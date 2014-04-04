@@ -3,7 +3,7 @@ GeoQ
 
 Collect geospatial features and manage feature collection among groups of users.
 
-The GeoQ software was developed at the National Geospatial-Intelligence Agency (NGA) as joint effort between NGA and Mitre.  You can copy, modify, distribute and perform the work, to include commercial purposes, all without asking permission.  NGA assumes no responsibility for the use of the software by any parties, and makes no guarantees, expressed or implied, about the software quality, reliability, or any other characteristic.  The GeoQ software can be redistributed and/or modified freely provided that any derivative work bears the following notice: "Elements of this work contain GeoQ— software jointly produced by the National Geospatial-Intelligence Agency and Mitre." 
+The GeoQ software was developed at the National Geospatial-Intelligence Agency (NGA) as joint effort between NGA and Mitre.  You can copy, modify, distribute and perform the work, to include commercial purposes, all without asking permission.  NGA assumes no responsibility for the use of the software by any parties, and makes no guarantees, expressed or implied, about the software quality, reliability, or any other characteristic.  The GeoQ software can be redistributed and/or modified freely provided that any derivative work bears the following notice: "Elements of this work contain GeoQ: software jointly produced by the National Geospatial-Intelligence Agency and Mitre." 
 
 ###Pull request 
 
