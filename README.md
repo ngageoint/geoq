@@ -2,7 +2,7 @@ The GeoQ software was developed at the National Geospatial-Intelligence Agency (
 
 ###Pull request 
 
-By submitting a pull request you agree to keep this work free of restrictions.  You are free to fork this project and add unique elements with your own stipulations in another repository, but this version shall remain free of restrictions.  
+If you'd like to contribute to this project, please make a pull request. We'll take a look and discuss the changes. By submitting a pull request you agree to keep this work free of restrictions.  You are free to fork this project and add unique elements with your own stipulations in another repository, but this version shall remain free of restrictions.  
 
 ###This project uses
 Django under [BSD] (https://github.com/django/django/blob/master/LICENSE)
