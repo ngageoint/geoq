@@ -1,0 +1,55 @@
+
+  <form method="post" action="">
+      {% csrf_token %}
+
+      {% load object_class %}
+
+    {% for field in form %}
+
+        <dl class="form">
+            {%  if field.field.widget|object_class == "CheckboxInput" %}
+
+                {% if field.errors %}
+                    <div class="control-group error">
+                        <div class="controls">
+                            <dt><label><b>{{ field.label }}</b></label>  {{ field }}</dt>
+
+                            <span class="help-inline">{{ field.errors }}</span>
+                        </div>
+                    </div>
+                {% else %}
+                    <dt>
+                        <label>{{ field.label }}  {{ field }}</label>
+                    </dt>
+                    <dd>
+                          <span class="help-block muted">
+                              <small>{{ field.help_text }}</small>
+                          </span>
+                    </dd>
+                {% endif %}
+
+            {% else %}
+
+
+                <dt>
+                    <label>{{ field.label }}</label>
+                </dt>
+                <dd>
+                    {% if field.errors %}
+                        <div class="control-group error">
+                            <div class="controls">
+                                {{ field }}
+                                <span class="help-inline">{{ field.errors }}</span>
+                            </div>
+                        </div>
+                    {% else %}
+                        {{ field }}<span class="help-block muted"><small>{{ field.help_text }}</small></span>
+                    {% endif %}
+                </dd>
+            {% endif %}
+        </dl>
+    {% endfor %}
+
+      <input class="btn" type="submit" value="Save" data-role="button" />
+      {% block extra_buttons%}{% endblock %}
+  </form>

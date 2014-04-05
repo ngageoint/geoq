@@ -1,0 +1,10 @@
+<ul class="statlist pull-right">
+    <li title="Edit this Map">
+        <i class="icon-edit"></i>
+        <a href="{% url 'map-update' object.id %}">Edit</a>
+    </li>
+    <li title="Delete this Map">
+        <i class="icon-trash"></i>
+        <a href="{% url 'map-delete' object.id %}">Delete</a>
+    </li>
+</ul>

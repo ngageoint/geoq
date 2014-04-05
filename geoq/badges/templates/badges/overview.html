@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+{% load badges_tags %}
+{% load humanize %}
+
+{% block container %}
+<div id="badges_tank">
+	<h1>{% block head_title %}Badges{% endblock %}</h1>
+	<p class="info_blurb">Contribute to one or more analyst tasks to earn points and badges.  Here is a list of the badges, and how many people have earned each one.</p>
+	<p class="info_blurb">Badges are fun! They're just little reminders that <strong>you are awesome</strong> <span class="faces">☺</span></p>
+	<table class="badges">
+		{% for badge in badges %}
+		<tr class="{% cycle 'highlighted' '' %}">
+			<td class="checkmarks">
+				{% if badge|is_in:request.user.badges.all %}<span title="You have earned this badge">✔</span>{% endif %}&nbsp;
+			</td>
+			<td class="badge">
+				{% include "badges/badge.html" %}
+				× {{ badge.user.count|intcomma }}
+			</td>
+			<td class="badge_description">{{ badge.description }}</td>
+		</tr>
+		{% endfor %}
+	</table>
+</div>
+{% endblock %}
+

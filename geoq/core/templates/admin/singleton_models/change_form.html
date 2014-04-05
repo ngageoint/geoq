@@ -1,0 +1,10 @@
+{% extends "admin/change_form.html" %}
+{% load i18n %}
+
+{% block breadcrumbs %}
+<div class="breadcrumbs">
+    <a href="../../">{% trans 'Home' %}</a> &rsaquo; 
+    <a href="../">{{ app_label|capfirst|escape }}</a> &rsaquo; 
+    {{ opts.verbose_name|capfirst }}
+</div>
+{% endblock %}

@@ -1,0 +1,16 @@
+{% comment %}
+	This is the html for displaying an individual badge on the site. It expects that
+	you will pass it a badge object called "badge".
+
+	Here is an example:
+	<div class="badges">
+		{% for badge in user_profile.user.badges.all %}
+			{% include "badges/badge.html" %}
+		{% endfor %}
+	</div>
+
+{% endcomment %}
+
+<a href="{{ badge.get_absolute_url }}" title="{{ badge.title }} ({{ badge.get_level_display }}): {{ badge.description }}">
+	<span class="level_{{ badge.level}} metal"><img src="{{ badge.icon.url }}"></span> {{ badge.title }}
+</a>

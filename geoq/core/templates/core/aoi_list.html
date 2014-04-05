@@ -1,0 +1,31 @@
+{% extends "core/base.html" %}
+{% load aoi_status %}
+
+{% block container %}
+
+    <div class="row-fluid container-narrow">
+
+        <div class="span12">
+            <div class="list-view-header">AOIs</div>
+
+            <div class="row body">
+                <ul class="nav nav-tabs">
+
+                    {% for status in statuses%}
+                    {% with status=status|lower %}
+                    <li class="{% if status == active_status %}active{% endif %}">
+                        <a href="{{ object.get_absolute_url }}{{ status }}">{{ status|title }}</a>
+                    </li>
+                    {% endwith %}
+                    {% endfor %}
+                </ul>
+            </div>
+
+            {% include "core/_object_list.html" %}
+
+
+        </div>
+
+    </div>
+
+{% endblock %}

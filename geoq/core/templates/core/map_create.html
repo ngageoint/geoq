@@ -1,0 +1,85 @@
+
+  <form method="post" action="">
+      {% csrf_token %}
+
+      {% load object_class %}
+
+    {% for field in form %}
+
+        <dl class="form">
+            {%  if field.field.widget|object_class == "CheckboxInput" %}
+
+                {% if field.errors %}
+                    <div class="control-group error">
+                        <div class="controls">
+                            <dt><label><b>{{ field.label }}</b></label>  {{ field }}</dt>
+
+                            <span class="help-inline">{{ field.errors }}</span>
+                        </div>
+                    </div>
+                {% else %}
+                    <dt>
+                        <label>{{ field.label }}  {{ field }}</label>
+                    </dt>
+                    <dd>
+                          <span class="help-block muted">
+                              <small>{{ field.help_text }}</small>
+                          </span>
+                    </dd>
+                {% endif %}
+
+            {% else %}
+
+
+                <dt>
+                    <label>{{ field.label }}</label>
+                </dt>
+                <dd>
+                    {% if field.errors %}
+                        <div class="control-group error">
+                            <div class="controls">
+                                {{ field }}
+                                <span class="help-inline">{{ field.errors }}</span>
+                            </div>
+                        </div>
+                    {% else %}
+                        {{ field }}<span class="help-block muted"><small>{{ field.help_text }}</small></span>
+                    {% endif %}
+                </dd>
+            {% endif %}
+        </dl>
+    {% endfor %}
+
+
+
+    {{ layer_formset.non_form_errors.as_ul }}
+    {{ layer_formset.management_form.as_p }}
+    <table id="formset" class="form">
+    {% for form in layer_formset %}
+      {% if forloop.first %}
+      <thead><tr>
+        {% for field in form.visible_fields %}
+        <th>{{ field.label|capfirst }}</th>
+        {% endfor %}
+      </tr></thead>
+      {% endif %}
+      <tr class="{% cycle row1,row2 %}">
+      {% for field in form.visible_fields %}
+        <td style="text-align: center">
+        {# Include the hidden fields in the form #}
+        {% if forloop.first %}
+          {% for hidden in form.hidden_fields %}
+          {{ hidden }}
+          {% endfor %}
+        {% endif %}
+          {{ field.errors.as_ul }}
+          {{ field }}
+        </td>
+      {% endfor %}
+      </tr>
+    {% endfor %}
+</table>
+
+      <input class="btn" type="submit" value="Save" data-role="button" />
+      {% block extra_buttons%}{% endblock %}
+  </form>

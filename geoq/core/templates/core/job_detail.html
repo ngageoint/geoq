@@ -1,0 +1,183 @@
+{% extends "core/base.html" %}
+{% load compress %}
+{% load leaflet_tags %}
+{% block static_libraries %}
+    {% leaflet_js %}
+    <script src="{{ STATIC_URL }}core/js/leaflet_helper.js"></script>
+    <script type="text/javascript">
+
+        function mapInit(map, bounds) {
+
+            aoi_extents = L.geoJson({{ object.geoJSON|default:'[]'|safe }}, {
+                style: function(feature) {
+                    switch (feature.properties.status){
+                        case 'Assigned': return leaflet_helper.styles.assigned;
+                        case 'Completed': return leaflet_helper.styles.completed;
+                        case 'In work' : return leaflet_helper.styles.in_work;
+                        case 'Unassigned' : return leaflet_helper.styles.extentStyle;
+                    }
+                }
+                , onEachFeature: function(feature, layer) {
+
+                    job_properties = feature.properties;
+                    popupContent = _.template('{% filter escapejs %}{% include "core/job_detail_aoi_popup.html" %}{% endfilter %}', job_properties);
+                    layer.bindPopup(popupContent);
+
+                    layer.on({
+                        mouseover: highlightFeature,
+                        mouseout: resetHighlight
+                    });
+                }
+            }).addTo(map);
+
+            // Map doesn't update without this delay.
+            setTimeout(function(){map.fitBounds(aoi_extents.getBounds())}, 1);
+
+
+            var drawnItems = new L.FeatureGroup();
+    		map.addLayer(drawnItems);
+
+        }
+
+        function highlightFeature(e) {
+            var layer = e.target;
+            layer.setStyle({
+                color: 'darkgreen',
+                weight: 3,
+                opacity: 1,
+                fillOpacity: 1,
+                fillColor: 'darkgreen'
+            });
+        }
+
+        function resetHighlight(e) {
+            aoi_extents.resetStyle(e.target);
+        }
+
+    </script>
+
+    {% compress css %}
+    {% leaflet_css %}
+    <link href="{{ STATIC_URL }}core/less/geoq.less" media="all" rel="stylesheet" type="text/less" />
+{% endcompress %}
+{% endblock %}
+
+{% block container %}
+    <div class="row-fluid container-narrow">
+
+        <div class="projectlist">
+
+            {% include 'core/_job_stat_list.html' %}
+
+            <h3>
+                <i class="icon-inbox icon-1x pull-left list-icon"></i>
+                <span class="title header">
+                    <a href="{%url 'job-detail' object.id %}">{{ object.name }}</a>
+                </span>
+            </h3>
+
+            <p class="body project-description">
+                {{ object.description }}
+            </p>
+
+            <div class="row body" style="height:250px; margin-top:25px">
+                {% if 'core.change_aoi' in request.base_perms %}
+                <div class="btn-group pull-right">
+                    <a class="btn btn-mini" href="{{ object.get_update_url }}">
+                        <b> Edit Job </b>
+                    </a>
+                    <button class="btn btn-mini dropdown-toggle" data-toggle="dropdown">
+                        <span class="caret"></span>
+                    </button>
+                    <ul class="dropdown-menu">
+                        {% if 'core.add_job' in request.base_perms %}
+                        <li><a href="{% url 'job-create-aois' object.id%}">Add AOIs</a></li>
+                        {% endif %}
+                        {% if 'core.delete_job' in request.base_perms %}
+                        <li><a href="{% url 'job-delete' object.id %}">Delete Job</a></li>
+                        {% endif %}
+                        {% if 'core.change_job' in request.base_perms and object.map%}
+                        <li><a href="{% url 'map-update' object.map.id %}">Edit Map</a></li>
+                        {% endif %}
+                    </ul>
+                </div>
+                {% endif %}
+                <div class="span4 thumbnail" id="map" style="height:225px; vertical-alignment:middle;">
+                {% leaflet_map "map" creatediv=False%}
+                </div>
+                <div class="span6" id="attribute-table">
+                    <table>
+                        <tr>
+                            <th style="min-width: 100px"></th>
+                            <th></th>
+                        </tr>
+                        <tr>
+                            <td>
+                                <b>Project:</b>
+                            </td>
+                            <td>
+                                <a href="{{ object.project.get_absolute_url }}">{{ object.project.name }}</a>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>
+                                <b>Created:</b>
+                            </td>
+                            <td>
+                                {{ object.created_at }}
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>
+                                <b>Project Type:</b>
+                            </td>
+                            <td>
+                                {{ object.project.project_type }}
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>
+                                <b>Private:</b>
+                            </td>
+                            <td>
+                                {{ object.project.private }}
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>
+                                <b>Description:</b>
+                            </td>
+                            <td>
+                                {{ object.project.description }}
+                            </td>
+                        </tr>
+                    </table>
+                </div>
+
+            {% if 'core.change_aoi' in request.base_perms %}
+            {% if object.unassigned_aois%}
+            <a href="{% url 'job-next-aoi' object.id%}" class="btn btn-large btn-success pull-right" style="margin-top:80px">Contribute to this job.  <i class="icon-long-arrow-right"></i></a>
+            {% endif %}
+            {% endif %}
+            </div>
+
+            <div class="row body">
+                <ul class="nav nav-tabs">
+
+                    {% for status in statuses%}
+                        {% with status=status|lower %}
+                    <li class="{% if status == active_status %}active{% endif %}">
+                        <a href="{{ object.get_absolute_url }}{{ status }}">{{ status|title }}</a>
+                    </li>
+                        {% endwith %}
+                    {% endfor %}
+                </ul>
+            </div>
+
+            {% include "core/_object_list.html" %}
+
+        </div>
+
+    </div>
+{% endblock %}
+

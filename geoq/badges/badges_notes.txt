@@ -1,0 +1,37 @@
+Pip install django-badges (then cloned due to having to make changes for Django 1.4+)
+pip install PIL (un-identified dependency)
+Modified models to add metabadge and also add user profile
+
+
+How does this work:
+
+Django-badges hooks into the save callback for one or more models (in our case, currently the AOI model).  Any time an AOI is saved, we currently check:
+  Is this AOI marked completed + with an assigned analyst.
+  If so, then that analyst's user profile's score is incremented by BadgeSettings.points
+  The analyst is marked as eligible to receive a badge for completing an AOI (will check if analyst already has this badge)
+  It then also checks if the analyst has multiple AOIs in multiple projects (NOTE: may want to first check if analyst has the badge since I think checking for the badge is cheaper than how I'm checking for multiple jobs)
+
+Menu.html was modified to include the user's current score and badges; clicking on the badges item in the menu will go to the badge page.
+
+Possible extensions:
+1) Currently, django-badges hooks into the post-save function; as far as I know, this means I cannot determine (from inside this function) what changed in the model, so I don't currently handle if an analyst was awarded points but would have just lost them because an admin "fixed" an AOI to be owned by a different analyst (but I do sort of handle it in the sense that when the analyst does get points, it currently recalculates the score from scratch, because I also can't tell if an AOI was being marked as completed (which should score points) or if a completed AOI was being updated for other reasons (which shouldn't).  I considered modifying django-badges to hook into pre-save function which lets me see the fields to be changed, which gives me some ability to potentially identify stuff
+
+2) Adding additional badges
+
+3) Points for supervisors
+
+4) Django-badges has the ability to map images to different badges but they aren't being shown at the moment (this looks like I just need to find / write the css for metal and/or medal classes)
+
+
+11/19/2013: Installation Notes
+
+Here's a couple of things I needed to do when I installed the badging stuff into the baseline:
+
+- A new table (UserProfile) was added to track badge points. This should be created when new users are added to the system,
+but records may need to be added for existing users
+
+- In the settings.py file, I updated MEDIA_ROOT and MEDIA_URL variables so that the badge images could be served out if
+running geoq-django from the command line (paver start_django). You'll need to update MEDIA_ROOT for your installation.
+ A 'static' url was also added to the top-level urls.py file. If you're running geoq-django on a wsgi server,
+ you won't need these as you'll likely have an image directory setup there. This means you'll also make a change to
+ the entries in the badges_badge db table for the icon path

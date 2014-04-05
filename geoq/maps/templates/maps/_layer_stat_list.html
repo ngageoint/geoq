@@ -1,0 +1,10 @@
+<ul class="statlist pull-right">
+    <li title="Edit this Layer">
+        <i class="icon-edit"></i>
+        <a href="{% url 'layer-update' object.id %}">Edit</a>
+    </li>
+    <li title="Delete this Layer">
+        <i class="icon-trash"></i>
+        <a href="{% url 'layer-delete' object.id %}">Delete</a>
+    </li>
+</ul>

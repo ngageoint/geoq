@@ -1,0 +1,70 @@
+[
+    {
+        "pk": 1,
+        "model": "maps.map",
+        "fields": {
+            "projection": "EPSG:4326",
+            "title": "Base Map",
+            "created_at": "2013-07-17T20:38:09.823Z",
+            "zoom": 0,
+            "updated_at": "2013-07-17T20:38:09.823Z",
+            "center_x": 0.0,
+            "center_y": 0.0,
+            "description": "This is a map"
+        }
+    },
+    {
+        "pk": 2,
+        "model": "maps.map",
+        "fields": {
+            "projection": "EPSG:4326",
+            "title": "Test Map",
+            "created_at": "2013-10-16T14:34:36.893Z",
+            "zoom": 5,
+            "updated_at": "2013-10-16T14:34:36.893Z",
+            "center_x": 0.0,
+            "center_y": 0.0,
+            "description": "This is a test map"
+        }
+    },
+{
+    "pk": 1, 
+    "model": "maps.featuretype",
+    "fields": {
+        "style": "{\"color\":\"red\",\"opacity\":1,\"weight\":2}", 
+        "type": "Polygon", 
+        "name": "Catastrophic Damage", 
+        "properties": "[{\"type\":\"text\",\"name\":\"severity\"}]"
+    }
+},
+{
+    "pk": 2, 
+    "model": "maps.featuretype", 
+    "fields": {
+        "style": "{\"color\":\"green\",\"opacity\":1,\"weight\":2}", 
+        "type": "Polygon", 
+        "name": "Limited Damage", 
+        "properties": "[{\"severity\":\"Limited\"}]"
+    }
+},
+{
+    "pk": 3, 
+    "model": "maps.featuretype", 
+    "fields": {
+        "style": "{\"color\":\"orange\",\"opacity\":1,\"weight\":2}", 
+        "type": "Polygon", 
+        "name": "Major Damage", 
+        "properties": "[{\"type\":\"text\",\"severity\":\"Major\"}]"
+    }
+},
+{
+    "pk": 5, 
+    "model": "maps.featuretype", 
+    "fields": {
+        "style": "{\"icon\":\"red-marker-icon.png\"}", 
+        "type": "Point", 
+        "name": "Catastrophic Damage Point", 
+        "properties": "{\"type\":\"text\",\"severity\":\"Catastrophic\"}"
+    }
+}
+]

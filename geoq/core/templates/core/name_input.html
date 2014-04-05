@@ -1,0 +1,11 @@
+{% extends "admin/base_site.html" %}
+{% block content %}
+
+<form action="{{ path }}" method="post">
+    {% csrf_token %}
+    {{ name_form }}
+<input type="hidden" name="action" value="rename_aois" />
+<input type="submit" name="apply" value="Save">
+</form>
+
+{% endblock %}

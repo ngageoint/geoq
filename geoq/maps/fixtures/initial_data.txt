@@ -1,0 +1,371 @@
+[{
+    "pk": 1,
+    "model": "auth.user",
+    "fields": {
+        "username": "admin",
+        "first_name": "",
+        "last_name": "",
+        "is_active": true,
+        "is_superuser": true,
+        "is_staff": true,
+        "last_login": "2013-07-23T13:44:15.013Z",
+        "groups": [],
+        "user_permissions": [],
+        "password": "pbkdf2_sha256$10000$5GgXfwiL8ayC$Q4NSRslo7FvMkBpaxta9ZE5UEHxp3XH0f0Zi8ADRuv4=",
+        "email": "admin@example.com",
+        "date_joined": "2013-07-23T13:44:15.013Z",
+	"userprofile" : 1
+    }
+},
+
+{
+  "pk": 1, 
+  "model": "core.userprofile", 
+  "fields": {
+    "score": 1, 
+    "user": 1
+  }
+},
+
+
+    {
+    "pk": 1, 
+    "model": "maps.layer", 
+    "fields": {
+        "layer": "nexrad-n0r-900913", 
+        "layer_parsing_function": null, 
+        "downloadableLink": "", 
+        "image_format": "image/png", 
+        "enable_identify": false, 
+        "fields_to_show": "", 
+        "additional_domains": "", 
+        "type": "WMS", 
+        "styles": "", 
+        "attribution": "Weather data \u00a9 2012 IEM Nexrad", 
+        "description": "", 
+        "root_field": "", 
+        "extent": null, 
+        "transparent": true, 
+        "refreshrate": null, 
+        "name": "Nexrad", 
+        "spatial_reference": "EPSG:4326", 
+        "url": "http://mesonet.agron.iastate.edu/cgi-bin/wms/nexrad/n0r.cgi", 
+        "layer_params": "{}", 
+        "token": "", 
+        "info_format": null, 
+        "constraints": ""
+    }
+},
+{
+    "pk": 2, 
+    "model": "maps.layer", 
+    "fields": {
+        "layer": "", 
+        "layer_parsing_function": null, 
+        "downloadableLink": "", 
+        "image_format": null, 
+        "enable_identify": false, 
+        "fields_to_show": "", 
+        "additional_domains": "", 
+        "type": "ArcGIS Tiled Map Service", 
+        "styles": "", 
+        "attribution": "", 
+        "description": "", 
+        "root_field": "", 
+        "extent": null, 
+        "transparent": true, 
+        "refreshrate": null, 
+        "name": "USA_Median_Household_Income", 
+        "spatial_reference": "EPSG:4326", 
+        "url": "http://server.arcgisonline.com/ArcGIS/rest/services/Demographics/USA_Median_Household_Income/MapServer", 
+        "layer_params": "{}", 
+        "token": "", 
+        "info_format": null, 
+        "constraints": ""
+    }
+},
+{
+    "pk": 3, 
+    "model": "maps.layer", 
+    "fields": {
+        "layer": "", 
+        "layer_parsing_function": null, 
+        "downloadableLink": "", 
+        "image_format": "png24",
+        "enable_identify": false, 
+        "fields_to_show": "", 
+        "additional_domains": "", 
+        "type": "WMS",
+        "styles": "", 
+        "attribution": "", 
+        "description": "", 
+        "root_field": "", 
+        "extent": null, 
+        "transparent": true, 
+        "refreshrate": null, 
+        "name": "National Map", 
+        "spatial_reference": "EPSG:4326", 
+        "url": "http://raster.nationalmap.gov/ArcGIS/rest/services/TNM_Large_Scale_Imagery/MapServer/export",
+        "layer_params": "{\"dpi\":92,\"f\":\"image\"}",
+        "token": "", 
+        "info_format": null, 
+        "constraints": ""
+    }
+},
+{
+    "pk": 4, 
+    "model": "maps.layer", 
+    "fields": {
+        "layer": "", 
+        "layer_parsing_function": null, 
+        "downloadableLink": "", 
+        "image_format": null, 
+        "enable_identify": false, 
+        "fields_to_show": "", 
+        "additional_domains": "", 
+        "type": "ESRI Feature Layer", 
+        "styles": "", 
+        "attribution": "", 
+        "description": "", 
+        "root_field": "", 
+        "extent": null, 
+        "transparent": true, 
+        "refreshrate": null, 
+        "name": "Feature Layer Test", 
+        "spatial_reference": "EPSG:4326", 
+        "url": "http://services.arcgis.com/rOo16HdIMeOBI4Mb/arcgis/rest/services/stops/FeatureServer/0/", 
+        "layer_params": "{}", 
+        "token": "", 
+        "info_format": null, 
+        "constraints": ""
+    }
+},
+{
+    "pk": 5, 
+    "model": "maps.layer", 
+    "fields": {
+        "layer": "", 
+        "layer_parsing_function": null, 
+        "downloadableLink": "", 
+        "image_format": null, 
+        "enable_identify": false, 
+        "fields_to_show": "", 
+        "additional_domains": "", 
+        "type": "GeoJSON", 
+        "styles": "", 
+        "attribution": "", 
+        "description": "", 
+        "root_field": "", 
+        "extent": null, 
+        "transparent": true, 
+        "refreshrate": null, 
+        "name": "Chicago Zip Codes", 
+        "spatial_reference": "EPSG:4326", 
+        "url": "https://raw.github.com/smartchicago/chicago-atlas/master/db/import/zipcodes.geojson", 
+        "layer_params": "{}", 
+        "token": "", 
+        "info_format": null, 
+        "constraints": ""
+    }
+},
+{
+    "pk": 6, 
+    "model": "maps.layer", 
+    "fields": {
+        "layer": "", 
+        "layer_parsing_function": null, 
+        "downloadableLink": "", 
+        "image_format": null, 
+        "enable_identify": false, 
+        "fields_to_show": "", 
+        "additional_domains": "", 
+        "type": "GeoJSON", 
+        "styles": "", 
+        "attribution": "", 
+        "description": "", 
+        "root_field": "", 
+        "extent": null, 
+        "transparent": true, 
+        "refreshrate": null, 
+        "name": "DC Bars", 
+        "spatial_reference": "EPSG:4326", 
+        "url": "https://raw.github.com/benbalter/dc-wifi-social/master/bars.geojson", 
+        "layer_params": "{}", 
+        "token": "", 
+        "info_format": null, 
+        "constraints": ""
+    }
+},
+{
+    "pk": 1, 
+    "model": "maps.map", 
+    "fields": {
+        "projection": "EPSG:4326", 
+        "title": "Base Map", 
+        "created_at": "2013-07-17T20:38:09.823Z", 
+        "zoom": 0, 
+        "updated_at": "2013-07-17T20:38:09.823Z", 
+        "center_x": 0.0, 
+        "center_y": 0.0, 
+        "description": "This is a map"
+    }
+},
+{
+    "pk": 1, 
+    "model": "maps.maplayer", 
+    "fields": {
+        "opacity": 0.8, 
+        "map": 1, 
+        "layer": 1, 
+        "shown": true, 
+        "stack_order": 0, 
+        "display_in_layer_switcher": false, 
+        "is_base_layer": false
+    }
+},
+{
+    "pk": 2, 
+    "model": "maps.maplayer", 
+    "fields": {
+        "opacity": 0.8, 
+        "map": 1, 
+        "layer": 3, 
+        "shown": true, 
+        "stack_order": 1, 
+        "display_in_layer_switcher": false, 
+        "is_base_layer": false
+    }
+},
+{
+    "pk": 3, 
+    "model": "maps.maplayer", 
+    "fields": {
+        "opacity": 0.8, 
+        "map": 1, 
+        "layer": 4, 
+        "shown": true, 
+        "stack_order": 2, 
+        "display_in_layer_switcher": false, 
+        "is_base_layer": false
+    }
+},
+{
+    "pk": 17, 
+    "model": "maps.feature", 
+    "fields": {
+        "created_at": "2013-07-23T12:34:41.125Z", 
+        "updated_at": "2013-07-23T12:34:41.125Z", 
+        "aoi": 7010, 
+        "analyst": [
+            "admin"
+        ], 
+        "project": 1, 
+        "job": 3, 
+        "template": 1, 
+        "the_geom": "POLYGON ((-79.7868347167968750 34.1978536387219094, -79.7868347167968750 34.1990604720245486, -79.7849035263061523 34.1990604720245486, -79.7849035263061523 34.1978536387219094, -79.7868347167968750 34.1978536387219094))", 
+        "properties": null
+    }
+},
+{
+    "pk": 18, 
+    "model": "maps.feature", 
+    "fields": {
+        "created_at": "2013-07-23T12:34:45.168Z", 
+        "updated_at": "2013-07-23T12:34:45.168Z", 
+        "aoi": 7010, 
+        "analyst": [
+            "admin"
+        ], 
+        "project": 1, 
+        "job": 3, 
+        "template": 1, 
+        "the_geom": "POINT (-79.7903108596801616 34.1948009832628870)", 
+        "properties": null
+    }
+},
+{
+    "pk": 19, 
+    "model": "maps.feature", 
+    "fields": {
+        "created_at": "2013-07-23T12:34:47.902Z", 
+        "updated_at": "2013-07-23T12:34:47.902Z", 
+        "aoi": 7010, 
+        "analyst": [
+            "admin"
+        ], 
+        "project": 1, 
+        "job": 3, 
+        "template": 1, 
+        "the_geom": "POINT (-79.7929716110229492 34.1949429696883342)", 
+        "properties": null
+    }
+},
+{
+    "pk": 20, 
+    "model": "maps.feature", 
+    "fields": {
+        "created_at": "2013-07-23T12:34:51.384Z", 
+        "updated_at": "2013-07-23T12:34:51.384Z", 
+        "aoi": 7010, 
+        "analyst": [
+            "admin"
+        ], 
+        "project": 1, 
+        "job": 3, 
+        "template": 1, 
+        "the_geom": "POINT (-79.7891092300415039 34.1966822839969140)", 
+        "properties": null
+    }
+},
+{
+    "pk": 21, 
+    "model": "maps.feature", 
+    "fields": {
+        "created_at": "2013-07-23T12:50:26.207Z", 
+        "updated_at": "2013-07-23T12:50:26.207Z", 
+        "aoi": 7010, 
+        "analyst": [
+            "admin"
+        ], 
+        "project": 1, 
+        "job": 3, 
+        "template": 2, 
+        "the_geom": "POLYGON ((-79.7873497009277202 34.1950849558746768, -79.7873497009277202 34.1961498446516075, -79.7857618331909180 34.1961498446516075, -79.7857618331909180 34.1950849558746768, -79.7873497009277202 34.1950849558746768))", 
+        "properties": null
+    }
+},
+{
+    "pk": 22, 
+    "model": "maps.feature", 
+    "fields": {
+        "created_at": "2013-07-23T13:18:00.408Z", 
+        "updated_at": "2013-07-23T13:18:00.408Z", 
+        "aoi": 7010, 
+        "analyst": [
+            "admin"
+        ], 
+        "project": 1, 
+        "job": 3, 
+        "template": 1, 
+        "the_geom": "POLYGON ((-79.7905683517456055 34.1929196405557221, -79.7905683517456055 34.1938425686379261, -79.7893238067626811 34.1938425686379261, -79.7893238067626811 34.1929196405557221, -79.7905683517456055 34.1929196405557221))", 
+        "properties": null
+    }
+},
+{
+    "pk": 23, 
+    "model": "maps.feature", 
+    "fields": {
+        "created_at": "2013-07-23T13:18:27.150Z", 
+        "updated_at": "2013-07-23T13:18:27.150Z", 
+        "aoi": 7010, 
+        "analyst": [
+            "admin"
+        ], 
+        "project": 1, 
+        "job": 3, 
+        "template": 2, 
+        "the_geom": "POLYGON ((-79.7947740554809570 34.1919967023727480, -79.7947740554809570 34.1936650832527249, -79.7930145263671875 34.1936650832527249, -79.7930145263671875 34.1919967023727480, -79.7947740554809570 34.1919967023727480))", 
+        "properties": null
+    }
+}
+]

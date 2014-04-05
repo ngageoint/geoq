@@ -1,0 +1,21 @@
+{% extends "core/base.html" %}
+
+{% block container %}
+
+    <div class="row-fluid container-narrow">
+        <div class="span12">
+            <span class="list-view-header">Maps</span>
+            {% if 'maps.add_map' in request.base_perms %}
+            <span><a class="btn btn-small pull-right" href="{% url 'map-create' %}">Add New</a></span>
+            {% endif %}
+
+        </div>
+        <div class="row"><span class="span6"/></div>
+        <div>
+
+            {% include "maps/_object_list.html" %}
+
+        </div>
+
+    </div>
+{% endblock %}

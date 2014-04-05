@@ -1,0 +1,13 @@
+{% extends "core/base.html" %}
+{% load object_class %}
+{% block container %}
+
+    <div class="row-fluid container-narrow">
+
+        <div class="span12">
+            <h3> {% if object %}Edit{% else %}Create New {% endif %} {{ form.Meta.model|object_class|title }}</h3>
+            {% include custom_form|default:"core/_generic_form.html" %}
+        </div>
+
+    </div>
+{% endblock %}

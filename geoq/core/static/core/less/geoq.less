@@ -1,0 +1,150 @@
+@gray: #555;
+@graylight: #eee;
+
+
+
+.hero-unit{
+    padding: 10px 30px 10px 30px;
+
+  .description{
+    min-height: 179px;
+  }
+  .description{
+    min-height: 179px;
+  }
+
+}
+
+.container-narrow {
+    margin: 0 auto;
+    max-width: 960px;
+    padding-top: 20px;
+}
+
+/* View headers */
+.header{
+  color: @gray;
+  font-weight: normal;
+  line-height: 15px;
+}
+
+
+.projectlist{
+  list-style-type: none;
+  padding-left: 5px;
+  margin: 0 0 5px 5px;
+
+  @left-margin: 40px;
+  @list-icon-width: 30px;
+
+  .body{
+    margin:0 0 0 @left-margin
+  }
+
+  h3{
+    .header;
+  }
+
+  .list-icon{
+    height: 30px;
+    width: @list-icon-width;
+    margin:-5px 0 0 0;
+    color: @gray;
+  }
+
+  .project-description{
+    font-size: 15px;
+    color: @gray;
+  }
+
+  .title{
+    margin-left: @left-margin - @list-icon-width;
+  }
+
+  >li{
+    border-bottom: 1px solid @graylight;
+    padding: 15px 0px;
+    min-height: 60px;
+  }
+
+  >li:first-child{
+  padding: 5px 0 15px 0;
+  }
+
+  >li:last-child{
+  border-bottom: none;
+  }
+
+  .statlist{
+    li{
+      display: inline;
+      font-size: 13px;
+      list-style-type: none;
+      padding-left: 5px;
+      padding-right: 5px;
+
+      i{
+        color:@gray;
+      }
+
+      a{
+        color:@gray;
+      }
+
+    }
+
+    .stat-counts{
+      margin: 0;
+    }
+
+  }
+
+  .timestamp{
+    font-size: 12px;
+  }
+
+}
+
+.list-view-header{
+  font-size: 28px;
+  color: @gray;
+  margin: 10px 0 20px 0;
+}
+
+.aoi-status{
+  font-size: 28px;
+  color: @gray;
+  font-weight: bold;
+}
+
+.aoi-status{
+  font-size: 28px;
+  color: @gray;
+  font-weight: bold;
+}
+
+//Map specific styles, move to maps > static > less?
+
+.layer{
+
+}
+
+.layer-icon{
+  height:20px;
+  width: 20px;
+  margin: 2px;
+}
+
+.job-detail-popup {
+  div {
+    height: 16px;
+      
+    label {
+      display: inline-block;
+      width: 60px;
+    }
+    span {
+      font-weight: bold;
+    }
+  }
+}

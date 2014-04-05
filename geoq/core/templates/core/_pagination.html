@@ -1,0 +1,31 @@
+<div class="pagination {% if alignment == "centered" %}pagination-centered{% endif %}{% if alignment == "right" %}pagination-right{% endif %}">    
+    <ul>    
+    {% if hide_previous != "true" %}
+        {% if page.has_previous %}  
+            <li class="prev">
+                <a href="{{url_suffix|default:"?page="}}{{page.previous_page_number}}">{{previous_label|default:"&larr; Previous"}}</a>
+            </li>
+        {% else %}
+            <li class="prev disabled">
+                <a href="#">{{previous_label|default:"&larr; Previous"}}</a>
+            </li>
+        {% endif %}
+    {% endif %}
+    {% for pagenum in page.paginator.page_range %}    
+        <li{% if page.number == pagenum %} class="active"{% endif %}>
+            <a href="{{url_suffix|default:"?page="}}{{pagenum}}">{{pagenum}}</a>
+        </li>
+    {% endfor %}
+    {% if hide_next != "true" %}
+        {% if page.has_next %}
+            <li class="next">
+                <a href="{{url_suffix|default:"?page="}}{{page.next_page_number}}">{{next_label|default:"Next &rarr;"}}</a>
+            </li>
+        {% else %}
+            <li class="next disabled">
+                <a href="#">{{next_label|default:"Next &rarr;"}}</a>
+            </li>
+        {% endif %} 
+    {% endif %}   
+    </ul> 
+</div>

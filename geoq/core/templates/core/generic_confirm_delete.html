@@ -1,0 +1,18 @@
+{% extends "core/base.html" %}
+{% load object_class %}
+{% block container %}
+
+    <div class="row-fluid container-narrow">
+
+        <div class="span12">
+            <h3>You are about to delete the {{ object|object_class }}: {{ object.name }}.</h3>
+            <p>Are you sure you want to continue?</p>
+            <form method="post" action="">
+                {% csrf_token %}
+                <input type="submit" class="btn btn-danger" value="Confirm Delete"/> <a class="btn" href="javascript:history.go(-1)">Cancel</a>
+            </form>
+        </div>
+
+    </div>
+{% endblock %}
+

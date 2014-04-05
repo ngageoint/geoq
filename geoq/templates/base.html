@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+{% load bootstrap_toolkit %}
+{% load compress %}
+{% load url from future %}
+{% load menu %}
+
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>{% block title %}GeoQ{% endblock %}</title>
+
+    <style type="text/css">
+        body {
+            padding-top: 60px;
+        }
+    </style>
+    <!--[if lt IE 9]>
+    <script src="//html5shim.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.0/jquery.min.js"></script>
+
+    {% bootstrap_stylesheet_tag %}
+    {% bootstrap_stylesheet_tag "responsive" %}
+
+    {% compress css %}
+
+    <link href="{{ STATIC_URL }}core/less/geoq.less" media="all" rel="stylesheet" type="text/less" />
+    <link rel="stylesheet" href="{{ STATIC_URL }}font-awesome-2/css/font-awesome.min.css">
+    {% endcompress %}
+
+    {% compress js %}
+     <script src="{{ STATIC_URL }}js/underscore-min.js"></script>
+     <script src="{{ STATIC_URL }}core/js/base.js"></script>
+    {% endcompress %}
+
+    {% block static_libraries %}
+    {% endblock %}
+
+    {% bootstrap_javascript_tag %}
+
+</head>
+
+<body>
+
+{% get_menu request  %}
+
+{% bootstrap_messages %}
+
+{% block container %}
+    <div class="container">
+
+
+
+        {% block content %}Empty page{% endblock %}
+
+
+        <!--<footer class="row">
+        {% block footer %}
+            <div class="span6">GeoQ</div>
+        {% endblock %}
+        </footer>-->
+
+    </div> <!-- container -->
+{% endblock %}
+</body>
+</html>

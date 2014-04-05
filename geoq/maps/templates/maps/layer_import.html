@@ -1,0 +1,91 @@
+{% extends "core/base.html" %}
+
+{% block container %}
+
+<script>
+    var layer_list = [];
+
+    function get_layers(server) {
+
+        $.ajax({
+            url: server.value,
+            type: 'GET',
+            global: false,
+            crossDomain: true,
+            dataType: 'jsonp',
+            xhrFields: {
+                withCredentials: true
+            },
+            error: function(xhr,status,error) {
+                alert('unable to contact server');
+            },
+            success: function(data) {
+                // remove everything from the current list
+                $('#layers tbody').empty();
+
+                for ( i = 0; i < data.objects.length; i++ ) {
+                    // add rows
+                    $('#layers tbody').append("<tr><td><div class=\"checkbox\"><label>" +
+                            "<input type=\"checkbox\" id=\"" + i + "\" onclick=\"add_layer(this);\"></label></div></td>" +
+                            "<td>" + data.objects[i].name + "</td>" +
+                            "<td>" + data.objects[i].type + "</td>" +
+                            "<td>" + data.objects[i].url + "</td>" +
+                            "<td>" + data.objects[i].layer + "</td></tr>");
+
+                    layer_list[i] = jQuery.extend({},data.objects[i]);
+                }
+            }
+        });
+    }
+
+    function add_layer(checkbox) {
+        var id = parseInt(checkbox.id);
+        if (checkbox.checked) {
+            $('<input>').attr({
+                type: 'hidden',
+                id: 'layer_' + checkbox.id,
+                name: 'layer',
+                value: JSON.stringify(layer_list[id])
+            }).appendTo('#import_form');
+        }
+    }
+</script>
+
+<div class="row-fluid container-narrow">
+
+    <form id="import_form" role="form" method="post" action="">
+        {% csrf_token %}
+
+        <div class="span12">
+            <span class="list-view-header">Import Layers</span>
+            <!-- span><a class="btn btn-small pull-right" href="{% url 'layer-create' %}">Add New</a></span -->
+        </div>
+        <br><br>
+        <div class="form-group">
+                <label for="servers">Servers</label>
+                <select id="servers" name="servers">
+                    <option selected="true">Select a Server</option>
+                    {% for source in geoevents_sources %}
+                    <option onclick="get_layers(this);" value="{{ source.url }}">{{ source.name }}</option>
+                    {% endfor %}
+                </select>
+        </div>
+        <div class="form-group">
+                <table id="layers" class="table">
+                    <thead>
+                    <tr>
+                        <th>Import</th>
+                        <th>Name</th>
+                        <th>Type</th>
+                        <th>URL</th>
+                        <th>Layer</th>
+                    </tr>
+                    <tbody>
+                    </tbody>
+                    </thead>
+                </table>
+        </div>
+        <input class="btn" type="submit" value="Import" data-role="button" />
+    </form>
+</div>
+{% endblock %}

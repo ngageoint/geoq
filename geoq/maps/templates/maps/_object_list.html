@@ -1,0 +1,30 @@
+{% load object_class %}
+<ul class="projectlist">
+    {% for object in object_list %}
+        {% with object_type=object|object_class|lower %}
+        <li>
+        {% if object_type == "featuretype" %}
+            {% include "maps/_featuretype_stat_list.html" %}
+        {% elif object_type == "map" %}
+            {% include "maps/_map_stat_list.html" %}
+        {% elif object_type == "layer" %}
+            {% include "maps/_layer_stat_list.html" %}
+        {% endif %}
+
+        <h3>
+            <i class="icon-{% if object_type == "map" %}map-marker{% else %}edit{% endif %} icon-1x pull-left list-icon"></i>
+            <span class="title"><a href="{{ object.get_absolute_url|default:"#" }}">{% if object_type == "map" %}{{ object.title }}
+                {% else %}{{ object.name }}{% endif %}</a></span>
+        </h3>
+
+        <p class="body project-description">{% if object_type == "map"%}{{ object.description }}
+            {% else %}{{ object.type }}{% endif %}</p>
+
+        <p class="body muted timestamp">{{ object.created_at }}</p>
+        </li>
+    {% endwith %}
+    {% endfor %}
+
+    {% include 'core/_pagination.html' with page=page_obj alignment='centered' %}
+
+</ul>

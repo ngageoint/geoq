@@ -1,0 +1,24 @@
+{% extends "core/base.html" %}
+
+{% block container %}
+
+    <div class="row-fluid container-narrow">
+
+        <div class="span12">
+            <div class="list-view-header">Jobs</div>
+
+            <ul class="nav nav-tabs">
+                <li class="active">
+                    <a href="#">Recent Jobs</a>
+                </li>
+                <li>
+                    <a href="#">Featured Jobs</a>
+                </li>
+            </ul>
+
+            {% include "core/_object_list.html" %}
+
+        </div>
+
+    </div>
+{% endblock %}

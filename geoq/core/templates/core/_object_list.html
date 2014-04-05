@@ -1,0 +1,30 @@
+{% load object_class %}
+<ul class="projectlist">
+    {% for object in object_list %}
+        {% with object_type=object|object_class|lower %}
+        <li>
+        {% if object_type == "project" %}
+            {% include "core/_project_stat_list.html" %}
+        {% elif object_type == "job" %}
+            {% include "core/_job_stat_list.html" %}
+        {% elif object_type == "aoi" %}
+            {% include "core/_aoi_stat_list.html" %}
+        {% endif %}
+        <h3>
+
+
+
+            <i class="icon-{% if object_type == "project" %}briefcase{% elif object_type == "job"%}inbox{% elif object_type == "aoi"%}th{% endif %} icon-1x pull-left list-icon"></i>
+            <span class="title"><a href="{{ object.get_absolute_url|default:"#" }}">{{ object.name }}</a></span>
+        </h3>
+
+        <p class="body project-description">{{ object.description }}</p>
+
+        <p class="body muted timestamp">{{ object.created_at }}</p>
+        </li>
+    {% endwith %}
+    {% endfor %}
+
+    {% include 'core/_pagination.html' with page=page_obj alignment='centered' %}
+
+</ul>

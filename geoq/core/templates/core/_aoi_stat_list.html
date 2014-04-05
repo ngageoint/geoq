@@ -1,0 +1,16 @@
+<ul class="statlist pull-right">
+    <li title="{{ object.job.project.name }}">
+        <i class="icon-briefcase"></i>
+        <a href="{{ object.job.project.get_absolute_url }}">{{ object.job.project.name }}</a>
+    </li>
+    <li title="This AOI is {{ object.status }}">
+        <i class="icon-th"></i>
+        {{ object.status }}
+    </li>
+    {% if 'core.delete_aoi' in request.base_perms %}
+    <li title="Delete this AOI">
+        <i class="icon-trash"></i>
+        <a href="{% url 'aoi-delete' object.id %}">Delete</a>
+    </li>
+    {% endif %}
+</ul>

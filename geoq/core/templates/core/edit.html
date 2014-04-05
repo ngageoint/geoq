@@ -1,0 +1,92 @@
+{% extends "core/base.html" %}
+{% load compress %}
+{% load leaflet_tags %}
+{% load django_select2_tags %}
+{% block static_libraries %}
+
+    {% leaflet_js plugins="draw, esri" %}
+    {% import_django_select2_js %}
+    <script src="{{ STATIC_URL }}core/js/leaflet_helper.js"></script>
+    <script src="{{ STATIC_URL }}core/js/edit.js"></script>
+
+    <script type="text/javascript">
+
+        var aoi_id = {{ object.id }};
+        var aoi_extents_geojson = {{ object.polygon.json|safe }};
+        var aoi_map_json = {{ map.to_json|safe|default:"{}" }};
+        var activeStyle = {};
+        var current_feature_type_id = null;
+        var create_feature_url = "{% url 'feature-create' %}";
+        var drawControl = {};
+        var feature_types = {};
+        var geometry_types = [];
+        var feature_type_div = "features";
+        var job_features_geojson = {{ object.job.features_geoJSON|safe }};
+
+        {% for feature_type in  object.job.feature_types.all %}
+                feature_types[{{ feature_type.id }}] = {{ feature_type.to_json|safe }};
+                geometry_types.push("{{ feature_type.type }}");
+        {% endfor %}
+
+        aoi_feature_edit.init(aoi_id, aoi_map_json, aoi_extents_geojson, job_features_geojson, feature_types, create_feature_url);
+
+        $( document ).ready(function() {
+
+
+            _.each(feature_types, function(feature_type){
+                aoi_feature_edit.addOptions(feature_type, feature_type_div);
+            });
+
+            $("#aoi-submit").click(function(){
+                 $.ajax({
+                      type: "POST",
+                      url: "{% url 'aoi-update-status' object.id "Completed" %}",
+                      dataType: "json",
+                      success: function(response){
+                        geoq.redirect("{% url 'job-detail' object.job.id %}");
+                        }
+                      });
+            });
+
+            $("#"+ feature_type_div).select2();
+            aoi_feature_edit.current_feature_type_id = parseInt($("#" + feature_type_div).val());
+
+            $("#" + feature_type_div).on("change", function(e) {
+                console.log("Selected feature type: " + e.val + ".");
+                aoi_feature_edit.current_feature_type_id = e.val;
+                aoi_feature_edit.updateDrawOptions(e.val);
+                //aoi_feature_edit.filterDrawConsole();
+            });
+        });
+
+</script>
+
+    {% compress css %}
+    {% leaflet_css plugins="draw"%}
+    {% import_django_select2_css %}
+{% endcompress %}
+{% endblock %}
+
+{% block container %}
+        <div class="container-fluid">
+            <div class="span12">
+                <h4><a href="{{ object.job.get_absolute_url }}">{{ object.job.name }}</a> > AOI #{{ object.id }}</h4>
+                <div id="map" class="thumbnail" style="height: 450px; width: 100%;">{% leaflet_map "map" callback="aoi_feature_edit.map_init"%}</div>
+            </div>
+            <div class="span3">
+                <p class="aoi-status muted">{% widthratio object.job.complete.count 100 100%}% Complete</p>
+                <h5>{{ object.description }}</h5>
+
+                <select id="features">
+
+
+
+                </select>
+                <br/><br/>
+
+                <a id="aoi-submit" href="#" class="btn btn-success">Complete</a>
+
+            </div>
+        </div>
+{% endblock %}
+

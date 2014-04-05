@@ -1,0 +1,17 @@
+{% extends "badges/overview.html" %}
+{% load badges_tags %}
+{% load humanize %}
+
+{% block body %}
+<div id="badges_tank">
+	<h1>{% block head_title %}Badge: {{ badge.title }}{% endblock %}</h1>
+    <p class="info_blurb">{{ badge.description }}</p>
+	<ul class="users">
+		{% for u in users %}
+			<li><a href='{{ u.get_absolute_url }}'>{{ u.username }}</a></li>
+		{% empty %}
+			<li>Nobody has earned this badge!</li>
+		{% endfor %}
+    </ul>
+</div>
+{% endblock %}

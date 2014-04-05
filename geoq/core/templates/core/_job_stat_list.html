@@ -1,0 +1,18 @@
+<ul class="statlist pull-right">
+    <li title="Contributors">
+        <i class="icon-user"></i>
+        {{ object.user_count|default:0 }}
+    </li>
+    <li title="AOIs">
+        <i class="icon-th"></i>
+        {{ object.aoi_count|default:0 }}
+    </li>
+    <li title="This job is {{ object.active }}">
+        <i class="icon-check"></i>
+        {% if object.active %}
+            Active
+        {% else %}
+            Archived
+        {% endif %}
+    </li>
+</ul>
