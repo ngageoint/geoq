@@ -2,7 +2,7 @@
 
 #### Geographic Work Queueing and Tasking System ####
 
-The aim of this project is to create an open source geographic tasking system that allows teams to collect geographic data across a large area, but manage the work in smaller geographic chunks. Large areas can be quickly broken up into small 1km squares and assigned to be worked by a team that has insight into what others are doing.
+The aim of this project is to create an open source geographic tasking system that allows teams to collect geographic data across a large area, but manage the work in smaller geographic regions. Large areas can be quickly broken up into small 1km squares and assigned to a team. System transparency informs all groups about workflow to avoid duplication of effort.  
 
 The GeoQ software was developed at the National Geospatial-Intelligence Agency (NGA) as a joint effort between NGA and The MITRE Corporation. The government has "unlimited rights" and is releasing this software to increase the impact of government investments by providing developers with the opportunity to take things in new directions.  You can copy, modify, distribute and perform the work, even for commercial purposes, all without asking permission.  NGA assumes no responsibility for the use of the software by any parties, and makes no guarantees, expressed or implied, about the software quality, reliability, or any other characteristic.  The GeoQ software can be redistributed and/or modified freely provided that any derivative work bears the following notice: "Elements of this work contain GeoQ: The National Geospatial-Intelligence Agency and The MITRE Corporation jointly produced this work."
 
