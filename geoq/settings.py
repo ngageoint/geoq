@@ -207,7 +207,7 @@ INSTALLED_APPS = (
     'jsonfield',
 
     'geoq.accounts', # TODO:Accounts -- Figure out what we are doing
-#    'geoq.badges', # TODO: Get Badges working, or incorportae with gamification service
+    'geoq.badges',
     'geoq.core',
     'geoq.maps',
 )
