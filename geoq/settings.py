@@ -75,7 +75,8 @@ MEDIA_URL = '/images/'
 # in apps' "static/" subdirectories and in STATICFILES_DIRS.
 # Example: "/var/www/example.com/static/"
 STATIC_URL_FOLDER = ''  # Can be set to something like 'geoq-test/' if the app is not run at root level
-STATIC_ROOT = '{0}{1}'.format('/usr/src/static/', STATIC_URL_FOLDER)
+#STATIC_ROOT = '{0}{1}'.format('/usr/src/static/', STATIC_URL_FOLDER)
+STATIC_ROOT = 'geoq/static/'
 
 # URL prefix for static files.
 # Example: "http://example.com/static/", "http://static.example.com/"
