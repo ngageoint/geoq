@@ -6,11 +6,21 @@ The aim of this project is to create an open source geographic tasking system th
 
 The GeoQ software was developed at the National Geospatial-Intelligence Agency (NGA) as a joint effort between NGA and The MITRE Corporation. The government has "unlimited rights" and is releasing this software to increase the impact of government investments by providing developers with the opportunity to take things in new directions.  You can copy, modify, distribute and perform the work, even for commercial purposes, all without asking permission.  NGA assumes no responsibility for the use of the software by any parties, and makes no guarantees, expressed or implied, about the software quality, reliability, or any other characteristic.  The GeoQ software can be redistributed and/or modified freely provided that any derivative work bears the following notice: "Elements of this work contain GeoQ: The National Geospatial-Intelligence Agency and The MITRE Corporation jointly produced this work."
 
-###Pull request 
+### Pull requests
 
 If you'd like to contribute to this project, please make a pull request. We'll review the pull request and discuss the changes. By submitting a pull request you agree to keep this work free of restrictions.  You are free to fork this project and add unique elements with your own stipulations in another repository or platform, but this version shall remain free of restrictions.
 
-###This project uses:
+### Screenshots
+![GeoQ Main page](https://cloud.githubusercontent.com/assets/147580/2639311/bf4dc520-bec3-11e3-9382-735249740fbc.png)
+
+![GeoQ creating AOIs](https://cloud.githubusercontent.com/assets/147580/2639313/bf51efce-bec3-11e3-9ae0-3bbfb56c8ad1.png)
+
+![GeoQ Areas of Interest within a job](https://cloud.githubusercontent.com/assets/147580/2639312/bf519362-bec3-11e3-8906-134b29f7ddc9.png)
+
+![Drawing a flooding polygon](https://cloud.githubusercontent.com/assets/147580/2639314/bf533bcc-bec3-11e3-8a90-2dcc1cd10956.png)
+
+
+###This project realies heavily on open source packages and uses:
 Django under [BSD] (https://github.com/django/django/blob/master/LICENSE)
 
 Leaflet under [BSD] (https://github.com/Leaflet/Leaflet/blob/master/LICENSE)
@@ -29,7 +39,7 @@ The ``geoq/settings.py`` file contains installation-specific settings. The Datab
 
 Mac OSX Development Build Instructions::
 
-1. Install PostGIS 2.0 using instructions at [https://docs.djangoproject.com/en/dev/ref/contrib/gis/install/#macosx](https://docs.djangoproject.com/en/dev/ref/contrib/gis/install/#macosx). There are several options there, but for most, the easiest option is to follow the Homebrew instructions. If you don't have Homebrew installed, follow the (one line) instruction at [http://brew.sh](http://brew.sh).
+1. Install PostGIS 2.0 using instructions at [https://docs.djangoproject.com/en/dev/ref/contrib/gis/install/#macosx](https://docs.djangoproject.com/en/dev/ref/contrib/gis/install/#macosx). There are several options there, but for most, the easiest option is to follow the Homebrew instructions. If you don't have Homebrew installed, you can either buid it securely yourself or follow the quick (yet not secure) one line instruction at [http://brew.sh](http://brew.sh).
 
 	One exception: Instead of using brew to install postgres, it's usually easier to install Postgres.app from [postgresapp.com](http://postgresapp.com). After installing, add the app's bin directory (``/Applications/Postgres.app/Contents/MacOS/bin``) to your PATH.
 
@@ -68,3 +78,4 @@ Mac OSX Development Build Instructions::
 9. Start it up!
 
         % paver start_django
+        
