@@ -1,10 +1,16 @@
+{% if 'maps.change_map' or 'maps.delete_map' in request.base_perms %}
 <ul class="statlist pull-right">
+    {% if 'maps.change_map' in request.base_perms %}
     <li title="Edit this Map">
         <i class="icon-edit"></i>
         <a href="{% url 'map-update' object.id %}">Edit</a>
     </li>
+    {% endif %}
+    {% if 'maps.delete_map' in request.base_perms %}
     <li title="Delete this Map">
         <i class="icon-trash"></i>
         <a href="{% url 'map-delete' object.id %}">Delete</a>
     </li>
+    {% endif %}
 </ul>
+{% endif %}

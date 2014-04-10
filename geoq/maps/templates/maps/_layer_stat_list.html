@@ -1,10 +1,16 @@
+{% if 'maps.change_layer' or 'maps.delete_layer' in request.base_perms %}
 <ul class="statlist pull-right">
+    {% if 'maps.change_layer' in request.base_perms %}
     <li title="Edit this Layer">
         <i class="icon-edit"></i>
         <a href="{% url 'layer-update' object.id %}">Edit</a>
     </li>
+    {% endif %}
+    {% if 'maps.delete_layer' in request.base_perms %}
     <li title="Delete this Layer">
         <i class="icon-trash"></i>
         <a href="{% url 'layer-delete' object.id %}">Delete</a>
     </li>
+    {% endif %}
 </ul>
+{% endif %}
