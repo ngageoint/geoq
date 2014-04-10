@@ -7,7 +7,7 @@
         <i class="icon-th"></i>
         {{ object.status }}
     </li>
-    {% if 'core.delete_aoi' in request.base_perms %}
+    {% if 'accounts.delete_aoi' in request.base_perms %}
     <li title="Delete this AOI">
         <i class="icon-trash"></i>
         <a href="{% url 'aoi-delete' object.id %}">Delete</a>
