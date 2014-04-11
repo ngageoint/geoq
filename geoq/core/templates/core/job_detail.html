@@ -81,7 +81,7 @@
             </p>
 
             <div class="row body" style="height:250px; margin-top:25px">
-                {% if 'core.change_aoi' in request.base_perms %}
+                {% if 'accounts.change_aoi' in request.base_perms %}
                 <div class="btn-group pull-right">
                     <a class="btn btn-mini" href="{{ object.get_update_url }}">
                         <b> Edit Job </b>
@@ -90,13 +90,13 @@
                         <span class="caret"></span>
                     </button>
                     <ul class="dropdown-menu">
-                        {% if 'core.add_job' in request.base_perms %}
+                        {% if 'accounts.add_job' in request.base_perms %}
                         <li><a href="{% url 'job-create-aois' object.id%}">Add AOIs</a></li>
                         {% endif %}
-                        {% if 'core.delete_job' in request.base_perms %}
+                        {% if 'accounts.delete_job' in request.base_perms %}
                         <li><a href="{% url 'job-delete' object.id %}">Delete Job</a></li>
                         {% endif %}
-                        {% if 'core.change_job' in request.base_perms and object.map%}
+                        {% if 'accounts.change_job' in request.base_perms and object.map%}
                         <li><a href="{% url 'map-update' object.map.id %}">Edit Map</a></li>
                         {% endif %}
                     </ul>
@@ -154,7 +154,7 @@
                     </table>
                 </div>
 
-            {% if 'core.change_aoi' in request.base_perms %}
+            {% if 'accounts.change_aoi' in request.base_perms %}
             {% if object.unassigned_aois%}
             <a href="{% url 'job-next-aoi' object.id%}" class="btn btn-large btn-success pull-right" style="margin-top:80px">Contribute to this job.  <i class="icon-long-arrow-right"></i></a>
             {% endif %}

@@ -152,6 +152,10 @@ class Map(models.Model):
         return '{0}'.format(self.title)
 
     @property
+    def name(self):
+        return self.title
+
+    @property
     def center(self):
         """
         A shortcut for the center_x and center_y properties as a tuple

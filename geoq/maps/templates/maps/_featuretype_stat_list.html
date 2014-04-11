@@ -1,10 +1,16 @@
+{% if 'maps.change_featuretype' or 'maps.delete_featuretype' in request.base_perms %}
 <ul class="statlist pull-right">
+    {% if 'maps.change_featuretype' in request.base_perms %}
     <li title="Edit this FeatureType">
         <i class="icon-edit"></i>
         <a href="{% url 'feature-type-update' object.id %}">Edit</a>
     </li>
+    {% endif %}
+    {% if 'maps.delete_featuretype' in request.base_perms %}
     <li title="Delete this FeatureType">
         <i class="icon-trash"></i>
         <a href="{% url 'feature-type-delete' object.id %}">Delete</a>
     </li>
+    {% endif %}
 </ul>
+{% endif %}
