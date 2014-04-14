@@ -37,6 +37,12 @@ The ``geoq/settings.py`` file contains installation-specific settings. The Datab
 
 ### GeoQ Installation ###
 
+Cloud Installation::
+
+1. You can optionally deploy geoq with all dependencies to a Virtual Machine or a cloud VM (such as an Amazon Web Services EC2 box) by using the chef installer at [https://github.com/ngageoint/geoq-chef-installer](https://github.com/ngageoint/geoq-chef-installer)
+
+2. Chef scripts are our preferred method of automating cloud builds
+
 Mac OSX Development Build Instructions::
 
 1. Install PostGIS 2.0 using instructions at [https://docs.djangoproject.com/en/dev/ref/contrib/gis/install/#macosx](https://docs.djangoproject.com/en/dev/ref/contrib/gis/install/#macosx). There are several options there, but for most, the easiest option is to follow the Homebrew instructions. If you don't have Homebrew installed, you can either buid it securely yourself or follow the quick (yet not secure) one line instruction at [http://brew.sh](http://brew.sh).
@@ -46,17 +52,19 @@ Mac OSX Development Build Instructions::
 2. (Optional) Install a Geoserver (we recommend the OGC Geoserver at [https://github.com/geoserver](https://github.com/geoserver))
 
 3. Make sure Python, Virtualenv, and Git are installed
+        % Note that some distros (Debian) might need additional libraries:
+        % sudo apt-get build-dep python-psycopg2
 
-4. Install and setup geoq-django:
+4. Install and setup geoq:
 
         % mkdir -p ~/pyenv
         % virtualenv --no-site-packages ~/pyenv/geoq
         % source ~/pyenv/geoq/bin/activate
-        % git clone https://github.com/jaycrossler/geoq-django
+        % git clone https://github.com/ngageoint/geoq
 
 5. Create the database and sync dependencies and data
 
-        % cd geoq-django
+        % cd geoq
         % pip install paver
         % paver install_dependencies
         % paver createdb
