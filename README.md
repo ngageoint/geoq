@@ -20,7 +20,7 @@ If you'd like to contribute to this project, please make a pull request. We'll r
 ![Drawing a flooding polygon](https://cloud.githubusercontent.com/assets/147580/2639314/bf533bcc-bec3-11e3-8a90-2dcc1cd10956.png)
 
 
-###This project realies heavily on open source packages and uses:
+###This project realies heavily on open source packages and uses:###
 Django under [BSD] (https://github.com/django/django/blob/master/LICENSE)
 
 Leaflet under [BSD] (https://github.com/Leaflet/Leaflet/blob/master/LICENSE)
