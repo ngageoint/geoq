@@ -10,6 +10,9 @@ The GeoQ software was developed at the National Geospatial-Intelligence Agency (
 
 If you'd like to contribute to this project, please make a pull request. We'll review the pull request and discuss the changes. By submitting a pull request you agree to keep this work free of restrictions.  You are free to fork this project and add unique elements with your own stipulations in another repository or platform, but this version shall remain free of restrictions.
 
+###In the News
+NGA Director Letitia Long talks about NGA's GitHub initiative and our first offering, GeoQ, at the GEOINT Symposium.  Her comments start at 40 minutes and 40 seconds in the [video clip] (http://geointv.com/archive/geoint-2013-keynote-letitia-a-long/).  
+
 ### Screenshots
 ![GeoQ Main page](https://cloud.githubusercontent.com/assets/147580/2639311/bf4dc520-bec3-11e3-9382-735249740fbc.png)
 
@@ -20,7 +23,7 @@ If you'd like to contribute to this project, please make a pull request. We'll r
 ![Drawing a flooding polygon](https://cloud.githubusercontent.com/assets/147580/2639314/bf533bcc-bec3-11e3-8a90-2dcc1cd10956.png)
 
 
-###This project realies heavily on open source packages and uses:
+###This project realies heavily on open source packages and uses:###
 Django under [BSD] (https://github.com/django/django/blob/master/LICENSE)
 
 Leaflet under [BSD] (https://github.com/Leaflet/Leaflet/blob/master/LICENSE)
