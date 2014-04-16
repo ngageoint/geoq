@@ -1,4 +1,4 @@
-# -*- coding: utf-8 -*-
+9# -*- coding: utf-8 -*-
 # This technical data was produced for the U. S. Government under Contract No. W15P7T-13-C-F600, and
 # is subject to the Rights in Technical Data-Noncommercial Items clause at DFARS 252.227-7013 (FEB 2012)
 
@@ -66,10 +66,15 @@ class CreateFeatures(View):
         return HttpResponse([response], mimetype="application/json")
 
 @login_required
-def create_map(request):
+def create_update_map(request, pk=None):
+
+    if pk:
+        map_obj = Map.objects.get(pk=pk)
+    else:
+        map_obj = None
 
     if request.method == 'POST':
-        map = MapForm(request.POST, prefix='map')
+        map = MapForm(request.POST, prefix='map', instance=map_obj)
         layer_formset = MapInlineFormset(request.POST, prefix='layers')
         if map.is_valid() and layer_formset.is_valid():
             # do something with the cleaned_data on the formsets.
@@ -79,13 +84,14 @@ def create_map(request):
             layer_formset.save()
             return HttpResponseRedirect(reverse('job-list'))
     else:
-        map = MapForm(prefix='map')
+        map = MapForm(prefix='map', instance=map_obj)
         layer_formset = MapInlineFormset(prefix='layers')
         print layer_formset.management_form.as_p
     return render_to_response('core/generic_form.html', {
         'form': map,
         'layer_formset': layer_formset,
         'custom_form': 'core/map_create.html',
+        'object': map_obj,
         },context_instance=RequestContext(request))
 
 class MapListView(ListView):
