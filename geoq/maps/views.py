@@ -1,24 +1,22 @@
-9# -*- coding: utf-8 -*-
+# -*- coding: utf-8 -*-
 # This technical data was produced for the U. S. Government under Contract No. W15P7T-13-C-F600, and
 # is subject to the Rights in Technical Data-Noncommercial Items clause at DFARS 252.227-7013 (FEB 2012)
 
 import json
-import requests
 
 from django.contrib.auth.decorators import login_required
 from django.contrib.gis.geos import GEOSGeometry
 from django.core.exceptions import ValidationError
-from django.core.urlresolvers import reverse, reverse_lazy
-from django.forms.formsets import formset_factory
+from django.core.urlresolvers import reverse
 from django.http import HttpResponse, HttpResponseRedirect
-from django.shortcuts import get_object_or_404, render_to_response
+from django.shortcuts import render_to_response
 from django.template import RequestContext
-from django.views.generic import CreateView, DetailView, ListView, TemplateView, UpdateView, View, DeleteView
+from django.views.generic import ListView, View, DeleteView
 
 from forms import MapForm, MapInlineFormset
 
 from geoq.core.models import AOI
-from models import Feature, FeatureType, Map, MapLayer, Layer, GeoeventsSource
+from models import Feature, FeatureType, Map, Layer, GeoeventsSource
 
 import logging
 
@@ -44,7 +42,7 @@ class CreateFeatures(View):
         project = getattr(job, 'project')
         template = properties.get('template') if properties else None
 
-        #TODO: handle exceptions
+        # TODO: handle exceptions
         if template:
             template = FeatureType.objects.get(id=template)
 
@@ -66,6 +64,7 @@ class CreateFeatures(View):
 
         return HttpResponse([response], mimetype="application/json")
 
+
 @login_required
 def create_update_map(request, pk=None):
 
@@ -79,8 +78,8 @@ def create_update_map(request, pk=None):
         maplayers_formset = MapInlineFormset(request.POST, prefix='layers', instance=map_obj)
 
         if form.is_valid() and maplayers_formset.is_valid():
-            map_data = form.save()
-            maplayers = maplayers_formset.save()
+            form.save()
+            maplayers_formset.save()
             return HttpResponseRedirect(reverse('job-list'))
     else:
         form = MapForm(prefix='map', instance=map_obj)
@@ -90,14 +89,16 @@ def create_update_map(request, pk=None):
         'layer_formset': maplayers_formset,
         'custom_form': 'core/map_create.html',
         'object': map_obj,
-        },context_instance=RequestContext(request))
+        }, context_instance=RequestContext(request))
+
 
 class MapListView(ListView):
     model = Map
 
-    def get_context_data(self,**kwargs):
+    def get_context_data(self, **kwargs):
         context = super(MapListView, self).get_context_data(**kwargs)
         return context
+
 
 class MapDelete(DeleteView):
     model = Map
@@ -111,7 +112,7 @@ class FeatureTypeListView(ListView):
 
     model = FeatureType
 
-    def get_context_data(self,**kwargs):
+    def get_context_data(self, **kwargs):
         context = super(FeatureTypeListView, self).get_context_data(**kwargs)
         return context
 
@@ -132,6 +133,7 @@ class LayerListView(ListView):
         context = super(LayerListView, self).get_context_data(**kwargs)
         return context
 
+
 class LayerImport(ListView):
 
     model = Layer
@@ -149,22 +151,20 @@ class LayerImport(ListView):
         for lay in layers:
             layer = json.loads(lay)
             # see if it's already in here. assume 'url' and 'layer' attributes make it unique
-            l = Layer.objects.filter( url=layer['url'], layer=layer['layer'] )
+            l = Layer.objects.filter(url=layer['url'], layer=layer['layer'])
             if not l:
                 # add the layer
                 new_layer = Layer()
-                for key,value in layer.iteritems():
+                for key, value in layer.iteritems():
                     if key == 'layer_params':
                         # TODO: need to pass json object here
                         pass
                     else:
-                        setattr(new_layer,key,value)
+                        setattr(new_layer, key, value)
 
                 new_layer.save()
 
         return HttpResponseRedirect(reverse('layer-list'))
-
-
 
 
 class LayerDelete(DeleteView):
