@@ -9,6 +9,7 @@ from django.contrib.auth.decorators import login_required
 from django.contrib.gis.geos import GEOSGeometry
 from django.core.exceptions import ValidationError
 from django.core.urlresolvers import reverse, reverse_lazy
+from django.forms.formsets import formset_factory
 from django.http import HttpResponse, HttpResponseRedirect
 from django.shortcuts import get_object_or_404, render_to_response
 from django.template import RequestContext
@@ -17,7 +18,7 @@ from django.views.generic import CreateView, DetailView, ListView, TemplateView,
 from forms import MapForm, MapInlineFormset
 
 from geoq.core.models import AOI
-from models import Feature, FeatureType, Map, Layer, GeoeventsSource
+from models import Feature, FeatureType, Map, MapLayer, Layer, GeoeventsSource
 
 import logging
 
@@ -74,22 +75,19 @@ def create_update_map(request, pk=None):
         map_obj = None
 
     if request.method == 'POST':
-        map = MapForm(request.POST, prefix='map', instance=map_obj)
-        layer_formset = MapInlineFormset(request.POST, prefix='layers')
-        if map.is_valid() and layer_formset.is_valid():
-            # do something with the cleaned_data on the formsets.
-            m = map.save(commit=False)
-            layer_formset.instance = m
-            m.save()
-            layer_formset.save()
+        form = MapForm(request.POST, prefix='map', instance=map_obj)
+        maplayers_formset = MapInlineFormset(request.POST, prefix='layers', instance=map_obj)
+
+        if form.is_valid() and maplayers_formset.is_valid():
+            map_data = form.save()
+            maplayers = maplayers_formset.save()
             return HttpResponseRedirect(reverse('job-list'))
     else:
-        map = MapForm(prefix='map', instance=map_obj)
-        layer_formset = MapInlineFormset(prefix='layers')
-        print layer_formset.management_form.as_p
+        form = MapForm(prefix='map', instance=map_obj)
+        maplayers_formset = MapInlineFormset(prefix='layers', instance=map_obj)
     return render_to_response('core/generic_form.html', {
-        'form': map,
-        'layer_formset': layer_formset,
+        'form': form,
+        'layer_formset': maplayers_formset,
         'custom_form': 'core/map_create.html',
         'object': map_obj,
         },context_instance=RequestContext(request))
