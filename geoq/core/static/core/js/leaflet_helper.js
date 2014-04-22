@@ -67,6 +67,11 @@ leaflet_helper.layer_conversion = function (lyr) {
             return new L.GeoJSON(e, layerOptions);
         }
 
+        var url = lyr.url;
+        if (url && url.substr(0,4) == "http") {
+            url = "/geoq/proxy/" + url;
+        }
+
         $.ajax({
             type: 'GET',
             url: lyr.url,
@@ -117,7 +122,7 @@ leaflet_helper.add_dynamic_capimage_data = function (result) {
         }
     }
 
-    return new L.geoJson(jsonObjects, {onEachFeature: onEachFeature});
+    L.geoJson(jsonObjects, {onEachFeature: onEachFeature}).addTo(map);
 };
 
 //TODO: Add MULTIPOLYGON support and commit back to https://gist.github.com/bmcbride/4248238
