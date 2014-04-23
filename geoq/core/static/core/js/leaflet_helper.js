@@ -74,7 +74,7 @@ leaflet_helper.layer_conversion = function (lyr) {
 
         $.ajax({
             type: 'GET',
-            url: lyr.url,
+            url: url,
             dataType: 'json',
             success: function (result) {
                 var isESRIpseudoJSON = false;
@@ -122,7 +122,8 @@ leaflet_helper.add_dynamic_capimage_data = function (result) {
         }
     }
 
-    L.geoJson(jsonObjects, {onEachFeature: onEachFeature}).addTo(map);
+    L.geoJson(jsonObjects, {onEachFeature: onEachFeature}).addTo(aoi_feature_edit.map);
+//    return new L.geoJson(jsonObjects, {onEachFeature: onEachFeature});
 };
 
 //TODO: Add MULTIPOLYGON support and commit back to https://gist.github.com/bmcbride/4248238
