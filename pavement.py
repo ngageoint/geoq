@@ -4,6 +4,7 @@
 
 import os
 import sys
+import time
 
 from paver.easy import *
 from paver.setuputils import setup
