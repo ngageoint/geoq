@@ -181,6 +181,12 @@ class AOI(GeoQBase):
     priority = models.SmallIntegerField(choices=PRIORITIES, max_length=1, default=5)
     status = models.CharField(max_length=15, choices=STATUS_CHOICES, default='Unassigned')
 
+    def save(self):
+        super(AOI, self).save()
+        if self.name == self.job.name:
+            self.name = '%s-%s' % (self.job.name, self.id)
+            super(AOI, self).save()
+
     #def save(self):
     # if analyst or reviewer updated, then create policy to give them permission to edit this object.....
     # -- Afterwards -- check how this will work with the views.
