@@ -27,12 +27,6 @@
                 <small>
                     <i class="icon-list-alt"></i>
                     <a href="{% url 'job-list' %}">View All</a>
-
-                    {% if 'accounts.add_job' in request.base_perms %}
-                    |
-                    <i class="icon-edit"></i>
-                    <a href="{% url 'job-create' %}">Create</a>
-                    {% endif %}
                 </small>
             </div>
         </div>
@@ -44,13 +38,6 @@
                 <small>
                     <i class="icon-list-alt"></i>
                     <a href="{% url 'aoi-list' %}">View All</a>
-
-                    {% if 'accounts.add_job' in request.base_perms %}
-                    |
-                    <i class="icon-edit"></i>
-                    <a href="{% url 'aoi-create' %}">Create</a>
-                    {% endif %}
-
                 </small>
             </div>
         </div>
