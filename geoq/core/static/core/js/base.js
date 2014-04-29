@@ -9,13 +9,13 @@ geoq.init = function(){
     geoq.csrftoken = geoq.getCookie('csrftoken');
     geoq.ajaxSetup();
     geoq.underscoreSettings();
-}
+};
 
 
 geoq.csrfSafeMethod = function(method) {
     // these HTTP methods do not require CSRF protection
     return (/^(GET|HEAD|OPTIONS|TRACE)$/.test(method));
-}
+};
 
 geoq.sameOrigin = function(url) {
     // test that a given url is a same-origin URL
@@ -29,7 +29,7 @@ geoq.sameOrigin = function(url) {
         (url == sr_origin || url.slice(0, sr_origin.length + 1) == sr_origin + '/') ||
         // or any other URL that isn't scheme relative or absolute i.e relative.
         !(/^(\/\/|http:|https:).*/.test(url));
-}
+};
 
 geoq.getCookie = function(name) {
     var cookieValue = null;
@@ -45,7 +45,7 @@ geoq.getCookie = function(name) {
         }
     }
     return cookieValue;
-}
+};
 
 geoq.ajaxSetup = function(){
     $.ajaxSetup({
@@ -58,16 +58,16 @@ geoq.ajaxSetup = function(){
             }
         }
     });
-   }
+};
 
 geoq.redirect = function(url){
     window.location = url;
-}
+};
 
 geoq.underscoreSettings= function(){
     _.templateSettings = {
       interpolate : /\{\{(.+?)\}\}/g
     };
-}
+};
 
 geoq.init();
