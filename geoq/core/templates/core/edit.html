@@ -4,7 +4,7 @@
 {% load django_select2_tags %}
 {% block static_libraries %}
 
-    {% leaflet_js plugins="draw, esri" %}
+    {% leaflet_js plugins="draw, esri, esriCluster" %}
     {% import_django_select2_js %}
     <script src="{{ STATIC_URL }}core/js/leaflet_helper.js"></script>
     <script src="{{ STATIC_URL }}core/js/edit.js"></script>
