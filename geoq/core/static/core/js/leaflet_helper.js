@@ -60,6 +60,16 @@ leaflet_helper.layer_conversion = function(lyr){
         return new L.esri.featureLayer(lyr.url, layerOptions);
     }
 
+    if (lyr.type=='ESRI Clustered Feature Layer' && esriPluginInstalled){
+
+        layerOptions = _.extend(options, layerParams);
+        if (layerOptions.createMarker){
+            layerOptions.createMarker = leaflet_helper.createMarker[layerOptions.createMarker];
+        }
+
+        return new L.esri.clusteredFeatureLayer(lyr.url, layerOptions);
+    }
+
     if (lyr.type=='GeoJSON'){
         layerOptions = options;
 
@@ -80,6 +90,17 @@ leaflet_helper.layer_conversion = function(lyr){
 
     }
 
+}
+
+leaflet_helper.createMarker = {
+    esriImageMapService: function(geojson, latlng) {
+        return new L.marker(latlng, {
+            title: geojson.properties.Title || geojson.properties.ProjectName,
+            alt: geojson.properties.Description
+        }).bindPopup(
+                "<a href='" + geojson.properties.ImageURL + "' target='geoqwindow'><img style='width:256px' src='" + geojson.properties.ThumbnailURL + "' /></a>"
+            );
+    }
 }
 
 //TODO: Add MULTIPOLYGON support and commit back to https://gist.github.com/bmcbride/4248238

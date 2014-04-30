@@ -45,6 +45,7 @@ SERVICE_TYPES = (
                 ('ESRI Feature Layer', 'ESRI Feature Layer'),
                 ('GeoJSON', 'GeoJSON'),
                 ('WMS', 'WMS'),
+                ('ESRI Clustered Feature Layer', 'ESRI Clustered Feature Layer')
                 #('ArcGIS93Rest', 'ArcGIS93Rest'),
                 #('KML', 'KML'),
                 #('GeoRSS', 'GeoRSS'),
