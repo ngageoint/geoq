@@ -116,8 +116,8 @@ L.esri.Mixins.featureGrid = {
       where: this.options.where
     };
 
-    for (var i in options) {
-        if (options.hasOwnProperty(i) && i !== 'prototype') {
+    for (var i in this.options) {
+        if (this.options.hasOwnProperty(i) && i !== 'prototype') {
             switch (i){
                 case "text":
                 case "geometry":
@@ -141,14 +141,11 @@ L.esri.Mixins.featureGrid = {
                 case "returnM":
                 case "returnDistinctValues":
                 case "gdbVersion":
-                    requestOptions[i] = options[i];
+                    requestOptions[i] = this.options[i];
                 break;
             }
 	    }
     }
-//    if(this.options.token){
-//      requestOptions.token = this.options.token;
-//    }
 
     L.esri.get(this.url+"query", requestOptions, function(response){
       //deincriment the request counter

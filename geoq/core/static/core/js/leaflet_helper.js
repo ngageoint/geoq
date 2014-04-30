@@ -115,8 +115,8 @@ leaflet_helper.createMarker = {
                 "<a href='" + geojson.properties.ImageURL + "' target='geoqwindow'><img style='width:256px' src='" + geojson.properties.ThumbnailURL + "' /></a>"
             );
     }
-}
 };
+
 leaflet_helper.add_dynamic_capimage_data = function (result) {
     var jsonObjects = [];
     $(result.features).each(function () {
