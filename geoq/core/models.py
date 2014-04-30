@@ -5,9 +5,6 @@
 import json
 import sys
 
-from django.db.models.signals import pre_save, post_save
-from django.dispatch import dispatcher
-
 from django.contrib.auth.models import User
 from django.contrib.gis.db import models
 from django.contrib.gis.geos import MultiPolygon
@@ -133,7 +130,6 @@ class Job(GeoQBase):
         Returns the unassigned AOIs.
         """
         return self.aois.filter(status='Unassigned')
-
 
     def complete(self):
         """
