@@ -32,7 +32,7 @@ class AOIAdmin(ObjectAdmin):
 
             if form.is_valid():
                 namestring = form.cleaned_data['name_field']
-                queryset.update( name=namestring )
+                queryset.update(name=namestring)
 
                 self.message_user(request, "Succesfully renamed selected AOIs")
                 return HttpResponseRedirect(request.get_full_path())
@@ -45,8 +45,8 @@ class AOIAdmin(ObjectAdmin):
 
 
 class JobAdmin(GuardedModelAdmin, ObjectAdmin):
- 	filter_horizontal = ("analysts","reviewers","feature_types")
- 	save_on_top = True
+    filter_horizontal = ("analysts", "reviewers", "feature_types")
+    save_on_top = True
 
 
 admin.site.register(Project, ObjectAdmin)

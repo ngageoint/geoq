@@ -13,6 +13,10 @@ logger = logging.getLogger(__name__)
 
 def proxy_to(request, path, target_url):
     url = '%s%s' % (target_url, path)
+
+    url = url.replace('http:/', 'http://', 1)
+    url = url.replace('http:///', 'http://')
+
     testurl = False
     errorCode = ''
     status = {}
