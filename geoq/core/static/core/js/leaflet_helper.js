@@ -7,7 +7,7 @@ leaflet_helper.styles.extentStyle = {"weight": 2, "color": "red", "fill": null, 
 leaflet_helper.styles.completed = {"weight": 2, "color": "green", "fillColor": "green", "fillOpacity": .9, "opacity": 1};
 leaflet_helper.styles.in_work = {"weight": 2, "color": "yellow", "fillColor": "orange", "fillOpacity": .9, "opacity": 1};
 leaflet_helper.styles.assigned = {"weight": 2, "color": "orange", "fillColor": "orange", "fillOpacity": .9, "opacity": 1};
-
+leaflet_helper.proxy_path = "/geoq/proxy/";
 
 leaflet_helper.layer_conversion = function (lyr) {
 
@@ -60,38 +60,40 @@ leaflet_helper.layer_conversion = function (lyr) {
         return new L.esri.featureLayer(lyr.url, layerOptions);
     }
 
-    if (lyr.type == 'GeoJSON') {
+    if (lyr.type=='GeoJSON'){
         layerOptions = options;
 
-        function addGeojson(e) {
-            return new L.GeoJSON(e, layerOptions);
-        }
-
-        var url = lyr.url;
-        if (url && url.substr(0,4) == "http") {
-            url = "/geoq/proxy/" + url;
-        }
-
-        $.ajax({
+        var resultobj = $.ajax({
             type: 'GET',
-            url: url,
+            url: leaflet_helper.proxy_path + encodeURI(lyr.url),
             dataType: 'json',
-            success: function (result) {
-                var isESRIpseudoJSON = false;
-                if (result &&
-                    result.geometryType && result.geometryType == "esriGeometryPoint" &&
-                    result.features && result.features.length &&
-                    result.features[0] && result.features[0].attributes) isESRIpseudoJSON = true;
+            async: false
+        });
 
-                if (isESRIpseudoJSON) {
-                    leaflet_helper.add_dynamic_capimage_data(result);
-                } else {
-                    addGeojson(result);
-                }
+        if ( resultobj.status == 200 ) {
+            result = JSON.parse(resultobj.responseText);
+            var isESRIpseudoJSON = false;
+            if (result &&
+                result.geometryType && result.geometryType == "esriGeometryPoint" &&
+                result.features && result.features.length &&
+                result.features[0] && result.features[0].attributes) isESRIpseudoJSON = true;
+
+            if (isESRIpseudoJSON) {
+                leaflet_helper.add_dynamic_capimage_data(result);
+            } else {
+                return new L.GeoJSON(result, layerOptions);
             }
+        } else {
+            return undefined;
+        }
 
-        })
+    }
 
+    if (lyr.type=='KML') {
+        layerOptions = options;
+        layerOptions['async'] = true;
+
+        return new L.KML(leaflet_helper.proxy_path + encodeURI(lyr.url), layerOptions);
     }
 
 };
