@@ -36,7 +36,7 @@ class JobForm(StyledModelForm):
     class Meta:
 
         fields = ('name', 'description', 'project',
-                  'analysts', 'reviewers', 'feature_types', 'map')
+                  'analysts', 'reviewers', 'feature_types', 'map', 'grid')
         model = Job
 
 

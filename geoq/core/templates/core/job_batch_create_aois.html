@@ -1,13 +1,46 @@
 {% extends "core/base.html" %}
 {% load compress %}
 {% load leaflet_tags %}
+{% load dynurl %}
 {% block static_libraries %}
     {% leaflet_js plugins="draw" %}
+    <script src="http://maps.googleapis.com/maps/api/js?sensor=false&libraries=places"></script>
+    <script src="{{ STATIC_URL }}core/js/jquery.geocomplete.js"></script>
 
     <script type="text/javascript">
 
     var df = null;
     var aois = new L.FeatureGroup();
+
+    function highlightFeature(e) {
+        var layer = e.target;
+        layer.setStyle({
+            color: 'darkgreen',
+            weight: 3,
+            opacity: 1,
+            fillOpacity: 1,
+            fillColor: 'darkgreen'
+        });
+    }
+
+    function resetHighlight(e) {
+        var layer = e.target;
+        layer.setStyle({
+            "weight":2,
+            "color":"red",
+            "fill":null,
+            "opacity":.7
+        })
+    }
+
+    function removeFeature(e) {
+        // get FeatureLayer key
+        for (var key in aois._layers) {
+            if (aois._layers[key]._layers[e.target._leaflet_id]) {
+                aois._layers[key].removeLayer(e.target);
+            }
+        }
+    }
 
     function mapInit(map, bounds) {
 
@@ -56,7 +89,23 @@
             map.addControl(drawControl);
 
             var callback = function(data, textStatus, jqXHR){
-                var features = L.geoJson(data, {'style':extentStyle});
+                var features = L.geoJson(data, {
+                    style: function(feature) {
+                        return extentStyle;
+                    },
+                    onEachFeature: function(feature, layer) {
+
+                        job_properties = feature.properties;
+//                        popupContent = _.template('{% filter escapejs %}{% include "core/job_detail_aoi_popup.html" %}{% endfilter %}', job_properties);
+//                        layer.bindPopup(popupContent);
+//
+                        layer.on({
+                            mouseover: highlightFeature,
+                            mouseout: resetHighlight,
+                            click: removeFeature
+                        });
+                    }
+                });
 
                 if (features){
                     aois.addLayer(features);
@@ -68,7 +117,7 @@
 
 
             map.on('draw:created', function (e) {
-                map.fitBounds(e.layer.getBounds());
+                // map.fitBounds(e.layer.getBounds());
                 var type = e.layerType,
                     layer = e.layer;
 
@@ -76,16 +125,31 @@
                        bboxStr = layer.getBounds().toBBoxString();
                        $.ajax({
                           type: "GET",
-                          url: "{% url 'usng' %}",
+                          url: "{% DynamicUrl object.grid %}",
                           data: { bbox: bboxStr},
                           contentType: "application/json",
                           success: callback,
+                          beforeSend: function() {
+                              //map.style.cursor = 'wait';
+                              $("#map").css({
+                                  'cursor': 'wait'
+                              })
+                          },
+                          complete: function() {
+                              $("#map").css({
+                                  'cursor': 'default'
+                              })
+                          },
+                          error: function(response) {
+                              if (response.responseText) {
+                                  message = JSON.parse(response.responseText);
+                                  if (message.details) {
+                                      alert(message.details);
+                                  }
+                              }
+                          },
                           dataType: "json"
                         });
-
-
-
-
                 }
 
                 drawnItems.addLayer(layer);
@@ -124,6 +188,27 @@
 
 
 </script>
+        <script>
+            $(function() {
+                $("#geocomplete").geocomplete()
+                        .bind("geocode:result", function(event,result) {
+                            console.log("Result: " + result.formatted_address);
+                            if ( df._map ) {
+                                df._map.setView([result.geometry.location.lat(),result.geometry.location.lng()],13);
+                            }
+                        })
+                        .bind("geocode:error", function(event,status){
+                            console.log("Error: " + status);
+                        })
+                        .bind("geocode:multiple", function(event,results) {
+                            console.log("Multiple: " + results.length + " results found");
+                        });
+
+                $("#find").click(function() {
+                    $("#geocomplete").trigger("geocode");
+                });
+            });
+        </script>
 
     {% compress css %}
     {% leaflet_css plugins="draw"%}
@@ -133,11 +218,18 @@
 
 {% block container %}
     <div class="row-fluid container-narrow">
-    <h2>Create new AOIS (currently US only).</h2>
+    <h2>Create new AOIS</h2>
     <div id="map" class="thumbnail" style="height: 450px; width: 100%;">{% leaflet_map "map" %}</div>
+        <br/>
     <div class="row">
+        <div class="col-md-3">
         <label>AOI Name</label>
         <input type="text" name="aoi-name" id="aoi-name" value="{{ object.name }}"/>
+        </div>
+        <div class="cod-md-3">
+            <label>Find Location:</label>
+            <input type="text" id="geocomplete" />
+        </div>
     </div>
     <div class="row">
     <btn id="save-aois-button" class="btn btn-success">Save AOIs</btn>
