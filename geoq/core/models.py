@@ -131,6 +131,12 @@ class Job(GeoQBase):
         """
         return self.aois.filter(status='Unassigned')
 
+    def in_work_aois(self):
+        """
+        Returns the in work AOIs.
+        """
+        return self.aois.filter(status='In work')
+
     def complete(self):
         """
         Returns the completed AOIs.

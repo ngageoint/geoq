@@ -156,7 +156,13 @@
 
             {% if 'accounts.change_aoi' in request.base_perms %}
             {% if object.unassigned_aois%}
-            <a href="{% url 'job-next-aoi' object.id%}" class="btn btn-large btn-success pull-right" style="margin-top:80px">Contribute to this job.  <i class="icon-long-arrow-right"></i></a>
+                {% if object.in_work_aois.count < 1 %}
+                    <a href="{% url 'job-next-aoi' object.id%}" class="btn btn-large btn-success pull-right" style="margin-top:80px">
+                {% else %}
+                    <a href="{% url 'aoi-work' object.in_work_aois.0.id %}" class="btn btn-large btn-success pull-right" style="margin-top:80px">
+                {% endif %}
+                    Contribute to this job.
+                    <i class="icon-long-arrow-right"></i></a>
             {% endif %}
             {% endif %}
             </div>
