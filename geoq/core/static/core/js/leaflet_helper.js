@@ -60,7 +60,17 @@ leaflet_helper.layer_conversion = function (lyr) {
         return new L.esri.featureLayer(lyr.url, layerOptions);
     }
 
-    if (lyr.type == 'GeoJSON') {
+    if (lyr.type=='ESRI Clustered Feature Layer' && esriPluginInstalled){
+
+        layerOptions = _.extend(options, layerParams);
+        if (layerOptions.createMarker){
+            layerOptions.createMarker = leaflet_helper.createMarker[layerOptions.createMarker];
+        }
+
+        return new L.esri.clusteredFeatureLayer(lyr.url, layerOptions);
+    }
+
+    if (lyr.type=='GeoJSON') {
         layerOptions = options;
 
         function addGeojson(e) {
@@ -94,7 +104,19 @@ leaflet_helper.layer_conversion = function (lyr) {
 
     }
 
+}
+
+leaflet_helper.createMarker = {
+    esriImageMapService: function(geojson, latlng) {
+        return new L.marker(latlng, {
+            title: geojson.properties.Title || geojson.properties.ProjectName,
+            alt: geojson.properties.Description
+        }).bindPopup(
+                "<a href='" + geojson.properties.ImageURL + "' target='geoqwindow'><img style='width:256px' src='" + geojson.properties.ThumbnailURL + "' /></a>"
+            );
+    }
 };
+
 leaflet_helper.add_dynamic_capimage_data = function (result) {
     var jsonObjects = [];
     $(result.features).each(function () {

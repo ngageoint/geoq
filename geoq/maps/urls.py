@@ -6,7 +6,7 @@ from django.contrib.auth.decorators import login_required
 from django.conf.urls import patterns, url
 from django.views.generic import CreateView, UpdateView, ListView
 from forms import FeatureTypeForm, MapForm, LayerForm, MapLayerForm
-from views import CreateFeatures, create_map, FeatureTypeListView, FeatureTypeDelete, MapListView, MapDelete, LayerListView, LayerDelete, LayerImport
+from views import CreateFeatures, create_update_map, FeatureTypeListView, FeatureTypeDelete, MapListView, MapDelete, LayerListView, LayerDelete, LayerImport
 from models import FeatureType, Map, Layer
 
 urlpatterns = patterns('',
@@ -45,13 +45,11 @@ urlpatterns = patterns('',
 
     # Map CRUD Views
     url(r'^create/?$',
-        login_required(create_map),
+        login_required(create_update_map),
         name='map-create'),
 
     url(r'^update/(?P<pk>\d+)/?$',
-        login_required(UpdateView.as_view(template_name='core/generic_form.html',
-                           queryset=MapForm.Meta.model.objects.all(),
-                           form_class=MapForm)),
+        login_required(create_update_map),
         name='map-update'),
 
     # Layer CRUD Views
@@ -78,6 +76,7 @@ urlpatterns = patterns('',
         name='layer-import'),
 
     # MapLayer CRUD Views
+
     url(r'^map-layers/create/?$',
         login_required(CreateView.as_view(template_name='core/generic_form.html',
                            form_class=MapLayerForm)),

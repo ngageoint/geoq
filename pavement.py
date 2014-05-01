@@ -45,7 +45,7 @@ def install_dev_fixtures():
         'geoq/accounts/fixture/initial_data.json',
         'geoq/maps/fixtures/initial_data_types.json',  # Maps
         'geoq/core/fixture/initial_data.json',
-        'geoq/badges/fixtures/initial_data.json',
+        #'geoq/badges/fixtures/initial_data.json', # Removing badges for now, b/c not working
         ]
 
     for fixture in fixtures:

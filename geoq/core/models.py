@@ -5,9 +5,6 @@
 import json
 import sys
 
-from django.db.models.signals import pre_save, post_save
-from django.dispatch import dispatcher
-
 from django.contrib.auth.models import User
 from django.contrib.gis.db import models
 from django.contrib.gis.geos import MultiPolygon
@@ -134,6 +131,11 @@ class Job(GeoQBase):
         """
         return self.aois.filter(status='Unassigned')
 
+    def in_work_aois(self):
+        """
+        Returns the in work AOIs.
+        """
+        return self.aois.filter(status='In work')
 
     def complete(self):
         """
@@ -180,6 +182,10 @@ class AOI(GeoQBase):
     polygon = models.MultiPolygonField()
     priority = models.SmallIntegerField(choices=PRIORITIES, max_length=1, default=5)
     status = models.CharField(max_length=15, choices=STATUS_CHOICES, default='Unassigned')
+
+    def __unicode__(self):
+        aoi_obj = '%s - AOI %s' % (self.name, self.id)
+        return aoi_obj
 
     #def save(self):
     # if analyst or reviewer updated, then create policy to give them permission to edit this object.....
