@@ -85,6 +85,7 @@ Mac OSX Development Build Instructions::
 8. Install less and add its folder ("type -p less") to your bash profile:
 
         % npm install -g less
+	% python manage.py collectstatic
 
 9. Start it up!
 
