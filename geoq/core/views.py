@@ -85,6 +85,7 @@ class CreateFeaturesView(DetailView):
         cv = super(CreateFeaturesView, self).get_context_data(**kwargs)
         cv['map'] = self.object.job.map
         cv['aoi'].analyst = self.request.user
+        cv['aoi'].status = 'In work'
         cv['aoi'].save()
         return cv
 
