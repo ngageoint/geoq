@@ -210,6 +210,7 @@ INSTALLED_APPS = (
 #    'geoq.badges', # TODO: Get Badges working, or incorportae with gamification service
     'geoq.core',
     'geoq.maps',
+    'geoq.mgrs',
 )
 
 # A sample logging configuration. The only tangible logging
@@ -244,6 +245,10 @@ LOGGING = {
 # Set default login location
 #LOGIN_REDIRECT_URL = '/'
 
+
+# Gamification variables
+GAMIFICATION_SERVER = 'http://192.168.5.129:6111'
+GAMIFICATION_PROJECT = 'django_geoq'
 
 # Override production settings with local settings if they exist
 try:
