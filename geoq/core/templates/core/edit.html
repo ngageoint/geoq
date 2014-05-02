@@ -4,10 +4,14 @@
 {% load django_select2_tags %}
 {% block static_libraries %}
 
-    {% leaflet_js plugins="draw, esri" %}
+    {% leaflet_js plugins="draw, esri, esriCluster" %}
     {% import_django_select2_js %}
     <script src="{{ STATIC_URL }}core/js/leaflet_helper.js"></script>
+    <script src="{{ STATIC_URL}}core/js/KML.js"></script>
+    <script src="{{ STATIC_URL}}core/js/KMZ.js"></script>
     <script src="{{ STATIC_URL }}core/js/edit.js"></script>
+    <script src="{{ STATIC_URL }}core/js/js-unzip.js"></script>
+    <script src="{{ STATIC_URL }}core/js/js-inflate.js"></script>
 
     <script type="text/javascript">
 
@@ -22,6 +26,7 @@
         var geometry_types = [];
         var feature_type_div = "features";
         var job_features_geojson = {{ object.job.features_geoJSON|safe }};
+        leaflet_helper.proxy_path = {% url 'home' %} + "proxy/";
 
         {% for feature_type in  object.job.feature_types.all %}
                 feature_types[{{ feature_type.id }}] = {{ feature_type.to_json|safe }};

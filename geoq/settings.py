@@ -87,7 +87,7 @@ STATICFILES_DIRS = (
     # Put strings here, like "/home/html/static" or "C:/www/django/static".
     # Always use forward slashes, even on Windows.
     # Don't forget to use absolute paths, not relative paths.
-#    os.path.join(SITE_ROOT, 'static'),
+    os.path.join(SITE_ROOT, 'static'),
     # TODO: Should we add this static location back in?
 )
 
@@ -119,7 +119,12 @@ LEAFLET_CONFIG = {
         },
         'esri': {
             'css': [],
-            'js': [STATIC_URL + 'leaflet/esri-leaflet.min.js'],
+            'js': [STATIC_URL + 'leaflet/esri-leaflet-src.js'],
+            'repo': 'https://github.com/Esri/esri-leaflet'
+        },
+        'esriCluster': {
+            'css': [STATIC_URL + 'leaflet/MarkerCluster.css'],
+            'js': [STATIC_URL + 'leaflet/ClusteredFeatureLayer.js', STATIC_URL + 'leaflet/leaflet.markercluster.js'],
             'repo': 'https://github.com/Esri/esri-leaflet'
         },
     }
@@ -210,6 +215,7 @@ INSTALLED_APPS = (
 #    'geoq.badges', # TODO: Get Badges working, or incorportae with gamification service
     'geoq.core',
     'geoq.maps',
+    'geoq.mgrs',
 )
 
 # A sample logging configuration. The only tangible logging
@@ -244,6 +250,10 @@ LOGGING = {
 # Set default login location
 #LOGIN_REDIRECT_URL = '/'
 
+
+# Gamification variables
+GAMIFICATION_SERVER = 'http://192.168.5.129:6111'
+GAMIFICATION_PROJECT = 'django_geoq'
 
 # Override production settings with local settings if they exist
 try:

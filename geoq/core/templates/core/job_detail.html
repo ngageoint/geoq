@@ -4,6 +4,7 @@
 {% block static_libraries %}
     {% leaflet_js %}
     <script src="{{ STATIC_URL }}core/js/leaflet_helper.js"></script>
+    <script src="{{ STATIC_URL }}core/js/bootstrap-dialog.js"></script>
     <script type="text/javascript">
 
         function mapInit(map, bounds) {
@@ -16,8 +17,8 @@
                         case 'In work' : return leaflet_helper.styles.in_work;
                         case 'Unassigned' : return leaflet_helper.styles.extentStyle;
                     }
-                }
-                , onEachFeature: function(feature, layer) {
+                },
+                onEachFeature: function(feature, layer) {
 
                     job_properties = feature.properties;
                     popupContent = _.template('{% filter escapejs %}{% include "core/job_detail_aoi_popup.html" %}{% endfilter %}', job_properties);
@@ -52,6 +53,23 @@
 
         function resetHighlight(e) {
             aoi_extents.resetStyle(e.target);
+        }
+
+        function deleteAOI(id, delete_url) {
+            BootstrapDialog.confirm('Delete AOI # ' + id + '?',
+                    function(result) {
+                        if (result) {
+                            $.ajax({
+                                url: delete_url,
+                                type: 'GET',
+                                success: function(data) {
+                                    window.location.reload();
+                                },
+                                failure: function() { console.log('failed');}
+                            })
+                        }
+                    }
+            );
         }
 
     </script>
@@ -151,12 +169,34 @@
                                 {{ object.project.description }}
                             </td>
                         </tr>
+                        <tr>
+                            <td>
+                                <b>Completed:</b>
+                            </td>
+                            <td>
+                                <div class="progress" style="margin-bottom: 0px;">
+                                    <div class="bar" role="progressbar"
+                                         aria-valuenow="{{ completed }}"
+                                         aria-valuemin="0"
+                                         aria-valuemax="100"
+                                         style="width:{{ completed }}%;">
+                                        {{ completed }}%
+                                    </div>
+                                </div>
+                            </td>
+                        </tr>
                     </table>
                 </div>
 
             {% if 'accounts.change_aoi' in request.base_perms %}
             {% if object.unassigned_aois%}
-            <a href="{% url 'job-next-aoi' object.id%}" class="btn btn-large btn-success pull-right" style="margin-top:80px">Contribute to this job.  <i class="icon-long-arrow-right"></i></a>
+                {% if object.in_work_aois.count < 1 %}
+                    <a href="{% url 'job-next-aoi' object.id%}" class="btn btn-large btn-success pull-right" style="margin-top:80px">
+                {% else %}
+                    <a href="{% url 'aoi-work' object.in_work_aois.0.id %}" class="btn btn-large btn-success pull-right" style="margin-top:80px">
+                {% endif %}
+                    Contribute to this job.
+                    <i class="icon-long-arrow-right"></i></a>
             {% endif %}
             {% endif %}
             </div>

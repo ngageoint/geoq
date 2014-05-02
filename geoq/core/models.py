@@ -5,9 +5,6 @@
 import json
 import sys
 
-from django.db.models.signals import pre_save, post_save
-from django.dispatch import dispatcher
-
 from django.contrib.auth.models import User
 from django.contrib.gis.db import models
 from django.contrib.gis.geos import MultiPolygon
@@ -98,10 +95,14 @@ class Job(GeoQBase):
     Mid-level organizational object.
     """
 
+    GRID_SERVICE_VALUES = ['usng', 'mgrs']
+    GRID_SERVICE_CHOICES = [(choice, choice) for choice in GRID_SERVICE_VALUES]
+
     analysts = models.ManyToManyField(User, blank=True, null=True, related_name="analysts")
     reviewers = models.ManyToManyField(User, blank=True, null=True, related_name="reviewers")
     progress = models.SmallIntegerField(max_length=2, blank=True, null=True)
     project = models.ForeignKey(Project, related_name="project")
+    grid = models.CharField(max_length=5, choices=GRID_SERVICE_CHOICES, default=GRID_SERVICE_VALUES[0])
 
     map = models.ForeignKey('maps.Map', blank=True, null=True)
     feature_types = models.ManyToManyField('maps.FeatureType', blank=True, null=True)
@@ -134,12 +135,23 @@ class Job(GeoQBase):
         """
         return self.aois.filter(status='Unassigned')
 
+    def in_work_aois(self):
+        """
+        Returns the in work AOIs.
+        """
+        return self.aois.filter(status='In work')
 
     def complete(self):
         """
         Returns the completed AOIs.
         """
         return self.aois.filter(status='Completed')
+
+    def in_work(self):
+        """
+        Returns the AOIs currently being worked
+        """
+        return self.aois.filter(status='In work')
 
     def geoJSON(self, as_json=True):
         """
@@ -181,6 +193,10 @@ class AOI(GeoQBase):
     priority = models.SmallIntegerField(choices=PRIORITIES, max_length=1, default=5)
     status = models.CharField(max_length=15, choices=STATUS_CHOICES, default='Unassigned')
 
+    def __unicode__(self):
+        aoi_obj = '%s - AOI %s' % (self.name, self.id)
+        return aoi_obj
+
     #def save(self):
     # if analyst or reviewer updated, then create policy to give them permission to edit this object.....
     # -- Afterwards -- check how this will work with the views.
@@ -198,7 +214,8 @@ class AOI(GeoQBase):
 
         geojson = SortedDict()
         geojson["type"] = "Feature"
-        geojson["properties"] = dict(id=self.id, status=self.status, analyst=(self.analyst.username if self.analyst is not None else 'Unassigned'), priority=self.priority, absolute_url=reverse('aoi-work', args=[self.id]))
+        geojson["properties"] = dict(id=self.id, status=self.status, analyst=(self.analyst.username if self.analyst is not None else 'Unassigned'), \
+           priority=self.priority, absolute_url=reverse('aoi-work', args=[self.id]), delete_url=reverse('aoi-deleter', args=[self.id]))
         geojson["geometry"] = json.loads(self.polygon.json)
 
         return json.dumps(geojson)
