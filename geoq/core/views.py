@@ -4,7 +4,7 @@
 
 import json
 import requests
-import utils
+import mgrs.utils
 
 from django.contrib.auth.models import User
 from django.contrib.auth.decorators import login_required
