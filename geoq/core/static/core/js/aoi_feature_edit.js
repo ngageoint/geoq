@@ -64,11 +64,11 @@ aoi_feature_edit.map_init = function (map, bounds) {
             var n = leaflet_helper.layer_conversion(l);
             if (n !== undefined) {
                 if (l.isBaseLayer) {
-                    baseLayers[l.name] = n
-                    log.info ("Added " + l.name + "as a base layer.")
+                    baseLayers[l.name] = n;
+                    log.info ("Added " + l.name + " as a base layer.")
                 } else {
                     layerSwitcher[l.name] = n;
-                    log.info ("Added " + l.name + "as a layer.")
+                    log.info ("Added " + l.name + " as a layer.")
                 }
             }
         });
