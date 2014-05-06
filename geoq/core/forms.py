@@ -39,6 +39,17 @@ class JobForm(StyledModelForm):
                   'analysts', 'reviewers', 'feature_types', 'map')
         model = Job
 
+    def __init__(self, *args, **kwargs):
+        super(JobForm, self).__init__(*args, **kwargs)
+
+        def remove_anonymous(field):
+            """ Removes anonymous from choices in form. """
+            field_var = self.fields[field].queryset.exclude(id=-1)
+            self.fields[field].queryset = field_var
+            return None
+        remove_anonymous('reviewers')
+        remove_anonymous('analysts')
+
 
 class ProjectForm(StyledModelForm):
     class Meta:
