@@ -37,6 +37,10 @@ aoi_feature_edit.init = function (aoi_id, aoi_map_json, aoi_extent, job_features
                 if (feature_type && feature_type.hasOwnProperty("style")) {
                     return feature_type.style;
                 }
+            },
+            onEachFeature: function(feature, layer) {
+            	layer.bindPopup(feature.properties.popupContent);
+
             }}
         );
         aoi_feature_edit.featureLayers[ftype.id] = featureLayer;
