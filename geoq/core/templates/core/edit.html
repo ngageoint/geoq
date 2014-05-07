@@ -12,9 +12,11 @@
     <script src="{{ STATIC_URL }}core/js/aoi_feature_edit.js"></script>
     <script src="{{ STATIC_URL }}core/js/js-unzip.js"></script>
     <script src="{{ STATIC_URL }}core/js/js-inflate.js"></script>
+    <script src="{{ STATIC_URL }}core/js/leafletcontrols/leaflet.simple_button.js"></script>
 
     <script type="text/javascript">
 
+        //TODO: Clean up all javascript global variables to one class
         var aoi_id = {{ object.id }};
         var aoi_extents_geojson = {{ object.polygon.json|safe }};
         var aoi_map_json = {{ map.to_json|safe|default:"{}" }};
@@ -26,7 +28,7 @@
         var geometry_types = [];
         var feature_type_div = "features";
         var job_features_geojson = {{ object.job.features_geoJSON|safe }};
-        leaflet_helper.proxy_path = {% url 'home' %} + "proxy/";
+        leaflet_helper.proxy_path = {% url 'home' %} + "proxy/"; //TODO: Standardize expression of proxy locations
 
         {% for feature_type in  object.job.feature_types.all %}
                 feature_types[{{ feature_type.id }}] = {{ feature_type.to_json|safe }};
@@ -36,6 +38,7 @@
         aoi_feature_edit.init(aoi_id, aoi_map_json, aoi_extents_geojson, job_features_geojson, feature_types, create_feature_url);
 
         $( document ).ready(function() {
+            //TODO: Move all page logic to separate JS file
 
 
             _.each(feature_types, function(feature_type){
@@ -73,6 +76,9 @@
 {% endblock %}
 
 {% block container %}
+<div id="map" >{% leaflet_map "map" callback="aoi_feature_edit.map_init"%}</div>
+
+<!--
         <div class="container-fluid">
             <div class="span12">
                 <h4><a href="{{ object.job.get_absolute_url }}">{{ object.job.name }}</a> > AOI #{{ object.id }}</h4>
@@ -81,17 +87,14 @@
             <div class="span3">
                 <p class="aoi-status muted">{% widthratio object.job.complete.count 100 100%}% Complete</p>
                 <h5>{{ object.description }}</h5>
-
                 <select id="features">
-
-
 
                 </select>
                 <br/><br/>
 
                 <a id="aoi-submit" href="#" class="btn btn-success">Complete</a>
-
             </div>
         </div>
+-->
 {% endblock %}
 

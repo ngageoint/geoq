@@ -9,27 +9,9 @@
     <meta charset="utf-8">
     <title>{% block title %}GeoQ{% endblock %}</title>
 
-    <style type="text/css">
-        body {
-            padding-top: 60px;
-        }
-    </style>
     <!--[if lt IE 9]>
     <script src="{{ STATIC_URL }}core/js/html5.js"></script>
     <![endif]-->
-    <script src="{{ STATIC_URL }}core/js/jquery.min.js"></script>
-    <script src="{{ STATIC_URL }}core/js/log4javascript.js"></script>
-    <script type="text/javascript">
-        var log;
-        if (document.location.hash && document.location.hash.indexOf("debug") > 0) {
-            log = log4javascript.getDefaultLogger();
-            var browserConsoleAppender = new log4javascript.BrowserConsoleAppender();
-            log.addAppender(browserConsoleAppender);
-        } else {
-            var output = (typeof console!="undefined") ? function (x) {console.log(x)} : function(){};
-            log = {warn:output,log:output,error:output,info:output,debug:output,trace:output};
-        }
-    </script>
 
     {% bootstrap_stylesheet_tag %}
     {% bootstrap_stylesheet_tag "responsive" %}
@@ -38,11 +20,40 @@
 
         <link href="{{ STATIC_URL }}core/less/geoq.less" media="all" rel="stylesheet" type="text/less"/>
         <link rel="stylesheet" href="{{ STATIC_URL }}font-awesome-2/css/font-awesome.min.css">
+    	<link href="{{ STATIC_URL }}core/js/fancytree/skin-win7/ui.fancytree.css" rel="stylesheet" type="text/css">
+        <style type="text/css">
+        #map {
+            position: absolute;
+            float: left;
+            top: 40px;
+            height: 94%;
+            width: 100%;
+            z-index: 1;
+        }
+        </style>
+
     {% endcompress %}
 
     {% compress js %}
-        <script src="{{ STATIC_URL }}js/../../static/core/js/underscore-min.js"></script>
+
+        <script src="{{ STATIC_URL }}core/js/jquery.min.js"></script>
+        <script src="{{ STATIC_URL }}core/js/jquery-ui.custom.js"></script>
+        <script src="{{ STATIC_URL }}core/js/fancytree/jquery.fancytree.js" type="text/javascript"></script>
+        <script src="{{ STATIC_URL }}core/js/underscore-min.js"></script>
+        <script src="{{ STATIC_URL }}core/js/log4javascript.js"></script>
+        <script type="text/javascript">
+            var log;
+            if (document.location.hash && document.location.hash.indexOf("debug") > 0) {
+                log = log4javascript.getDefaultLogger();
+                var browserConsoleAppender = new log4javascript.BrowserConsoleAppender();
+                log.addAppender(browserConsoleAppender);
+            } else {
+                var output = (typeof console!="undefined") ? function (x) {console.log(x)} : function(){};
+                log = {warn:output,log:output,error:output,info:output,debug:output,trace:output};
+            }
+        </script>
         <script src="{{ STATIC_URL }}core/js/base.js"></script>
+
     {% endcompress %}
 
     {% block static_libraries %}
@@ -53,11 +64,6 @@
 </head>
 
 <body>
-
-{% get_menu request %}
-
-{% bootstrap_messages %}
-
 {% block container %}
     <div class="container">
 
@@ -71,5 +77,9 @@
 
     </div> <!-- container -->
 {% endblock %}
+
+{% get_menu request %}
+{% bootstrap_messages %}
+
 </body>
 </html>

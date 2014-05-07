@@ -44,14 +44,23 @@ aoi_feature_edit.init = function (aoi_id, aoi_map_json, aoi_extent, job_features
 };
 
 aoi_feature_edit.get_feature_type = function (i) {
-    return aoi_feature_edit.feature_types[i];
+    return aoi_feature_edit.feature_types[i] || {style:{"weight": 2, "color": "yellow", "fillColor": "orange", "fillOpacity": .9, "opacity": 1}};
 };
+aoi_feature_edit.map_resize = function(){
+    var toLower = parseInt($('div.navbar-inner').css('height'));
+    var newHeight = $(window).height()-toLower;
+    $(map).height(newHeight);
+    $(map).css('top',toLower+'px');
 
+    $('.navbar-fixed-top').css('margin-bottom', 0);
+    $('body').css({'padding-left':0, 'padding-right':0});
+
+};
 aoi_feature_edit.map_init = function (map, bounds) {
     var custom_map = aoi_feature_edit.aoi_map_json;
     aoi_feature_edit.map = map;
 
-    var baseLayers = {}
+    var baseLayers = {};
     var layerSwitcher = {};
     //var editableLayers = new L.FeatureGroup();
     // Only layer in here should be base OSM layer
@@ -75,6 +84,22 @@ aoi_feature_edit.map_init = function (map, bounds) {
     }
 
     var layercontrol = L.control.layers(baseLayers, layerSwitcher).addTo(aoi_feature_edit.map);
+
+    var buttonOptions = {
+      'html': '<a id="aoi-submit" href="#" class="btn btn-success">Complete</a>',  // string
+      'text': 'Mark', // string
+      'iconUrl': '/static/images/badge_images/gold.png',  // string
+      'onClick': my_button_onClick,  // callback function
+      'hideText': false,  // bool
+      'maxWidth': 60,  // number
+      'doToggle': false,  // bool
+      'toggleStatus': false  // bool
+    }
+    var myButton = new L.Control.Button(buttonOptions).addTo(map);
+    function my_button_onClick() {
+        console.log("Button pressed - Mark AOI as complete");
+        //TODO: Finish completion login
+    }
 
     var aoi_extents = L.geoJson(aoi_feature_edit.aoi_extents_geojson,
         {style: leaflet_helper.styles.extentStyle,
@@ -125,11 +150,12 @@ aoi_feature_edit.map_init = function (map, bounds) {
     var drawnItems = new L.FeatureGroup();
     aoi_feature_edit.map.addLayer(drawnItems);
 
+    //TODO: Check that feature updates when chosen feature changes within dropbox
     var drawControl = new L.Control.Draw({
         draw: {
             position: aoi_feature_edit.options.drawControlLocation,
             polygon: {
-                title: 'Draw a polygon!',
+                title: 'Draw a polygon feature',
                 allowIntersection: false,
                 drawError: {
                     color: '#b00b00',
@@ -138,17 +164,17 @@ aoi_feature_edit.map_init = function (map, bounds) {
                 shapeOptions: aoi_feature_edit.get_feature_type(aoi_feature_edit.current_feature_type_id).style,
                 showArea: true
             },
-            circle: false,
-            rectangle: {
-                shapeOptions: aoi_feature_edit.feature_types[aoi_feature_edit.current_feature_type_id].style
-            }
+            circle: false
+//            ,rectangle: {
+//                shapeOptions: aoi_feature_edit.feature_types[aoi_feature_edit.current_feature_type_id].style
+//            }
         },
         edit: {
             featureGroup: drawnItems
         }
     });
 
-    aoi_feature_edit.map.addControl(drawControl);
+    map.addControl(drawControl);
     aoi_feature_edit.drawcontrol = drawControl;
 
     map.on('draw:created', function (e) {
@@ -172,6 +198,12 @@ aoi_feature_edit.map_init = function (map, bounds) {
         //layer.bindPopup('Feature Created!');
         drawnItems.addLayer(layer);
     });
+
+    //Resize the map
+    aoi_feature_edit.map_resize();
+    //Resize it on screen resize, but no more than every .3 seconds
+    var lazyResize = _.debounce(aoi_feature_edit.map_resize,300);
+    $(window).resize(lazyResize);
 };
 
 // Changes current features to match the selected style.
