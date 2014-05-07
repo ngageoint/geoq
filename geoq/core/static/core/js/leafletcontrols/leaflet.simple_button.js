@@ -38,8 +38,8 @@ L.Control.Button = L.Control.extend({
 
   setButton: function (options) {
     var button = {
-      'text': options.text,                 //string
-      'iconUrl': options.iconUrl,           //string
+      'text': options.text || '',                 //string
+      'iconUrl': options.iconUrl || '',           //string
       'onClick': options.onClick,           //callback function
       'hideText': !!options.hideText,         //forced bool
       'maxWidth': options.maxWidth || 70,     //number
@@ -107,7 +107,7 @@ L.Control.Button = L.Control.extend({
         L.DomUtil.addClass(span,'leaflet-buttons-control-text-hide');
     }
     if (button.html) {
-      $(span).append(button.html);
+      $(newButton).append(button.html);
     }
 
     L.DomEvent
