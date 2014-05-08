@@ -15,9 +15,21 @@
         }
     </style>
     <!--[if lt IE 9]>
-    <script src="//html5shim.googlecode.com/svn/trunk/html5.js"></script>
+    <script src="{{ STATIC_URL }}core/js/html5.js"></script>
     <![endif]-->
-    <script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.0/jquery.min.js"></script>
+    <script src="{{ STATIC_URL }}core/js/jquery.min.js"></script>
+    <script src="{{ STATIC_URL }}core/js/log4javascript.js"></script>
+    <script type="text/javascript">
+        var log;
+        if (document.location.hash && document.location.hash.indexOf("debug") > 0) {
+            log = log4javascript.getDefaultLogger();
+            var browserConsoleAppender = new log4javascript.BrowserConsoleAppender();
+            log.addAppender(browserConsoleAppender);
+        } else {
+            var output = (typeof console!="undefined") ? function (x) {console.log(x)} : function(){};
+            log = {warn:output,log:output,error:output,info:output,debug:output,trace:output};
+        }
+    </script>
 
     {% bootstrap_stylesheet_tag %}
     {% bootstrap_stylesheet_tag "responsive" %}
@@ -29,7 +41,7 @@
     {% endcompress %}
 
     {% compress js %}
-     <script src="{{ STATIC_URL }}js/underscore-min.js"></script>
+     <script src="{{ STATIC_URL }}js/../core/static/core/js/underscore-min.js"></script>
      <script src="{{ STATIC_URL }}core/js/base.js"></script>
     {% endcompress %}
 

@@ -1,5 +1,40 @@
 {% load static %}
 {% load url from future %}
+{% load gamification_tags %}
+
+<script>
+    function getbadges() {
+        var host = "{% gamification_value 'GAMIFICATION_SERVER' %}";
+        var project = "{% gamification_value 'GAMIFICATION_PROJECT' %}";
+        var user = "{{ request.user.username }}";
+
+        if ( user != undefined && user.length > 0 ) {
+            $.ajax({
+                type: 'GET',
+                url: host + '/users/' + user + '/projects/' + project + '/badges',
+                dataType: 'json',
+                timeout: 3000,
+                success: function (badges, textstatus, jqXHR) {
+                    var badge_container = $("#badge-container");
+                    if (badge_container) {
+                        for (var i = 0; i < badges.length; i++ ) {
+                            badge_container.append("<img id='" + badges[i].name + "' src='" +
+                                    badges[i].url + "'></i>&nbsp;" + badges[i].awarded + " &nbsp;");
+                            //badge_container.append("<span style='background-image: url(" + badges[i].url + ")' class='badge-count' id='" + badges[i].name + "-count'><b>" +
+                            //        badges[i].awarded + "</b></span>");
+                        }
+                    }
+                }
+            });
+        }
+    }
+
+    $(document).ready(function() {
+        getbadges();
+    });
+</script>
+
+
 
 <div class="navbar navbar-fixed-top">
 
@@ -38,7 +73,7 @@
                     </ul>
                 </div>
                 <div class="nav-collapse">
-                    <ul class="nav">
+                    <ul class="nav navbar-nav">
                         {%for key,value in menu_items.items%}
                             {%if not value.dropdown%}
                                 <li class="{% if value.active %}active{% endif%}"><a href="{{value.url}}"  {% if value.target %}target="{{ value.target }}"{% endif %} >{{key}}</a></li>
@@ -60,9 +95,14 @@
                                 </li>
                             {%endif%}
                         {%endfor%}
+                    </ul>
+                    <ul class="nav navbar-right">
 
-{#                        <li id="navbar-additions"></li>#}
-{#			<li><a href="/badges/"> {% include "badges/badges_display.html" %}</a></li>#}
+                        <li id="navbar-badges" class="text-right">
+                            <p id="badge-container" class="navbar-text user-badge">
+                                <span class="muted">Badges:</span>
+                            </p>
+                        </li>
                     </ul>
                 </div><!--/.nav-collapse -->
             </div>
