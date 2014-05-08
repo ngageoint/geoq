@@ -37,8 +37,11 @@ aoi_feature_edit.init = function () {
                     return feature_type.style;
                 }
             },
-            onEachFeature:onEachFeature
-            });
+            onEachFeature: function(feature, layer) {
+            	layer.bindPopup(feature.properties.popupContent);
+
+            }}
+        );
         aoi_feature_edit.featureLayers[ftype.id] = featureLayer;
     });
 };
