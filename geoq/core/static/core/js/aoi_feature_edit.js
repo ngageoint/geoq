@@ -20,10 +20,13 @@ aoi_feature_edit.init = function () {
         if (feature.properties) {
             var popupContent;
 
-            popupContent = "Feature #"+feature.properties.id;
+            popupContent = "<h5>Feature #"+feature.properties.id+"</h5>";
             if (feature.properties.template){
                 var template = aoi_feature_edit.feature_types[parseInt(feature.properties.template)];
-                popupContent += "<br/><b>"+template.name+'</b>';
+                popupContent += "<b>"+template.name+"</b>";
+                popupContent += "<br/><b>Analyst:</b> "+feature.properties.analyst;
+                popupContent += "<br/><b>Created:</b> "+feature.properties.created_at;
+                popupContent += "<br/><b>Updated:</b> "+feature.properties.updated_at;
             }
         }
         layer.bindPopup(popupContent);
@@ -37,11 +40,8 @@ aoi_feature_edit.init = function () {
                     return feature_type.style;
                 }
             },
-            onEachFeature: function(feature, layer) {
-            	layer.bindPopup(feature.properties.popupContent);
-
-            }}
-        );
+        	onEachFeature: onEachFeature
+    });
         aoi_feature_edit.featureLayers[ftype.id] = featureLayer;
     });
 };

@@ -267,33 +267,14 @@ class Feature(models.Model):
         Returns geoJSON of the feature.
         Try to conform to https://github.com/mapbox/simplestyle-spec/tree/master/1.0.0
         """
-
-        # Create the feature popup content
-        id_str = str(self.id)
-        created_at_str = datetime.strftime(self.created_at, '%Y-%m-%dT%H:%M:%S%Z')
-        updated_at_str = datetime.strftime(self.updated_at, '%Y-%m-%dT%H:%M:%S%Z')
-        username = self.analyst.username
-        popupContent = """<div>
-            <h5>Feature # """ + id_str + """</h5>
-            <div>
-                <label>Analyst:</label>
-                <span>""" + username + """</span>
-            </div>
-            <div>
-                <label>Created:</label>
-                <span>""" + created_at_str + """</span>
-            </div>
-            <div>
-                <label>Updated:</label>
-                <span>""" + updated_at_str + """</span>
-            </div>
-        </div>"""
-
+        
         geojson = SortedDict()
         geojson["type"] = "Feature"
         geojson["properties"] = dict(id=self.id,
                                      template=self.template.id if hasattr(self.template, "id") else None,
-                                     popupContent=popupContent
+                                     analyst=self.analyst.username,
+                                     created_at=datetime.strftime(self.created_at, '%Y-%m-%dT%H:%M:%S%Z'),
+                                     updated_at=datetime.strftime(self.updated_at, '%Y-%m-%dT%H:%M:%S%Z')
                                      )
         geojson["geometry"] = json.loads(self.the_geom.json)
 
