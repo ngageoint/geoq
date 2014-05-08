@@ -6,6 +6,7 @@ import json
 
 from django.contrib.auth.decorators import login_required
 from django.contrib.gis.geos import GEOSGeometry
+from django.core import serializers
 from django.core.exceptions import ValidationError
 from django.core.urlresolvers import reverse
 from django.http import HttpResponse, HttpResponseRedirect
@@ -62,7 +63,7 @@ class CreateFeatures(View):
         except ValidationError as e:
             return HttpResponse(content=json.dumps(dict(errors=e.messages)), mimetype="application/json", status=400)
 
-        return HttpResponse([response], mimetype="application/json")
+        return HttpResponse(serializers.serialize('json', [response,]), mimetype="application/json")
 
 
 @login_required
