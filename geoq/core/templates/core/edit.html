@@ -16,19 +16,10 @@
 
     <script type="text/javascript">
 
-        //TODO: Clean up all javascript global variables to one class
-        var aoi_id = {{ object.id }};
-        var aoi_extents_geojson = {{ object.polygon.json|safe }};
-        var aoi_map_json = {{ map.to_json|safe|default:"{}" }};
-        var activeStyle = {};
-        var current_feature_type_id = null;
-        var create_feature_url = "{% url 'feature-create' %}";
-        var drawControl = {};
-        var feature_types = {};
-        var geometry_types = [];
-        var job_features_geojson = {{ object.job.features_geoJSON|safe }};
         leaflet_helper.proxy_path = {% url 'home' %} + "proxy/"; //TODO: Standardize expression of proxy locations
 
+        var feature_types = {};
+        var geometry_types = [];
         {% for feature_type in  object.job.feature_types.all %}
                 feature_types[{{ feature_type.id }}] = {{ feature_type.to_json|safe }};
                 geometry_types.push("{{ feature_type.type }}");
@@ -36,7 +27,19 @@
 
         aoi_feature_edit.complete_url = "{% url 'aoi-update-status' object.id "Completed" %}";
         aoi_feature_edit.complete_redirect_url = "{% url 'job-detail' object.job.id %}";
-        aoi_feature_edit.init(aoi_id, aoi_map_json, aoi_extents_geojson, job_features_geojson, feature_types, create_feature_url);
+
+        aoi_feature_edit.job_absolute_url = "{{ object.job.get_absolute_url }}";
+        aoi_feature_edit.job_name = "{{ object.job.name }}";
+        aoi_feature_edit.aoi_id = "{{ object.id }}";
+
+        aoi_feature_edit.aoi_map_json = {{ map.to_json|safe|default:"{}" }};
+        aoi_feature_edit.aoi_extents_geojson = {{ object.polygon.json|safe }};;
+        aoi_feature_edit.job_features_geojson = {{ object.job.features_geoJSON|safe }};;
+        aoi_feature_edit.feature_types = feature_types;
+        aoi_feature_edit.create_feature_url = "{% url 'feature-create' %}";
+
+        aoi_feature_edit.init();
+
 
 
 </script>

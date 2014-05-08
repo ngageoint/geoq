@@ -9,36 +9,36 @@ aoi_feature_edit.options = {
     drawControlLocation: "topleft"
 };
 
-aoi_feature_edit.init = function (aoi_id, aoi_map_json, aoi_extent, job_features_geojson, feature_types, create_feature_url) {
-    aoi_feature_edit.aoi_id = aoi_id;
-    aoi_feature_edit.aoi_map_json = aoi_map_json;
-    aoi_feature_edit.aoi_extents_geojson = aoi_extent;
-    aoi_feature_edit.job_features_geojson = job_features_geojson;
-    aoi_feature_edit.feature_types = feature_types;
-    aoi_feature_edit.create_feature_url = create_feature_url;
+aoi_feature_edit.init = function () {
+
     aoi_feature_edit.drawcontrol = null;
     aoi_feature_edit.featureLayers = [];
     aoi_feature_edit.icons = [];
 
-/*    for( var i = 1; i <= aoi_feature_edit.feature_types.length; i++) {
-        aoi_feature_edit.featureLayers[i] = L.geoJson( null,
-            {style: function(feature){
-                feature_type = aoi_feature_edit.feature_types[feature.properties.template];
-                if (feature_type && feature_type.hasOwnProperty("style")){
-                    return feature_type.style;
-            };
-        }});
-    }*/
+    // on each feature use feature data to create a pop-up
+    function onEachFeature(feature, layer) {
+        if (feature.properties) {
+            var popupContent;
+
+            popupContent = "Feature #"+feature.properties.id;
+            if (feature.properties.template){
+                var template = aoi_feature_edit.feature_types[parseInt(feature.properties.template)];
+                popupContent += "<br/>"+template.name;
+            }
+        }
+        layer.bindPopup(popupContent);
+    }
 
     _.each(aoi_feature_edit.feature_types, function (ftype) {
-        var featureLayer = L.geoJson(null,
-            {style: function (ftype) {
+        var featureLayer = L.geoJson(null,{
+            style: function (ftype) {
                 var feature_type = aoi_feature_edit.feature_types[ftype.properties.template];
                 if (feature_type && feature_type.hasOwnProperty("style")) {
                     return feature_type.style;
                 }
-            }}
-        );
+            },
+            onEachFeature:onEachFeature
+            });
         aoi_feature_edit.featureLayers[ftype.id] = featureLayer;
     });
 };
@@ -90,7 +90,8 @@ aoi_feature_edit.map_init = function (map, bounds) {
 
 
     var aoi_extents = L.geoJson(aoi_feature_edit.aoi_extents_geojson,
-        {style: leaflet_helper.styles.extentStyle,
+        {
+            style: leaflet_helper.styles.extentStyle,
             zIndex: 1000
         });
     aoi_extents.addTo(aoi_feature_edit.map);
@@ -104,6 +105,7 @@ aoi_feature_edit.map_init = function (map, bounds) {
 
         _.each(aoi_feature_edit.job_features_geojson.features, function (feature) {
             if (feature.properties.template == tnum && feature.geometry.type == featuretype) {
+                //TODO: Change icon here depending on feature type
                 featureCollection.features.push(feature);
             }
         });
@@ -225,7 +227,7 @@ aoi_feature_edit.addMapControlButtons = function (map) {
         //TODO: Finish completion login
     }
     var completeButtonOptions = {
-      'html': '<a id="aoi-submit" href="#" class="btn btn-success">Complete</a>',  // string
+      'html': '<a id="aoi-submit" href="#" class="btn btn-success">Mark Complete</a>',  // string
       'onClick': my_button_onClick,  // callback function
       'hideText': false,  // bool
       'maxWidth': 60,  // number
@@ -237,7 +239,6 @@ aoi_feature_edit.addMapControlButtons = function (map) {
 
     var featuresButtonOptions = {
       'html': '<select id="features"></select>',  // string
-      'onClick': function(){},  // callback function
       'hideText': false,  // bool
       'maxWidth': 60,  // number
       'doToggle': false,  // bool

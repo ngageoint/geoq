@@ -40,7 +40,7 @@ L.Control.Button = L.Control.extend({
     var button = {
       'text': options.text || '',                 //string
       'iconUrl': options.iconUrl || '',           //string
-      'onClick': options.onClick,           //callback function
+      'onClick': options.onClick || function(){},           //callback function
       'hideText': !!options.hideText,         //forced bool
       'maxWidth': options.maxWidth || 70,     //number
       'doToggle': options.toggle,			//bool
