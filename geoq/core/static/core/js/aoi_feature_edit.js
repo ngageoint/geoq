@@ -97,6 +97,13 @@ aoi_feature_edit.map_init = function (map, bounds) {
     aoi_extents.addTo(aoi_feature_edit.map);
 
 
+    //Build a reset button that zooms to the extents of the AOI
+    function locateBounds () {
+        return aoi_extents.getBounds();
+    }
+    (new L.Control.ResetView(locateBounds)).addTo(aoi_feature_edit.map);
+
+
     // for each feature template, add features to map and layer control
     _.each(aoi_feature_edit.feature_types, function (ftype) {
         var tnum = ftype.id;
@@ -105,7 +112,7 @@ aoi_feature_edit.map_init = function (map, bounds) {
 
         _.each(aoi_feature_edit.job_features_geojson.features, function (feature) {
             if (feature.properties.template == tnum && feature.geometry.type == featuretype) {
-                //TODO: Change icon here depending on feature type
+                //TODO: Change icon here depending on feature type, Issue #27
                 featureCollection.features.push(feature);
             }
         });

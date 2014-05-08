@@ -111,6 +111,7 @@ LEAFLET_CSS = [
     ]
 
 LEAFLET_CONFIG = {
+    'RESET_VIEW' : False,
     'PLUGINS': {
         'draw': {
             'css': LEAFLET_CSS,
