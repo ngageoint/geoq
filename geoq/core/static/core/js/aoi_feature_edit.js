@@ -41,7 +41,7 @@ aoi_feature_edit.init = function () {
                 }
             },
         	onEachFeature: onEachFeature
-    });
+        });
         aoi_feature_edit.featureLayers[ftype.id] = featureLayer;
     });
 };
