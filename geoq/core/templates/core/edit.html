@@ -13,7 +13,7 @@
     <script src="{{ STATIC_URL }}core/js/js-unzip.js"></script>
     <script src="{{ STATIC_URL }}core/js/js-inflate.js"></script>
     <script src="{{ STATIC_URL }}core/js/leafletcontrols/leaflet.simple_button.js"></script>
-
+    <script src="{{ STATIC_URL }}core/js/leafletcontrols/leaflet.simple_button.left.js"></script>
     <script type="text/javascript">
 
         leaflet_helper.proxy_path = {% url 'home' %} + "proxy/"; //TODO: Standardize expression of proxy locations
@@ -38,6 +38,9 @@
         aoi_feature_edit.feature_types = feature_types;
         aoi_feature_edit.create_feature_url = "{% url 'feature-create' %}";
 
+        aoi_feature_edit.percent_complete = {% widthratio object.job.complete.count 100 100%};
+        aoi_feature_edit.description = "{{ object.description |safe}}";
+
         aoi_feature_edit.init();
 
 
@@ -60,6 +63,7 @@
                 <div id="map" class="thumbnail" style="height: 450px; width: 100%;">{% leaflet_map "map" callback="aoi_feature_edit.map_init"%}</div>
             </div>
             <div class="span3">
+                <h4><a href="{{ object.job.get_absolute_url }}">{{ object.job.name }}</a> > AOI #{{ object.id }}</h4>
                 <p class="aoi-status muted">{% widthratio object.job.complete.count 100 100%}% Complete</p>
                 <h5>{{ object.description }}</h5>
                 <select id="features">

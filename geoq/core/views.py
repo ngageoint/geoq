@@ -4,7 +4,6 @@
 
 import json
 import requests
-import mgrs.utils
 
 from django.contrib.auth.models import User
 from django.contrib.auth.decorators import login_required
@@ -22,7 +21,8 @@ from django.views.generic import DetailView, ListView, TemplateView, View, Delet
 from models import Project, Job, AOI
 from geoq.maps.models import Layer, Map
 
-from geoq.mgrs.utils import Grid,GridException
+from geoq.mgrs.utils import Grid, GridException
+from geoq.mgrs import utils
 
 
 class Dashboard(TemplateView):

@@ -23,7 +23,7 @@ aoi_feature_edit.init = function () {
             popupContent = "Feature #"+feature.properties.id;
             if (feature.properties.template){
                 var template = aoi_feature_edit.feature_types[parseInt(feature.properties.template)];
-                popupContent += "<br/>"+template.name;
+                popupContent += "<br/><b>"+template.name+'</b>';
             }
         }
         layer.bindPopup(popupContent);
@@ -193,7 +193,9 @@ aoi_feature_edit.buildDrawingControl = function(feature_id){
 
     //Start building the draw options object
     var drawOptions = { draw:{position: aoi_feature_edit.options.drawControlLocation} };
-    drawOptions.edit = {featureGroup: aoi_feature_edit.drawnItems };
+    drawOptions.edit = false;//{featureGroup: aoi_feature_edit.drawnItems };
+    //TODO: Add editing back in - currently is not catching edits, as features are saved
+    // to server as soon as they are entered
 
     if (feature.type == "Polygon") {
         drawOptions.draw.polygon = {
@@ -229,13 +231,19 @@ aoi_feature_edit.buildDrawingControl = function(feature_id){
 
 aoi_feature_edit.addMapControlButtons = function (map) {
 
-    function my_button_onClick() {
-        console.log("Button pressed - Mark AOI as complete");
-        //TODO: Finish completion login
+    function complete_button_onClick() {
+         $.ajax({
+              type: "POST",
+              url: aoi_feature_edit.complete_url,
+              dataType: "json",
+              success: function(response){
+                  geoq.redirect(aoi_feature_edit.complete_redirect_url);
+              }
+         });
     }
     var completeButtonOptions = {
-      'html': '<a id="aoi-submit" href="#" class="btn btn-success">Mark Complete</a>',  // string
-      'onClick': my_button_onClick,  // callback function
+      'html': '<a id="aoi-submit" href="#" class="btn btn-success">Mark as Complete</a>',  // string
+      'onClick': complete_button_onClick,  // callback function
       'hideText': false,  // bool
       'maxWidth': 60,  // number
       'doToggle': false,  // bool
@@ -254,22 +262,29 @@ aoi_feature_edit.addMapControlButtons = function (map) {
     var featuresButton = new L.Control.Button(featuresButtonOptions).addTo(map);
 
 
+    var title = "<h4><a href='"+aoi_feature_edit.job_absolute_url+"'>"+aoi_feature_edit.job_name+"</a> > AOI #"+aoi_feature_edit.aoi_id+" > ";
+    title+= "<span class='aoi-status muted'>"+aoi_feature_edit.percent_complete+"% Complete > "+ aoi_feature_edit.description+"</span></h4>";
+
+
+    var titleInfoOptions = {
+      'html': title,  // string
+      'hideText': false,  // bool
+      'maxWidth': 60,  // number
+      'doToggle': false,  // bool
+      'toggleStatus': false  // bool
+    }
+    var titleInfoButton = new L.Control.ButtonLeft(titleInfoOptions).addTo(map);
+
+
+    //Quick work-around for moving header to top of the page
+    var $c = $($(".leaflet-control-button.leaflet-control")[0]);
+    $c.css({backgroundColor:'white',border:'solid black 1px', borderRadius:4, padding:'0px 6px 0px 6px'});
+    $c.prependTo($c.parent());
 
 
     var feature_type_div = "features";
     _.each(aoi_feature_edit.feature_types, function(feature_type){
         aoi_feature_edit.addOptions(feature_type, feature_type_div);
-    });
-
-    $("#aoi-submit").click(function(){
-         $.ajax({
-              type: "POST",
-              url: aoi_feature_edit.complete_url,
-              dataType: "json",
-              success: function(response){
-                  geoq.redirect(aoi_feature_edit.complete_redirect_url);
-              }
-         });
     });
 
     var $features = $("#features");
