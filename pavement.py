@@ -14,7 +14,7 @@ sys.path.append(os.path.dirname(os.path.realpath(__file__)))
 setup(
     name="geoq",
     packages=['geoq'],
-    version='0.0.0.1',
+    version='0.0.0.2',
     url="",
     author="Site Admin",
     author_email="admin@localhost"

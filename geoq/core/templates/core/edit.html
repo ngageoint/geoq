@@ -48,32 +48,21 @@
 </script>
 
     {% compress css %}
-    {% leaflet_css plugins="draw"%}
-    {% import_django_select2_css %}
-{% endcompress %}
+        {% leaflet_css plugins="draw"%}
+        {% import_django_select2_css %}
+    {% endcompress %}
+    <style type="text/css">
+        #map {
+            position: absolute;
+            float: left;
+            top: 40px;
+            height: 94%;
+            width: 100%;
+        }
+    </style>
 {% endblock %}
 
 {% block container %}
 <div id="map" >{% leaflet_map "map" callback="aoi_feature_edit.map_init"%}</div>
-
-<!--
-        <div class="container-fluid">
-            <div class="span12">
-                <h4><a href="{{ object.job.get_absolute_url }}">{{ object.job.name }}</a> > AOI #{{ object.id }}</h4>
-                <div id="map" class="thumbnail" style="height: 450px; width: 100%;">{% leaflet_map "map" callback="aoi_feature_edit.map_init"%}</div>
-            </div>
-            <div class="span3">
-                <h4><a href="{{ object.job.get_absolute_url }}">{{ object.job.name }}</a> > AOI #{{ object.id }}</h4>
-                <p class="aoi-status muted">{% widthratio object.job.complete.count 100 100%}% Complete</p>
-                <h5>{{ object.description }}</h5>
-                <select id="features">
-
-                </select>
-                <br/><br/>
-
-                <a id="aoi-submit" href="#" class="btn btn-success">Complete</a>
-            </div>
-        </div>
--->
 {% endblock %}
 
