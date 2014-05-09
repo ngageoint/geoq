@@ -57,13 +57,18 @@ class CreateFeatures(View):
         attrs['the_geom'] = GEOSGeometry(json.dumps(geometry))
 
         try:
-            response = Feature(**attrs)
-            response.full_clean()
-            response.save()
+            feature = Feature(**attrs)
+            feature.full_clean()
+            feature.save()
         except ValidationError as e:
             return HttpResponse(content=json.dumps(dict(errors=e.messages)), mimetype="application/json", status=400)
 
-        return HttpResponse(serializers.serialize('json', [response,]), mimetype="application/json")
+        # This feels a bit ugly but it does get the GeoJSON into the response
+        feature_json = serializers.serialize('json', [feature,])
+        feature_list = json.loads(feature_json)
+        feature_list[0]['geojson'] = feature.geoJSON(True)
+        
+        return HttpResponse(json.dumps(feature_list), mimetype="application/json")
 
 
 @login_required

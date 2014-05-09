@@ -154,6 +154,19 @@ aoi_feature_edit.map_init = function (map, bounds) {
 
     aoi_feature_edit.buildDrawingControl();
 
+    function onSuccess(data, textStatus, jqXHR) {
+    	if (data[0] && data[0].geojson) {
+    		var tnum = data[0].fields.template;
+	        var featureCollection = aoi_feature_edit.createFeatureCollection(tnum);
+	        featureCollection.features.push($.parseJSON(data[0].geojson));
+	    	aoi_feature_edit.featureLayers[tnum].addData(featureCollection);
+    	}
+    }
+    
+    function onError(jqXHR, textStatus, errorThrown) { 
+    	alert("Error while adding feature: " + errorThrown);
+    }
+    
     map.on('draw:created', function (e) {
         var type = e.layerType;
         var layer = e.layer;
@@ -168,12 +181,12 @@ aoi_feature_edit.map_init = function (map, bounds) {
             data: { aoi: aoi_feature_edit.aoi_id,
                 geometry: geojson
             },
-            success: alert,
+            success: onSuccess,
+            error: onError,
             dataType: "json"
         });
 
         //layer.bindPopup('Feature Created!');
-        drawnItems.addLayer(layer);
     });
 
     //Resize the map
