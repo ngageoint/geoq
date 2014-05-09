@@ -20,13 +20,13 @@ aoi_feature_edit.init = function () {
         if (feature.properties) {
             var popupContent;
 
-            popupContent = "<h5>Feature #"+feature.properties.id+"</h5>";
+            popupContent = '<h5>Feature #'+feature.properties.id+'</h5>';
             if (feature.properties.template){
                 var template = aoi_feature_edit.feature_types[parseInt(feature.properties.template)];
-                popupContent += "<b>"+template.name+"</b>";
-                popupContent += "<br/><b>Analyst:</b> "+feature.properties.analyst;
-                popupContent += "<br/><b>Created:</b> "+feature.properties.created_at;
-                popupContent += "<br/><b>Updated:</b> "+feature.properties.updated_at;
+                popupContent += '<b>'+template.name+'</b>';
+                popupContent += '<br/><b>Analyst:</b> '+feature.properties.analyst;
+                popupContent += '<br/><b>Created:</b> '+feature.properties.created_at;
+                popupContent += '<br/><b>Updated:</b> '+feature.properties.updated_at;
             }
         }
         layer.bindPopup(popupContent);
@@ -147,11 +147,6 @@ aoi_feature_edit.map_init = function (map, bounds) {
         aoi_feature_edit.map.fitBounds(aoi_extents.getBounds());
     }, 1);
 
-    var drawnItems = new L.FeatureGroup();
-    aoi_feature_edit.map.addLayer(drawnItems);
-    aoi_feature_edit.drawnItems = drawnItems;
-
-
     aoi_feature_edit.buildDrawingControl();
 
     function onSuccess(data, textStatus, jqXHR) {
@@ -209,7 +204,7 @@ aoi_feature_edit.buildDrawingControl = function(feature_id){
 
     //Start building the draw options object
     var drawOptions = { draw:{position: aoi_feature_edit.options.drawControlLocation} };
-    drawOptions.edit = false;//{featureGroup: aoi_feature_edit.drawnItems };
+    drawOptions.edit = false;
     //TODO: Add editing back in - currently is not catching edits, as features are saved
     // to server as soon as they are entered
 
