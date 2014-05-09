@@ -5,6 +5,8 @@
 
 var aoi_feature_edit = {};
 
+var feature_hash = {};
+
 aoi_feature_edit.options = {
     drawControlLocation: "topleft"
 };
@@ -15,23 +17,6 @@ aoi_feature_edit.init = function () {
     aoi_feature_edit.featureLayers = [];
     aoi_feature_edit.icons = [];
 
-    // on each feature use feature data to create a pop-up
-    function onEachFeature(feature, layer) {
-        if (feature.properties) {
-            var popupContent;
-
-            popupContent = '<h5>Feature #'+feature.properties.id+'</h5>';
-            if (feature.properties.template){
-                var template = aoi_feature_edit.feature_types[parseInt(feature.properties.template)];
-                popupContent += '<b>'+template.name+'</b>';
-                popupContent += '<br/><b>Analyst:</b> '+feature.properties.analyst;
-                popupContent += '<br/><b>Created:</b> '+feature.properties.created_at;
-                popupContent += '<br/><b>Updated:</b> '+feature.properties.updated_at;
-            }
-        }
-        layer.bindPopup(popupContent);
-    }
-
     _.each(aoi_feature_edit.feature_types, function (ftype) {
         var featureLayer = L.geoJson(null,{
             style: function (ftype) {
@@ -40,7 +25,22 @@ aoi_feature_edit.init = function () {
                     return feature_type.style;
                 }
             },
-        	onEachFeature: onEachFeature
+            onEachFeature: function(feature, layer) {
+            	if (feature.properties) {
+                	feature_hash[feature.properties.id] = {layerGroup: featureLayer, layer: layer};
+                    
+                	var popupContent = '<h5>Feature #'+feature.properties.id+'</h5>';
+                	if (feature.properties.template){
+                		var template = aoi_feature_edit.feature_types[parseInt(feature.properties.template)];
+                		popupContent += '<b>'+template.name+'</b><br/>';
+                	}
+                	popupContent += '<b>Analyst:</b> '+feature.properties.analyst;
+                	popupContent += '<br/><b>Created:</b> '+feature.properties.created_at;
+                	popupContent += '<br/><b>Updated:</b> '+feature.properties.updated_at;
+                	popupContent += '<br/><a onclick="javascript:deleteFeature(\''+feature.properties.id+'\', \'/geoq/features/delete/'+feature.properties.id+'\');">Delete Feature</a>';
+                	layer.bindPopup(popupContent);
+                }
+            }
         });
         aoi_feature_edit.featureLayers[ftype.id] = featureLayer;
     });
@@ -363,4 +363,12 @@ aoi_feature_edit.createFeatureCollection = function (id) {
     featureCollection.properties.id = id;
 
     return featureCollection;
+};
+
+aoi_feature_edit.deleteFeature = function (id) {
+	var feature = feature_hash[id];
+	if (feature) {
+		feature.layerGroup.removeLayer(feature.layer);
+		delete feature_hash[id];
+	}
 };

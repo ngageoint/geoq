@@ -14,6 +14,7 @@
     <script src="{{ STATIC_URL }}core/js/js-inflate.js"></script>
     <script src="{{ STATIC_URL }}core/js/leafletcontrols/leaflet.simple_button.js"></script>
     <script src="{{ STATIC_URL }}core/js/leafletcontrols/leaflet.simple_button.left.js"></script>
+    <script src="{{ STATIC_URL }}core/js/bootstrap-dialog.js"></script>
     <script type="text/javascript">
 
         leaflet_helper.proxy_path = {% url 'home' %} + "proxy/"; //TODO: Standardize expression of proxy locations
@@ -43,7 +44,22 @@
 
         aoi_feature_edit.init();
 
-
+        function deleteFeature(id, delete_url) {
+        	BootstrapDialog.confirm('Delete feature #' + id + '?',
+            	function(result) {
+                	if (result) {
+                    	$.ajax({
+                        	url: delete_url,
+                            type: 'GET',
+                            success: function(data) {
+                            	aoi_feature_edit.deleteFeature(data);
+                            },
+                            failure: function() { console.log('Failed to delete feature ' + id);}
+                        })
+                  	}
+             	}
+            );
+        }
 
 </script>
 

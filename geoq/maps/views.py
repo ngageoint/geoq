@@ -7,9 +7,9 @@ import json
 from django.contrib.auth.decorators import login_required
 from django.contrib.gis.geos import GEOSGeometry
 from django.core import serializers
-from django.core.exceptions import ValidationError
+from django.core.exceptions import ValidationError, ObjectDoesNotExist
 from django.core.urlresolvers import reverse
-from django.http import HttpResponse, HttpResponseRedirect
+from django.http import HttpResponse, HttpResponseRedirect, Http404
 from django.shortcuts import render_to_response
 from django.template import RequestContext
 from django.views.generic import ListView, View, DeleteView
@@ -70,6 +70,14 @@ class CreateFeatures(View):
         
         return HttpResponse(json.dumps(feature_list), mimetype="application/json")
 
+def feature_delete(request,pk):
+    try:
+        feature = Feature.objects.get(pk=pk)
+        feature.delete()
+    except ObjectDoesNotExist:
+        raise Http404
+
+    return HttpResponse( content=pk, status=200 )
 
 @login_required
 def create_update_map(request, pk=None):
