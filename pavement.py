@@ -36,9 +36,11 @@ def install_fixture(options):
     fixture = options.get('fixture')
     sh("python manage.py loaddata {fixture}".format(fixture=fixture))
 
+
 def _perms_check():
     sh("python manage.py check_permissions")  # Check userena perms
     sh("python manage.py clean_expired")  # Clean our expired userena perms
+
 
 @task
 def install_dev_fixtures():
@@ -57,6 +59,7 @@ def install_dev_fixtures():
     sh("python manage.py migrate --all")
     _perms_check()
 
+
 @task
 def sync():
     """ Runs the syncdb process with migrations """
@@ -67,6 +70,7 @@ def sync():
     sh("python manage.py loaddata {fixture}".format(fixture=fixture))
     _perms_check()
 
+
 @task
 def reset_dev_env():
     """ Resets your dev environment from scratch in the current branch you are in. """
@@ -76,6 +80,7 @@ def reset_dev_env():
     createdb()
     sync()
     install_dev_fixtures()
+
 
 @cmdopts([
     ('bind=', 'b', 'Bind server to provided IP address and port number.'),
@@ -130,11 +135,12 @@ def create_db_user():
     user = settings.DATABASES.get('default').get('USER')
     password = settings.DATABASES.get('default').get('PASSWORD')
 
-    sh('psql -d {database} -c {sql}'.format(database=database,
-                                            sql='"CREATE USER {user} WITH PASSWORD \'{password}\';"'.format(user=user,
-                                                                                                            password=password)))
+    sh('psql -d {database} -c {sql}'.format(
+        database=database,
+        sql='"CREATE USER {user} WITH PASSWORD \'{password}\';"'.format(user=user, password=password)))
 # Order matters for the list of apps, otherwise migrations reset may fail.
 _APPS = ['maps', 'accounts', 'badges', 'core']
+
 
 @task
 def reset_migrations():
@@ -143,6 +149,7 @@ def reset_migrations():
     """
     for app in _APPS:
         sh('python manage.py migrate %s 0001 --fake  --delete-ghost-migrations' % app)
+
 
 @task
 def reset_migrations_full():
