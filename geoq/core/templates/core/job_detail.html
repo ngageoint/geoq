@@ -7,9 +7,10 @@
     <script src="{{ STATIC_URL }}core/js/bootstrap-dialog.js"></script>
     <script type="text/javascript">
 
+        var aoi_extents;
         function mapInit(map, bounds) {
 
-            var aoi_extents = L.geoJson({{ object.geoJSON|default:'[]'|safe }}, {
+            aoi_extents = L.geoJson({{ object.geoJSON|default:'[]'|safe }}, {
                 style: function(feature) {
                     switch (feature.properties.status){
                         case 'Assigned': return leaflet_helper.styles.assigned;
@@ -20,7 +21,7 @@
                 },
                 onEachFeature: function(feature, layer) {
 
-                    var job_properties = feature.properties;
+                    job_properties = feature.properties;
                     var popupContent = _.template('{% filter escapejs %}{% include "core/job_detail_aoi_popup.html" %}{% endfilter %}', job_properties);
                     layer.bindPopup(popupContent);
 

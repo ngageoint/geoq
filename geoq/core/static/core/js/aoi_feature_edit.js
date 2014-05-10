@@ -150,6 +150,7 @@ aoi_feature_edit.map_init = function (map, bounds) {
 
 
     aoi_feature_edit.buildDrawingControl();
+    leaflet_helper.add_geocoder_control(map);
 
     map.on('draw:created', function (e) {
         var type = e.layerType;
