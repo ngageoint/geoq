@@ -20,8 +20,8 @@
                 },
                 onEachFeature: function(feature, layer) {
 
-                    job_properties = feature.properties;
-                    popupContent = _.template('{% filter escapejs %}{% include "core/job_detail_aoi_popup.html" %}{% endfilter %}', job_properties);
+                    var job_properties = feature.properties;
+                    var popupContent = _.template('{% filter escapejs %}{% include "core/job_detail_aoi_popup.html" %}{% endfilter %}', job_properties);
                     layer.bindPopup(popupContent);
 
                     layer.on({
