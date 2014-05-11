@@ -178,7 +178,8 @@ leaflet_helper.add_locator_control = function(map){
 
         //Build text output to show in info box
         var country = pt.country.name_long || pt.country.name || "";
-        var text = pt.usngCoords.usngString + "<br/>Lat: "+ pt.lat + "<br/>Lon:" + pt.lng + "<br/>" + country;
+        var text = pt.usngCoords.usngString + "<br/>Lat: "+ pt.lat + "<br/>Lon: " + pt.lng;
+        if (country) text += "<br/>" + country;
         if (pt.state && pt.state.name) text += "<br/>" + pt.state.name;
 
         $map_move_info_update.html(text);
