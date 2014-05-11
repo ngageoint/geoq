@@ -14,7 +14,12 @@
     <script src="{{ STATIC_URL }}core/js/js-inflate.js"></script>
     <script src="{{ STATIC_URL }}core/js/leafletcontrols/leaflet.simple_button.js"></script>
     <script src="{{ STATIC_URL }}core/js/leafletcontrols/leaflet.simple_button.left.js"></script>
+    <script src="{{ STATIC_URL }}core/js/leafletcontrols/leaflet.simple_button.bottomright.js"></script>
 	<script src="{{ STATIC_URL }}core/js/leaflet.OSMGeocoder/Control.OSMGeocoder.js"></script>
+
+	<script src="{{ STATIC_URL }}core/js/geojson-js-utils/geojson-utils.js"></script>
+	<script src="{{ STATIC_URL }}core/js/jsmaptools/jsmaptools.js"></script>
+	<script src="{{ STATIC_URL }}core/js/jsmaptools/jsmaptools_polygons.js"></script>
 
     <script type="text/javascript">
 
@@ -45,8 +50,6 @@
 
         aoi_feature_edit.init();
 
-
-
 </script>
 
     {% compress css %}
@@ -64,6 +67,20 @@
             width: 100%;
             cursor: crosshair;
         }
+        form.leaflet-control-geocoder-form {
+            margin: 0;
+        }
+        form.leaflet-control-geocoder-form > input[type="text"] {
+            margin-bottom: 0;
+        }
+
+        div.leaflet-control-button.leaflet-control > div > h4 {
+            background-color: white;
+            border: solid black 1px;
+            border-radius: 4px;
+            padding: 6px;
+        }
+
     </style>
 {% endblock %}
 

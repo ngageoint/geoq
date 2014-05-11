@@ -149,8 +149,9 @@ aoi_feature_edit.map_init = function (map, bounds) {
     aoi_feature_edit.drawnItems = drawnItems;
 
 
-    aoi_feature_edit.buildDrawingControl();
+    aoi_feature_edit.add_drawing_control();
     leaflet_helper.add_geocoder_control(map);
+    leaflet_helper.add_locator_control(map);
 
     map.on('draw:created', function (e) {
         var type = e.layerType;
@@ -181,7 +182,7 @@ aoi_feature_edit.map_init = function (map, bounds) {
     $(window).resize(lazyResize);
 };
 
-aoi_feature_edit.buildDrawingControl = function(feature_id){
+aoi_feature_edit.add_drawing_control = function(feature_id){
 
     if (aoi_feature_edit.drawcontrol) {
         //If a current control exists, delete it
@@ -249,7 +250,7 @@ aoi_feature_edit.addMapControlButtons = function (map) {
       'maxWidth': 60,  // number
       'doToggle': false,  // bool
       'toggleStatus': false  // bool
-    }
+    };
     var completeButton = new L.Control.Button(completeButtonOptions).addTo(map);
 
 
@@ -259,7 +260,7 @@ aoi_feature_edit.addMapControlButtons = function (map) {
       'maxWidth': 60,  // number
       'doToggle': false,  // bool
       'toggleStatus': false  // bool
-    }
+    };
     var featuresButton = new L.Control.Button(featuresButtonOptions).addTo(map);
 
 
@@ -273,13 +274,12 @@ aoi_feature_edit.addMapControlButtons = function (map) {
       'maxWidth': 60,  // number
       'doToggle': false,  // bool
       'toggleStatus': false  // bool
-    }
+    };
     var titleInfoButton = new L.Control.ButtonLeft(titleInfoOptions).addTo(map);
 
 
     //Quick work-around for moving header to top of the page
     var $c = $($(".leaflet-control-button.leaflet-control")[0]);
-    $c.css({backgroundColor:'white',border:'solid black 1px', borderRadius:4, padding:'0px 6px 0px 6px'});
     $c.prependTo($c.parent());
 
 
@@ -308,7 +308,7 @@ aoi_feature_edit.updateDrawOptions = function (i) {
     aoi_feature_edit.drawcontrol.setDrawingOptions({ polygon: { shapeOptions: aoi_feature_edit.feature_types[i].style },
         rectangle: { shapeOptions: aoi_feature_edit.feature_types[i].style}
     });
-    aoi_feature_edit.buildDrawingControl(i);
+    aoi_feature_edit.add_drawing_control(i);
 };
 
 aoi_feature_edit.getDrawConsole = function () {

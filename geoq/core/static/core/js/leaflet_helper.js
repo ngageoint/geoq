@@ -155,11 +155,36 @@ leaflet_helper.add_geocoder_control = function(map){
     };
     var osmGeocoder = new L.Control.OSMGeocoder(options);
     map.addControl(osmGeocoder);
-
-    $('form.leaflet-control-geocoder-form').css('margin','0px');
-
 };
 
+leaflet_helper.add_locator_control = function(map){
+
+    var $map_move_info_update = $('<h4>Location Info</h4>');
+
+    var infoButtonOptions = {
+        html: $map_move_info_update,
+        position: 'bottomright', /* The position of the control */
+        hideText: false,  // bool
+        maxWidth: 60,  // number
+        doToggle: false,  // bool
+        toggleStatus: false  // bool
+    };
+    var infoButton = new L.Control.ButtonBottomRight(infoButtonOptions).addTo(map);
+
+    map.on('mousemove click', function(e) {
+        var ll = e.latlng;
+
+        var pt = maptools.locationInfoString({lat:ll.lat, lng:ll.lng, separator:"<br/>", boldTitles:true});
+
+        //Build text output to show in info box
+        var country = pt.country.name_long || pt.country.name || "";
+        var text = pt.usngCoords.usngString + "<br/>Lat: "+ pt.lat + "<br/>Lon:" + pt.lng + "<br/>" + country;
+        if (pt.state && pt.state.name) text += "<br/>" + pt.state.name;
+
+        $map_move_info_update.html(text);
+    });
+
+};
 
 //TODO: Add MULTIPOLYGON support and commit back to https://gist.github.com/bmcbride/4248238
 leaflet_helper.toWKT = function (layer) {
