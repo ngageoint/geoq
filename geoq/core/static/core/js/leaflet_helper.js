@@ -163,13 +163,13 @@ leaflet_helper.add_locator_control = function(map){
 
     var infoButtonOptions = {
         html: $map_move_info_update,
-        position: 'bottomright', /* The position of the control */
+        position: 'topright', /* The position of the control */
         hideText: false,  // bool
         maxWidth: 60,  // number
         doToggle: false,  // bool
         toggleStatus: false  // bool
     };
-    var infoButton = new L.Control.ButtonBottomRight(infoButtonOptions).addTo(map);
+    var infoButton = new L.Control.Button(infoButtonOptions).addTo(map);
 
     map.on('mousemove click', function(e) {
         var ll = e.latlng;

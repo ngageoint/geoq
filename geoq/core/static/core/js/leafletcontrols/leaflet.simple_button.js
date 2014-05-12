@@ -20,6 +20,11 @@ L.Control.Button = L.Control.extend({
   },
   initialize: function (options) {
     this._button = {};
+    if (options.position) {
+        this.options.position = options.position;
+    } else {
+        this.options.position = 'bottomleft'
+    }
     this.setButton(options);
   },
 

@@ -247,6 +247,7 @@ aoi_feature_edit.addMapControlButtons = function (map) {
       'html': '<a id="aoi-submit" href="#" class="btn btn-success">Mark as Complete</a>',  // string
       'onClick': complete_button_onClick,  // callback function
       'hideText': false,  // bool
+      position: 'bottomright',
       'maxWidth': 60,  // number
       'doToggle': false,  // bool
       'toggleStatus': false  // bool
@@ -257,6 +258,7 @@ aoi_feature_edit.addMapControlButtons = function (map) {
     var featuresButtonOptions = {
       'html': '<select id="features"></select>',  // string
       'hideText': false,  // bool
+      position: 'bottomleft',
       'maxWidth': 60,  // number
       'doToggle': false,  // bool
       'toggleStatus': false  // bool
@@ -271,11 +273,12 @@ aoi_feature_edit.addMapControlButtons = function (map) {
     var titleInfoOptions = {
       'html': title,  // string
       'hideText': false,  // bool
+      position: 'topleft',
       'maxWidth': 60,  // number
       'doToggle': false,  // bool
       'toggleStatus': false  // bool
     };
-    var titleInfoButton = new L.Control.ButtonLeft(titleInfoOptions).addTo(map);
+    var titleInfoButton = new L.Control.Button(titleInfoOptions).addTo(map);
 
 
     //Quick work-around for moving header to top of the page
