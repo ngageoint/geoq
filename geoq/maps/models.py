@@ -10,6 +10,7 @@ from django.core.exceptions import ValidationError
 from django.utils.datastructures import SortedDict
 from django.core.urlresolvers import reverse
 from jsonfield import JSONField
+from datetime import datetime
 
 IMAGE_FORMATS = (
                 ('image/png', 'image/png'),
@@ -266,11 +267,14 @@ class Feature(models.Model):
         Returns geoJSON of the feature.
         Try to conform to https://github.com/mapbox/simplestyle-spec/tree/master/1.0.0
         """
-
+        
         geojson = SortedDict()
         geojson["type"] = "Feature"
         geojson["properties"] = dict(id=self.id,
-                                     template=self.template.id if hasattr(self.template, "id") else None
+                                     template=self.template.id if hasattr(self.template, "id") else None,
+                                     analyst=self.analyst.username,
+                                     created_at=datetime.strftime(self.created_at, '%Y-%m-%dT%H:%M:%S%Z'),
+                                     updated_at=datetime.strftime(self.updated_at, '%Y-%m-%dT%H:%M:%S%Z')
                                      )
         geojson["geometry"] = json.loads(self.the_geom.json)
 
