@@ -18,7 +18,7 @@ class GridTooLargeError(Exception):
         return repr(self.value)
 
 
-class ProgramError(Exception):
+class ProgramException(Exception):
     # Exception raised when an internal error occurs
     def __init__(self,value):
         self.value = value

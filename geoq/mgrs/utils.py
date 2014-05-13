@@ -5,7 +5,10 @@
 import subprocess
 # from django.contrib.gis.geos import *
 from geojson import MultiPolygon, Feature, FeatureCollection
-from exceptions import ProgramError
+from exceptions import ProgramException
+
+import logging
+logger = logging.getLogger(__name__)
 
 class Grid:
 
@@ -43,7 +46,7 @@ class Grid:
             if errorCode and len(errorCode):
                 logger.error(errorCode)
 
-            raise ProgramError('Unable to execute GeoConvert program')
+            raise ProgramException('Unable to execute GeoConvert program')
 
 
     def get_polygon(self,mgrs_list):
@@ -57,7 +60,7 @@ class Grid:
             if errorCode and len(errorCode):
                 logger.error(errorCode)
 
-            raise ProgramError('Error executing GeoConvert program')
+            raise ProgramException('Error executing GeoConvert program')
 
         for i,val in enumerate(result):
             result[i] = tuple(float(x) for x in val.split())
