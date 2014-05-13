@@ -5,6 +5,7 @@
 import subprocess
 #from geojson import MultiPolygon, Feature, FeatureCollection
 from django.contrib.gis.geos import *
+from exceptions import ProgramError
 
 class Grid:
 
@@ -32,15 +33,31 @@ class Grid:
 
     # given a lat/lon combination, determine its 1km MGRS grid
     def get_mgrs(self,lat,lon):
-        input = "%s,%s" % (lon, lat)
-        process = subprocess.Popen(["GeoConvert","-w","-m","-p","-3","--input-string",input],stdout=subprocess.PIPE)
-        return process.communicate()[0].rstrip()
+        try:
+            input = "%s,%s" % (lon, lat)
+            process = subprocess.Popen(["GeoConvert","-w","-m","-p","-3","--input-string",input],stdout=subprocess.PIPE)
+            return process.communicate()[0].rstrip()
+        except Exception:
+            import traceback
+            errorCode = 'Program Error: ' + traceback.format_exc()
+            if errorCode and len(errorCode):
+                logger.error(errorCode)
+
+            raise ProgramError('Unable to execute GeoConvert program')
 
 
     def get_polygon(self,mgrs_list):
-        m_string = ';'.join(mgrs_list)
-        process = subprocess.Popen(["GeoConvert","-w","-g","-p","0","--input-string",m_string],stdout=subprocess.PIPE)
-        result = process.communicate()[0].rstrip().split('\n')
+        try:
+            m_string = ';'.join(mgrs_list)
+            process = subprocess.Popen(["GeoConvert","-w","-g","-p","0","--input-string",m_string],stdout=subprocess.PIPE)
+            result = process.communicate()[0].rstrip().split('\n')
+        except Exception:
+            import traceback
+            errorCode = 'Program Error: ' + traceback.format_exc()
+            if errorCode and len(errorCode):
+                logger.error(errorCode)
+
+            raise ProgramError('Error executing GeoConvert program')
 
         for i,val in enumerate(result):
             result[i] = tuple(float(x) for x in val.split())
