@@ -4,6 +4,7 @@
 //requires leaflet_helper.js, underscore, jquery, leaflet, log4javascript
 
 var aoi_feature_edit = {};
+aoi_feature_edit.layers = {};
 
 aoi_feature_edit.options = {
     drawControlLocation: "topleft"
@@ -68,6 +69,8 @@ aoi_feature_edit.map_init = function (map, bounds) {
         baseLayers["OpenStreetMap"] = l;
     });
 
+    aoi_feature_edit.layers.base = [];
+    aoi_feature_edit.layers.overlays = [];
     if (custom_map.hasOwnProperty("layers")) {
         _.each(custom_map.layers, function (l) {
             var n = leaflet_helper.layer_conversion(l);
@@ -75,9 +78,11 @@ aoi_feature_edit.map_init = function (map, bounds) {
                 if (l.isBaseLayer) {
                     baseLayers[l.name] = n;
                     log.info ("Added " + l.name + " as a base layer.")
+                    aoi_feature_edit.layers.base.push(l);
                 } else {
                     layerSwitcher[l.name] = n;
                     log.info ("Added " + l.name + " as a layer.")
+                    aoi_feature_edit.layers.overlays.push(l);
                 }
             }
         });
@@ -96,6 +101,7 @@ aoi_feature_edit.map_init = function (map, bounds) {
         });
     aoi_extents.addTo(aoi_feature_edit.map);
 
+    aoi_feature_edit.layers.extent = aoi_extents;
 
     //Build a reset button that zooms to the extents of the AOI
     function locateBounds () {
@@ -122,23 +128,7 @@ aoi_feature_edit.map_init = function (map, bounds) {
         layercontrol.addOverlay(aoi_feature_edit.featureLayers[tnum], aoi_feature_edit.feature_types[tnum].name);
     });
 
-    // add one for points
-//    var pointcollection = _.filter(aoi_feature_edit.job_features_geojson.features, function(feature) {
-//         return feature.geometry.type == "Point";
-//    });
-//
-//    if ( pointcollection.length > 0 ) {
-//        var fid = aoi_feature_edit.featureLayers.length + 1;
-//        var featureCollection = aoi_feature_edit.createFeatureCollection(fid);
-//
-//        for ( var i = 0; i < pointcollection.length; i++ ) {
-//            featureCollection.features.push(pointcollection[i]);
-//        }
-//
-//        aoi_feature_edit.featureLayers[fid] = L.geoJson(featureCollection);
-//        aoi_feature_edit.featureLayers[fid].addTo(aoi_feature_edit.map);
-//        layercontrol.addOverlay(aoi_feature_edit.featureLayers[fid], "Points");
-//    }
+    aoi_feature_edit.layers.features = aoi_feature_edit.featureLayers;
 
     setTimeout(function () {
         aoi_feature_edit.map.fitBounds(aoi_extents.getBounds());
@@ -258,7 +248,7 @@ aoi_feature_edit.addMapControlButtons = function (map) {
     var featuresButtonOptions = {
       'html': '<select id="features"></select>',  // string
       'hideText': false,  // bool
-      position: 'bottomleft',
+      position: 'topleft',
       'maxWidth': 60,  // number
       'doToggle': false,  // bool
       'toggleStatus': false  // bool
@@ -281,9 +271,15 @@ aoi_feature_edit.addMapControlButtons = function (map) {
     var titleInfoButton = new L.Control.Button(titleInfoOptions).addTo(map);
 
 
-    //Quick work-around for moving header to top of the page
-    var $c = $($(".leaflet-control-button.leaflet-control")[0]);
+    aoi_feature_edit.addLayerControl(map);
+
+    //TODO: Fix to make controls positioning more robust (and force to move to top when created)
+    // Quick work-around for moving header to top of the page
+    var $controls = $(".leaflet-control-button.leaflet-control");
+    var $c = $($controls[0]);
     $c.prependTo($c.parent());
+    var $c2 = $($controls[1]);
+    $c2.prependTo($c2.parent());
 
 
     var feature_type_div = "features";
@@ -301,6 +297,108 @@ aoi_feature_edit.addMapControlButtons = function (map) {
         aoi_feature_edit.updateDrawOptions(e.val);
         //aoi_feature_edit.filterDrawConsole();
     });
+
+
+};
+
+
+aoi_feature_edit.layerDataList = function(){
+
+    var treeData = [
+        {title: "Base Maps", tooltip: "Base Maps that are underneath layers", folder:true, key:"folder1", children:[] },
+        {title: "Overlay Layers", selected:true, folder:true, key:"folder2", children:[] },
+        {title: "Features", folder: true, key:"folder3", children:[]}
+    ];
+
+    //TODO: This is only half implemented to show all layers, finish it
+    _.each(aoi_feature_edit.layers.base,function(layer,i){
+        var layer_obj = {title: layer.name, key: 'folder1.'+i};
+        treeData[0].children.push(layer_obj);
+    });
+
+    _.each(aoi_feature_edit.layers.overlays,function(layer,i){
+        var layer_obj = {title: layer.name, key: 'folder2.'+i};
+        treeData[1].children.push(layer_obj);
+    });
+
+// Format:
+//          children: [
+//            {title: "Sub-item 3.1",
+//              children: [
+//                {title: "Sub-item 3.1.1", key: "id3.1.1" },
+//                {title: "Sub-item 3.1.2", key: "id3.1.2" }
+//              ]
+//            },
+//            {title: "Sub-item 3.2",
+//              children: [
+//                {title: "Sub-item 3.2.1", key: "id3.2.1" },
+//                {title: "Sub-item 3.2.2", key: "id3.2.2" }
+//              ]
+//            }
+//          ]
+//        }
+//    ];
+    return treeData;
+
+};
+aoi_feature_edit.addLayerControl = function (map){
+
+    //Hide the existing layer control
+    $('.leaflet-control-layers.leaflet-control').css({display: 'none'});
+
+    //Build the tree
+    var $tree = $("<div>")
+        .attr({name:'layers_tree_control'})
+        .css({maxHeight:'300px'});
+
+    var layersOptions = {
+        html: $tree,  // string
+        position: 'bottomleft'
+    };
+    var layersButton = new L.Control.Button(layersOptions).addTo(map);
+
+
+    var treeData = aoi_feature_edit.layerDataList();
+
+    $tree.fancytree({
+        checkbox: true,
+        selectMode: 1,
+        source: treeData,
+        activate: function(event, data){
+            //Click on title
+            var node = data.node;
+            log.info("activate: event=", event, ", data=", data);
+            if(!$.isEmptyObject(node.data)){
+                log.info("custom node data: " + JSON.stringify(node.data));
+            }
+        },
+		deactivate: function(event, data) {
+			log.info("-");
+		},
+        select: function(event, data) {
+            // Display list of selected nodes
+            var s = data.tree.getSelectedNodes().join(", ");
+            log.info(s);
+          },
+
+		focus: function(event, data) {
+			log.info(data.node.title);
+		},
+		blur: function(event, data) {
+			log.info("-");
+		}
+	});
+
+//      var rootNode = $tree.fancytree("getRootNode");
+//      var childNode = rootNode.addChildren({
+//        title: "Programatically addded nodes",
+//        tooltip: "This folder and all child nodes were added programmatically.",
+//        folder: true
+//      });
+//      childNode.addChildren({
+//        title: "Document using a custom icon",
+//        icon: "customdoc1.gif"
+//      });
 
 
 };

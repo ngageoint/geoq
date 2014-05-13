@@ -1,4 +1,6 @@
 L.Control.Button = L.Control.extend({
+// Requires jQuery for some functions
+//
 //  USAGE:
 //    var myButtonOptions = {
 //      'text': 'MyButton',  // string
@@ -33,7 +35,7 @@ L.Control.Button = L.Control.extend({
     var container = L.DomUtil.create('div', 'leaflet-control-button');
 	
     this._container = container;
-    
+
     this._update();
     return this._container;
   },
