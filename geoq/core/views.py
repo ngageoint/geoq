@@ -22,7 +22,7 @@ from models import Project, Job, AOI
 from geoq.maps.models import Layer, Map
 
 from geoq.mgrs.utils import Grid, GridException
-from geoq.mgrs import utils
+from geoq.core.utils import send_aoi_create_event
 from geoq.mgrs.exceptions import ProgramException
 
 
@@ -240,7 +240,7 @@ class ChangeAOIStatus(View):
             aoi.save()
 
             # send aoi completion event for badging
-            utils.send_aoi_create_event(request.user, aoi.id, aoi.features.all().count())
+            send_aoi_create_event(request.user, aoi.id, aoi.features.all().count())
             return HttpResponse(json.dumps({aoi.id: aoi.status}), mimetype="application/json")
         else:
             error = dict(error=403,
