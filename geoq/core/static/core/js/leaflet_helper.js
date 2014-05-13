@@ -137,6 +137,56 @@ leaflet_helper.add_dynamic_capimage_data = function (result) {
     return new L.geoJson(jsonObjects, {onEachFeature: onEachFeature});
 };
 
+leaflet_helper.add_geocoder_control = function(map){
+
+    var options = {
+        collapsed: false, /* Whether its collapsed or not */
+        position: 'bottomright', /* The position of the control */
+        text: 'Locate', /* The text of the submit button */
+        bounds: null, /* a L.LatLngBounds object to limit the results to */
+        email: null, /* an email string with a contact to provide to Nominatim. Useful if you are doing lots of queries */
+        callback: function (results) {
+                var bbox = results[0].boundingbox,
+                    first = new L.LatLng(bbox[0], bbox[2]),
+                    second = new L.LatLng(bbox[1], bbox[3]),
+                    bounds = new L.LatLngBounds([first, second]);
+                this._map.fitBounds(bounds);
+        }
+    };
+    var osmGeocoder = new L.Control.OSMGeocoder(options);
+    map.addControl(osmGeocoder);
+};
+
+leaflet_helper.add_locator_control = function(map){
+
+    var $map_move_info_update = $('<h4>Location Info</h4>');
+
+    var infoButtonOptions = {
+        html: $map_move_info_update,
+        position: 'topright', /* The position of the control */
+        hideText: false,  // bool
+        maxWidth: 60,  // number
+        doToggle: false,  // bool
+        toggleStatus: false  // bool
+    };
+    var infoButton = new L.Control.Button(infoButtonOptions).addTo(map);
+
+    map.on('mousemove click', function(e) {
+        var ll = e.latlng;
+
+        var pt = maptools.locationInfoString({lat:ll.lat, lng:ll.lng, separator:"<br/>", boldTitles:true});
+
+        //Build text output to show in info box
+        var country = pt.country.name_long || pt.country.name || "";
+        var text = pt.usngCoords.usngString + "<br/>Lat: "+ pt.lat + "<br/>Lon: " + pt.lng;
+        if (country) text += "<br/>" + country;
+        if (pt.state && pt.state.name) text += "<br/>" + pt.state.name;
+
+        $map_move_info_update.html(text);
+    });
+
+};
+
 //TODO: Add MULTIPOLYGON support and commit back to https://gist.github.com/bmcbride/4248238
 leaflet_helper.toWKT = function (layer) {
     var lng, lat, coords = [];

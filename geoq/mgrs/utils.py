@@ -3,8 +3,8 @@
 # is subject to the Rights in Technical Data-Noncommercial Items clause at DFARS 252.227-7013 (FEB 2012)
 
 import subprocess
-#from geojson import MultiPolygon, Feature, FeatureCollection
-from django.contrib.gis.geos import *
+# from django.contrib.gis.geos import *
+from geojson import MultiPolygon, Feature, FeatureCollection
 from exceptions import ProgramError
 
 class Grid:

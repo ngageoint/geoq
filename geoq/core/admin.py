@@ -19,7 +19,7 @@ class AOIAdmin(ObjectAdmin):
     filter_horizontal = ("reviewers",)
     save_on_top = True
     actions = ['rename_aois']
-    search_fields = ['name','id']
+    search_fields = ['name', 'id']
 
     class NameInputForm(forms.Form):
         _selected_action = forms.CharField(widget=forms.MultipleHiddenInput)

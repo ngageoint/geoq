@@ -13,6 +13,12 @@
     <script src="{{ STATIC_URL }}core/js/js-unzip.js"></script>
     <script src="{{ STATIC_URL }}core/js/js-inflate.js"></script>
     <script src="{{ STATIC_URL }}core/js/leafletcontrols/leaflet.simple_button.js"></script>
+	<script src="{{ STATIC_URL }}core/js/leaflet.OSMGeocoder/Control.OSMGeocoder.js"></script>
+
+	<script src="{{ STATIC_URL }}core/js/geojson-js-utils/geojson-utils.js"></script>
+	<script src="{{ STATIC_URL }}core/js/jsmaptools/jsmaptools.js"></script>
+	<script src="{{ STATIC_URL }}core/js/jsmaptools/jsmaptools_polygons.js"></script>
+
     <script src="{{ STATIC_URL }}core/js/leafletcontrols/leaflet.simple_button.left.js"></script>
     <script src="{{ STATIC_URL }}core/js/bootstrap-dialog.js"></script>
     <script type="text/javascript">
@@ -64,33 +70,38 @@
 </script>
 
     {% compress css %}
-    {% leaflet_css plugins="draw"%}
-    {% import_django_select2_css %}
-{% endcompress %}
+        {% leaflet_css plugins="draw"%}
+        {% import_django_select2_css %}
+	<link rel="stylesheet" href="{{ STATIC_URL }}core/js/leaflet.OSMGeocoder/Control.OSMGeocoder.css" />
+
+    {% endcompress %}
+    <style type="text/css">
+        #map {
+            position: absolute;
+            float: left;
+            top: 40px;
+            height: 94%;
+            width: 100%;
+            cursor: crosshair;
+        }
+        form.leaflet-control-geocoder-form {
+            margin: 0;
+        }
+        form.leaflet-control-geocoder-form > input[type="text"] {
+            margin-bottom: 0;
+        }
+
+        div.leaflet-control-button.leaflet-control > div > h4 {
+            background-color: white;
+            border: solid black 1px;
+            border-radius: 4px;
+            padding: 6px;
+        }
+
+    </style>
 {% endblock %}
 
 {% block container %}
 <div id="map" >{% leaflet_map "map" callback="aoi_feature_edit.map_init"%}</div>
-
-<!--
-        <div class="container-fluid">
-            <div class="span12">
-                <h4><a href="{{ object.job.get_absolute_url }}">{{ object.job.name }}</a> > AOI #{{ object.id }}</h4>
-                <div id="map" class="thumbnail" style="height: 450px; width: 100%;">{% leaflet_map "map" callback="aoi_feature_edit.map_init"%}</div>
-            </div>
-            <div class="span3">
-                <h4><a href="{{ object.job.get_absolute_url }}">{{ object.job.name }}</a> > AOI #{{ object.id }}</h4>
-                <p class="aoi-status muted">{% widthratio object.job.complete.count 100 100%}% Complete</p>
-                <br/>
-                <h5>{{ object.description }}</h5>
-                <select id="features">
-
-                </select>
-                <br/><br/>
-
-                <a id="aoi-submit" href="#" class="btn btn-success">Complete</a>
-            </div>
-        </div>
--->
 {% endblock %}
 

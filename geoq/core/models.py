@@ -3,7 +3,6 @@
 # is subject to the Rights in Technical Data-Noncommercial Items clause at DFARS 252.227-7013 (FEB 2012)
 
 import json
-import sys
 
 from django.contrib.auth.models import User
 from django.contrib.gis.db import models
@@ -54,9 +53,11 @@ class Project(GeoQBase):
 
     project_type = models.CharField(max_length=50, choices=PROJECT_TYPES)
     private = models.BooleanField(default=False, help_text='Make this project available to all users.')
-    project_admins = models.ManyToManyField(User, blank=True, null=True,
+    project_admins = models.ManyToManyField(
+        User, blank=True, null=True,
         related_name="project_admins", help_text='User that has admin rights to project.')
-    contributors = models.ManyToManyField(User, blank=True, null=True,
+    contributors = models.ManyToManyField(
+        User, blank=True, null=True,
         related_name="contributors", help_text='User that will be able to take on jobs.')
 
     @property
@@ -209,13 +210,18 @@ class AOI(GeoQBase):
         Returns geoJSON of the feature.
         """
 
-        if (self.id == None):
+        if self.id is None:
             self.id = 1
 
         geojson = SortedDict()
         geojson["type"] = "Feature"
-        geojson["properties"] = dict(id=self.id, status=self.status, analyst=(self.analyst.username if self.analyst is not None else 'Unassigned'), \
-           priority=self.priority, absolute_url=reverse('aoi-work', args=[self.id]), delete_url=reverse('aoi-deleter', args=[self.id]))
+        geojson["properties"] = dict(
+            id=self.id,
+            status=self.status,
+            analyst=(self.analyst.username if self.analyst is not None else 'Unassigned'),
+            priority=self.priority,
+            absolute_url=reverse('aoi-work', args=[self.id]),
+            delete_url=reverse('aoi-deleter', args=[self.id]))
         geojson["geometry"] = json.loads(self.polygon.json)
 
         return json.dumps(geojson)

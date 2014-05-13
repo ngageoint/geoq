@@ -7,6 +7,7 @@
     <script src="{{ STATIC_URL }}core/js/bootstrap-dialog.js"></script>
     <script type="text/javascript">
 
+        var aoi_extents;
         function mapInit(map, bounds) {
 
             aoi_extents = L.geoJson({{ object.geoJSON|default:'[]'|safe }}, {
@@ -21,7 +22,7 @@
                 onEachFeature: function(feature, layer) {
 
                     job_properties = feature.properties;
-                    popupContent = _.template('{% filter escapejs %}{% include "core/job_detail_aoi_popup.html" %}{% endfilter %}', job_properties);
+                    var popupContent = _.template('{% filter escapejs %}{% include "core/job_detail_aoi_popup.html" %}{% endfilter %}', job_properties);
                     layer.bindPopup(popupContent);
 
                     layer.on({
@@ -32,7 +33,15 @@
             }).addTo(map);
 
             // Map doesn't update without this delay.
-            setTimeout(function(){map.fitBounds(aoi_extents.getBounds())}, 1);
+            setTimeout(function(){
+                try {
+                    //AOI is sometimes getting no bounds data, which causes error
+                    var test = aoi_extents.getBounds().getCenter();
+                    map.fitBounds(aoi_extents.getBounds());
+                } catch(ex){
+                    log.error("aoi_extents not being passed in valid bounds");
+                }
+            }, 1);
 
 
             var drawnItems = new L.FeatureGroup();
