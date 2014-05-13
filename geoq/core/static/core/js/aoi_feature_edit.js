@@ -11,13 +11,37 @@ aoi_feature_edit.options = {
     drawControlLocation: "topleft"
 };
 
+aoi_feature_edit.all_polygons = [];
+aoi_feature_edit.all_markers = [];
+
+aoi_feature_edit.MapMarker = L.Icon.extend({
+    options: {
+        id: 0,
+        shadowUrl: null,
+        iconAnchor: new L.Point(12, 41),
+        iconSize: new L.Point(25, 41),
+        repeatMode: true,
+        text: 'Draw a marker',
+        iconUrl: null
+    }
+});
+
 aoi_feature_edit.init = function () {
 
     aoi_feature_edit.drawcontrol = null;
     aoi_feature_edit.featureLayers = [];
-    aoi_feature_edit.icons = [];
+    aoi_feature_edit.icons = {};
+
 
     _.each(aoi_feature_edit.feature_types, function (ftype) {
+        // if this is a point, create icon for it first
+        if (ftype.type == 'Point') {
+            aoi_feature_edit.icons[ftype.id] = {
+                iconUrl: ftype.style.iconUrl,
+                text: ftype.name
+            };
+        }
+
         var featureLayer = L.geoJson(null,{
             style: function (ftype) {
                 var feature_type = aoi_feature_edit.feature_types[ftype.properties.template];
@@ -40,6 +64,11 @@ aoi_feature_edit.init = function () {
                 	popupContent += '<br/><a onclick="javascript:deleteFeature(\''+feature.properties.id+'\', \'/geoq/features/delete/'+feature.properties.id+'\');">Delete Feature</a>';
                 	layer.bindPopup(popupContent);
                 }
+            },
+            pointToLayer: function( feature, latlng) {
+                return new L.Marker(latlng, {
+                    icon: new aoi_feature_edit.MapMarker(aoi_feature_edit.icons[feature.properties.template])
+                });
             }
         });
         aoi_feature_edit.featureLayers[ftype.id] = featureLayer;
@@ -62,6 +91,10 @@ aoi_feature_edit.map_resize = function(){
 aoi_feature_edit.map_init = function (map, bounds) {
     var custom_map = aoi_feature_edit.aoi_map_json;
     aoi_feature_edit.map = map;
+
+    // SRJ: move zoom control
+    aoi_feature_edit.map.removeControl(aoi_feature_edit.map.zoomControl);
+    aoi_feature_edit.map.addControl(L.control.zoom({position:'bottomright'}));
 
     var baseLayers = {};
     var layerSwitcher = {};
@@ -106,9 +139,14 @@ aoi_feature_edit.map_init = function (map, bounds) {
     }
     (new L.Control.ResetView(locateBounds)).addTo(aoi_feature_edit.map);
 
-
     // for each feature template, add features to map and layer control
     _.each(aoi_feature_edit.feature_types, function (ftype) {
+
+        if (ftype.type == 'Polygon') {
+            aoi_feature_edit.all_polygons.push(aoi_feature_edit.createPolygonOptions(ftype));
+        } else if (ftype.type == 'Point') {
+            aoi_feature_edit.all_markers.push(aoi_feature_edit.createPointOptions(ftype));
+        }
         var tnum = ftype.id;
         var featuretype = ftype.type;
         var featureCollection = aoi_feature_edit.createFeatureCollection(tnum);
@@ -147,7 +185,12 @@ aoi_feature_edit.map_init = function (map, bounds) {
         aoi_feature_edit.map.fitBounds(aoi_extents.getBounds());
     }, 1);
 
-    aoi_feature_edit.buildDrawingControl();
+
+    var drawnItems = new L.FeatureGroup();
+    aoi_feature_edit.map.addLayer(drawnItems);
+    aoi_feature_edit.drawnItems = drawnItems;
+
+    aoi_feature_edit.buildDrawingControl(drawnItems);
 
     function onSuccess(data, textStatus, jqXHR) {
     	if (data[0] && data[0].geojson) {
@@ -182,6 +225,12 @@ aoi_feature_edit.map_init = function (map, bounds) {
         });
 
         //layer.bindPopup('Feature Created!');
+        drawnItems.addLayer(layer);
+    });
+
+    map.on('draw:drawstart', function (e) {
+        var id = e.layerType.slice(-1);
+        aoi_feature_edit.current_feature_type_id = parseInt(id);
     });
 
     //Resize the map
@@ -191,7 +240,7 @@ aoi_feature_edit.map_init = function (map, bounds) {
     $(window).resize(lazyResize);
 };
 
-aoi_feature_edit.buildDrawingControl = function(feature_id){
+aoi_feature_edit.buildDrawingControl = function(drawnItems){
 
     if (aoi_feature_edit.drawcontrol) {
         //If a current control exists, delete it
@@ -199,8 +248,8 @@ aoi_feature_edit.buildDrawingControl = function(feature_id){
     }
 
     //Find the Feature ID from the drop-down box (or use the one passed in)
-    feature_id = feature_id || aoi_feature_edit.current_feature_type_id || 1;
-    var feature = aoi_feature_edit.get_feature_type(feature_id);
+    //feature_id = feature_id || aoi_feature_edit.current_feature_type_id || 1;
+    //var feature = aoi_feature_edit.get_feature_type(feature_id);
 
     //Start building the draw options object
     var drawOptions = { draw:{position: aoi_feature_edit.options.drawControlLocation} };
@@ -208,33 +257,27 @@ aoi_feature_edit.buildDrawingControl = function(feature_id){
     //TODO: Add editing back in - currently is not catching edits, as features are saved
     // to server as soon as they are entered
 
-    if (feature.type == "Polygon") {
-        drawOptions.draw.polygon = {
-            title: 'Add a feature Polygon: '+ feature.name || "Polygon",
-            allowIntersection: false,
-            drawError: {
-                color: '#b00b00',
-                timeout: 1000
-            },
-            shapeOptions: feature.style || {borderColor: "black", backgroundColor:"brown"},
-            showArea: true
-        };
-        drawOptions.draw.polyline = false;
-        drawOptions.draw.rectangle = false;
-        drawOptions.draw.circle = false;
-        drawOptions.draw.marker = false;
-    } else {
-        drawOptions.draw.marker = {
-            title: 'Add a feature point: ' + feature.name || "Point"
-        };
-        drawOptions.draw.polyline = false;
-        drawOptions.draw.rectangle = false;
-        drawOptions.draw.circle = false;
-        drawOptions.draw.polygon = false;
-    }
+    var drawControl = new L.Control.Draw({
+        draw: {
+            position: aoi_feature_edit.options.drawControlLocation,
+            polyline: false,
+            circle: false,
+            rectangle: false,
+
+            markers: aoi_feature_edit.all_markers,
+            polygons: aoi_feature_edit.all_polygons
+            // rectangle: {
+            //    shapeOptions: aoi_feature_edit.feature_types[aoi_feature_edit.current_feature_type_id].style
+            //}
+        },
+        edit: {
+            featureGroup: drawnItems
+        }
+    });
+
 
     //Create the drawing objects control
-    var drawControl = new L.Control.Draw(drawOptions);
+    //var drawControl = new L.Control.Draw(drawOptions);
     aoi_feature_edit.map.addControl(drawControl);
     aoi_feature_edit.drawcontrol = drawControl;
 
@@ -263,14 +306,14 @@ aoi_feature_edit.addMapControlButtons = function (map) {
     var completeButton = new L.Control.Button(completeButtonOptions).addTo(map);
 
 
-    var featuresButtonOptions = {
-      'html': '<select id="features"></select>',  // string
-      'hideText': false,  // bool
-      'maxWidth': 60,  // number
-      'doToggle': false,  // bool
-      'toggleStatus': false  // bool
-    }
-    var featuresButton = new L.Control.Button(featuresButtonOptions).addTo(map);
+//    var featuresButtonOptions = {
+//      'html': '<select id="features"></select>',  // string
+//      'hideText': false,  // bool
+//      'maxWidth': 60,  // number
+//      'doToggle': false,  // bool
+//      'toggleStatus': false  // bool
+//    }
+//    var featuresButton = new L.Control.Button(featuresButtonOptions).addTo(map);
 
 
     var title = "<h4><a href='"+aoi_feature_edit.job_absolute_url+"'>"+aoi_feature_edit.job_name+"</a> > AOI #"+aoi_feature_edit.aoi_id+" > ";
@@ -293,33 +336,33 @@ aoi_feature_edit.addMapControlButtons = function (map) {
     $c.prependTo($c.parent());
 
 
-    var feature_type_div = "features";
-    _.each(aoi_feature_edit.feature_types, function(feature_type){
-        aoi_feature_edit.addOptions(feature_type, feature_type_div);
-    });
-
-    var $features = $("#features");
-    $features.select2();
-    aoi_feature_edit.current_feature_type_id = parseInt($features.val());
-
-    $features.on("change", function(e) {
-        log.info("Selected feature type: " + e.val + ".");
-        aoi_feature_edit.current_feature_type_id = e.val;
-        aoi_feature_edit.updateDrawOptions(e.val);
-        //aoi_feature_edit.filterDrawConsole();
-    });
+//    var feature_type_div = "features";
+//    _.each(aoi_feature_edit.feature_types, function(feature_type){
+//        aoi_feature_edit.addOptions(feature_type, feature_type_div);
+//    });
+//
+//    var $features = $("#features");
+//    $features.select2();
+//    aoi_feature_edit.current_feature_type_id = parseInt($features.val());
+//
+//    $features.on("change", function(e) {
+//        log.info("Selected feature type: " + e.val + ".");
+//        aoi_feature_edit.current_feature_type_id = e.val;
+//        aoi_feature_edit.updateDrawOptions(e.val);
+//        //aoi_feature_edit.filterDrawConsole();
+//    });
 
 
 };
 
 
 // Changes current features to match the selected style.
-aoi_feature_edit.updateDrawOptions = function (i) {
-    aoi_feature_edit.drawcontrol.setDrawingOptions({ polygon: { shapeOptions: aoi_feature_edit.feature_types[i].style },
-        rectangle: { shapeOptions: aoi_feature_edit.feature_types[i].style}
-    });
-    aoi_feature_edit.buildDrawingControl(i);
-};
+//aoi_feature_edit.updateDrawOptions = function (i) {
+//    aoi_feature_edit.drawcontrol.setDrawingOptions({ polygon: { shapeOptions: aoi_feature_edit.feature_types[i].style },
+//        rectangle: { shapeOptions: aoi_feature_edit.feature_types[i].style}
+//    });
+//    aoi_feature_edit.buildDrawingControl(i);
+//};
 
 aoi_feature_edit.getDrawConsole = function () {
 
@@ -371,4 +414,36 @@ aoi_feature_edit.deleteFeature = function (id) {
 		feature.layerGroup.removeLayer(feature.layer);
 		delete feature_hash[id];
 	}
+};
+
+aoi_feature_edit.createPolygonOptions = function(opts) {
+    var options = {};
+
+    if (opts.name) {
+        options.title = opts.name;
+    }
+
+    options.allowIntersection = false;
+    options.drawError = { color: '#b00b00', timeout: 1000};
+
+    options.shapeOptions = opts.style || {borderColor: "black", backgroundColor:"brown"},
+    options.showArea = true;
+    options.id = opts.id;
+
+    return options;
+};
+
+aoi_feature_edit.createPointOptions = function(opts) {
+    var options = {};
+
+    var marker = new aoi_feature_edit.MapMarker({
+        iconUrl: opts.style.iconUrl,
+        text: opts.name
+    });
+
+    options.icon = marker;
+    options.repeatMode = true;
+    options.id = opts.id;
+
+    return options;
 };
