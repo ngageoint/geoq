@@ -19,9 +19,11 @@
 	<script src="{{ STATIC_URL }}core/js/jsmaptools/jsmaptools.js"></script>
 	<script src="{{ STATIC_URL }}core/js/jsmaptools/jsmaptools_polygons.js"></script>
 
+    <script src="{{ STATIC_URL }}core/js/leafletcontrols/leaflet.simple_button.left.js"></script>
+    <script src="{{ STATIC_URL }}core/js/bootstrap-dialog.js"></script>
     <script type="text/javascript">
 
-        leaflet_helper.proxy_path = {% url 'home' %} + "proxy/"; //TODO: Standardize expression of proxy locations
+        leaflet_helper.proxy_path = "{% url 'home' %}" + "proxy/"; //TODO: Standardize expression of proxy locations
 
         var feature_types = {};
         var geometry_types = [];
@@ -47,6 +49,23 @@
         aoi_feature_edit.description = "{{ object.description |safe}}";
 
         aoi_feature_edit.init();
+
+        function deleteFeature(id, delete_url) {
+        	BootstrapDialog.confirm('Delete feature #' + id + '?',
+            	function(result) {
+                	if (result) {
+                    	$.ajax({
+                        	url: delete_url,
+                            type: 'GET',
+                            success: function(data) {
+                            	aoi_feature_edit.deleteFeature(data);
+                            },
+                            failure: function() { console.log('Failed to delete feature ' + id);}
+                        })
+                  	}
+             	}
+            );
+        }
 
 </script>
 

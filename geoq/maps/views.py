@@ -6,9 +6,10 @@ import json
 
 from django.contrib.auth.decorators import login_required
 from django.contrib.gis.geos import GEOSGeometry
-from django.core.exceptions import ValidationError
+from django.core import serializers
+from django.core.exceptions import ValidationError, ObjectDoesNotExist
 from django.core.urlresolvers import reverse
-from django.http import HttpResponse, HttpResponseRedirect
+from django.http import HttpResponse, HttpResponseRedirect, Http404
 from django.shortcuts import render_to_response
 from django.template import RequestContext
 from django.views.generic import ListView, View, DeleteView
@@ -56,14 +57,27 @@ class CreateFeatures(View):
         attrs['the_geom'] = GEOSGeometry(json.dumps(geometry))
 
         try:
-            response = Feature(**attrs)
-            response.full_clean()
-            response.save()
+            feature = Feature(**attrs)
+            feature.full_clean()
+            feature.save()
         except ValidationError as e:
             return HttpResponse(content=json.dumps(dict(errors=e.messages)), mimetype="application/json", status=400)
 
-        return HttpResponse([response], mimetype="application/json")
+        # This feels a bit ugly but it does get the GeoJSON into the response
+        feature_json = serializers.serialize('json', [feature,])
+        feature_list = json.loads(feature_json)
+        feature_list[0]['geojson'] = feature.geoJSON(True)
+        
+        return HttpResponse(json.dumps(feature_list), mimetype="application/json")
 
+def feature_delete(request,pk):
+    try:
+        feature = Feature.objects.get(pk=pk)
+        feature.delete()
+    except ObjectDoesNotExist:
+        raise Http404
+
+    return HttpResponse( content=pk, status=200 )
 
 @login_required
 def create_update_map(request, pk=None):

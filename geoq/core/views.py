@@ -23,6 +23,7 @@ from geoq.maps.models import Layer, Map
 
 from geoq.mgrs.utils import Grid, GridException
 from geoq.mgrs import utils
+from geoq.mgrs.exceptions import ProgramException
 
 
 class Dashboard(TemplateView):
@@ -287,6 +288,9 @@ def mgrs(request):
         fc = grid.build_grid_fc()
     except GridException:
         error = dict(error=500, details="Can't create grids across longitudinal boundaries. Try creating a smaller bounding box",)
+        return HttpResponse(json.dumps(error), status=error.get('error'))
+    except ProgramException:
+        error = dict(error=500, details="Error executing external GeoConvert application. Make sure it is installed on the server",)
         return HttpResponse(json.dumps(error), status=error.get('error'))
 
     return HttpResponse(fc.__str__(), mimetype="application/json")
