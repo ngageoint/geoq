@@ -17,7 +17,7 @@
     <script src="{{ STATIC_URL }}core/js/bootstrap-dialog.js"></script>
     <script type="text/javascript">
 
-        leaflet_helper.proxy_path = {% url 'home' %} + "proxy/"; //TODO: Standardize expression of proxy locations
+        leaflet_helper.proxy_path = "{% url 'home' %}" + "proxy/"; //TODO: Standardize expression of proxy locations
 
         var feature_types = {};
         var geometry_types = [];
@@ -81,6 +81,7 @@
             <div class="span3">
                 <h4><a href="{{ object.job.get_absolute_url }}">{{ object.job.name }}</a> > AOI #{{ object.id }}</h4>
                 <p class="aoi-status muted">{% widthratio object.job.complete.count 100 100%}% Complete</p>
+                <br/>
                 <h5>{{ object.description }}</h5>
                 <select id="features">
 
