@@ -20,7 +20,7 @@ MANAGERS = ADMINS
 DATABASES = {
     'default': {
         'ENGINE': 'django.contrib.gis.db.backends.postgis',  # Add 'postgresql_psycopg2', 'mysql', 'sqlite3' or 'oracle'.
-        'NAME': 'geoq2',  # Or path to database file if using sqlite3.
+        'NAME': 'geoq',  # Or path to database file if using sqlite3.
         # The following settings are not used with sqlite3:
         'USER': 'geoq',
         'PASSWORD': 'geoq',
@@ -213,7 +213,6 @@ INSTALLED_APPS = (
     'jsonfield',
 
     'geoq.accounts', # TODO:Accounts -- Figure out what we are doing
-#    'geoq.badges', # TODO: Get Badges working, or incorportae with gamification service
     'geoq.core',
     'geoq.maps',
     'geoq.mgrs',
@@ -253,8 +252,8 @@ LOGGING = {
 
 
 # Gamification variables
-GAMIFICATION_SERVER = 'http://192.168.5.131:6111'
-GAMIFICATION_PROJECT = 'django_geoq'
+#GAMIFICATION_SERVER = 'http://localhost:6111'
+#GAMIFICATION_PROJECT = 'django_geoq'
 
 # Override production settings with local settings if they exist
 try:
