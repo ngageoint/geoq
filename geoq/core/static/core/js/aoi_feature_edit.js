@@ -23,7 +23,7 @@ aoi_feature_edit.MapMarker = L.Icon.extend({
         iconSize: new L.Point(25, 41),
         repeatMode: true,
         text: 'Draw a marker',
-        iconUrl: null
+        iconUrl: '/static/images/badge_images/silver.png'
     }
 });
 
@@ -51,7 +51,7 @@ aoi_feature_edit.init = function () {
 
     _.each(aoi_feature_edit.feature_types, function (ftype) {
         // if this is a point, create icon for it first
-        if (ftype.type == 'Point') {
+        if (ftype.type == 'Point' && ftype.style && ftype.style.iconUrl) {
             aoi_feature_edit.icons[ftype.id] = {
                 iconUrl: ftype.style.iconUrl,
                 text: ftype.name
@@ -169,7 +169,10 @@ aoi_feature_edit.map_init = function (map, bounds) {
         if (ftype.type == 'Polygon') {
             aoi_feature_edit.all_polygons.push(aoi_feature_edit.createPolygonOptions(ftype));
         } else if (ftype.type == 'Point') {
-            aoi_feature_edit.all_markers.push(aoi_feature_edit.createPointOptions(ftype));
+            var point = aoi_feature_edit.createPointOptions(ftype);
+            if (point) aoi_feature_edit.all_markers.push(point);
+        } else {
+            log.error("Item should be drawn, but not a Polygon or Point object.")
         }
         var tnum = ftype.id;
         var featuretype = ftype.type;
@@ -554,16 +557,19 @@ aoi_feature_edit.createPolygonOptions = function (opts) {
 };
 
 aoi_feature_edit.createPointOptions = function (opts) {
-    var options = {};
+    var options = null
 
-    var marker = new aoi_feature_edit.MapMarker({
-        iconUrl: opts.style.iconUrl,
-        text: opts.name
-    });
+    if (opts && opts.style && opts.style.iconUrl) {
+        options = {};
+        var marker = new aoi_feature_edit.MapMarker({
+            iconUrl: opts.style.iconUrl,
+            text: opts.name
+        });
 
-    options.icon = marker;
-    options.repeatMode = true;
-    options.id = opts.id;
+        options.icon = marker;
+        options.repeatMode = true;
+        options.id = opts.id;
+    }
 
     return options;
 };
