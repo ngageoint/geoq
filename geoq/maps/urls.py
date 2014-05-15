@@ -6,7 +6,7 @@ from django.contrib.auth.decorators import login_required
 from django.conf.urls import patterns, url
 from django.views.generic import CreateView, UpdateView, ListView
 from forms import FeatureTypeForm, MapForm, LayerForm, MapLayerForm
-from views import CreateFeatures, create_update_map, FeatureTypeListView, FeatureTypeDelete, MapListView, MapDelete, LayerListView, LayerDelete, LayerImport
+from views import CreateFeatures, EditFeatures, create_update_map, FeatureTypeListView, FeatureTypeDelete, MapListView, MapDelete, LayerListView, LayerDelete, LayerImport
 from models import FeatureType, Map, Layer
 
 urlpatterns = patterns('',
@@ -18,6 +18,10 @@ urlpatterns = patterns('',
     url(r'^features/create/?$',
         login_required(CreateFeatures.as_view()),
         name='feature-create'),
+                       
+    url(r'^features/edit/?$',
+        login_required(EditFeatures.as_view()),
+        name='feature-edit'),
 
     url(r'^feature-types/create/?',
         login_required(CreateView.as_view(template_name='core/generic_form.html',

@@ -5,8 +5,8 @@
 
 var aoi_feature_edit = {};
 aoi_feature_edit.layers = {};
-
-var feature_hash = {};
+aoi_feature_edit.feature_hash = {};
+aoi_feature_edit.drawnItems = new L.FeatureGroup();
 
 aoi_feature_edit.options = {
     drawControlLocation: "topleft"
@@ -68,7 +68,7 @@ aoi_feature_edit.init = function () {
             },
             onEachFeature: function (feature, layer) {
                 if (feature.properties) {
-                    feature_hash[feature.properties.id] = {layerGroup: featureLayer, layer: layer};
+                    aoi_feature_edit.feature_hash[feature.properties.id] = {layerGroup: featureLayer, layer: layer};
 
                     var popupContent = '<h5>Feature #' + feature.properties.id + '</h5>';
                     if (feature.properties.template) {
@@ -183,6 +183,9 @@ aoi_feature_edit.map_init = function (map, bounds) {
         });
 
         aoi_feature_edit.featureLayers[tnum].addData(featureCollection);
+        aoi_feature_edit.featureLayers[tnum].eachLayer(function (layer) {
+            aoi_feature_edit.drawnItems.addLayer(layer);
+        });
         aoi_feature_edit.featureLayers[tnum].addTo(aoi_feature_edit.map);
         layercontrol.addOverlay(aoi_feature_edit.featureLayers[tnum], aoi_feature_edit.feature_types[tnum].name);
     });
@@ -192,33 +195,28 @@ aoi_feature_edit.map_init = function (map, bounds) {
     setTimeout(function () {
         aoi_feature_edit.map.fitBounds(aoi_extents.getBounds());
     }, 1);
-
-
-    var drawnItems = new L.FeatureGroup();
-//    aoi_feature_edit.map.addLayer(drawnItems);
-//    aoi_feature_edit.drawnItems = drawnItems;
-//
-    aoi_feature_edit.buildDrawingControl(drawnItems);
+    
+    aoi_feature_edit.buildDrawingControl(aoi_feature_edit.drawnItems);
     leaflet_helper.add_geocoder_control(map);
     leaflet_helper.add_locator_control(map);
 
-    function onSuccess(data, textStatus, jqXHR) {
+    function onSuccessCreate(data, textStatus, jqXHR) {
         if (data[0] && data[0].geojson) {
             var tnum = data[0].fields.template;
             var featureCollection = aoi_feature_edit.createFeatureCollection(tnum);
             featureCollection.features.push($.parseJSON(data[0].geojson));
             aoi_feature_edit.featureLayers[tnum].addData(featureCollection);
+            
+            var layer = aoi_feature_edit.feature_hash[data[0].pk].layer
+            aoi_feature_edit.drawnItems.addLayer(layer);
         }
     }
 
-    function onError(jqXHR, textStatus, errorThrown) {
+    function onErrorCreate(jqXHR, textStatus, errorThrown) {
         alert("Error while adding feature: " + errorThrown);
     }
 
     map.on('draw:created', function (e) {
-        var type = e.layerType;
-        var layer = e.layer;
-
         var geojson = e.layer.toGeoJSON();
         geojson.properties.template = aoi_feature_edit.current_feature_type_id;
         geojson = JSON.stringify(geojson);
@@ -229,20 +227,43 @@ aoi_feature_edit.map_init = function (map, bounds) {
             data: { aoi: aoi_feature_edit.aoi_id,
                 geometry: geojson
             },
-            success: onSuccess,
-            error: onError,
+            success: onSuccessCreate,
+            error: onErrorCreate,
             dataType: "json"
         });
-
-        //layer.bindPopup('Feature Created!');
-        //drawnItems.addLayer(layer);
     });
 
     map.on('draw:drawstart', function (e) {
         var id = e.layerType.slice(-1);
         aoi_feature_edit.current_feature_type_id = parseInt(id);
     });
+    
+    function onSuccessEdit(data, textStatus, jqXHR) {
+    }
 
+    function onErrorEdit(jqXHR, textStatus, errorThrown) {
+        alert("Error while editing feature: " + errorThrown);
+    }
+    
+    map.on('draw:edited', function (e) {
+        var layers = e.layers;
+        layers.eachLayer(function (layer) {
+            var geojson = layer.toGeoJSON();
+            geojson = JSON.stringify(geojson);
+            
+        	$.ajax({
+                type: "POST",
+                url: aoi_feature_edit.edit_feature_url,
+                data: { aoi: aoi_feature_edit.aoi_id,
+                    geometry: geojson
+                },
+                success: onSuccessEdit,
+                error: onErrorEdit,
+                dataType: "json"
+            });
+        });
+    });
+    
     //Resize the map
     aoi_feature_edit.map_resize();
     //Resize it on screen resize, but no more than every .3 seconds
@@ -529,10 +550,11 @@ aoi_feature_edit.createFeatureCollection = function (id) {
 };
 
 aoi_feature_edit.deleteFeature = function (id) {
-    var feature = feature_hash[id];
+    var feature = aoi_feature_edit.feature_hash[id];
     if (feature) {
         feature.layerGroup.removeLayer(feature.layer);
-        delete feature_hash[id];
+        aoi_feature_edit.drawnItems.removeLayer(feature.layer);
+        delete aoi_feature_edit.feature_hash[id];
     }
 };
 

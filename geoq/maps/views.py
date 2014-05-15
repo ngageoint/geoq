@@ -70,6 +70,41 @@ class CreateFeatures(View):
         
         return HttpResponse(json.dumps(feature_list), mimetype="application/json")
 
+class EditFeatures(View):
+    """
+    Reads feature info from post request and updates associated feature object.
+    """
+
+    http_method_names = ['post']
+
+    def post(self, request, *args, **kwargs):
+        
+        geometry = request.POST.get('geometry')
+        geojson = json.loads(geometry)
+        properties = geojson.get('properties')
+        
+        try:
+            feature = Feature.objects.get(pk=properties.get('id'))
+        except ObjectDoesNotExist:
+            raise Http404
+    
+        geometry = geojson.get('geometry')
+        feature.the_geom = GEOSGeometry(json.dumps(geometry))
+        
+        template = properties.get('template') if properties else None
+        
+        # TODO: handle exceptions
+        if template:
+            feature.template = FeatureType.objects.get(id=template)
+        
+        try:
+            feature.full_clean()
+            feature.save()
+        except ValidationError as e:
+            return HttpResponse(content=json.dumps(dict(errors=e.messages)), mimetype="application/json", status=400)
+        
+        return HttpResponse("{}", mimetype="application/json")
+
 def feature_delete(request,pk):
     try:
         feature = Feature.objects.get(pk=pk)

@@ -44,6 +44,7 @@
         aoi_feature_edit.job_features_geojson = {{ object.job.features_geoJSON|safe }};;
         aoi_feature_edit.feature_types = feature_types;
         aoi_feature_edit.create_feature_url = "{% url 'feature-create' %}";
+        aoi_feature_edit.edit_feature_url = "{% url 'feature-edit' %}";
 
         aoi_feature_edit.percent_complete = {% widthratio object.job.complete.count 100 100%};
         aoi_feature_edit.description = "{{ object.description |safe}}";
