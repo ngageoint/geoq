@@ -1,8 +1,17 @@
 {% load object_class %}
 <ul class="projectlist">
+
+    {# Currently only for job detail, 'in work' tab. #}
+    {% with object_list|first as first_object %}
+        {% if first_object.status == 'In work'%}
+        {% include "core/_get_started_message.html" %}
+        {% endif %}
+    {% endwith %}
+
     {% for object in object_list %}
         {% with object_type=object|object_class|lower %}
-        <li{% if object.status == 'In work' %}{% ifnotequal request.user object.analyst %} class='shaded'{% endifnotequal %}{% endif %}>
+
+        <li{% if object.status == 'In work' %}{% if request.user != object.analyst %} class='shaded'{% endif %}{% endif %}>
 
         {% if object_type == "project" %}
             {% include "core/_project_stat_list.html" %}

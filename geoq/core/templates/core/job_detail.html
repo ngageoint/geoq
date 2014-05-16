@@ -212,7 +212,6 @@
 
             <div class="row body">
                 <ul class="nav nav-tabs">
-
                     {% for status in statuses%}
                         {% with status=status|lower %}
                     <li class="{% if status == active_status %}active{% endif %}">
