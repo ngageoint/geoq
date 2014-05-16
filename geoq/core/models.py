@@ -180,7 +180,7 @@ class AOI(GeoQBase):
     Low-level organizational object.
     """
 
-    STATUS_VALUES = ['Unassigned', 'Assigned', 'In work', 'Submitted', 'Completed']
+    STATUS_VALUES = ['Unassigned', 'In work', 'In review', 'Completed'] #'Assigned'
     STATUS_CHOICES = [(choice, choice) for choice in STATUS_VALUES]
 
     PRIORITIES = [(n, n) for n in range(1, 6)]

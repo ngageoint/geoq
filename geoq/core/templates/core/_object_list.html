@@ -2,7 +2,8 @@
 <ul class="projectlist">
     {% for object in object_list %}
         {% with object_type=object|object_class|lower %}
-        <li>
+        <li{% if object.status == 'In work' %}{% ifnotequal request.user object.analyst %} class='shaded'{% endifnotequal %}{% endif %}>
+
         {% if object_type == "project" %}
             {% include "core/_project_stat_list.html" %}
         {% elif object_type == "job" %}
@@ -11,16 +12,15 @@
             {% include "core/_aoi_stat_list.html" %}
         {% endif %}
         <h3>
-
-
-
             <i class="icon-{% if object_type == "project" %}briefcase{% elif object_type == "job"%}inbox{% elif object_type == "aoi"%}th{% endif %} icon-1x pull-left list-icon"></i>
             <span class="title"><a href="{{ object.get_absolute_url|default:"#" }}">{{ object.name }} {% if object_type == "aoi" %}{{ object.id }}{% endif %}</a></span>
         </h3>
 
         <p class="body project-description">{{ object.description }}</p>
 
-        <p class="body muted timestamp">{{ object.created_at }}</p>
+        <p class="body muted timestamp">{{ object.created_at }}
+
+        </p>
         </li>
     {% endwith %}
     {% endfor %}

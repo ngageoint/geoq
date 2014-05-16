@@ -117,11 +117,24 @@ class JobDetailedListView(ListView):
 
     paginate_by = 15
     model = Job
-    default_status = 'unassigned'
+    default_status = 'in work'
+    request = None
 
     def get_queryset(self):
         status = getattr(self, 'status', None)
-        self.queryset = AOI.objects.filter(job=self.kwargs.get('pk'))
+        q_set = AOI.objects.filter(job=self.kwargs.get('pk'))
+
+        # # If there is a user logged in, we want to show their stuff
+        # # at the top of the list
+        if self.request.user.id is not None and status == 'in work':
+            user = self.request.user
+            clauses = 'WHEN analyst_id=%s THEN %s ELSE 1' % (user.id,0)
+            ordering = 'CASE %s END' % clauses
+            self.queryset = q_set.extra(
+               select={'ordering': ordering}, order_by=('ordering',))
+        else:
+            self.queryset = q_set
+
         if status and (status in [value.lower() for value in AOI.STATUS_VALUES]):
             return self.queryset.filter(status__iexact=status)
         else:
@@ -134,6 +147,8 @@ class JobDetailedListView(ListView):
             self.status = self.status.lower()
         else:
             self.status = self.default_status.lower()
+
+        self.request = request
 
         return super(JobDetailedListView, self).get(request, *args, **kwargs)
 
