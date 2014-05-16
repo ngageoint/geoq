@@ -51,9 +51,9 @@ aoi_feature_edit.init = function () {
 
     _.each(aoi_feature_edit.feature_types, function (ftype) {
         // if this is a point, create icon for it first
-        if (ftype.type == 'Point' && ftype.style && ftype.style.iconUrl) {
+        if (ftype.type == 'Point' && ftype.style && (ftype.style.iconUrl || ftype.style.icon)) {
             aoi_feature_edit.icons[ftype.id] = {
-                iconUrl: ftype.style.iconUrl,
+                iconUrl: ftype.style.iconUrl || opts.style.icon,
                 text: ftype.name
             };
         }
@@ -557,12 +557,12 @@ aoi_feature_edit.createPolygonOptions = function (opts) {
 };
 
 aoi_feature_edit.createPointOptions = function (opts) {
-    var options = null
+    var options = null;
 
-    if (opts && opts.style && opts.style.iconUrl) {
+    if (opts && opts.style && (opts.style.iconUrl || opts.style.icon)) {
         options = {};
         var marker = new aoi_feature_edit.MapMarker({
-            iconUrl: opts.style.iconUrl,
+            iconUrl: opts.style.iconUrl || opts.style.icon,
             text: opts.name
         });
 
