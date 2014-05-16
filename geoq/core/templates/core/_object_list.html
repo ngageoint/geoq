@@ -4,7 +4,7 @@
     {# Currently only for job detail, 'in work' tab. #}
     {% with object_list|first as first_object %}
         {% if first_object.status == 'In work'%}
-        {% include "core/_get_started_message.html" %}
+                {% include "core/_get_started_message.html" %}
         {% endif %}
     {% endwith %}
 
@@ -22,7 +22,23 @@
         {% endif %}
         <h3>
             <i class="icon-{% if object_type == "project" %}briefcase{% elif object_type == "job"%}inbox{% elif object_type == "aoi"%}th{% endif %} icon-1x pull-left list-icon"></i>
-            <span class="title"><a href="{{ object.get_absolute_url|default:"#" }}">{{ object.name }} {% if object_type == "aoi" %}{{ object.id }}{% endif %}</a></span>
+            <span class="title">
+                {% if object.status == 'In work' %}
+                    {% if request.user == object.analyst %}
+                    <a href="{{ object.get_absolute_url|default:'#' }}">
+                    {% endif %}
+                    {% else %}
+                    <a href="{{ object.get_absolute_url|default:'#' }}">
+                {% endif %}
+
+                {{ object.name }} {% if object_type == "aoi" %}{{ object.id }}{% endif %}
+
+                {% if object.status == 'In work' %}{% if request.user == object.analyst %}
+                </a>
+                {% endif %}{% else %}
+                </a>
+                {% endif %}
+            </span>
         </h3>
 
         <p class="body project-description">{{ object.description }}</p>
