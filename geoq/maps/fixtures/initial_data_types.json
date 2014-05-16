@@ -61,7 +61,7 @@
     "pk": 5, 
     "model": "maps.featuretype", 
     "fields": {
-        "style": "{\"icon\":\"red-marker-icon.png\"}", 
+        "style": "{\"iconUrl\":\"/static/leaflet/images/red-marker-icon.png\"}", 
         "type": "Point", 
         "name": "Catastrophic Damage Point", 
         "properties": "{\"type\":\"text\",\"severity\":\"Catastrophic\"}"
