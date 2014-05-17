@@ -16,7 +16,7 @@ from django.forms.util import ValidationError
 from django.http import HttpResponse, HttpResponseRedirect
 from django.shortcuts import get_object_or_404, redirect
 from django.utils.decorators import method_decorator
-from django.views.generic import DetailView, ListView, TemplateView, View, DeleteView, CreateView, UpdateView
+from django.views.generic import DetailView, ListView, TemplateView, View, DeleteView, CreateView
 
 from models import Project, Job, AOI
 from geoq.maps.models import Layer, Map
@@ -64,7 +64,6 @@ class BatchCreateAOIS(TemplateView):
         return HttpResponse()
 
 
-
 #TODO: Abstract this
 class DetailedListView(ListView):
     """
@@ -107,7 +106,6 @@ def redirect_to_unassigned_aoi(request, pk):
         return HttpResponseRedirect(job.aois.filter(status='Unassigned')[0].get_absolute_url())
     except IndexError:
         return HttpResponseRedirect(job.get_absolute_url())
-
 
 
 class JobDetailedListView(ListView):
@@ -310,6 +308,7 @@ def usng(request):
     resp = requests.get(base_url, params=params)
     return HttpResponse(resp, mimetype="application/json")
 
+
 def mgrs(request):
     """
     Create mgrs grid in manner similar to usng above
@@ -350,7 +349,7 @@ def aoi_delete(request,pk):
     except ObjectDoesNotExist:
         raise Http404
 
-    return HttpResponse( status=200 )
+    return HttpResponse(status=200)
 
 @login_required
 def batch_create_aois(request, *args, **kwargs):
