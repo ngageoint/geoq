@@ -6,17 +6,19 @@
     <li title="This AOI is {{ object.status }}">
         <i class="icon-th"></i>
         {% if object.status == 'In work' %}
-            {% ifequal object.analyst request.user %}You are{% else %}{{ object.analyst }} is{% endifequal%} on it.
+            {% if object.analyst == request.user %}You are{% else %}{{ object.analyst }} is{% endif %} on it.
         {% else %}
         {{ object.status }}
         {% endif %}
     </li>
     {% if object.status == 'In work' %}
     {% if 'accounts.change_aoi' in request.base_perms %}
+    {% if object.analyst == request.user %}
     <li title="Unassign this AOI">
         <i class="icon-circle-arrow-down"></i>
-        <a href="">Unassign</a>
+        <a href="{% url 'aoi-update-status' object.id 'Unassigned' %}">Unassign</a>
     </li>
+    {% endif %}
     {% endif %}
     {% endif %}
     {% if 'accounts.delete_aoi' in request.base_perms %}
