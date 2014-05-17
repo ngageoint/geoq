@@ -16,7 +16,7 @@ from django.forms.util import ValidationError
 from django.http import HttpResponse, HttpResponseRedirect
 from django.shortcuts import get_object_or_404
 from django.utils.decorators import method_decorator
-from django.views.generic import DetailView, ListView, TemplateView, View, DeleteView, CreateView
+from django.views.generic import DetailView, ListView, TemplateView, View, DeleteView, CreateView, UpdateView
 
 from models import Project, Job, AOI
 from geoq.maps.models import Layer, Map
@@ -170,7 +170,6 @@ class JobDelete(DeleteView):
 
     def get_success_url(self):
         return reverse('project-detail', args=[self.object.project.pk])
-
 
 class AOIDelete(DeleteView):
     model = AOI
@@ -330,18 +329,19 @@ def aoi_delete(request,pk):
 
 @login_required
 def batch_create_aois(request, *args, **kwargs):
-        aois = request.POST.get('aois')
-        job = Job.objects.get(id=kwargs.get('job_pk'))
+    aois = request.POST.get('aois')
+    job = Job.objects.get(id=kwargs.get('job_pk'))
 
-        try:
-            aois = json.loads(aois)
-        except ValueError:
-            raise ValidationError(_("Enter valid JSON"))
+    try:
+        aois = json.loads(aois)
+    except ValueError:
+        raise ValidationError(_("Enter valid JSON"))
 
 
-        response = AOI.objects.bulk_create([AOI(name=(aoi.get('name')),
-                                            job=job,
-                                            description=job.description,
-                                            polygon=GEOSGeometry(json.dumps(aoi.get('geometry')))) for aoi in aois])
+    response = AOI.objects.bulk_create([AOI(name=(aoi.get('name')),
+                                        job=job,
+                                        description=job.description,
+                                        polygon=GEOSGeometry(json.dumps(aoi.get('geometry')))) for aoi in aois])
 
-        return HttpResponse()
+    return HttpResponse()
+
