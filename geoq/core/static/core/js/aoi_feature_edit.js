@@ -9,7 +9,6 @@ aoi_feature_edit.layers = {};
 var feature_hash = {};
 
 aoi_feature_edit.options = {
-    drawControlLocation: "topleft"
 };
 
 aoi_feature_edit.all_polygons = [];
@@ -96,7 +95,7 @@ aoi_feature_edit.get_feature_type = function (i) {
     return aoi_feature_edit.feature_types[i] || {style: {"weight": 2, "color": "yellow", "fillColor": "orange", "fillOpacity": .9, "opacity": 1}};
 };
 
-aoi_feature_edit.map_resize = function () {
+aoi_feature_edit.mapResize = function () {
     var toLower = parseInt($('div.navbar-inner').css('height'));
     var newHeight = $(window).height() - toLower;
     $(map).height(newHeight);
@@ -202,8 +201,8 @@ aoi_feature_edit.map_init = function (map, bounds) {
 //    aoi_feature_edit.drawnItems = drawnItems;
 //
     aoi_feature_edit.buildDrawingControl(drawnItems);
-    leaflet_helper.add_geocoder_control(map);
-    leaflet_helper.add_locator_control(map);
+    leaflet_helper.addLocatorControl(map);
+    leaflet_helper.addGeocoderControl(map);
 
     function onSuccess(data, textStatus, jqXHR) {
         if (data[0] && data[0].geojson) {
@@ -247,9 +246,9 @@ aoi_feature_edit.map_init = function (map, bounds) {
     });
 
     //Resize the map
-    aoi_feature_edit.map_resize();
+    aoi_feature_edit.mapResize();
     //Resize it on screen resize, but no more than every .3 seconds
-    var lazyResize = _.debounce(aoi_feature_edit.map_resize, 300);
+    var lazyResize = _.debounce(aoi_feature_edit.mapResize, 300);
     $(window).resize(lazyResize);
 };
 
@@ -265,14 +264,14 @@ aoi_feature_edit.buildDrawingControl = function (drawnItems) {
     //var feature = aoi_feature_edit.get_feature_type(feature_id);
 
     //Start building the draw options object
-    var drawOptions = { draw: {position: aoi_feature_edit.options.drawControlLocation} };
+    var drawOptions = { draw: {position: "topright"} };
     drawOptions.edit = false;
     //TODO: Add editing back in - currently is not catching edits, as features are saved
     // to server as soon as they are entered
 
     var drawControl = new L.Control.Draw({
         draw: {
-            position: aoi_feature_edit.options.drawControlLocation,
+            position: "topright",
             polyline: false,
             circle: false,
             rectangle: false,
@@ -310,7 +309,7 @@ aoi_feature_edit.addMapControlButtons = function (map) {
     }
 
     var completeButtonOptions = {
-        'html': '<a id="aoi-submit" href="#" class="btn btn-success">Mark as Complete</a>',  // string
+        'html': '<a id="aoi-submit" href="#" class="btn">Mark as Complete</a>',  // string
         'onClick': complete_button_onClick,  // callback function
         'hideText': false,  // bool
         position: 'bottomright',
@@ -353,8 +352,8 @@ aoi_feature_edit.addMapControlButtons = function (map) {
     var $controls = $(".leaflet-control-button.leaflet-control");
     var $c = $($controls[0]);
     $c.prependTo($c.parent());
-    var $c2 = $($controls[1]);
-    $c2.prependTo($c2.parent());
+//    var $c2 = $($controls[1]);
+//    $c2.prependTo($c2.parent());
 
 
 //    var feature_type_div = "features";
@@ -428,7 +427,7 @@ aoi_feature_edit.addLayerControl = function (map) {
 
     var layersOptions = {
         html: $tree,  // string
-        position: 'bottomleft'
+        position: 'bottomright'
     };
     var layersButton = new L.Control.Button(layersOptions).addTo(map);
 
