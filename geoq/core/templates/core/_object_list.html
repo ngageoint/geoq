@@ -27,7 +27,7 @@
                     {% if request.user == object.analyst %}
                     <a href="{{ object.get_absolute_url|default:'#' }}">
                     {% endif %}
-                    {% else %}
+                {% else %}
                     <a href="{{ object.get_absolute_url|default:'#' }}">
                 {% endif %}
 
@@ -40,6 +40,7 @@
                 {% endif %}
             </span>
         </h3>
+
 
         <p class="body project-description">{{ object.description }}</p>
 

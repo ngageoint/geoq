@@ -5,12 +5,20 @@
     </li>
     <li title="This AOI is {{ object.status }}">
         <i class="icon-th"></i>
-        {% ifequal object.status 'In work' %}
-            {% ifequal object.analyst request.user %}You are{% else %}{{ object.analyst }} is{% endifequal%} working on it.
+        {% if object.status == 'In work' %}
+            {% ifequal object.analyst request.user %}You are{% else %}{{ object.analyst }} is{% endifequal%} on it.
         {% else %}
         {{ object.status }}
-        {% endifequal %}
+        {% endif %}
     </li>
+    {% if object.status == 'In work' %}
+    {% if 'accounts.change_aoi' in request.base_perms %}
+    <li title="Unassign this AOI">
+        <i class="icon-circle-arrow-down"></i>
+        <a href="">Unassign</a>
+    </li>
+    {% endif %}
+    {% endif %}
     {% if 'accounts.delete_aoi' in request.base_perms %}
     <li title="Delete this AOI">
         <i class="icon-trash"></i>
