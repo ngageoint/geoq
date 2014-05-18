@@ -22,7 +22,7 @@ aoi_feature_edit.MapMarker = L.Icon.extend({
         iconSize: new L.Point(25, 41),
         repeatMode: true,
         text: 'Draw a marker',
-        iconUrl: '/static/images/badge_images/silver.png'
+        iconUrl: '/static/images/badge_images/silver.png' //TODO: Replace with better default image
     }
 });
 
@@ -375,14 +375,21 @@ aoi_feature_edit.layerDataList = function () {
 
     //TODO: This is only half implemented to show all layers, finish it
     _.each(aoi_feature_edit.layers.base, function (layer, i) {
-        var layer_obj = {title: layer.name, key: 'folder1.' + i};
-        treeData[0].children.push(layer_obj);
-    });
-
-    _.each(aoi_feature_edit.layers.overlays, function (layer, i) {
         var layer_obj = {title: layer.name, key: 'folder2.' + i};
         treeData[1].children.push(layer_obj);
     });
+
+    try{
+        var all_layers = JSON.parse(aoi_feature_edit.aoi_map_json.all_layers);
+        _.each(all_layers, function (layer, i) {
+            if (layer.type == "WMS" || layer.type == "WMTS") {
+                var layer_obj = {title: layer.name, key: 'folder1.' + i, data:layer};
+                treeData[0].children.push(layer_obj);
+            }
+        });
+    } catch (ex) {
+        log.error("All Layers isn't being parsed as valid JSON")
+    }
 
 // Format:
 //          children: [
@@ -411,8 +418,7 @@ aoi_feature_edit.addLayerControl = function (map) {
 
     //Build the tree
     var $tree = $("<div>")
-        .attr({name: 'layers_tree_control'})
-        .css({maxHeight: '300px'});
+        .attr({name: 'layers_tree_control'});
 
     var layersOptions = {
         html: $tree,  // string
@@ -424,32 +430,71 @@ aoi_feature_edit.addLayerControl = function (map) {
     var treeData = aoi_feature_edit.layerDataList();
 
     $tree.fancytree({
+        extensions: ["dnd"],
         checkbox: true,
-        selectMode: 1,
+        autoScroll: true,
+        selectMode: 2,
         source: treeData,
         activate: function (event, data) {
             //Click on title
             var node = data.node;
-            log.info("activate: event=", event, ", data=", data);
+            log.info("Click on ", data);
             if (!$.isEmptyObject(node.data)) {
                 log.info("custom node data: " + JSON.stringify(node.data));
             }
         },
         deactivate: function (event, data) {
-            log.info("-");
         },
         select: function (event, data) {
             // Display list of selected nodes
-            var s = data.tree.getSelectedNodes().join(", ");
-            log.info(s);
+            var selectedLayers = data.tree.getSelectedNodes();
+            _.each(selectedLayers,function(layer){
+                if (layer && layer.data) {
+                    log.info(layer.data.url);
+
+                }
+            });
         },
 
         focus: function (event, data) {
-            log.info(data.node.title);
         },
         blur: function (event, data) {
-            log.info("-");
-        }
+        },
+
+        dnd: {
+            preventVoidMoves: true, // Prevent dropping nodes 'before self', etc.
+            preventRecursiveMoves: true, // Prevent dropping nodes on own descendants
+            autoExpandMS: 400,
+            dragStart: function(node, data) {
+              /** This function MUST be defined to enable dragging for the tree.
+               *  Return false to cancel dragging of node.
+               */
+              return true;
+            },
+            dragEnter: function(node, data) {
+              /** data.otherNode may be null for non-fancytree droppables.
+               *  Return false to disallow dropping on node. In this case
+               *  dragOver and dragLeave are not called.
+               *  Return 'over', 'before, or 'after' to force a hitMode.
+               *  Return ['before', 'after'] to restrict available hitModes.
+               *  Any other return value will calc the hitMode from the cursor position.
+               */
+              // Prevent dropping a parent below another parent (only sort
+              // nodes under the same parent)
+              if(node.parent !== data.otherNode.parent){
+                return false;
+              }
+              // Don't allow dropping *over* a node (would create a child)
+              return ["before", "after"];
+            },
+            dragDrop: function(node, data) {
+              /** This function MUST be defined to enable dropping of items on
+               *  the tree.
+               */
+              data.otherNode.moveTo(node, data.hitMode);
+            }
+          }
+
     });
 
 //      var rootNode = $tree.fancytree("getRootNode");

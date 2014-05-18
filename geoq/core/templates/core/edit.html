@@ -14,6 +14,8 @@
     <script src="{{ STATIC_URL }}core/js/js-inflate.js"></script>
     <script src="{{ STATIC_URL }}core/js/leafletcontrols/leaflet.simple_button.js"></script>
 	<script src="{{ STATIC_URL }}core/js/leaflet.OSMGeocoder/Control.OSMGeocoder.js"></script>
+    <script src="{{ STATIC_URL }}core/js/fancytree/jquery.fancytree.js" type="text/javascript"></script>
+    <script src="{{ STATIC_URL }}core/js/fancytree/jquery.fancytree.dnd.js" type="text/javascript"></script>
 
 	<script src="{{ STATIC_URL }}core/js/geojson-js-utils/geojson-utils.js"></script>
 	<script src="{{ STATIC_URL }}core/js/jsmaptools/jsmaptools.js"></script>
@@ -91,8 +93,16 @@
             margin-bottom: 0;
         }
 
+        div.leaflet-control-button.leaflet-control {
+            font: 14px/16px Arial, Helvetica, sans-serif;
+            background: white;
+            background: rgba(255,255,255,0.8);
+            box-shadow: 0 0 15px rgba(0,0,0,0.2);
+            border-radius: 5px;
+        }
+
         div.leaflet-control-button.leaflet-control > div > h4 {
-            background-color: white;
+            background-color: transparent;
             border: solid black 1px;
             border-radius: 4px;
             padding: 6px;
@@ -123,6 +133,10 @@
 
         ul.fancytree-container {
             font-size: 10px;
+            max-height: 200px;
+            overflow: auto;
+            position: relative;
+            background-color: transparent;
         }
 
     </style>
