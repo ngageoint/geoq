@@ -41,18 +41,18 @@ IMAGE_FORMATS = (
 )
 
 SERVICE_TYPES = (
+                ('WMS', 'WMS'),
+                ('KML', 'KML'),
+                ('GeoRSS', 'GeoRSS'),
                 ('ESRI Tiled Map Service', 'ESRI Tiled Map Service'),
                 ('ESRI Dynamic Map Layer', 'ESRI Dynamic Map Layer'),
                 ('ESRI Feature Layer', 'ESRI Feature Layer'),
                 ('GeoJSON', 'GeoJSON'),
-                ('WMS', 'WMS'),
-                ('ESRI Clustered Feature Layer', 'ESRI Clustered Feature Layer')
+                ('ESRI Clustered Feature Layer', 'ESRI Clustered Feature Layer'),
                 #('ArcGIS93Rest', 'ArcGIS93Rest'),
-                #('KML', 'KML'),
-                #('GeoRSS', 'GeoRSS'),
-                #('GPX','GPX'),
+                ('GPX', 'GPX'),
                 #('GML','GML'),
-                #('WMTS', 'WMTS'),
+                ('WMTS', 'WMTS'),
                 #('MapBox', 'MapBox'),
                 #('TileServer','TileServer'),
                 #('GetCapabilities', 'GetCapabilities'),

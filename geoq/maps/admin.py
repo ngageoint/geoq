@@ -14,23 +14,27 @@ class MapLayerInline(admin.TabularInline):
 
 class MapAdmin(reversion.VersionAdmin, admin.ModelAdmin):
     model = Map
-    list_display = ['__unicode__', 'description']
+    list_display = ['__unicode__', 'description', 'number_of_maps']
     inlines = [MapLayerInline]
     save_as = True
     ordering = ['title']
+    search_fields = ['description', 'title', 'tags', ]
+
+    def number_of_maps(self, obj):
+        return Map.objects.filter(map=obj.id).count()
 
 
 class LayerAdmin(reversion.VersionAdmin, admin.OSMGeoAdmin):
     model = Layer
-    list_display = ['name', 'type', 'image_format']
+    list_display = ['name', 'type', 'url']
     list_filter = ['type', 'image_format']
     save_as = True
-    search_fields = ['name']
-    normal_fields = ('name', 'type', 'url', 'layer', 'attribution', 'description', 'image_format',
-                     'styles', 'transparent', 'refreshrate')
-    advanced_fields = ('enable_identify', 'token', 'additional_domains', 'constraints', 'extent',
-                       'layer_parsing_function', 'info_format', 'root_field', 'fields_to_show',
-                       'downloadableLink',  'spatial_reference', 'layer_params', )
+    search_fields = ['name', 'url', 'type', ]
+    normal_fields = ('name', 'type', 'url', 'layer', 'attribution', 'description', 'image_format')
+    advanced_fields = (
+     'styles', 'refreshrate', 'transparent', 'enable_identify',
+    'token', 'additional_domains', 'constraints', 'extent', 'layer_parsing_function', 'info_format',
+    'root_field', 'fields_to_show', 'downloadableLink', 'spatial_reference', 'layer_params' )
 
     desc = 'The settings below are advanced.  Please contact and admin if you have questions.'
     fieldsets = (
