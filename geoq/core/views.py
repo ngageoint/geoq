@@ -14,7 +14,7 @@ from django.core.urlresolvers import reverse
 from django.core.exceptions import ObjectDoesNotExist
 from django.forms.util import ValidationError
 from django.http import HttpResponse, HttpResponseRedirect
-from django.shortcuts import get_object_or_404
+from django.shortcuts import get_object_or_404, redirect
 from django.utils.decorators import method_decorator
 from django.views.generic import DetailView, ListView, TemplateView, View, DeleteView, CreateView
 
@@ -64,7 +64,6 @@ class BatchCreateAOIS(TemplateView):
         return HttpResponse()
 
 
-
 #TODO: Abstract this
 class DetailedListView(ListView):
     """
@@ -107,7 +106,6 @@ def redirect_to_unassigned_aoi(request, pk):
         return HttpResponseRedirect(job.aois.filter(status='Unassigned')[0].get_absolute_url())
     except IndexError:
         return HttpResponseRedirect(job.get_absolute_url())
-
 
 
 class JobDetailedListView(ListView):
@@ -179,6 +177,7 @@ class AOIDelete(DeleteView):
     def get_success_url(self):
         return reverse('job-detail', args=[self.object.job.pk])
 
+
 class AOIDetailedListView(ListView):
     """
     A mixture between a list view and detailed view.
@@ -243,16 +242,39 @@ class CreateJobView(CreateView):
 
 
 class ChangeAOIStatus(View):
-    http_method_names = ['post']
+    http_method_names = ['post','get']
 
-    def post(self, request, **kwargs):
-        aoi = get_object_or_404(AOI, pk=self.kwargs.get('pk'))
+    def _get_aoi_and_update(self, pk):
+        aoi = get_object_or_404(AOI, pk=pk)
         status = self.kwargs.get('status')
+        return status, aoi
+
+    def _update_aoi(self, request, aoi, status):
+        aoi.analyst = request.user
+        aoi.status = status
+        aoi.save()
+        return aoi
+
+    def get(self, request, **kwargs):
+        # Used to unassign tasks on the job detail, 'in work' tab
+
+        status, aoi = self._get_aoi_and_update(self.kwargs.get('pk'))
 
         if aoi.user_can_complete(request.user):
-            aoi.analyst = request.user
-            aoi.status = status
-            aoi.save()
+            aoi = self._update_aoi(request, aoi, status)
+
+        try:
+            url = request.META['HTTP_REFERER']
+            return redirect(url)
+        except KeyError:
+            return redirect('/geoq/jobs/%s/' % aoi.job.id)
+
+    def post(self, request, **kwargs):
+
+        status, aoi = self._get_aoi_and_update(self.kwargs.get('pk'))
+
+        if aoi.user_can_complete(request.user):
+            aoi = self._update_aoi(request, aoi, status)
 
             # send aoi completion event for badging
             send_aoi_create_event(request.user, aoi.id, aoi.features.all().count())
@@ -285,6 +307,7 @@ def usng(request):
     params['srsName'] = 'EPSG:4326'
     resp = requests.get(base_url, params=params)
     return HttpResponse(resp, mimetype="application/json")
+
 
 def mgrs(request):
     """
@@ -326,22 +349,22 @@ def aoi_delete(request,pk):
     except ObjectDoesNotExist:
         raise Http404
 
-    return HttpResponse( status=200 )
+    return HttpResponse(status=200)
 
 @login_required
 def batch_create_aois(request, *args, **kwargs):
-        aois = request.POST.get('aois')
-        job = Job.objects.get(id=kwargs.get('job_pk'))
+    aois = request.POST.get('aois')
+    job = Job.objects.get(id=kwargs.get('job_pk'))
 
-        try:
-            aois = json.loads(aois)
-        except ValueError:
-            raise ValidationError(_("Enter valid JSON"))
+    try:
+        aois = json.loads(aois)
+    except ValueError:
+        raise ValidationError(_("Enter valid JSON"))
 
 
-        response = AOI.objects.bulk_create([AOI(name=(aoi.get('name')),
-                                            job=job,
-                                            description=job.description,
-                                            polygon=GEOSGeometry(json.dumps(aoi.get('geometry')))) for aoi in aois])
+    response = AOI.objects.bulk_create([AOI(name=(aoi.get('name')),
+                                        job=job,
+                                        description=job.description,
+                                        polygon=GEOSGeometry(json.dumps(aoi.get('geometry')))) for aoi in aois])
 
-        return HttpResponse()
+    return HttpResponse()
