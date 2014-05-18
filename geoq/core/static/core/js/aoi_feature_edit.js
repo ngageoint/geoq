@@ -129,12 +129,12 @@ aoi_feature_edit.map_init = function (map, bounds) {
             if (n !== undefined) {
                 if (l.isBaseLayer) {
                     baseLayers[l.name] = n;
-                    log.info("Added " + l.name + " as a base layer.")
-                    aoi_feature_edit.layers.base.push(l);
+                    log.info("Added " + l.name + " as an overlay layer.")
+                    aoi_feature_edit.layers.overlays.push(l);
                 } else {
                     layerSwitcher[l.name] = n;
-                    log.info("Added " + l.name + " as a layer.")
-                    aoi_feature_edit.layers.overlays.push(l);
+                    log.info("Added " + l.name + " as a base layer.")
+                    aoi_feature_edit.layers.base.push(l);
                 }
             }
         });
@@ -208,8 +208,8 @@ aoi_feature_edit.map_init = function (map, bounds) {
 //    aoi_feature_edit.map.addLayer(drawnItems);
 //    aoi_feature_edit.drawnItems = drawnItems;
 //
-    aoi_feature_edit.buildDrawingControl(drawnItems);
     leaflet_helper.addLocatorControl(map);
+    aoi_feature_edit.buildDrawingControl(drawnItems);
     leaflet_helper.addGeocoderControl(map);
 
     function onSuccess(data, textStatus, jqXHR) {
@@ -278,8 +278,9 @@ aoi_feature_edit.buildDrawingControl = function (drawnItems) {
     // to server as soon as they are entered
 
     var drawControl = new L.Control.Draw({
+        position: "topright",
+
         draw: {
-            position: "topright",
             polyline: false,
             circle: false,
             rectangle: false,
@@ -360,26 +361,6 @@ aoi_feature_edit.addMapControlButtons = function (map) {
     var $controls = $(".leaflet-control-button.leaflet-control");
     var $c = $($controls[0]);
     $c.prependTo($c.parent());
-//    var $c2 = $($controls[1]);
-//    $c2.prependTo($c2.parent());
-
-
-//    var feature_type_div = "features";
-//    _.each(aoi_feature_edit.feature_types, function(feature_type){
-//        aoi_feature_edit.addOptions(feature_type, feature_type_div);
-//    });
-//
-//    var $features = $("#features");
-//    $features.select2();
-//    aoi_feature_edit.current_feature_type_id = parseInt($features.val());
-//
-//    $features.on("change", function(e) {
-//        log.info("Selected feature type: " + e.val + ".");
-//        aoi_feature_edit.current_feature_type_id = e.val;
-//        aoi_feature_edit.updateDrawOptions(e.val);
-//        //aoi_feature_edit.filterDrawConsole();
-//    });
-
 
 };
 
@@ -387,8 +368,8 @@ aoi_feature_edit.addMapControlButtons = function (map) {
 aoi_feature_edit.layerDataList = function () {
 
     var treeData = [
-        {title: "Base Maps", tooltip: "Base Maps that are underneath layers", folder: true, key: "folder1", children: [] },
-        {title: "Overlay Layers", selected: true, folder: true, key: "folder2", children: [] },
+        {title: "Base Maps", folder: true, key: "folder1", children: [] },
+        {title: "Data Layers", selected: true, folder: true, key: "folder2", children: [] },
         {title: "Features", folder: true, key: "folder3", children: []}
     ];
 
