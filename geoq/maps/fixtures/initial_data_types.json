@@ -27,44 +27,74 @@
             "description": "This is a test map"
         }
     },
-{
-    "pk": 1, 
-    "model": "maps.featuretype",
-    "fields": {
-        "style": "{\"color\":\"red\",\"opacity\":1,\"weight\":2}", 
-        "type": "Polygon", 
-        "name": "Catastrophic Damage", 
-        "properties": "[{\"type\":\"text\",\"name\":\"severity\"}]"
+    {
+        "pk": 1,
+        "model": "maps.featuretype",
+        "fields": {
+            "style": "{\"color\":\"red\",\"opacity\":1,\"weight\":2}",
+            "type": "Polygon",
+            "name": "Catastrophic Damage",
+            "properties": "[{\"type\":\"text\",\"name\":\"severity\"}]"
+        }
+    },
+    {
+        "pk": 2,
+        "model": "maps.featuretype",
+        "fields": {
+            "style": "{\"color\":\"green\",\"opacity\":1,\"weight\":2}",
+            "type": "Polygon",
+            "name": "Limited Damage",
+            "properties": "[{\"severity\":\"Limited\"}]"
+        }
+    },
+    {
+        "pk": 3,
+        "model": "maps.featuretype",
+        "fields": {
+            "style": "{\"color\":\"orange\",\"opacity\":1,\"weight\":2}",
+            "type": "Polygon",
+            "name": "Major Damage",
+            "properties": "[{\"type\":\"text\",\"severity\":\"Major\"}]"
+        }
+    },
+    {
+        "pk": 5,
+        "model": "maps.featuretype",
+        "fields": {
+            "style": "{\"iconUrl\":\"/static/leaflet/images/red-marker-icon.png\"}",
+            "type": "Point",
+            "name": "Catastrophic Damage Point",
+            "properties": "{\"type\":\"text\",\"severity\":\"Catastrophic\"}"
+        }
+    },
+    {
+        "pk": 6,
+        "model": "maps.featuretype",
+        "fields": {
+            "style": "{\"iconUrl\":\"/static/leaflet/images/orange-marker-icon.png\"}",
+            "type": "Point",
+            "name": "Major Damage Point",
+            "properties": "{\"type\":\"text\",\"severity\":\"Major\"}"
+        }
+    },
+    {
+        "pk": 7,
+        "model": "maps.featuretype",
+        "fields": {
+            "style": "{\"iconUrl\":\"/static/leaflet/images/yellow-marker-icon.png\"}",
+            "type": "Point",
+            "name": "Minor Damage Point",
+            "properties": "{\"type\":\"text\",\"severity\":\"Minor\"}"
+        }
+    },
+    {
+        "pk": 8,
+        "model": "maps.featuretype",
+        "fields": {
+            "style": "{\"iconUrl\":\"/static/leaflet/images/green-marker-icon.png\"}",
+            "type": "Point",
+            "name": "No Damage Point",
+            "properties": "{\"type\":\"text\",\"severity\":\"None\"}"
+        }
     }
-},
-{
-    "pk": 2, 
-    "model": "maps.featuretype", 
-    "fields": {
-        "style": "{\"color\":\"green\",\"opacity\":1,\"weight\":2}", 
-        "type": "Polygon", 
-        "name": "Limited Damage", 
-        "properties": "[{\"severity\":\"Limited\"}]"
-    }
-},
-{
-    "pk": 3, 
-    "model": "maps.featuretype", 
-    "fields": {
-        "style": "{\"color\":\"orange\",\"opacity\":1,\"weight\":2}", 
-        "type": "Polygon", 
-        "name": "Major Damage", 
-        "properties": "[{\"type\":\"text\",\"severity\":\"Major\"}]"
-    }
-},
-{
-    "pk": 5, 
-    "model": "maps.featuretype", 
-    "fields": {
-        "style": "{\"icon\":\"red-marker-icon.png\"}", 
-        "type": "Point", 
-        "name": "Catastrophic Damage Point", 
-        "properties": "{\"type\":\"text\",\"severity\":\"Catastrophic\"}"
-    }
-}
 ]
