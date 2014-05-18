@@ -310,7 +310,7 @@ aoi_feature_edit.addMapControlButtons = function (map) {
     }
 
     var completeButtonOptions = {
-        'html': '<a id="aoi-submit" href="#" class="btn btn-success">Mark as Complete</a>',  // string
+        'html': '<a id="aoi-submit" href="#" class="btn btn-success">Submit to QA</a>',  // string
         'onClick': complete_button_onClick,  // callback function
         'hideText': false,  // bool
         position: 'bottomright',
