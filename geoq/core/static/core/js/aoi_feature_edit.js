@@ -52,7 +52,7 @@ aoi_feature_edit.init = function () {
         // if this is a point, create icon for it first
         if (ftype.type == 'Point' && ftype.style && (ftype.style.iconUrl || ftype.style.icon)) {
             aoi_feature_edit.icons[ftype.id] = {
-                iconUrl: ftype.style.iconUrl || opts.style.icon,
+                iconUrl: ftype.style.iconUrl || ftype.style.icon,
                 text: ftype.name
             };
         }
@@ -184,9 +184,17 @@ aoi_feature_edit.map_init = function (map, bounds) {
             }
         });
 
-        aoi_feature_edit.featureLayers[tnum].addData(featureCollection);
-        aoi_feature_edit.featureLayers[tnum].addTo(aoi_feature_edit.map);
-        layercontrol.addOverlay(aoi_feature_edit.featureLayers[tnum], aoi_feature_edit.feature_types[tnum].name);
+        var featureLayer = aoi_feature_edit.featureLayers[tnum];
+        var featureType = aoi_feature_edit.feature_types[tnum];
+
+        if (featureLayer && featureType) {
+            featureLayer.addData(featureCollection);
+            featureLayer.addTo(aoi_feature_edit.map);
+            layercontrol.addOverlay(featureLayer, featureType.name);
+        } else {
+            log.error("A FeatureLayer was supposed to be drawn, but didn't seem to exist.")
+        }
+
     });
 
     aoi_feature_edit.layers.features = aoi_feature_edit.featureLayers;
