@@ -6,12 +6,11 @@ from django.utils.translation import ugettext_lazy as _
 
 from userena.forms import SignupForm
 
+
 class SignupFormExtra(SignupForm):
     """
     A form to demonstrate how to add extra fields to the signup form, in this
     case adding the first and last name.
-
-
     """
     first_name = forms.CharField(label=_(u'First name'),
                                  max_length=30,
