@@ -39,12 +39,8 @@
             aoi_feature_edit.finishUrl = "{% url 'aoi-update-status' object.id "Completed" %}";
         {% else %}
             aoi_feature_edit.finishLabel = "Submit AOI";
-            aoi_feature_edit.finishUrl = "{% url 'aoi-update-status' object.id "In review" %}";
+            aoi_feature_edit.finishUrl = "{% url 'aoi-update-status' object.id 'In review' %}";
         {% endif %}
-
-//        aoi_feature_edit.complete_url = "{% url 'aoi-update-status' object.id "Completed" %}";
-//        aoi_feature_edit.complete_redirect_url = "{% url 'job-detail' object.job.id %}";
-//        aoi_feature_edit.submit_url = "{% url 'aoi-update-status' object.id "Submitted" %}";
 
         aoi_feature_edit.job_absolute_url = "{{ object.job.get_absolute_url }}";
         aoi_feature_edit.job_name = "{{ object.job.name }}";
