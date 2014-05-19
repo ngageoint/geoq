@@ -9,28 +9,33 @@ from models import EmailDomain, Organization, UserAuthorization, UserProfile
 class ObjectAdmin(reversion.VersionAdmin,):
     pass
 
+
 class EmailDomainInline(admin.TabularInline):
     model = EmailDomain
     extra = 5
 
+
 class EmailDomainAdmin(ObjectAdmin):
     pass
+
 
 class OrganizationAdmin(ObjectAdmin):
     inlines = [EmailDomainInline]
     pass
 
+
 # Unregister userena's admin to add to it.
 admin.site.unregister(UserProfile)
 class UserProfileAdmin(ObjectAdmin):
-    list_display = ('user','organization','score')
+    list_display = ('user', 'organization', 'score')
     readonly_fields = ('email',)
 
     def __unicode__(self):
         return self.user.organization
 
+
 class UserAuthorizationAdmin(ObjectAdmin):
-    list_display = ('user','Organization','Email','authorized')
+    list_display = ('user', 'Organization', 'Email', 'authorized')
     list_editable = ('authorized',)
     readonly_fields = ('permissions_granted_by',)
 
@@ -39,8 +44,10 @@ class UserAuthorizationAdmin(ObjectAdmin):
 
     def Organization(self, obj):
         return '%s' % (obj.user_profile.organization)
+
     def Email(self, obj):
         return '%s' % (obj.user.email)
+
 # TODO:Accounts -- bring this back
 #admin.site.register(EmailDomain, EmailDomainAdmin)
 #admin.site.register(Organization, OrganizationAdmin)

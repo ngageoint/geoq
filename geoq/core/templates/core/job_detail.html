@@ -198,11 +198,11 @@
                 </div>
 
             {% if 'accounts.change_aoi' in request.base_perms %}
-            {% if object.unassigned_aois%}
-                {% if object.in_work_aois.count < 1 %}
-                    <a href="{% url 'job-next-aoi' object.id%}" class="btn btn-large btn-success pull-right" style="margin-top:80px">
+            {% if object.unassigned_aois %}
+                {% if request.user == object.in_work_aois.0.analyst or request.user == object.in_work_aois.0.reviewer %}
+                <a href="{% url 'aoi-work' object.in_work_aois.0.id %}" class="btn btn-large btn-success pull-right" style="margin-top:80px">
                 {% else %}
-                    <a href="{% url 'aoi-work' object.in_work_aois.0.id %}" class="btn btn-large btn-success pull-right" style="margin-top:80px">
+                <a href="{% url 'job-next-aoi' object.id%}" class="btn btn-large btn-success pull-right" style="margin-top:80px">
                 {% endif %}
                     Contribute to this job.
                     <i class="icon-long-arrow-right"></i></a>
@@ -212,7 +212,6 @@
 
             <div class="row body">
                 <ul class="nav nav-tabs">
-
                     {% for status in statuses%}
                         {% with status=status|lower %}
                     <li class="{% if status == active_status %}active{% endif %}">

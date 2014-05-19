@@ -76,7 +76,7 @@ leaflet_helper.layer_conversion = function (lyr) {
                     result.features[0] && result.features[0].attributes) isESRIpseudoJSON = true;
 
                 if (isESRIpseudoJSON) {
-                    outputLayer = leaflet_helper.add_dynamic_capimage_data(result);
+                    outputLayer = leaflet_helper.addDynamicCapimageData(result);
                 } else {
                     outputLayer = new L.GeoJSON(result, layerOptions);
                 }
@@ -106,7 +106,7 @@ leaflet_helper.createMarker = {
     }
 };
 
-leaflet_helper.add_dynamic_capimage_data = function (result) {
+leaflet_helper.addDynamicCapimageData = function (result) {
     var jsonObjects = [];
     $(result.features).each(function () {
         var feature = $(this)[0];
@@ -137,11 +137,11 @@ leaflet_helper.add_dynamic_capimage_data = function (result) {
     return new L.geoJson(jsonObjects, {onEachFeature: onEachFeature});
 };
 
-leaflet_helper.add_geocoder_control = function(map){
+leaflet_helper.addGeocoderControl = function(map){
 
     var options = {
-        collapsed: false, /* Whether its collapsed or not */
-        position: 'bottomright', /* The position of the control */
+        collapsed: true, /* Whether its collapsed or not */
+        position: 'topright', /* The position of the control */
         text: 'Locate', /* The text of the submit button */
         bounds: null, /* a L.LatLngBounds object to limit the results to */
         email: null, /* an email string with a contact to provide to Nominatim. Useful if you are doing lots of queries */
@@ -157,9 +157,9 @@ leaflet_helper.add_geocoder_control = function(map){
     map.addControl(osmGeocoder);
 };
 
-leaflet_helper.add_locator_control = function(map){
+leaflet_helper.addLocatorControl = function(map){
 
-    var $map_move_info_update = $('<h4>Location Info</h4>');
+    var $map_move_info_update = $('<h4 class="location_info">Location Info</h4>');
 
     var infoButtonOptions = {
         html: $map_move_info_update,
@@ -178,7 +178,7 @@ leaflet_helper.add_locator_control = function(map){
 
         //Build text output to show in info box
         var country = pt.country.name_long || pt.country.name || "";
-        var text = pt.usngCoords.usngString + "<br/>Lat: "+ pt.lat + "<br/>Lon: " + pt.lng;
+        var text = pt.usngCoords.usngString + "<br/><b>Lat:</b> "+ pt.lat + "<br/><b>Lon:</b> " + pt.lng;
         if (country) text += "<br/>" + country;
         if (pt.state && pt.state.name) text += "<br/>" + pt.state.name;
 

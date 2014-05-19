@@ -7,7 +7,6 @@ var aoi_feature_edit = {};
 aoi_feature_edit.layers = {};
 aoi_feature_edit.feature_hash = {};
 aoi_feature_edit.drawnItems = new L.FeatureGroup();
-
 aoi_feature_edit.options = {
     drawControlLocation: "topleft"
 };
@@ -23,7 +22,7 @@ aoi_feature_edit.MapMarker = L.Icon.extend({
         iconSize: new L.Point(25, 41),
         repeatMode: true,
         text: 'Draw a marker',
-        iconUrl: '/static/images/badge_images/silver.png'
+        iconUrl: '/static/images/badge_images/silver.png' //TODO: Replace with better default image
     }
 });
 
@@ -51,9 +50,9 @@ aoi_feature_edit.init = function () {
 
     _.each(aoi_feature_edit.feature_types, function (ftype) {
         // if this is a point, create icon for it first
-        if (ftype.type == 'Point' && ftype.style && ftype.style.iconUrl) {
+        if (ftype.type == 'Point' && ftype.style && (ftype.style.iconUrl || ftype.style.icon)) {
             aoi_feature_edit.icons[ftype.id] = {
-                iconUrl: ftype.style.iconUrl,
+                iconUrl: ftype.style.iconUrl || ftype.style.icon,
                 text: ftype.name
             };
         }
@@ -96,7 +95,7 @@ aoi_feature_edit.get_feature_type = function (i) {
     return aoi_feature_edit.feature_types[i] || {style: {"weight": 2, "color": "yellow", "fillColor": "orange", "fillOpacity": .9, "opacity": 1}};
 };
 
-aoi_feature_edit.map_resize = function () {
+aoi_feature_edit.mapResize = function () {
     var toLower = parseInt($('div.navbar-inner').css('height'));
     var newHeight = $(window).height() - toLower;
     $(map).height(newHeight);
@@ -130,12 +129,12 @@ aoi_feature_edit.map_init = function (map, bounds) {
             if (n !== undefined) {
                 if (l.isBaseLayer) {
                     baseLayers[l.name] = n;
-                    log.info("Added " + l.name + " as a base layer.")
-                    aoi_feature_edit.layers.base.push(l);
+                    log.info("Added " + l.name + " as an overlay layer.")
+                    aoi_feature_edit.layers.overlays.push(l);
                 } else {
                     layerSwitcher[l.name] = n;
-                    log.info("Added " + l.name + " as a layer.")
-                    aoi_feature_edit.layers.overlays.push(l);
+                    log.info("Added " + l.name + " as a base layer.")
+                    aoi_feature_edit.layers.base.push(l);
                 }
             }
         });
@@ -185,12 +184,17 @@ aoi_feature_edit.map_init = function (map, bounds) {
             }
         });
 
-        aoi_feature_edit.featureLayers[tnum].addData(featureCollection);
-        aoi_feature_edit.featureLayers[tnum].eachLayer(function (layer) {
-            aoi_feature_edit.drawnItems.addLayer(layer);
-        });
-        aoi_feature_edit.featureLayers[tnum].addTo(aoi_feature_edit.map);
-        layercontrol.addOverlay(aoi_feature_edit.featureLayers[tnum], aoi_feature_edit.feature_types[tnum].name);
+        var featureLayer = aoi_feature_edit.featureLayers[tnum];
+        var featureType = aoi_feature_edit.feature_types[tnum];
+
+        if (featureLayer && featureType) {
+            featureLayer.addData(featureCollection);
+            featureLayer.addTo(aoi_feature_edit.map);
+            layercontrol.addOverlay(featureLayer, featureType.name);
+        } else {
+            log.error("A FeatureLayer was supposed to be drawn, but didn't seem to exist.")
+        }
+
     });
 
     aoi_feature_edit.layers.features = aoi_feature_edit.featureLayers;
@@ -198,12 +202,17 @@ aoi_feature_edit.map_init = function (map, bounds) {
     setTimeout(function () {
         aoi_feature_edit.map.fitBounds(aoi_extents.getBounds());
     }, 1);
-    
-    aoi_feature_edit.buildDrawingControl(aoi_feature_edit.drawnItems);
-    leaflet_helper.add_geocoder_control(map);
-    leaflet_helper.add_locator_control(map);
 
-    function onSuccessCreate(data, textStatus, jqXHR) {
+
+    var drawnItems = new L.FeatureGroup();
+//    aoi_feature_edit.map.addLayer(drawnItems);
+//    aoi_feature_edit.drawnItems = drawnItems;
+//
+    leaflet_helper.addLocatorControl(map);
+    aoi_feature_edit.buildDrawingControl(drawnItems);
+    leaflet_helper.addGeocoderControl(map);
+
+    function onSuccess(data, textStatus, jqXHR) {
         if (data[0] && data[0].geojson) {
             var tnum = data[0].fields.template;
             var featureCollection = aoi_feature_edit.createFeatureCollection(tnum);
@@ -215,11 +224,14 @@ aoi_feature_edit.map_init = function (map, bounds) {
         }
     }
 
-    function onErrorCreate(jqXHR, textStatus, errorThrown) {
+    function onError(jqXHR, textStatus, errorThrown) {
         alert("Error while adding feature: " + errorThrown);
     }
 
     map.on('draw:created', function (e) {
+        var type = e.layerType;
+        var layer = e.layer;
+
         var geojson = e.layer.toGeoJSON();
         geojson.properties.template = aoi_feature_edit.current_feature_type_id;
         geojson = JSON.stringify(geojson);
@@ -230,8 +242,8 @@ aoi_feature_edit.map_init = function (map, bounds) {
             data: { aoi: aoi_feature_edit.aoi_id,
                 geometry: geojson
             },
-            success: onSuccessCreate,
-            error: onErrorCreate,
+            success: onSuccess,
+            error: onError,
             dataType: "json"
         });
     });
@@ -268,9 +280,9 @@ aoi_feature_edit.map_init = function (map, bounds) {
     });
     
     //Resize the map
-    aoi_feature_edit.map_resize();
+    aoi_feature_edit.mapResize();
     //Resize it on screen resize, but no more than every .3 seconds
-    var lazyResize = _.debounce(aoi_feature_edit.map_resize, 300);
+    var lazyResize = _.debounce(aoi_feature_edit.mapResize, 300);
     $(window).resize(lazyResize);
 };
 
@@ -286,14 +298,15 @@ aoi_feature_edit.buildDrawingControl = function (drawnItems) {
     //var feature = aoi_feature_edit.get_feature_type(feature_id);
 
     //Start building the draw options object
-    var drawOptions = { draw: {position: aoi_feature_edit.options.drawControlLocation} };
+    var drawOptions = { draw: {position: "topright"} };
     drawOptions.edit = false;
     //TODO: Add editing back in - currently is not catching edits, as features are saved
     // to server as soon as they are entered
 
     var drawControl = new L.Control.Draw({
+        position: "topright",
+
         draw: {
-            position: aoi_feature_edit.options.drawControlLocation,
             polyline: false,
             circle: false,
             rectangle: false,
@@ -332,7 +345,7 @@ aoi_feature_edit.addMapControlButtons = function (map) {
     }
 
     var completeButtonOptions = {
-        'html': '<a id="aoi-submit" href="#" class="btn btn-success">Submit to QA</a>',  // string
+        'html': '<a id="aoi-submit" href="#" class="btn">Mark as Complete</a>',  // string
         'onClick': complete_button_onClick,  // callback function
         'hideText': false,  // bool
         position: 'bottomright',
@@ -378,32 +391,14 @@ aoi_feature_edit.addMapControlButtons = function (map) {
     var $c2 = $($controls[1]);
     $c2.prependTo($c2.parent());
 
-
-//    var feature_type_div = "features";
-//    _.each(aoi_feature_edit.feature_types, function(feature_type){
-//        aoi_feature_edit.addOptions(feature_type, feature_type_div);
-//    });
-//
-//    var $features = $("#features");
-//    $features.select2();
-//    aoi_feature_edit.current_feature_type_id = parseInt($features.val());
-//
-//    $features.on("change", function(e) {
-//        log.info("Selected feature type: " + e.val + ".");
-//        aoi_feature_edit.current_feature_type_id = e.val;
-//        aoi_feature_edit.updateDrawOptions(e.val);
-//        //aoi_feature_edit.filterDrawConsole();
-//    });
-
-
 };
 
 
 aoi_feature_edit.layerDataList = function () {
 
     var treeData = [
-        {title: "Base Maps", tooltip: "Base Maps that are underneath layers", folder: true, key: "folder1", children: [] },
-        {title: "Overlay Layers", selected: true, folder: true, key: "folder2", children: [] },
+        {title: "Base Maps", folder: true, key: "folder1", children: [] },
+        {title: "Data Layers", selected: true, folder: true, key: "folder2", children: [] },
         {title: "Features", folder: true, key: "folder3", children: []}
     ];
 
@@ -417,6 +412,18 @@ aoi_feature_edit.layerDataList = function () {
         var layer_obj = {title: layer.name, key: 'folder2.' + i};
         treeData[1].children.push(layer_obj);
     });
+
+    try{
+        var all_layers = JSON.parse(aoi_feature_edit.aoi_map_json.all_layers);
+        _.each(all_layers, function (layer, i) {
+            if (layer.type == "WMS" || layer.type == "WMTS") {
+                var layer_obj = {title: layer.name, key: 'folder1.' + i, data:layer};
+                treeData[0].children.push(layer_obj);
+            }
+        });
+    } catch (ex) {
+        log.error("All Layers isn't being parsed as valid JSON")
+    }
 
 // Format:
 //          children: [
@@ -445,12 +452,11 @@ aoi_feature_edit.addLayerControl = function (map) {
 
     //Build the tree
     var $tree = $("<div>")
-        .attr({name: 'layers_tree_control'})
-        .css({maxHeight: '300px'});
+        .attr({name: 'layers_tree_control'});
 
     var layersOptions = {
         html: $tree,  // string
-        position: 'bottomleft'
+        position: 'bottomright'
     };
     var layersButton = new L.Control.Button(layersOptions).addTo(map);
 
@@ -458,32 +464,70 @@ aoi_feature_edit.addLayerControl = function (map) {
     var treeData = aoi_feature_edit.layerDataList();
 
     $tree.fancytree({
+        extensions: ["dnd"],
         checkbox: true,
-        selectMode: 1,
+        autoScroll: true,
+        selectMode: 2,
         source: treeData,
         activate: function (event, data) {
             //Click on title
             var node = data.node;
-            log.info("activate: event=", event, ", data=", data);
+            log.info("Click on ", data);
             if (!$.isEmptyObject(node.data)) {
                 log.info("custom node data: " + JSON.stringify(node.data));
             }
         },
         deactivate: function (event, data) {
-            log.info("-");
         },
         select: function (event, data) {
             // Display list of selected nodes
-            var s = data.tree.getSelectedNodes().join(", ");
-            log.info(s);
+            var selectedLayers = data.tree.getSelectedNodes();
+            _.each(selectedLayers,function(layer){
+                if (layer && layer.data) {
+                    log.info(layer.data.url);
+
+                }
+            });
         },
 
         focus: function (event, data) {
-            log.info(data.node.title);
         },
-        blur: function (event, data) {
-            log.info("-");
-        }
+        blur: function (event, data) {        },
+
+        dnd: {
+            preventVoidMoves: true, // Prevent dropping nodes 'before self', etc.
+            preventRecursiveMoves: true, // Prevent dropping nodes on own descendants
+            autoExpandMS: 400,
+            dragStart: function(node, data) {
+              /** This function MUST be defined to enable dragging for the tree.
+               *  Return false to cancel dragging of node.
+               */
+              return true;
+            },
+            dragEnter: function(node, data) {
+              /** data.otherNode may be null for non-fancytree droppables.
+               *  Return false to disallow dropping on node. In this case
+               *  dragOver and dragLeave are not called.
+               *  Return 'over', 'before, or 'after' to force a hitMode.
+               *  Return ['before', 'after'] to restrict available hitModes.
+               *  Any other return value will calc the hitMode from the cursor position.
+               */
+              // Prevent dropping a parent below another parent (only sort
+              // nodes under the same parent)
+              if(node.parent !== data.otherNode.parent){
+                return false;
+              }
+              // Don't allow dropping *over* a node (would create a child)
+              return ["before", "after"];
+            },
+            dragDrop: function(node, data) {
+              /** This function MUST be defined to enable dropping of items on
+               *  the tree.
+               */
+              data.otherNode.moveTo(node, data.hitMode);
+            }
+          }
+
     });
 
 //      var rootNode = $tree.fancytree("getRootNode");
@@ -580,12 +624,12 @@ aoi_feature_edit.createPolygonOptions = function (opts) {
 };
 
 aoi_feature_edit.createPointOptions = function (opts) {
-    var options = null
+    var options = null;
 
-    if (opts && opts.style && opts.style.iconUrl) {
+    if (opts && opts.style && (opts.style.iconUrl || opts.style.icon)) {
         options = {};
         var marker = new aoi_feature_edit.MapMarker({
-            iconUrl: opts.style.iconUrl,
+            iconUrl: opts.style.iconUrl || opts.style.icon,
             text: opts.name
         });
 

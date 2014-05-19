@@ -33,7 +33,11 @@ L.Control.Button = L.Control.extend({
   onAdd: function (map) {
     this._map = map;
     var container = L.DomUtil.create('div', 'leaflet-control-button');
-	
+
+    L.DomEvent.on(container, 'mousedown', L.DomEvent.stopPropagation)
+        .on(container, 'doubleclick', L.DomEvent.stopPropagation)
+        .on(container, 'click', L.DomEvent.stopPropagation);
+
     this._container = container;
 
     this._update();

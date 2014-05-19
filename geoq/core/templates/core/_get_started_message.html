@@ -1,0 +1,10 @@
+        {% if request.user != first_object.analyst %}
+        {% if request.user.id %}
+        <li>
+            <h3>
+                <i class="icon-1x pull-left list-icon"></i>
+                <span class="title"><a href="{% url 'job-next-aoi' object.id%}">Get started now!</a></span>
+            </h3>
+        </li>
+        {% endif %}
+        {% endif %}
