@@ -67,7 +67,7 @@ urlpatterns = patterns('',
     url(r'^aois/(?P<status>[a-zA-Z_ ]+)?/?$', AOIDetailedListView.as_view(template_name='core/aoi_list.html'), name='aoi-list'),
     url(r'^aois/work/(?P<pk>\d+)/?$',
         login_required(CreateFeaturesView.as_view()), name='aoi-work'),
-    url(r'^aois/update-status/(?P<pk>\d+)/(?P<status>Unassigned|Assigned|In work|Submitted|Completed)/?$', login_required(
+    url(r'^aois/update-status/(?P<pk>\d+)/(?P<status>Unassigned|Assigned|In work|In review|Completed)/?$', login_required(
         ChangeAOIStatus.as_view()),
         name="aoi-update-status"),
     url(r'^aois/create/?$', login_required(
