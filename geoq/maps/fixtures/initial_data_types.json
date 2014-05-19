@@ -44,7 +44,7 @@
             "style": "{\"color\":\"green\",\"opacity\":1,\"weight\":2}",
             "type": "Polygon",
             "name": "Limited Damage",
-            "properties": "[{\"severity\":\"Limited\"}]"
+            "properties": "[{\"type\":\"text\",\"severity\":\"Limited\"}]"
         }
     },
     {
@@ -97,35 +97,4 @@
             "properties": "{\"type\":\"text\",\"severity\":\"None\"}"
         }
     }
-},
-{
-    "pk": 2, 
-    "model": "maps.featuretype", 
-    "fields": {
-        "style": "{\"color\":\"green\",\"opacity\":1,\"weight\":2}", 
-        "type": "Polygon", 
-        "name": "Limited Damage", 
-        "properties": "[{\"severity\":\"Limited\"}]"
-    }
-},
-{
-    "pk": 3, 
-    "model": "maps.featuretype", 
-    "fields": {
-        "style": "{\"color\":\"orange\",\"opacity\":1,\"weight\":2}", 
-        "type": "Polygon", 
-        "name": "Major Damage", 
-        "properties": "[{\"type\":\"text\",\"severity\":\"Major\"}]"
-    }
-},
-{
-    "pk": 5, 
-    "model": "maps.featuretype", 
-    "fields": {
-        "style": "{\"iconUrl\":\"/static/leaflet/images/red-marker-icon.png\"}", 
-        "type": "Point", 
-        "name": "Catastrophic Damage Point", 
-        "properties": "{\"type\":\"text\",\"severity\":\"Catastrophic\"}"
-    }
-}
 ]
