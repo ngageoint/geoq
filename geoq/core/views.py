@@ -5,17 +5,13 @@
 import json
 import requests
 
-from django.contrib.auth.models import User
 from django.contrib.auth.decorators import login_required
-from django.http import Http404, HttpResponse
-
 from django.contrib.gis.geos import GEOSGeometry
 from django.core.urlresolvers import reverse
 from django.core.exceptions import ObjectDoesNotExist
 from django.forms.util import ValidationError
-from django.http import HttpResponse, HttpResponseRedirect
+from django.http import Http404, HttpResponse, HttpResponseRedirect
 from django.shortcuts import get_object_or_404, redirect
-from django.utils.decorators import method_decorator
 from django.views.generic import DetailView, ListView, TemplateView, View, DeleteView, CreateView
 
 from models import Project, Job, AOI
@@ -128,7 +124,7 @@ class JobDetailedListView(ListView):
         # # at the top of the list
         if self.request.user.id is not None and status == 'in work':
             user = self.request.user
-            clauses = 'WHEN analyst_id=%s THEN %s ELSE 1' % (user.id,0)
+            clauses = 'WHEN analyst_id=%s THEN %s ELSE 1' % (user.id, 0)
             ordering = 'CASE %s END' % clauses
             self.queryset = q_set.extra(
                select={'ordering': ordering}, order_by=('ordering',))
@@ -324,7 +320,7 @@ def mgrs(request):
     bb = bbox.split(',')
 
     try:
-        grid = Grid(bb[1],bb[0],bb[3],bb[2])
+        grid = Grid(bb[1], bb[0], bb[3], bb[2])
         fc = grid.build_grid_fc()
     except GridException:
         error = dict(error=500, details="Can't create grids across longitudinal boundaries. Try creating a smaller bounding box",)
@@ -344,7 +340,7 @@ def geocode(request):
     params['apiKey'] = '57956afd728b4204bee23dbb17f00573'
     params['version'] = '4.01'
 
-def aoi_delete(request,pk):
+def aoi_delete(request, pk):
     try:
         aoi = AOI.objects.get(pk=pk)
         aoi.delete()
@@ -362,7 +358,6 @@ def batch_create_aois(request, *args, **kwargs):
         aois = json.loads(aois)
     except ValueError:
         raise ValidationError(_("Enter valid JSON"))
-
 
     response = AOI.objects.bulk_create([AOI(name=(aoi.get('name')),
                                         job=job,
