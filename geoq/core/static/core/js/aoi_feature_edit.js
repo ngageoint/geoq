@@ -189,6 +189,9 @@ aoi_feature_edit.map_init = function (map, bounds) {
 
         if (featureLayer && featureType) {
             featureLayer.addData(featureCollection);
+            featureLayer.eachLayer(function (layer) {
+                aoi_feature_edit.drawnItems.addLayer(layer);
+            });
             featureLayer.addTo(aoi_feature_edit.map);
             layercontrol.addOverlay(featureLayer, featureType.name);
         } else {
@@ -204,15 +207,11 @@ aoi_feature_edit.map_init = function (map, bounds) {
     }, 1);
 
 
-    var drawnItems = new L.FeatureGroup();
-//    aoi_feature_edit.map.addLayer(drawnItems);
-//    aoi_feature_edit.drawnItems = drawnItems;
-//
     leaflet_helper.addLocatorControl(map);
-    aoi_feature_edit.buildDrawingControl(drawnItems);
+    aoi_feature_edit.buildDrawingControl(aoi_feature_edit.drawnItems);
     leaflet_helper.addGeocoderControl(map);
 
-    function onSuccess(data, textStatus, jqXHR) {
+    function onSuccessCreate(data, textStatus, jqXHR) {
         if (data[0] && data[0].geojson) {
             var tnum = data[0].fields.template;
             var featureCollection = aoi_feature_edit.createFeatureCollection(tnum);
@@ -224,14 +223,11 @@ aoi_feature_edit.map_init = function (map, bounds) {
         }
     }
 
-    function onError(jqXHR, textStatus, errorThrown) {
+    function onErrorCreate(jqXHR, textStatus, errorThrown) {
         alert("Error while adding feature: " + errorThrown);
     }
 
     map.on('draw:created', function (e) {
-        var type = e.layerType;
-        var layer = e.layer;
-
         var geojson = e.layer.toGeoJSON();
         geojson.properties.template = aoi_feature_edit.current_feature_type_id;
         geojson = JSON.stringify(geojson);
@@ -242,8 +238,8 @@ aoi_feature_edit.map_init = function (map, bounds) {
             data: { aoi: aoi_feature_edit.aoi_id,
                 geometry: geojson
             },
-            success: onSuccess,
-            error: onError,
+            success: onSuccessCreate,
+            error: onErrorCreate,
             dataType: "json"
         });
     });
