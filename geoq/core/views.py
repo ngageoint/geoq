@@ -88,6 +88,8 @@ class CreateFeaturesView(DetailView):
 
     def get_context_data(self, **kwargs):
         cv = super(CreateFeaturesView, self).get_context_data(**kwargs)
+        cv['reviewers'] = kwargs['object'].job.reviewers.all()
+
         cv['map'] = self.object.job.map
         cv['aoi'].analyst = self.request.user
         cv['aoi'].status = 'In work'

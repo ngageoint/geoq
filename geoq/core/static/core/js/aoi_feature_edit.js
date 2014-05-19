@@ -298,13 +298,13 @@ aoi_feature_edit.buildDrawingControl = function (drawnItems) {
     //var feature = aoi_feature_edit.get_feature_type(feature_id);
 
     //Start building the draw options object
-    var drawOptions = { draw: {position: "topright"} };
+    var drawOptions = { draw: {position: "topleft"} };
     drawOptions.edit = false;
     //TODO: Add editing back in - currently is not catching edits, as features are saved
     // to server as soon as they are entered
 
     var drawControl = new L.Control.Draw({
-        position: "topright",
+        position: "topleft",
 
         draw: {
             polyline: false,
@@ -336,16 +336,17 @@ aoi_feature_edit.addMapControlButtons = function (map) {
     function complete_button_onClick() {
         $.ajax({
             type: "POST",
-            url: aoi_feature_edit.complete_url,
+            url: aoi_feature_edit.finishUrl,
             dataType: "json",
             success: function (response) {
-                geoq.redirect(aoi_feature_edit.complete_redirect_url);
+                //geoq.redirect(aoi_feature_edit.complete_redirect_url);
+                finishAOI();
             }
         });
     }
 
     var completeButtonOptions = {
-        'html': '<a id="aoi-submit" href="#" class="btn">Mark as Complete</a>',  // string
+        'html': '<a id="aoi-submit" href="#" class="btn">' + aoi_feature_edit.finishLabel+ '</a>',  // string
         'onClick': complete_button_onClick,  // callback function
         'hideText': false,  // bool
         position: 'bottomright',

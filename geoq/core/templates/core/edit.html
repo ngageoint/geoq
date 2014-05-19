@@ -34,9 +34,17 @@
                 geometry_types.push("{{ feature_type.type }}");
         {% endfor %}
 
-        aoi_feature_edit.complete_url = "{% url 'aoi-update-status' object.id "Completed" %}";
-        aoi_feature_edit.complete_redirect_url = "{% url 'job-detail' object.job.id %}";
-        aoi_feature_edit.submit_url = "{% url 'aoi-update-status' object.id "Submitted" %}";
+        {% if aoi.analyst in reviewers %}
+            aoi_feature_edit.finishLabel = "Complete AOI";
+            aoi_feature_edit.finishUrl = "{% url 'aoi-update-status' object.id "Completed" %}";
+        {% else %}
+            aoi_feature_edit.finishLabel = "Submit AOI";
+            aoi_feature_edit.finishUrl = "{% url 'aoi-update-status' object.id "In review" %}";
+        {% endif %}
+
+//        aoi_feature_edit.complete_url = "{% url 'aoi-update-status' object.id "Completed" %}";
+//        aoi_feature_edit.complete_redirect_url = "{% url 'job-detail' object.job.id %}";
+//        aoi_feature_edit.submit_url = "{% url 'aoi-update-status' object.id "Submitted" %}";
 
         aoi_feature_edit.job_absolute_url = "{{ object.job.get_absolute_url }}";
         aoi_feature_edit.job_name = "{{ object.job.name }}";
@@ -48,6 +56,7 @@
         aoi_feature_edit.feature_types = feature_types;
         aoi_feature_edit.create_feature_url = "{% url 'feature-create' %}";
         aoi_feature_edit.edit_feature_url = "{% url 'feature-edit' %}";
+        aoi_feature_edit.next_aoi_url = "{% url 'job-next-aoi' object.job.id %}";
 
         aoi_feature_edit.percent_complete = {% widthratio object.job.complete.count 100 100%};
         aoi_feature_edit.description = "{{ object.description |safe}}";
@@ -69,6 +78,24 @@
                   	}
              	}
             );
+        }
+
+        function finishAOI() {
+            BootstrapDialog.show({
+                title: 'AOI Complete',
+                message: 'Your work has been uploaded. Would you like to:',
+                buttons: [{
+                    label: 'Go back to the Job page',
+                    action: function(dialog) {
+                        geoq.redirect(aoi_feature_edit.job_absolute_url);
+                    }
+                }, {
+                    label: 'Work on another AOI',
+                    action: function(dialog) {
+                        geoq.redirect(aoi_feature_edit.next_aoi_url);
+                    }
+                }]
+            });
         }
 
 </script>
