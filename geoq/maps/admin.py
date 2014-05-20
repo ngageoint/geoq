@@ -14,15 +14,11 @@ class MapLayerInline(admin.TabularInline):
 
 class MapAdmin(reversion.VersionAdmin, admin.ModelAdmin):
     model = Map
-    list_display = ['__unicode__', 'description', 'number_of_maps']
+    list_display = ['__unicode__', 'description',]
     inlines = [MapLayerInline]
     save_as = True
     ordering = ['title']
     search_fields = ['description', 'title', 'tags', ]
-
-    def number_of_maps(self, obj):
-        return Map.objects.filter(map=obj.id).count()
-
 
 class LayerAdmin(reversion.VersionAdmin, admin.OSMGeoAdmin):
     model = Layer

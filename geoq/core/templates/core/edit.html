@@ -6,14 +6,16 @@
 
     {% leaflet_js plugins="draw, esri, esriCluster" %}
     {% import_django_select2_js %}
+    <script src="{{ STATIC_URL }}core/js/jquery-migrate-1.2.1.min.js"></script>
     <script src="{{ STATIC_URL }}core/js/leaflet_helper.js"></script>
-    <script src="{{ STATIC_URL}}core/js/KML.js"></script>
-    <script src="{{ STATIC_URL}}core/js/KMZ.js"></script>
+    <script src="{{ STATIC_URL }}core/js/KML.js"></script>
+    <script src="{{ STATIC_URL }}core/js/KMZ.js"></script>
     <script src="{{ STATIC_URL }}core/js/aoi_feature_edit.js"></script>
     <script src="{{ STATIC_URL }}core/js/js-unzip.js"></script>
     <script src="{{ STATIC_URL }}core/js/js-inflate.js"></script>
     <script src="{{ STATIC_URL }}core/js/leafletcontrols/leaflet.simple_button.js"></script>
 	<script src="{{ STATIC_URL }}core/js/leaflet.OSMGeocoder/Control.OSMGeocoder.js"></script>
+	<script src="{{ STATIC_URL }}core/js/leafletcontrols/leaflet.layer_tree.js"></script>
     <script src="{{ STATIC_URL }}core/js/fancytree/jquery.fancytree.js" type="text/javascript"></script>
     <script src="{{ STATIC_URL }}core/js/fancytree/jquery.fancytree.dnd.js" type="text/javascript"></script>
 
@@ -21,7 +23,6 @@
 	<script src="{{ STATIC_URL }}core/js/jsmaptools/jsmaptools.js"></script>
 	<script src="{{ STATIC_URL }}core/js/jsmaptools/jsmaptools_polygons.js"></script>
 
-    <script src="{{ STATIC_URL }}core/js/leafletcontrols/leaflet.simple_button.left.js"></script>
     <script src="{{ STATIC_URL }}core/js/bootstrap-dialog.js"></script>
     <script type="text/javascript">
 
@@ -59,42 +60,7 @@
 
         aoi_feature_edit.init();
 
-        function deleteFeature(id, delete_url) {
-        	BootstrapDialog.confirm('Delete feature #' + id + '?',
-            	function(result) {
-                	if (result) {
-                    	$.ajax({
-                        	url: delete_url,
-                            type: 'GET',
-                            success: function(data) {
-                            	aoi_feature_edit.deleteFeature(data);
-                            },
-                            failure: function() { console.log('Failed to delete feature ' + id);}
-                        })
-                  	}
-             	}
-            );
-        }
-
-        function finishAOI() {
-            BootstrapDialog.show({
-                title: 'AOI Complete',
-                message: 'Your work has been uploaded. Would you like to:',
-                buttons: [{
-                    label: 'Go back to the Job page',
-                    action: function(dialog) {
-                        geoq.redirect(aoi_feature_edit.job_absolute_url);
-                    }
-                }, {
-                    label: 'Work on another AOI',
-                    action: function(dialog) {
-                        geoq.redirect(aoi_feature_edit.next_aoi_url);
-                    }
-                }]
-            });
-        }
-
-</script>
+    </script>
 
     {% compress css %}
         {% leaflet_css plugins="draw"%}
@@ -165,9 +131,47 @@
         }
 
     </style>
+    <script language="JavaScript">
+        //TODO: Move out of Edit.html
+        var deleteCheck = function(result) {
+            if (result) {
+                $.ajax({
+                    url: delete_url,
+                    type: 'GET',
+                    success: function(data) {
+                        aoi_feature_edit.deleteFeature(data);
+                    },
+                    failure: function() { log.log('Failed to delete feature ' + id);}
+                })
+            }
+        };
+        function deleteFeature(id, delete_url) {
+            var confirmText = 'Delete feature #' + id + '?';
+        	BootstrapDialog.confirm(confirmText, deleteCheck);
+        }
+
+        function finishAOI() {
+            BootstrapDialog.show({
+                title: 'AOI Complete',
+                message: 'Your work has been uploaded. Would you like to:',
+                buttons: [{
+                    label: 'Go back to the Job page',
+                    action: function(dialog) {
+                        geoq.redirect(aoi_feature_edit.job_absolute_url);
+                    }
+                }, {
+                    label: 'Work on another AOI',
+                    action: function(dialog) {
+                        geoq.redirect(aoi_feature_edit.next_aoi_url);
+                    }
+                }]
+            });
+        }
+
+
+    </script>
 {% endblock %}
 
 {% block container %}
-<div id="map" >{% leaflet_map "map" callback="aoi_feature_edit.map_init"%}</div>
+{% leaflet_map "map" callback="aoi_feature_edit.map_init"%}
 {% endblock %}
-
