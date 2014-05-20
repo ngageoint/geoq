@@ -17,7 +17,11 @@ def send_aoi_create_event(user, aoi_id, aoi_feature_count):
         url = '%s/users/%s/projects/%s/event/' % (gamification_server, user.username, gamification_project)
         dtg = datetime.now().isoformat(' ')
 
-        payload = { 'event_dtg' : dtg, 'details' : { 'event_type' : 'aoi_complete', 'aoi_id' : aoi_id, 'feature_count' : aoi_feature_count } }
+        payload = {'event_dtg': dtg, 'details': {
+            'event_type': 'aoi_complete',
+            'aoi_id': aoi_id,
+            'feature_count': aoi_feature_count
+        }}
         headers = {'Content-type': 'application/json'}
 
-        r = requests.post(url, data=json.dumps(payload), headers=headers, timeout=5 )
+        r = requests.post(url, data=json.dumps(payload), headers=headers, timeout=5)
