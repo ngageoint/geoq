@@ -13,63 +13,39 @@ var leaflet_layer_control = {};
 
 leaflet_layer_control.layerDataList = function (options) {
 
-    var baseLayers = options.base_layers || [];
-    var dataLayers = options.data_layers || [];
-    var featuresLayers = options.feature_layers || [];
+    var treeData = [];
 
-    var treeData = [
-        {title: "Base Maps", folder: true, key: "folder1", children: [] },
-        {title: "Data Layers", folder: true, key: "folder2", children: [] },
-        {title: "Features", folder: true, key: "folder3", children: []}
-    ];
+    //For each layer group
+    _.each(options.layers,function(layerGroup,groupNum){
+        var layerName = options.titles[groupNum] || "Layers";
+        var folderName = "folder."+ groupNum;
+        treeData.push({title: layerName, folder: true, key: folderName, children: [] });
 
-    _.each(dataLayers, function (layer, i) {
-        var name = layer.name || layer.options.name;
-        var layer_obj = {title: name, key: 'folder1.' + i, data:layer};
-        treeData[0].children.push(layer_obj);
-    });
+        //For each layer
+        _.each(layerGroup, function (layer, i) {
+            var name = layer.name || layer.options.name;
+            var layer_obj = {title: name, key: folderName+"."+i, data:layer};
 
-    _.each(baseLayers, function (layer, i) {
-        var name = layer.name || layer.options.name;
-        var layer_obj = {title: name, key: 'folder2.' + i, data:layer};
-        treeData[1].children.push(layer_obj);
-    });
-
-    _.each(featuresLayers, function (layer, i) {
-        var name = layer.name || layer.options.name;
-        var layer_obj = {title: name, key: 'folder3.' + i, data:layer};
-
-        if (layer.getLayers && layer.getLayers() && layer.getLayers()[0]) {
-            var options = layer.getLayers()[0]._options;
-            if (options && options.style) {
-                if (options.style.opacity == 1 || options.style.fillOpacity == 1){
-                    layer_obj.selected = true;
+            //Figure out if it is visible and should be "checked"
+            if (layer.getLayers && layer.getLayers() && layer.getLayers()[0]) {
+                var layerItem = layer.getLayers()[0];
+                var options = layerItem._options || layerItem.options;
+                if (options && options.style) {
+                    if (options.style.opacity == 1 || options.style.fillOpacity == 1){
+                        layer_obj.selected = true;
+                    }
+                } else if (options && options.opacity && options.opacity == 1) {
+                        layer_obj.selected = true;
                 }
+            } else if (layer.options && layer.options.opacity && layer.options.opacity == 1){
+                layer_obj.selected = true;
             }
-        }
 
-        treeData[2].children.push(layer_obj);
+            treeData[groupNum].children.push(layer_obj);
+        });
+
     });
 
-
-
-// Format:
-//          children: [
-//            {title: "Sub-item 3.1",
-//              children: [
-//                {title: "Sub-item 3.1.1", key: "id3.1.1" },
-//                {title: "Sub-item 3.1.2", key: "id3.1.2" }
-//              ]
-//            },
-//            {title: "Sub-item 3.2",
-//              children: [
-//                {title: "Sub-item 3.2.1", key: "id3.2.1" },
-//                {title: "Sub-item 3.2.2", key: "id3.2.2" }
-//              ]
-//            }
-//          ]
-//        }
-//    ];
     return treeData;
 
 };
@@ -102,10 +78,7 @@ leaflet_layer_control.addLayerControl = function (map, options) {
             //TODO: Show an info box to control layer settings
 
             var node = data.node;
-            log.info("Click on ", data);
-            if (!$.isEmptyObject(node.data)) {
-                log.info("custom node data: " + JSON.stringify(node.data));
-            }
+            log.info("Clicked on a layer", data);
         },
         deactivate: function (event, data) {
         },
@@ -125,23 +98,67 @@ leaflet_layer_control.addLayerControl = function (map, options) {
             // If it's selected but not in list then create as a layer and turn it on
 
             var all_layers = _.flatten(aoi_feature_edit.layers);
-            var all_active_layers = _.filter(all_layers,function(l){return (l._initHooksCalled && l._layers && l._map)});
+            var all_active_layers = _.filter(all_layers,function(l){return (l._initHooksCalled && l._map)});
 
             _.each(all_active_layers,function(l){
                 setOpacity(l,0);
+                if (l.getContainer) {
+                    var $lc = $(l.getContainer());
+                    $lc.zIndex(1);
+                    $lc.hide();
+                }
             });
 
+            var zIndexes = 1;
 
             var selectedLayers = data.tree.getSelectedNodes();
-            _.each(selectedLayers,function(layer_obj){
+            _.each(selectedLayers,function(layer_obj, layerOrder){
                 if (layer_obj && layer_obj.data) {
                     var layer = layer_obj.data;
-                    var name = layer.name;
-                    if (!name && layer.options) name = layer.options.name;
 
-                    log.info(name, " = ", layer.url);
+                    if (layer._map && layer._initHooksCalled) {
+                        //It's a layer that's been already built
+                        setOpacity(layer,1);
+                        if (layer.getContainer) {
+                            var $lc = $(layer.getContainer());
+                            zIndexes++;
+                            $lc.zIndex(zIndexes);
+                            $lc.show();
+                        }
 
-                    setOpacity(layer,1);
+                    } else {
+                        //It's an object with layer info, not yet built
+                        var name = layer.name;
+                        if (!name && layer.options) name = layer.options.name;
+                        log.info(name, " = ", layer.url);
+
+                        //TODO: Move this to generic layer loading script
+                        if (layer.type == "WMS"){
+
+                            var newLayer = L.tileLayer.wms(layer.url, {
+                                layers: layer.layer,
+                                format: layer.format || 'image/png',
+                                transparent: layer.transparent,
+                                attribution: layer.attribution,
+                                name: layer.name,
+                                details: layer
+                            });
+                            aoi_feature_edit.map.addLayer(newLayer);
+
+                            if (layer.getContainer) {
+                                var $lc = $(layer.getContainer());
+                                zIndexes++;
+                                $lc.zIndex(zIndexes);
+                                $lc.show();
+                            }
+
+                            layer_obj.data = newLayer;
+                            //TODO: Problem is that this .data is not overwriting the info obj
+                            // with the newly created layer. Need to set it properly, perhaps with
+                            // a pointer to the original?
+                        }
+                    }
+
                 } else {
                     log.error("A layer with no data was clicked");
                 }

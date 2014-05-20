@@ -123,6 +123,13 @@ aoi_feature_edit.map_init = function (map, bounds) {
 
     aoi_feature_edit.layers.base = [];
     aoi_feature_edit.layers.overlays = [];
+
+    var baselayer = _.toArray(aoi_feature_edit.map._layers);
+    if (baselayer && baselayer[0]) {
+        baselayer[0].name="OpenStreetMap";
+        aoi_feature_edit.layers.base.push(baselayer[0]);
+    }
+
     if (custom_map.hasOwnProperty("layers")) {
         _.each(custom_map.layers, function (l) {
             var n = leaflet_helper.layer_conversion(l);
@@ -130,11 +137,11 @@ aoi_feature_edit.map_init = function (map, bounds) {
                 if (l.isBaseLayer) {
                     baseLayers[l.name] = n;
                     log.info("Added " + l.name + " as an overlay layer.")
-                    aoi_feature_edit.layers.overlays.push(l);
+                    aoi_feature_edit.layers.base.push(l);
                 } else {
                     layerSwitcher[l.name] = n;
                     log.info("Added " + l.name + " as a base layer.")
-                    aoi_feature_edit.layers.base.push(l);
+                    aoi_feature_edit.layers.overlays.push(l);
                 }
             }
         });
@@ -364,20 +371,55 @@ aoi_feature_edit.addMapControlButtons = function (map) {
 };
 
 aoi_feature_edit.buildTreeLayers = function(){
-    var options = {};
-    options.base_layers = aoi_feature_edit.layers.base;
-    options.feature_layers = aoi_feature_edit.layers.features;
-    options.data_layers = [];
-    try {
-        var all_layers = JSON.parse(aoi_feature_edit.aoi_map_json.all_layers);
-        var data_layers = _.filter(all_layers, function(l){
-            return (l.type == "WMS" || l.type == "WMTS");
-        });
-        data_layers = _.difference(data_layers,options.base_layers);
-        options.data_layers = data_layers;
-    } catch (ex) {
-        log.error("aoi_map_json.all_layers isn't being parsed as valid JSON.")
+
+    function layers_only_non_transparent(not_these){
+        var layers = [];
+        try {
+            var all_layers = JSON.parse(aoi_feature_edit.aoi_map_json.all_layers);
+            layers = _.filter(all_layers, function(l){
+                return ((l.type == "WMS" || l.type == "WMTS") && l.transparent == false);
+            });
+            if (not_these) {
+                //layers = _.difference(layers,not_these);
+                var keep_layers = [];
+                _.each(layers,function(l_main){
+                    var l_keep = true;
+                    _.each(not_these, function(l_not){
+                        if (l_main.id === l_not.id) {
+                            l_keep = false;
+                            return false;
+                        }
+                    });
+                    if (l_keep) keep_layers.push(l_main);
+                });
+                layers = keep_layers;
+            }
+        } catch (ex) {
+            log.error("aoi_map_json.all_layers isn't being parsed as valid JSON.")
+        }
+        return layers;
     }
+
+    var options = {};
+    options.titles = [];
+    options.layers = [];
+
+    //1
+    options.titles.push('AOI Base Maps');
+    options.layers.push(aoi_feature_edit.layers.base);
+
+    //0
+    options.titles.push('Other Base Maps');
+    options.layers.push(layers_only_non_transparent(aoi_feature_edit.layers.base));
+
+    //2
+    options.titles.push('Features');
+    options.layers.push(aoi_feature_edit.layers.features);
+
+    //2
+    options.titles.push('Data Feeds');
+    options.layers.push(aoi_feature_edit.layers.overlays);
+
     return options;
 };
 aoi_feature_edit.getDrawConsole = function () {
