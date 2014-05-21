@@ -32,22 +32,6 @@ aoi_feature_edit.init = function () {
     aoi_feature_edit.featureLayers = [];
     aoi_feature_edit.icons = {};
 
-    // on each feature use feature data to create a pop-up
-//    function onEachFeature(feature, layer) {
-//        if (feature.properties) {
-//            var popupContent;
-
-//    _.each(aoi_feature_edit.feature_types, function (ftype) {
-//        // if this is a point, create icon for it first
-//        if (ftype.type == 'Point') {
-//            aoi_feature_edit.icons[ftype.id] = {
-//                iconUrl: ftype.style.iconUrl,
-//                text: ftype.name
-//            };
-//        }
-//        layer.bindPopup(popupContent);
-//    }
-
     _.each(aoi_feature_edit.feature_types, function (ftype) {
         // if this is a point, create icon for it first
         if (ftype.type == 'Point' && ftype.style && (ftype.style.iconUrl || ftype.style.icon)) {
@@ -57,29 +41,11 @@ aoi_feature_edit.init = function () {
             };
         }
 
-
         var featureLayer = L.geoJson(null, {
-            onEachFeature: function (feature, layer) {
-                if (feature.properties) {
-                    feature_hash[feature.properties.id] = {layerGroup: featureLayer, layer: layer};
-
-                    var popupContent = '<h5>Feature #' + feature.properties.id + '</h5>';
-                    if (feature.properties.template) {
-                        var template = aoi_feature_edit.feature_types[parseInt(feature.properties.template)];
-                        popupContent += '<b>' + template.name + '</b><br/>';
-                    }
-                    popupContent += '<b>Analyst:</b> ' + feature.properties.analyst;
-                    popupContent += '<br/><b>Created:</b> ' + feature.properties.created_at;
-                    popupContent += '<br/><b>Updated:</b> ' + feature.properties.updated_at;
-                    popupContent += '<br/><a onclick="javascript:deleteFeature(\'' + feature.properties.id + '\', \'/geoq/features/delete/' + feature.properties.id + '\');">Delete Feature</a>';
-                    layer.bindPopup(popupContent);
-                }
+            onEachFeature: function(feature, layer) {
+                aoi_feature_edit.featureLayer_onEachFeature(feature, layer, featureLayer);
             },
-            pointToLayer: function (feature, latlng) {
-                return new L.Marker(latlng, {
-                    icon: new aoi_feature_edit.MapMarker(aoi_feature_edit.icons[feature.properties.template])
-                });
-            }
+            pointToLayer: aoi_feature_edit.featureLayer_pointToLayer
         });
         var feature_type = aoi_feature_edit.feature_types[ftype.properties.template];
         if (feature_type && feature_type.hasOwnProperty("style")) {
@@ -89,6 +55,39 @@ aoi_feature_edit.init = function () {
         featureLayer.name = ftype.name;
         aoi_feature_edit.featureLayers[ftype.id] = featureLayer;
     });
+};
+
+aoi_feature_edit.featureLayer_pointToLayer = function (feature, latlng) {
+    return new L.Marker(latlng, {
+        icon: new aoi_feature_edit.MapMarker(aoi_feature_edit.icons[feature.properties.template])
+    });
+};
+aoi_feature_edit.featureLayer_onEachFeature = function (feature, layer, featureLayer) {
+    if (feature.properties) {
+        feature_hash[feature.properties.id] = {layerGroup: featureLayer, layer: layer};
+
+        var popupContent = "<h5>Feature</h5>";
+        if (feature.properties.id){
+            popupContent = '<h5>Feature #' + feature.properties.id + '</h5>';
+        }
+        if (feature.properties.template) {
+            var template = aoi_feature_edit.feature_types[parseInt(feature.properties.template)];
+            popupContent += '<b>' + template.name + '</b><br/>';
+        }
+        if (feature.properties.analyst){
+            popupContent += '<b>Analyst:</b> ' + feature.properties.analyst;
+        }
+        if (feature.properties.created_at){
+            popupContent += '<br/><b>Created:</b> ' + feature.properties.created_at;
+        }
+        if (feature.properties.updated_at){
+            popupContent += '<br/><b>Updated:</b> ' + feature.properties.updated_at;
+        }
+        if (feature.properties.id){
+            popupContent += '<br/><a onclick="javascript:deleteFeature(\'' + feature.properties.id + '\', \'/geoq/features/delete/' + feature.properties.id + '\');">Delete Feature</a>';
+        }
+        layer.bindPopup(popupContent);
+    }
 };
 
 aoi_feature_edit.get_feature_type = function (i) {
