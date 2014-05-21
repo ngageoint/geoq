@@ -67,6 +67,7 @@ leaflet_layer_control.addLayerControl = function (map, options) {
     //Build the layer schema
     var treeData = leaflet_layer_control.layerDataList(options);
 
+    var zIndexesOfHighest = 2;
     $tree.fancytree({
 //        extensions: ["dnd"],
         checkbox: true,
@@ -95,7 +96,6 @@ leaflet_layer_control.addLayerControl = function (map, options) {
 
             //TODO:
             // Loop through sub-folder objects, too
-            // If it's selected but not in list then create as a layer and turn it on
 
             var all_layers = _.flatten(aoi_feature_edit.layers);
             var all_active_layers = _.filter(all_layers,function(l){return (l._initHooksCalled && l._map)});
@@ -109,8 +109,6 @@ leaflet_layer_control.addLayerControl = function (map, options) {
                 }
             });
 
-            var zIndexes = 1;
-
             var selectedLayers = data.tree.getSelectedNodes();
             _.each(selectedLayers,function(layer_obj, layerOrder){
                 if (layer_obj && layer_obj.data) {
@@ -121,8 +119,8 @@ leaflet_layer_control.addLayerControl = function (map, options) {
                         setOpacity(layer,1);
                         if (layer.getContainer) {
                             var $lc = $(layer.getContainer());
-                            zIndexes++;
-                            $lc.zIndex(zIndexes);
+                            zIndexesOfHighest++;
+                            $lc.zIndex(zIndexesOfHighest);
                             $lc.show();
                         }
 
@@ -145,17 +143,24 @@ leaflet_layer_control.addLayerControl = function (map, options) {
                             });
                             aoi_feature_edit.map.addLayer(newLayer);
 
-                            if (layer.getContainer) {
-                                var $lc = $(layer.getContainer());
-                                zIndexes++;
-                                $lc.zIndex(zIndexes);
+                            if (newLayer.getContainer) {
+                                var $lc = $(newLayer.getContainer());
+                                zIndexesOfHighest++;
+                                $lc.zIndex(zIndexesOfHighest);
                                 $lc.show();
                             }
 
                             layer_obj.data = newLayer;
-                            //TODO: Problem is that this .data is not overwriting the info obj
-                            // with the newly created layer. Need to set it properly, perhaps with
-                            // a pointer to the original?
+
+                            //Replace the old object list with the new layer
+                            _.each(aoi_feature_edit.layers,function(layerGroup,l_i){
+                                _.each(layerGroup,function(layerGroupItem,l_l){
+                                    if (layerGroupItem.id == layer.id) {
+                                        layerGroup[l_l] = newLayer;
+                                    }
+
+                                });
+                            });
                         }
                     }
 
