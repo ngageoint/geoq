@@ -31,7 +31,7 @@ def menu(active=None, request_path=None, request_user=None):
         #'Help': {'index': 6, 'url': '#', 'active': False, 'dropdown': order_dict(help_dropdown, sort_key)},
     }
 
-    if(request_user.groups.filter(name='admin_group')):
+    if(request_user.groups.filter(name='admin_group') or request_user.is_superuser):
         menu_items.update(menu_maps)
 
     if request_path:
