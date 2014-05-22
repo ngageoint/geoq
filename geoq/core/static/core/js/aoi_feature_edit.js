@@ -206,7 +206,7 @@ aoi_feature_edit.map_init = function (map, bounds) {
                 aoi_feature_edit.drawnItems.addLayer(layer);
             });
             featureLayer.addTo(aoi_feature_edit.map);
-            layercontrol.addOverlay(featureLayer, featureType.name);
+//            layercontrol.addOverlay(featureLayer, featureType.name);
             aoi_feature_edit.layers.features.push(featureLayer);
         } else {
             log.error("A FeatureLayer was supposed to be drawn, but didn't seem to exist.")
