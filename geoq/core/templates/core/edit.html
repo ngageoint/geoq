@@ -133,21 +133,21 @@
     </style>
     <script language="JavaScript">
         //TODO: Move out of Edit.html
-        var deleteCheck = function(result) {
-            if (result) {
-                $.ajax({
-                    url: delete_url,
-                    type: 'GET',
-                    success: function(data) {
-                        aoi_feature_edit.deleteFeature(data);
-                    },
-                    failure: function() { log.log('Failed to delete feature ' + id);}
-                })
-            }
-        };
+
         function deleteFeature(id, delete_url) {
             var confirmText = 'Delete feature #' + id + '?';
-        	BootstrapDialog.confirm(confirmText, deleteCheck);
+        	BootstrapDialog.confirm(confirmText, function(result) {
+                if (result) {
+                    $.ajax({
+                        url: delete_url,
+                        type: 'GET',
+                        success: function(data) {
+                            aoi_feature_edit.deleteFeature(data);
+                        },
+                        failure: function() { log.log('Failed to delete feature ' + id);}
+                    })
+                }
+            });
         }
 
         function finishAOI() {

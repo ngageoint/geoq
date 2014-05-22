@@ -7,7 +7,7 @@ var aoi_feature_edit = {};
 aoi_feature_edit.layers = {features:[], base:[], overlays:[]};
 
 var feature_hash = {};
-
+aoi_feature_edit.drawnItems = new L.FeatureGroup();
 aoi_feature_edit.options = {
 };
 
@@ -41,16 +41,23 @@ aoi_feature_edit.init = function () {
             };
         }
 
+
         var featureLayer = L.geoJson(null, {
+            style: function (ftype) {
+                var feature_type = aoi_feature_edit.feature_types[ftype.properties.template];
+                if (feature_type && feature_type.hasOwnProperty("style")) {
+                    return feature_type.style;
+                }
+            },
             onEachFeature: function(feature, layer) {
                 aoi_feature_edit.featureLayer_onEachFeature(feature, layer, featureLayer);
             },
             pointToLayer: aoi_feature_edit.featureLayer_pointToLayer
         });
-        var feature_type = aoi_feature_edit.feature_types[ftype.properties.template];
-        if (feature_type && feature_type.hasOwnProperty("style")) {
-            featureLayer.style = feature_type.style;
-        }
+        //var feature_type = aoi_feature_edit.feature_types[ftype.id];
+        //if (feature_type && feature_type.hasOwnProperty("style")) {
+        //    featureLayer.style = feature_type.style;
+        //}
 
         featureLayer.name = ftype.name;
         aoi_feature_edit.featureLayers[ftype.id] = featureLayer;
@@ -194,14 +201,19 @@ aoi_feature_edit.map_init = function (map, bounds) {
 
         if (featureLayer && featureType) {
             featureLayer.addData(featureCollection);
+            featureLayer.eachLayer(function (layer) {
+                aoi_feature_edit.drawnItems.addLayer(layer);
+            });
             featureLayer.addTo(aoi_feature_edit.map);
             layercontrol.addOverlay(featureLayer, featureType.name);
-            aoi_feature_edit.layers.features.push(featureLayer);
+            //aoi_feature_edit.layers.features.push(featureLayer);
         } else {
             log.error("A FeatureLayer was supposed to be drawn, but didn't seem to exist.")
         }
 
     });
+
+    aoi_feature_edit.layers.features = aoi_feature_edit.featureLayers;
 
     setTimeout(function () {
         aoi_feature_edit.map.fitBounds(aoi_extents.getBounds());
@@ -213,7 +225,7 @@ aoi_feature_edit.map_init = function (map, bounds) {
 //    aoi_feature_edit.drawnItems = drawnItems;
 //
     leaflet_helper.addLocatorControl(map);
-    aoi_feature_edit.buildDrawingControl(drawnItems);
+    aoi_feature_edit.buildDrawingControl(aoi_feature_edit.drawnItems);
     leaflet_helper.addGeocoderControl(map);
 
     var options = aoi_feature_edit.buildTreeLayers();
@@ -227,6 +239,9 @@ aoi_feature_edit.map_init = function (map, bounds) {
             var featureCollection = aoi_feature_edit.createFeatureCollection(tnum);
             featureCollection.features.push($.parseJSON(data[0].geojson));
             aoi_feature_edit.featureLayers[tnum].addData(featureCollection);
+
+            var layer = feature_hash[data[0].pk].layer
+            aoi_feature_edit.drawnItems.addLayer(layer);
         }
     }
 
@@ -290,14 +305,11 @@ aoi_feature_edit.buildDrawingControl = function (drawnItems) {
     //feature_id = feature_id || aoi_feature_edit.current_feature_type_id || 1;
     //var feature = aoi_feature_edit.get_feature_type(feature_id);
 
-    //Start building the draw options object
-    var drawOptions = { draw: {position: "topright"} };
-    drawOptions.edit = false;
     //TODO: Add editing back in - currently is not catching edits, as features are saved
     // to server as soon as they are entered
 
     var drawControl = new L.Control.Draw({
-        position: "topright",
+        position: "topleft",
 
         draw: {
             polyline: false,
@@ -317,7 +329,7 @@ aoi_feature_edit.buildDrawingControl = function (drawnItems) {
 
 
     //Create the drawing objects control
-    //var drawControl = new L.Control.Draw(drawOptions);
+
     aoi_feature_edit.map.addControl(drawControl);
     aoi_feature_edit.drawcontrol = drawControl;
 
@@ -328,16 +340,17 @@ aoi_feature_edit.addMapControlButtons = function (map) {
     function complete_button_onClick() {
         $.ajax({
             type: "POST",
-            url: aoi_feature_edit.complete_url,
+            url: aoi_feature_edit.finishUrl,
             dataType: "json",
             success: function (response) {
-                geoq.redirect(aoi_feature_edit.complete_redirect_url);
+                //geoq.redirect(aoi_feature_edit.complete_redirect_url);
+                finishAOI();
             }
         });
     }
 
     var completeButtonOptions = {
-        'html': '<a id="aoi-submit" href="#" class="btn">Mark as Complete</a>',  // string
+        'html': '<a id="aoi-submit" href="#" class="btn">' + aoi_feature_edit.finishLabel+ '</a>',  // string
         'onClick': complete_button_onClick,  // callback function
         'hideText': false,  // bool
         position: 'bottomright',
@@ -469,6 +482,7 @@ aoi_feature_edit.deleteFeature = function (id) {
     var feature = feature_hash[id];
     if (feature) {
         feature.layerGroup.removeLayer(feature.layer);
+        aoi_feature_edit.drawnItems.removeLayer(feature.layer);
         delete feature_hash[id];
     }
 };
