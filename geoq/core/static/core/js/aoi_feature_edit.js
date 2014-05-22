@@ -138,23 +138,24 @@ aoi_feature_edit.map_init = function (map, bounds) {
 
     if (custom_map.hasOwnProperty("layers")) {
         _.each(custom_map.layers, function (l) {
-            var n = leaflet_helper.layer_conversion(l);
-            if (n !== undefined) {
+            var built_layer = leaflet_helper.layer_conversion(l);
+            if (built_layer !== undefined) {
                 if (l.isBaseLayer) {
-                    baseLayers[l.name] = n;
-                    log.info("Added " + l.name + " as an overlay layer.")
-                    aoi_feature_edit.layers.base.push(l);
+                    baseLayers[l.name] = built_layer;
+                    aoi_feature_edit.layers.base.push(built_layer);
                 } else {
-                    layerSwitcher[l.name] = n;
-                    log.info("Added " + l.name + " as a base layer.")
-                    aoi_feature_edit.layers.overlays.push(l);
+                    layerSwitcher[l.name] = built_layer;
+                    aoi_feature_edit.layers.overlays.push(built_layer);
                 }
+            } else {
+                log.error("Tried to add a layer, but didn't work: "+lyr.url)
             }
+        aoi_feature_edit.map.addLayer(built_layer);
         });
     }
     //TODO: Remove all this code when layer builder is working
-    var layercontrol = L.control.layers(baseLayers, layerSwitcher).addTo(aoi_feature_edit.map);
-
+//    var layercontrol = L.control.layers(baseLayers, layerSwitcher).addTo(aoi_feature_edit.map);
+//TODO: Maps are not showing as visible in the loader...
 
     aoi_feature_edit.addMapControlButtons(aoi_feature_edit.map);
 
@@ -206,7 +207,7 @@ aoi_feature_edit.map_init = function (map, bounds) {
             });
             featureLayer.addTo(aoi_feature_edit.map);
             layercontrol.addOverlay(featureLayer, featureType.name);
-            //aoi_feature_edit.layers.features.push(featureLayer);
+            aoi_feature_edit.layers.features.push(featureLayer);
         } else {
             log.error("A FeatureLayer was supposed to be drawn, but didn't seem to exist.")
         }
@@ -216,14 +217,13 @@ aoi_feature_edit.map_init = function (map, bounds) {
     aoi_feature_edit.layers.features = aoi_feature_edit.featureLayers;
 
     setTimeout(function () {
-        aoi_feature_edit.map.fitBounds(aoi_extents.getBounds());
+        if (aoi_extents.getBounds) {
+            aoi_feature_edit.map.fitBounds(aoi_extents.getBounds());
+        }
     }, 1);
 
 
-    var drawnItems = new L.FeatureGroup();
-//    aoi_feature_edit.map.addLayer(drawnItems);
-//    aoi_feature_edit.drawnItems = drawnItems;
-//
+    //var drawnItems = new L.FeatureGroup();
     leaflet_helper.addLocatorControl(map);
     aoi_feature_edit.buildDrawingControl(aoi_feature_edit.drawnItems);
     leaflet_helper.addGeocoderControl(map);
@@ -267,9 +267,6 @@ aoi_feature_edit.map_init = function (map, bounds) {
             error: onError,
             dataType: "json"
         });
-
-        //layer.bindPopup('Feature Created!');
-        //drawnItems.addLayer(layer);
     });
 
     map.on('draw:drawstart', function (e) {

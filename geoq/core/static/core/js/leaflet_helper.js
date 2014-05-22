@@ -35,6 +35,7 @@ leaflet_helper.layer_conversion = function (lyr) {
         log.warn('Esri Leaflet plugin not installed.  Esri layer types disabled.');
     }
 
+    //TODO: Combine these with the leaflet.layer_tree.js code for layer loading
     if (lyr.type == 'WMS') {
         layerOptions = _.extend(options, layerParams);
         outputLayer = new L.tileLayer.wms(lyr.url, layerOptions);
@@ -70,6 +71,7 @@ leaflet_helper.layer_conversion = function (lyr) {
                 log.error("JSON layer error, message was:", result.error.message, "url:", url);
             } else {
                 var isESRIpseudoJSON = false;
+                //TODO: Move to a dynamic type-detector module
                 if (result &&
                     result.geometryType && result.geometryType == "esriGeometryPoint" &&
                     result.features && result.features.length &&
@@ -80,9 +82,11 @@ leaflet_helper.layer_conversion = function (lyr) {
                 } else {
                     outputLayer = new L.GeoJSON(result, layerOptions);
                 }
+                outputLayer.name = lyr.name || (lyr.type+ " layer");
+                log.info("JSON layer was created from :", lyr.url, "features:", result.features.length);
             }
         } else {
-            log.error ("A JSON layer was requested, but no valid response was received, result:", resultobj);
+            log.error ("A JSON layer was requested, but no valid response was received from the server, result:", resultobj);
         }
     } else if (lyr.type == 'KML') {
         layerOptions = options;
@@ -90,9 +94,7 @@ leaflet_helper.layer_conversion = function (lyr) {
         outputLayer = new L.KML(leaflet_helper.proxy_path + encodeURI(lyr.url), layerOptions);
     }
 
-    log.info("Trying to create a layer from url:", lyr.url);
     return outputLayer;
-
 };
 
 leaflet_helper.createMarker = {
@@ -125,6 +127,7 @@ leaflet_helper.addDynamicCapimageData = function (result) {
         };
         jsonObjects.push(json);
     });
+    log.info("A FEMA CAP layer was loaded, with", result.features.length, "features");
 
     function onEachFeature(feature, layer) {
         // does this feature have a property named popupContent?

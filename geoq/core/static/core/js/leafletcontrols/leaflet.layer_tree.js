@@ -9,7 +9,7 @@ var leaflet_layer_control = {};
 //TODO: have an info control that modifies things like opactiy/IA tools/icons
 //TODO: Save info about layer configuration, then have a way to load that back in or save as settings for a Job
 //TODO: Have a control to add new layers
-
+//TODO: Show count of features next to layer title
 
 leaflet_layer_control.layerDataList = function (options) {
 
@@ -26,6 +26,8 @@ leaflet_layer_control.layerDataList = function (options) {
             var name = layer.name || layer.options.name;
             var layer_obj = {title: name, key: folderName+"."+i, data:layer};
 
+            //TODO: Look for other layers with same name, or url+layers - if so, remove others
+
             //Figure out if it is visible and should be "checked"
             if (layer.getLayers && layer.getLayers() && layer.getLayers()[0]) {
                 var layerItem = layer.getLayers()[0];
@@ -37,7 +39,7 @@ leaflet_layer_control.layerDataList = function (options) {
                 } else if (options && options.opacity && options.opacity == 1) {
                         layer_obj.selected = true;
                 }
-            } else if (layer.options && layer.options.opacity && layer.options.opacity == 1){
+            } else if (layer.options && layer.options.opacity){
                 layer_obj.selected = true;
             }
 
@@ -94,8 +96,8 @@ leaflet_layer_control.addLayerControl = function (map, options) {
                 }
             }
 
-            //TODO:
-            // Loop through sub-folder objects, too
+            //TODO: Loop through sub-folder objects, too
+            //TODO: Turn off json layers - not hiding properly
 
             var all_layers = _.flatten(aoi_feature_edit.layers);
             var all_active_layers = _.filter(all_layers,function(l){return (l._initHooksCalled && l._map)});
