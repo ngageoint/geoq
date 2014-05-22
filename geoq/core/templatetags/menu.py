@@ -10,8 +10,9 @@ register = template.Library()
 def get_menu(request=None, **kwargs):
 
     request_path = getattr(request, 'path', None)
+    request_user = getattr(request, 'user', None)
     menu_dict = kwargs
-    menu_dict['menu_items'] = menu(request_path=request_path)
+    menu_dict['menu_items'] = menu(request_path=request_path, request_user=request_user)
     menu_dict['request'] = request
 
     return menu_dict

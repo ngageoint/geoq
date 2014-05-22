@@ -7,7 +7,7 @@ from django.utils.datastructures import SortedDict
 import re
 
 
-def menu(active=None, request_path=None):
+def menu(active=None, request_path=None, request_user=None):
 
     def order_dict(d, key):
         return SortedDict(sorted(d.items(), key=key))
@@ -24,13 +24,15 @@ def menu(active=None, request_path=None):
         'Layers': {'index': 2, 'url': reverse_lazy('layer-list'), 'active': False},
         'Feature Types': {'index': 2, 'url': reverse_lazy('feature-type-list'), 'active': False}
     }
-
+    menu_maps = {'Maps':  {'index': 4, 'url': '#', 'active': False, 'dropdown': order_dict(maps_dropdown, sort_key)}}
     menu_items = {
         'Projects': {'index': 2, 'url': reverse_lazy('project-list'), 'active': False},
-        'Jobs': {'index': 3, 'url': reverse_lazy('job-list'), 'active': False},
-        'Maps': {'index': 4, 'url': '#', 'active': False, 'dropdown': order_dict(maps_dropdown, sort_key)},
-        # 'Help': {'index': 6, 'url': '#', 'active': False, 'dropdown': order_dict(help_dropdown, sort_key)},
+        'Jobs': {'index': 3, 'url': reverse_lazy('job-list'), 'active': False}
+        #'Help': {'index': 6, 'url': '#', 'active': False, 'dropdown': order_dict(help_dropdown, sort_key)},
     }
+
+    if(request_user.groups.filter(name='admin_group') or request_user.is_superuser):
+        menu_items.update(menu_maps)
 
     if request_path:
         for i in menu_items.keys():
