@@ -70,7 +70,7 @@ leaflet_helper.layer_conversion = function (lyr) {
         if (resultobj.status == 200) {
             var result = JSON.parse(resultobj.responseText);
             if (result && result.error && result.error.message){
-                log.error("JSON layer error, message was:", result.error.message, "url:", url);
+                log.error("JSON layer error, message was:", result.error.message, "url:", proxiedURL);
             } else {
                 var isESRIpseudoJSON = false;
                 //TODO: Move to a dynamic type-detector module
@@ -100,7 +100,7 @@ leaflet_helper.layer_conversion = function (lyr) {
             outputLayer = new L.KML(proxiedURL, layerOptions);
         }
     }
-    if (lyr.name) outputLayer.name = lyr.name;
+    if (lyr.name && outputLayer) outputLayer.name = lyr.name;
 
     return outputLayer;
 };

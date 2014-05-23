@@ -148,9 +148,9 @@ aoi_feature_edit.map_init = function (map, bounds) {
                     aoi_feature_edit.layers.overlays.push(built_layer);
                 }
             } else {
-                log.error("Tried to add a layer, but didn't work: "+lyr.url)
+                log.error("Tried to add a layer, but didn't work: "+layer_data.url)
             }
-        aoi_feature_edit.map.addLayer(built_layer);
+            if (built_layer) aoi_feature_edit.map.addLayer(built_layer);
         });
     }
     //TODO: Remove all this code when layer builder is working
