@@ -229,6 +229,11 @@ class CreateJobView(CreateView):
     Create view that adds the user that created the job as a reviewer.
     """
 
+    def get_form_kwargs(self):
+        kwargs = super(CreateJobView, self).get_form_kwargs()
+        kwargs['project'] = self.request.GET['project'] if 'project' in self.request.GET else 0
+        return kwargs
+
     def form_valid(self, form):
         """
         If the form is valid, save the associated model and add the current user as a reviewer.

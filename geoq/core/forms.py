@@ -39,7 +39,7 @@ class JobForm(StyledModelForm):
                   'analysts', 'reviewers', 'feature_types', 'map', 'grid')
         model = Job
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, project, *args, **kwargs):
         super(JobForm, self).__init__(*args, **kwargs)
 
         def remove_anonymous(field):
@@ -49,6 +49,7 @@ class JobForm(StyledModelForm):
             return None
         remove_anonymous('reviewers')
         remove_anonymous('analysts')
+        self.fields['project'].initial = project
 
 
 class ProjectForm(StyledModelForm):

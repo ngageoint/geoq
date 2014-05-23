@@ -80,7 +80,7 @@ class Layer(models.Model):
     A layer object that can be added to any map.
     """
 
-    name = models.CharField(max_length=200)
+    name = models.CharField(max_length=200, help_text='Name that will be displayed within GeoQ')
     type = models.CharField(choices=SERVICE_TYPES, max_length=75)
     """TODO: Make this url field a CharField"""
     url = models.URLField(help_text='URL of service. If WMS or ESRI, can be any valid URL. Otherwise, the URL will require a local proxy')
@@ -104,7 +104,7 @@ class Layer(models.Model):
     downloadableLink = models.URLField(max_length=300, null=True, blank=True, help_text='URL of link to supporting tool (such as a KML document that will be shown as a download button)')
     layer_params = JSONField(null=True, blank=True, help_text='JSON key/value pairs to be sent to the web service.  ex: {"crs":"urn:ogc:def:crs:EPSG::4326"}')
     spatial_reference = models.CharField(max_length=32, blank=True, null=True, default="EPSG:4326", help_text='The spatial reference of the service.  Should be in ESPG:XXXX format.')
-    constraints = models.TextField(null=True, blank=True)
+    constraints = models.TextField(null=True, blank=True, help_text='Constrain layer data displayed to certain feature types')
 
     ## Primarily for http://trac.osgeo.org/openlayers/wiki/OpenLayersOptimization
     additional_domains = models.TextField(null=True, blank=True, help_text='Semicolon seperated list of additional domains for the layer.')
