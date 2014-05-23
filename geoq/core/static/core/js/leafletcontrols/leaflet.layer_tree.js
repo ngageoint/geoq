@@ -3,7 +3,6 @@ var leaflet_layer_control = {};
 //TODO: Make an icon that is expanded to list when clicked (maybe have list on left)
 //TODO: Add to Layer module a "show on all map" variable and a "is Base Layer" variable
 //TODO: Pull ordering from map object
-//TODO: Remove scrolling on list
 //TODO: Allow drag-and-drop sorting that controls layer
 //TODO: Show layer-relevant icons
 //TODO: have an info control that modifies things like opactiy/IA tools/icons
@@ -244,17 +243,23 @@ leaflet_layer_control.addLayerControl = function (map, options) {
 //        }
 
     });
+    leaflet_layer_control.toggleZooming($tree);
 
-//      var rootNode = $tree.fancytree("getRootNode");
-//      var childNode = rootNode.addChildren({
-//        title: "Programatically addded nodes",
-//        tooltip: "This folder and all child nodes were added programmatically.",
-//        folder: true
-//      });
-//      childNode.addChildren({
-//        title: "Document using a custom icon",
-//        icon: "customdoc1.gif"
-//      });
-
-
+};
+leaflet_layer_control.toggleZooming=function($control){
+    $control.on('mouseover',function(){
+        var map=aoi_feature_edit.map;
+        map.dragging.disable();
+        map.touchZoom.disable();
+        map.doubleClickZoom.disable();
+        map.scrollWheelZoom.disable();
+        if (map.tap) map.tap.disable();}
+    ).on('mouseout',function(){
+        var map=aoi_feature_edit.map;
+        map.dragging.enable();
+        map.touchZoom.enable();
+        map.doubleClickZoom.enable();
+        map.scrollWheelZoom.enable();
+        if (map.tap) map.tap.enable();}
+    );
 };
