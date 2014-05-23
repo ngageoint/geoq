@@ -137,14 +137,14 @@ aoi_feature_edit.map_init = function (map, bounds) {
     }
 
     if (custom_map.hasOwnProperty("layers")) {
-        _.each(custom_map.layers, function (l) {
-            var built_layer = leaflet_helper.layer_conversion(l);
+        _.each(custom_map.layers, function (layer_data) {
+            var built_layer = leaflet_helper.layer_conversion(layer_data);
             if (built_layer !== undefined) {
-                if (l.isBaseLayer) {
-                    baseLayers[l.name] = built_layer;
+                if (layer_data.isBaseLayer) {
+                    baseLayers[layer_data.name] = built_layer;
                     aoi_feature_edit.layers.base.push(built_layer);
                 } else {
-                    layerSwitcher[l.name] = built_layer;
+                    layerSwitcher[layer_data.name] = built_layer;
                     aoi_feature_edit.layers.overlays.push(built_layer);
                 }
             } else {

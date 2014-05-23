@@ -21,7 +21,8 @@ leaflet_helper.layer_conversion = function (lyr) {
         subdomains: lyr.subdomains,
         opacity: lyr.opacity,
         zIndex: lyr.zIndex,
-        visibile: lyr.shown
+        visibile: lyr.shown,
+        url: lyr.url
     };
     var layerParams = lyr.layerParams || {};
     var layerOptions;
@@ -93,6 +94,7 @@ leaflet_helper.layer_conversion = function (lyr) {
         layerOptions['async'] = true;
         outputLayer = new L.KML(leaflet_helper.proxy_path + encodeURI(lyr.url), layerOptions);
     }
+    if (lyr.name) outputLayer.name = lyr.name;
 
     return outputLayer;
 };

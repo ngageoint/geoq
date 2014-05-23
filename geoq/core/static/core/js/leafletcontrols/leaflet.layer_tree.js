@@ -15,8 +15,10 @@ leaflet_layer_control.layerDataList = function (options) {
 
     var treeData = [];
 
+    var layerGroups = options.layers;
+
     //For each layer group
-    _.each(options.layers,function(layerGroup,groupNum){
+    _.each(layerGroups,function(layerGroup,groupNum){
         var layerName = options.titles[groupNum] || "Layers";
         var folderName = "folder."+ groupNum;
         treeData.push({title: layerName, folder: true, key: folderName, children: [] });
@@ -26,29 +28,58 @@ leaflet_layer_control.layerDataList = function (options) {
             var name = layer.name || layer.options.name;
             var layer_obj = {title: name, key: folderName+"."+i, data:layer};
 
-            //TODO: Look for other layers with same name, or url+layers - if so, remove others
+            if (!layer.skipThis) {
+                //If there are any later layers with same name/settings, mark them to skip
+                leaflet_layer_control.removeDuplicateLayers(layerGroups,layer);
 
-            //Figure out if it is visible and should be "checked"
-            if (layer.getLayers && layer.getLayers() && layer.getLayers()[0]) {
-                var layerItem = layer.getLayers()[0];
-                var options = layerItem._options || layerItem.options;
-                if (options && options.style) {
-                    if (options.style.opacity == 1 || options.style.fillOpacity == 1){
+                //Figure out if it is visible and should be "checked"
+                if (layer.getLayers && layer.getLayers() && layer.getLayers()[0]) {
+                    var layerItem = layer.getLayers()[0];
+                    var options = layerItem._options || layerItem.options;
+                    if (options && options.style) {
+                        if (options.style.opacity == 1 || options.style.fillOpacity == 1){
+                            layer_obj.selected = true;
+                        }
+                    } else if (options && options.opacity && options.opacity == 1) {
                         layer_obj.selected = true;
                     }
-                } else if (options && options.opacity && options.opacity == 1) {
-                        layer_obj.selected = true;
+                } else if (layer.options && layer.options.opacity){
+                    layer_obj.selected = true;
                 }
-            } else if (layer.options && layer.options.opacity){
-                layer_obj.selected = true;
+
+                //Add this to the json to build the treeview
+                treeData[groupNum].children.push(layer_obj);
             }
+        },layerGroups);
 
-            treeData[groupNum].children.push(layer_obj);
-        });
-
-    });
-
+    },layerGroups);
     return treeData;
+};
+leaflet_layer_control.removeDuplicateLayers = function(layerList, layer){
+    var layerSearchStart = false;
+
+    _.each(layerList,function(layerGroup){
+        _.each(layerGroup, function (layer_orig, layer_num) {
+            if (layerSearchStart) {
+                //It's been found previously, so only look at next layers
+                var layerLookingAt = layerGroup[layer_num];
+                //Check if names exist and are the same
+                if (layer.name && layerLookingAt.name) {
+                    if (layer.name == layerLookingAt.name) {
+                        layerLookingAt.skipThis = true;
+                    }
+                //Check if the URL and Layer exist and are the same
+                } else if (layer.url && layerLookingAt.url && layer.layer && layerLookingAt.layer) {
+                    if ((layer.url == layerLookingAt.url) && (layer.layer == layerLookingAt.layer)) {
+                        layerLookingAt.skipThis = true;
+                    }
+                }
+
+            } else {
+                if (layer_orig == layer) layerSearchStart = true;
+            }
+        });
+    });
 
 };
 leaflet_layer_control.addLayerControl = function (map, options) {
@@ -97,7 +128,6 @@ leaflet_layer_control.addLayerControl = function (map, options) {
             }
 
             //TODO: Loop through sub-folder objects, too
-            //TODO: Turn off json layers - not hiding properly
 
             var all_layers = _.flatten(aoi_feature_edit.layers);
             var all_active_layers = _.filter(all_layers,function(l){return (l._initHooksCalled && l._map)});
@@ -109,6 +139,8 @@ leaflet_layer_control.addLayerControl = function (map, options) {
                     $lc.zIndex(1);
                     $lc.hide();
                 }
+                //GeoJSON features are kept in a different layer, so hiding them won't work
+                //TODO: Indicate this somehow, or hide them with magic
             });
 
             var selectedLayers = data.tree.getSelectedNodes();
@@ -125,7 +157,6 @@ leaflet_layer_control.addLayerControl = function (map, options) {
                             $lc.zIndex(zIndexesOfHighest);
                             $lc.show();
                         }
-
                     } else {
                         //It's an object with layer info, not yet built
                         var name = layer.name;
