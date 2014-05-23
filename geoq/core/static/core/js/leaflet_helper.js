@@ -13,6 +13,8 @@ leaflet_helper.proxy_path = "/geoq/proxy/";
 
 leaflet_helper.layer_conversion = function (lyr) {
 
+    var proxiedURL = leaflet_helper.proxy_path + encodeURI(lyr.url);
+
     var options = {
         layers: lyr.layer,
         format: lyr.format,
@@ -57,11 +59,10 @@ leaflet_helper.layer_conversion = function (lyr) {
         outputLayer = new L.esri.clusteredFeatureLayer(lyr.url, layerOptions);
     } else if (lyr.type == 'GeoJSON') {
         layerOptions = options;
-        var url = leaflet_helper.proxy_path + lyr.url;
 
         var resultobj = $.ajax({
             type: 'GET',
-            url: url,
+            url: proxiedURL,
             dataType: 'json',
             async: false
         });
@@ -90,9 +91,14 @@ leaflet_helper.layer_conversion = function (lyr) {
             log.error ("A JSON layer was requested, but no valid response was received from the server, result:", resultobj);
         }
     } else if (lyr.type == 'KML') {
-        layerOptions = options;
-        layerOptions['async'] = true;
-        outputLayer = new L.KML(leaflet_helper.proxy_path + encodeURI(lyr.url), layerOptions);
+        if (/kmz$/i.test(proxiedURL)) {
+            log.error("Trying to load a KML layer that ends with KMZ - these aren't supported, skipping");
+            outputLayer = undefined;
+        } else {
+            layerOptions = options;
+            layerOptions['async'] = true;
+            outputLayer = new L.KML(proxiedURL, layerOptions);
+        }
     }
     if (lyr.name) outputLayer.name = lyr.name;
 
