@@ -664,6 +664,112 @@ L.Draw.Polygon = L.Draw.Polyline.extend({
 });
 
 
+L.Draw.Polygons = L.Draw.Polyline.extend({
+	statics: {
+		TYPE: 'polygon',
+        CLASS: 'polygon'
+	},
+
+	Poly: L.Polygon,
+
+	options: {
+		showArea: false,
+		shapeOptions: {
+			stroke: true,
+			color: '#f06eaa',
+			weight: 4,
+			opacity: 0.5,
+			fill: true,
+			fillColor: null, //same as color by default
+			fillOpacity: 0.2,
+			clickable: true
+		}
+	},
+
+	initialize: function (map, options, n) {
+        L.setOptions(this,options);
+		L.Draw.Polyline.prototype.initialize.call(this, map, options);
+
+		// Save the type so super can fire, need to do this as cannot do this.TYPE :(
+		this.type = L.Draw.Polygons.TYPE + "-" + n;
+        this.clasz = L.Draw.Polygons.CLASS;
+	},
+
+	_updateFinishHandler: function () {
+		var markerCount = this._markers.length;
+
+		// The first marker shold have a click handler to close the polygon
+		if (markerCount === 1) {
+			this._markers[0].on('click', this._finishShape, this);
+		}
+
+		// Add and update the double click handler
+		if (markerCount > 2) {
+			this._markers[markerCount - 1].on('dblclick', this._finishShape, this);
+			// Only need to remove handler if has been added before
+			if (markerCount > 3) {
+				this._markers[markerCount - 2].off('dblclick', this._finishShape, this);
+			}
+		}
+	},
+
+	_getTooltipText: function () {
+		var text, subtext;
+
+		if (this._markers.length === 0) {
+			text = L.drawLocal.draw.handlers.polygon.tooltip.start;
+		} else if (this._markers.length < 3) {
+			text = L.drawLocal.draw.handlers.polygon.tooltip.cont;
+		} else {
+			text = L.drawLocal.draw.handlers.polygon.tooltip.end;
+			subtext = this._getMeasurementString();
+		}
+
+		return {
+			text: text,
+			subtext: subtext
+		};
+	},
+
+	_getMeasurementString: function () {
+		var area = this._area;
+
+		if (!area) {
+			return null;
+		}
+
+		return L.GeometryUtil.readableArea(area, this.options.metric);
+	},
+
+	_shapeIsValid: function () {
+		return this._markers.length >= 3;
+	},
+
+	_vertexAdded: function () {
+		// Check to see if we should show the area
+		if (this.options.allowIntersection || !this.options.showArea) {
+			return;
+		}
+
+		var latLngs = this._poly.getLatLngs();
+
+		this._area = L.GeometryUtil.geodesicArea(latLngs);
+	},
+
+	_cleanUpShape: function () {
+		var markerCount = this._markers.length;
+
+		if (markerCount > 0) {
+			this._markers[0].off('click', this._finishShape, this);
+
+			if (markerCount > 2) {
+				this._markers[markerCount - 1].off('dblclick', this._finishShape, this);
+			}
+		}
+	}
+});
+
+
 L.SimpleShape = {};
 
 L.Draw.SimpleShape = L.Draw.Feature.extend({
@@ -856,11 +962,13 @@ L.Draw.Circle = L.Draw.SimpleShape.extend({
 
 L.Draw.Marker = L.Draw.Feature.extend({
 	statics: {
-		TYPE: 'marker'
+		TYPE: 'marker',
+        ID: ''
 	},
 
 	options: {
 		icon: new L.Icon.Default(),
+        text: 'Draw a Marker',
 		repeatMode: false,
 		zIndexOffset: 2000 // This should be > than the highest z-index any markers
 	},
@@ -868,7 +976,111 @@ L.Draw.Marker = L.Draw.Feature.extend({
 	initialize: function (map, options) {
 		// Save the type so super can fire, need to do this as cannot do this.TYPE :(
 		this.type = L.Draw.Marker.TYPE;
+		L.Draw.Feature.prototype.initialize.call(this, map, options);
+	},
 
+	addHooks: function () {
+		L.Draw.Feature.prototype.addHooks.call(this);
+
+		if (this._map) {
+			this._tooltip.updateContent({ text: L.drawLocal.draw.handlers.marker.tooltip.start });
+
+			// Same mouseMarker as in Draw.Polyline
+			if (!this._mouseMarker) {
+				this._mouseMarker = L.marker(this._map.getCenter(), {
+					icon: L.divIcon({
+						className: 'leaflet-mouse-marker',
+						iconAnchor: [20, 20],
+						iconSize: [40, 40]
+					}),
+					opacity: 0,
+					zIndexOffset: this.options.zIndexOffset
+				});
+			}
+
+			this._mouseMarker
+				.on('click', this._onClick, this)
+				.addTo(this._map);
+
+			this._map.on('mousemove', this._onMouseMove, this);
+		}
+	},
+
+	removeHooks: function () {
+		L.Draw.Feature.prototype.removeHooks.call(this);
+
+		if (this._map) {
+			if (this._marker) {
+				this._marker.off('click', this._onClick, this);
+				this._map
+					.off('click', this._onClick, this)
+					.removeLayer(this._marker);
+				delete this._marker;
+			}
+
+			this._mouseMarker.off('click', this._onClick, this);
+			this._map.removeLayer(this._mouseMarker);
+			delete this._mouseMarker;
+
+			this._map.off('mousemove', this._onMouseMove, this);
+		}
+	},
+
+	_onMouseMove: function (e) {
+		var latlng = e.latlng;
+
+		this._tooltip.updatePosition(latlng);
+		this._mouseMarker.setLatLng(latlng);
+
+		if (!this._marker) {
+			this._marker = new L.Marker(latlng, {
+				icon: this.options.icon,
+				zIndexOffset: this.options.zIndexOffset
+			});
+			// Bind to both marker and map to make sure we get the click event.
+			this._marker.on('click', this._onClick, this);
+			this._map
+				.on('click', this._onClick, this)
+				.addLayer(this._marker);
+		}
+		else {
+			this._marker.setLatLng(latlng);
+		}
+	},
+
+	_onClick: function () {
+		this._fireCreatedEvent();
+
+		this.disable();
+		if (this.options.repeatMode) {
+			this.enable();
+		}
+	},
+
+	_fireCreatedEvent: function () {
+		var marker = new L.Marker(this._marker.getLatLng(), { icon: this.options.icon });
+		L.Draw.Feature.prototype._fireCreatedEvent.call(this, marker);
+	}
+});
+
+L.Draw.Markers = L.Draw.Feature.extend({
+	statics: {
+		TYPE: 'marker',
+        CLASS: 'marker'
+	},
+
+	options: {
+		icon: new L.Icon.Default(),
+        text: 'Draw a Marker',
+		repeatMode: false,
+		zIndexOffset: 2000 // This should be > than the highest z-index any markers
+	},
+
+	initialize: function (map, options, n) {
+		// Save the type so super can fire, need to do this as cannot do this.TYPE :(
+		this.type = L.Draw.Markers.TYPE + "-" + n;
+        this.clasz = L.Draw.Markers.CLASS;
+        L.setOptions(this,options);
 		L.Draw.Feature.prototype.initialize.call(this, map, options);
 	},
 
@@ -1915,7 +2127,8 @@ L.Toolbar = L.Class.extend({
 	},
 
 	_initModeHandler: function (handler, container, buttonIndex, classNamePredix, buttonTitle) {
-		var type = handler.type;
+        var type = handler.type;
+        var clasz = (handler.clasz) ? handler.clasz : type;
 
 		this._modes[type] = {};
 
@@ -1923,7 +2136,7 @@ L.Toolbar = L.Class.extend({
 
 		this._modes[type].button = this._createButton({
 			title: buttonTitle,
-			className: classNamePredix + '-' + type,
+			className: classNamePredix + '-' + clasz,
 			container: container,
 			callback: this._modes[type].handler.enable,
 			context: this._modes[type].handler
@@ -2135,6 +2348,11 @@ L.DrawToolbar = L.Toolbar.extend({
 			}
 		}
 
+        // SRJ: passing in array of markers and polygons (eventually)
+        if (options.markers) {
+            this.options.markers = options.markers;
+        }
+
 		L.Toolbar.prototype.initialize.call(this, options);
 	},
 
@@ -2157,13 +2375,29 @@ L.DrawToolbar = L.Toolbar.extend({
 		}
 
 		if (this.options.polygon) {
-			this._initModeHandler(
-				new L.Draw.Polygon(map, this.options.polygon),
-				this._toolbarContainer,
-				buttonIndex++,
-				buttonClassPrefix,
-				L.drawLocal.draw.toolbar.buttons.polygon
-			);
+//			this._initModeHandler(
+//				new L.Draw.Polygon(map, this.options.polygon),
+//				this._toolbarContainer,
+//				buttonIndex++,
+//				buttonClassPrefix,
+//				L.drawLocal.draw.toolbar.buttons.polygon
+//			);
+
+            if (this.options.polygons) {
+                for (var k = 0; k < this.options.polygons.length; k++) {
+                    var optns = L.extend({}, this.options.polygon, this.options.polygons[k]);
+                    var poly = new L.Draw.Polygons(map, optns, optns.id);
+                    //poly.id = marker.type + "-" + i;
+                    this._initModeHandler(
+                        poly,
+                        this._toolbarContainer,
+                        buttonIndex++,
+                        buttonClassPrefix,
+                        //L.drawLocal.draw.toolbar.buttons.marker
+                        this.options.polygons[k].title
+                    );
+                }
+            }
 		}
 
 		if (this.options.rectangle) {
@@ -2187,13 +2421,21 @@ L.DrawToolbar = L.Toolbar.extend({
 		}
 
 		if (this.options.marker) {
-			this._initModeHandler(
-				new L.Draw.Marker(map, this.options.marker),
-				this._toolbarContainer,
-				buttonIndex++,
-				buttonClassPrefix,
-				L.drawLocal.draw.toolbar.buttons.marker
-			);
+            if (this.options.markers) {
+                for (var i = 0; i < this.options.markers.length; i++) {
+                    var opts = L.extend({}, this.options.marker, this.options.markers[i]);
+                    var marker = new L.Draw.Markers(map, opts, opts.id);
+                    //marker.id = marker.type + "-" + i;
+                    this._initModeHandler(
+                        marker,
+                        this._toolbarContainer,
+                        buttonIndex++,
+                        buttonClassPrefix,
+                        //L.drawLocal.draw.toolbar.buttons.marker
+                        this.options.markers[i].icon.options.text
+                    );
+                }
+            }
 		}
 
 		// Save button index of the last button, -1 as we would have ++ after the last button

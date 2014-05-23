@@ -103,7 +103,7 @@ class Job(GeoQBase):
     reviewers = models.ManyToManyField(User, blank=True, null=True, related_name="reviewers")
     progress = models.SmallIntegerField(max_length=2, blank=True, null=True)
     project = models.ForeignKey(Project, related_name="project")
-    grid = models.CharField(max_length=5, choices=GRID_SERVICE_CHOICES, default=GRID_SERVICE_VALUES[0])
+    grid = models.CharField(max_length=5, choices=GRID_SERVICE_CHOICES, default=GRID_SERVICE_VALUES[0], help_text='Select usng for Jobs inside the US, otherwise use mgrs')
 
     map = models.ForeignKey('maps.Map', blank=True, null=True)
     feature_types = models.ManyToManyField('maps.FeatureType', blank=True, null=True)
