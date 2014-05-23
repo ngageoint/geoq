@@ -70,13 +70,26 @@
     {% endcompress %}
     <style type="text/css">
         #map {
-            position: absolute;
-            float: left;
-            top: 40px;
-            height: 94%;
-            width: 100%;
+            position: relative;
+            top: -20px;
+            left: 0px;
+            margin-left: 0px;
+{#            float: left;#}
+{#            height: 94%;#}
+{#            width: 100%;#}
             cursor: crosshair;
         }
+        #layer_info_drawer {
+            position: absolute;
+            top: 0px;
+            left: 0px;
+            width: 300px;
+            height: 100%;
+            background-color: lightblue;
+            padding-top: 50px;
+            margin-left: -300px;
+        }
+
         form.leaflet-control-geocoder-form {
             margin: 0;
         }
@@ -123,11 +136,12 @@
         }
 
         ul.fancytree-container {
-            font-size: 10px;
-            max-height: 200px;
-            overflow: auto;
-            position: relative;
-            background-color: transparent;
+            max-width: 280px;
+{#            font-size: 10px;#}
+{#            max-height: 200px;#}
+{#            overflow: auto;#}
+{#            position: relative;#}
+{#            background-color: transparent;#}
         }
 
     </style>
@@ -174,4 +188,5 @@
 
 {% block container %}
 {% leaflet_map "map" callback="aoi_feature_edit.map_init"%}
+<div id="layer_info_drawer"></div>
 {% endblock %}

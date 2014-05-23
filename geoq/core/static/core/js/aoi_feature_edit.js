@@ -105,11 +105,14 @@ aoi_feature_edit.mapResize = function () {
     var toLower = parseInt($('div.navbar-inner').css('height'));
     var newHeight = $(window).height() - toLower;
     $(map).height(newHeight);
-    $(map).css('top', toLower + 'px');
+    //$(map).css('top', toLower + 'px');
 
     $('.navbar-fixed-top').css('margin-bottom', 0);
     $('body').css({'padding-left': 0, 'padding-right': 0});
 
+    if (aoi_feature_edit.map && aoi_feature_edit.map.invalidateSize) {
+        aoi_feature_edit.map.invalidateSize(false);
+    }
 };
 aoi_feature_edit.map_init = function (map, bounds) {
     var custom_map = aoi_feature_edit.aoi_map_json;
@@ -517,4 +520,30 @@ aoi_feature_edit.createPointOptions = function (opts) {
     }
 
     return options;
+};
+
+//TODO: Abstract these
+aoi_feature_edit.drawerIsOpen = false;
+aoi_feature_edit.openDrawer = function() {
+    var $map = $("#map");
+    var $drawer = $("#layer_info_drawer");
+    $map.animate({marginLeft: "300px"}, 300);
+    $map.css("overflow", "hidden");
+    $drawer.animate({marginLeft: "0px"}, 300);
+};
+aoi_feature_edit.closeDrawer = function() {
+    var $map = $("#map");
+    var $drawer = $("#layer_info_drawer");
+    $map.animate({marginLeft: "0px"}, 300);
+    $map.css("overflow", "auto");
+    $drawer.animate({marginLeft: "-300px"}, 300);
+};
+aoi_feature_edit.toggleDrawer = function() {
+    if(aoi_feature_edit.drawerIsOpen) {
+        aoi_feature_edit.closeDrawer();
+        aoi_feature_edit.drawerIsOpen = false;
+    } else {
+        aoi_feature_edit.openDrawer();
+        aoi_feature_edit.drawerIsOpen = true;
+    }
 };

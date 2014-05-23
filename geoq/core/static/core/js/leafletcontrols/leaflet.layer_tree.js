@@ -1,6 +1,5 @@
 var leaflet_layer_control = {};
 
-//TODO: Make an icon that is expanded to list when clicked (maybe have list on left)
 //TODO: Add to Layer module a "show on all map" variable and a "is Base Layer" variable
 //TODO: Pull ordering from map object
 //TODO: Allow drag-and-drop sorting that controls layer
@@ -20,7 +19,7 @@ leaflet_layer_control.layerDataList = function (options) {
     _.each(layerGroups,function(layerGroup,groupNum){
         var layerName = options.titles[groupNum] || "Layers";
         var folderName = "folder."+ groupNum;
-        treeData.push({title: layerName, folder: true, key: folderName, children: [] });
+        treeData.push({title: layerName, folder: true, key: folderName, children: [], expanded:true });
 
         //For each layer
         _.each(layerGroup, function (layer, i) {
@@ -86,15 +85,30 @@ leaflet_layer_control.addLayerControl = function (map, options) {
     //Hide the existing layer control
     $('.leaflet-control-layers.leaflet-control').css({display: 'none'});
 
+
+    var $layerButton = $('<a id="toggle-drawer" href="#" class="btn">Layers</a>');
+    var layerButtonOptions = {
+        'html': $layerButton,
+        'onClick': aoi_feature_edit.toggleDrawer,  // callback function
+        'hideText': false,  // bool
+        position: 'bottomright',
+        'maxWidth': 60,  // number
+        'doToggle': false,  // bool
+        'toggleStatus': false  // bool
+    };
+    var layerButton = new L.Control.Button(layerButtonOptions).addTo(map);
+
+
+
     //Build the tree
     var $tree = $("<div>")
-        .attr({name: 'layers_tree_control'});
-
-    var layersOptions = {
-        html: $tree,  // string
-        position: 'bottomright'
-    };
-    var layersButton = new L.Control.Button(layersOptions).addTo(map);
+        .attr({name: 'layers_tree_control', id:'layers_tree_control'});
+//
+//    var layersOptions = {
+//        html: $tree,  // string
+//        position: 'bottomright'
+//    };
+//    var layersButton = new L.Control.Button(layersOptions).addTo(map);
 
     //Build the layer schema
     var treeData = leaflet_layer_control.layerDataList(options);
@@ -243,7 +257,10 @@ leaflet_layer_control.addLayerControl = function (map, options) {
 //        }
 
     });
-    leaflet_layer_control.toggleZooming($tree);
+//    leaflet_layer_control.toggleZooming($tree);
+
+    var $drawer = $("#layer_info_drawer");
+    $tree.appendTo($drawer);
 
 };
 leaflet_layer_control.toggleZooming=function($control){
