@@ -11,18 +11,166 @@ var leaflet_layer_control = {};
 
 leaflet_layer_control.$map = undefined;
 leaflet_layer_control.$drawer = undefined;
+leaflet_layer_control.$drawer_tray = undefined;
 
 leaflet_layer_control.init = function(){
+    leaflet_layer_control.$map = $("#map");
     leaflet_layer_control.initDrawer();
 };
 leaflet_layer_control.initDrawer = function(){
     //Build the drawer and add it after the map
-    leaflet_layer_control.$drawer = $("<div>")
+    var $drawer = $("<div>")
         .attr({id:"layer_info_drawer"});
-    leaflet_layer_control.$map = $("#map");
-    leaflet_layer_control.$map.after(leaflet_layer_control.$drawer);
+    leaflet_layer_control.$drawer = $drawer;
+    leaflet_layer_control.$map.after($drawer);
+
+    var $drawer_inner = $("<div>")
+        .addClass("inner-padding")
+        .appendTo($drawer);
+    var $drawer_tray = $("<div>")
+        .attr({id:"drawer_tray"})
+        .appendTo($drawer_inner);
+
+    leaflet_layer_control.$drawer_tray = $drawer_tray;
+    $drawer_tray.html("Click a layer above to see more information.")
+
 };
 
+leaflet_layer_control.show_info = function (objToShow, node) {
+    var html = "";
+    if (typeof objToShow == "string"){
+        html = objToShow;
+    } else {
+        if (objToShow.options && objToShow._leaflet_id) {
+            //Probably a Leaflet layer
+            html = leaflet_layer_control.parsers.infoFromLayer(objToShow);
+        } else if (objToShow.name && objToShow.url && objToShow.type) {
+            //Probably a map info object
+            html = leaflet_layer_control.parsers.infoFromInfoObj(objToShow);
+        } else {
+
+            if (typeof objToShow == "object"){
+                var obj_size = _.toArray(objToShow).length;
+                if (obj_size > 1) {
+                    //Show all items from the object
+                    html = leaflet_layer_control.parsers.infoFromObject(objToShow);
+                } else {
+                    //Likely a title/folder of the tree
+                    html = leaflet_layer_control.parsers.infoFromFolder(node);
+                }
+            }
+        }
+    }
+    leaflet_layer_control.$drawer_tray.html(html);
+};
+//=========================================
+
+leaflet_layer_control.parsers = {};
+leaflet_layer_control.parsers.infoFromLayer = function (obj){
+    var html = "";
+    obj = obj || {};
+
+    html+=leaflet_layer_control.parsers.textIfExists({name: obj.name, header:true});
+    html+=leaflet_layer_control.parsers.textIfExists({name: obj._url, title:"URL", linkify:true, linkSuffix:"?request=GetCapabilities", style:'font-size:.7em'});
+
+    if (obj._layers) {
+        var count = _.toArray(obj._layers).length;
+        html+=leaflet_layer_control.parsers.textIfExists({name: count, title:"Feature Count"});
+        html+="<i>Turning off the layer doesn't hide these hide point features<i>";
+        //TODO: Some way to highlight these or show more info?
+    }
+    if (obj.options) {
+        html+=leaflet_layer_control.parsers.textIfExists({name: obj.options.attribution});
+        html+=leaflet_layer_control.parsers.textIfExists({name: obj.options.layers, title:"Layers"});
+        html+=leaflet_layer_control.parsers.textIfExists({name: obj.options.opacity, title:"Opacity"});
+    }
+
+    return html;
+};
+leaflet_layer_control.parsers.infoFromInfoObj = function (obj){
+    var html = "";
+    obj = obj || {};
+
+    html+=leaflet_layer_control.parsers.textIfExists({name: obj.name, header:true});
+    html+=leaflet_layer_control.parsers.textIfExists({name: obj.type, title:"Type"});
+    html+=leaflet_layer_control.parsers.textIfExists({name: obj.url, title:"URL", linkify:true, linkSuffix:"?request=GetCapabilities", style:'font-size:.7em'});
+    html+=leaflet_layer_control.parsers.textIfExists({name: obj.layer, title:"Layers"});
+    html+=leaflet_layer_control.parsers.textIfExists({name: obj.description});
+    return html;
+};
+leaflet_layer_control.parsers.infoFromObject = function (obj){
+    var html = "";
+    for(var k in obj) {
+        html+=leaflet_layer_control.parsers.textIfExists({name: obj[k], title:k});
+    }
+    return html;
+};
+leaflet_layer_control.parsers.infoFromFolder = function (obj){
+    var html = "";
+    obj = obj || {};
+    html+=leaflet_layer_control.parsers.textIfExists({name: obj.title, title:"Group", header:true});
+    if (obj.children) {
+        var children = _.pluck(obj.children,'title').join(", ");
+        html+=leaflet_layer_control.parsers.textIfExists({name: children, title:"Sub-layers"});
+    }
+    html+=leaflet_layer_control.parsers.textIfExists({name: obj.selected, title:"Selected"});
+
+    return html;
+};
+leaflet_layer_control.parsers.textIfExists = function(options) {
+    options = options || {};
+    var obj = options.name;
+    var title = options.title;
+    var noBold = options.noBold;
+    var noBreak = options.noBreak;
+    var header = options.header;
+    if (header) noBreak = true;
+    var linkify = options.linkify;
+    var linkSuffix = options.linkSuffix;
+    var style = options.style;
+
+    var html = "";
+    if (typeof obj != "undefined") {
+        if (header) {
+            html+="<h5>";
+        }
+        if (title){
+            if (noBold){
+                html+= title +": ";
+            } else {
+                html+= "<b>"+title+":</b> ";
+            }
+        }
+        if (obj.toString) {
+            var text = obj.toString();
+            if (linkify) {
+                html += "<a target='_new' href='"+text;
+                if (linkSuffix){
+                    html += linkSuffix;
+                }
+                html += "'>" + text + "</a>";
+            } else {
+                html += text;
+            }
+        } else {
+            html += obj; //TODO: Think through this... .toString should always be true
+        }
+        if (header) {
+            html+="</h5>";
+        }
+        if (style){
+            style = style.replace(/'/g, '"');
+            html = "<span style='"+style+"'>"+html+"</span>";
+        }
+        if (!noBreak){
+            html += "<br/>";
+        }
+    }
+
+    return html;
+};
+
+//=========================================
 leaflet_layer_control.layerDataList = function (options) {
 
     var treeData = [];
@@ -117,12 +265,6 @@ leaflet_layer_control.addLayerControl = function (map, options) {
     //Build the tree
     var $tree = $("<div>")
         .attr({name: 'layers_tree_control', id:'layers_tree_control'});
-//
-//    var layersOptions = {
-//        html: $tree,  // string
-//        position: 'bottomright'
-//    };
-//    var layersButton = new L.Control.Button(layersOptions).addTo(map);
 
     //Build the layer schema
     var treeData = leaflet_layer_control.layerDataList(options);
@@ -135,16 +277,16 @@ leaflet_layer_control.addLayerControl = function (map, options) {
         selectMode: 2,
         source: treeData,
         activate: function (event, data) {
-            //Click on title
-            //TODO: Show an info box to control layer settings
-
+            //Clicked on a treenode title
             var node = data.node;
-            log.info("Clicked on a layer", data);
+            if (node && node.data) {
+                leaflet_layer_control.show_info(node.data, node);
+            }
         },
         deactivate: function (event, data) {
         },
         select: function (event, data) {
-            // Display list of selected nodes
+            // A checkbox has been checked or unchecked
 
             function setOpacity(layer,num){
                 if (layer.setStyle){
