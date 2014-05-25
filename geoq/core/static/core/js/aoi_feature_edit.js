@@ -231,6 +231,7 @@ aoi_feature_edit.map_init = function (map, bounds) {
     aoi_feature_edit.buildDrawingControl(aoi_feature_edit.drawnItems);
     leaflet_helper.addGeocoderControl(map);
 
+    leaflet_layer_control.init();
     var options = aoi_feature_edit.buildTreeLayers();
     leaflet_layer_control.addLayerControl(map, options);
 
@@ -243,7 +244,7 @@ aoi_feature_edit.map_init = function (map, bounds) {
             featureCollection.features.push($.parseJSON(data[0].geojson));
             aoi_feature_edit.featureLayers[tnum].addData(featureCollection);
 
-            var layer = feature_hash[data[0].pk].layer
+            var layer = feature_hash[data[0].pk].layer;
             aoi_feature_edit.drawnItems.addLayer(layer);
         }
     }
@@ -520,30 +521,4 @@ aoi_feature_edit.createPointOptions = function (opts) {
     }
 
     return options;
-};
-
-//TODO: Abstract these
-aoi_feature_edit.drawerIsOpen = false;
-aoi_feature_edit.openDrawer = function() {
-    var $map = $("#map");
-    var $drawer = $("#layer_info_drawer");
-    $map.animate({marginLeft: "300px"}, 300);
-    $map.css("overflow", "hidden");
-    $drawer.animate({marginLeft: "0px"}, 300);
-};
-aoi_feature_edit.closeDrawer = function() {
-    var $map = $("#map");
-    var $drawer = $("#layer_info_drawer");
-    $map.animate({marginLeft: "0px"}, 300);
-    $map.css("overflow", "auto");
-    $drawer.animate({marginLeft: "-300px"}, 300);
-};
-aoi_feature_edit.toggleDrawer = function() {
-    if(aoi_feature_edit.drawerIsOpen) {
-        aoi_feature_edit.closeDrawer();
-        aoi_feature_edit.drawerIsOpen = false;
-    } else {
-        aoi_feature_edit.openDrawer();
-        aoi_feature_edit.drawerIsOpen = true;
-    }
 };

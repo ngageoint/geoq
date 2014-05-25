@@ -9,6 +9,20 @@ var leaflet_layer_control = {};
 //TODO: Have a control to add new layers
 //TODO: Show count of features next to layer title
 
+leaflet_layer_control.$map = undefined;
+leaflet_layer_control.$drawer = undefined;
+
+leaflet_layer_control.init = function(){
+    leaflet_layer_control.initDrawer();
+};
+leaflet_layer_control.initDrawer = function(){
+    //Build the drawer and add it after the map
+    leaflet_layer_control.$drawer = $("<div>")
+        .attr({id:"layer_info_drawer"});
+    leaflet_layer_control.$map = $("#map");
+    leaflet_layer_control.$map.after(leaflet_layer_control.$drawer);
+};
+
 leaflet_layer_control.layerDataList = function (options) {
 
     var treeData = [];
@@ -89,11 +103,11 @@ leaflet_layer_control.addLayerControl = function (map, options) {
     var $layerButton = $('<a id="toggle-drawer" href="#" class="btn">Layers</a>');
     var layerButtonOptions = {
         'html': $layerButton,
-        'onClick': aoi_feature_edit.toggleDrawer,  // callback function
+        'onClick': leaflet_layer_control.toggleDrawer,  // callback function
         'hideText': false,  // bool
         position: 'bottomright',
         'maxWidth': 60,  // number
-        'doToggle': false,  // bool
+        'doToggle': true,  // bool
         'toggleStatus': false  // bool
     };
     var layerButton = new L.Control.Button(layerButtonOptions).addTo(map);
@@ -279,4 +293,27 @@ leaflet_layer_control.toggleZooming=function($control){
         map.scrollWheelZoom.enable();
         if (map.tap) map.tap.enable();}
     );
+};
+
+
+//TODO: Abstract these
+leaflet_layer_control.drawerIsOpen = false;
+leaflet_layer_control.openDrawer = function() {
+    leaflet_layer_control.$map.animate({marginLeft: "300px"}, 300);
+    leaflet_layer_control.$map.css("overflow", "hidden");
+    leaflet_layer_control.$drawer.animate({marginLeft: "0px"}, 300);
+};
+leaflet_layer_control.closeDrawer = function() {
+    leaflet_layer_control.$map.animate({marginLeft: "0px"}, 300);
+    leaflet_layer_control.$map.css("overflow", "auto");
+    leaflet_layer_control.$drawer.animate({marginLeft: "-300px"}, 300);
+};
+leaflet_layer_control.toggleDrawer = function() {
+    if(leaflet_layer_control.drawerIsOpen) {
+        leaflet_layer_control.closeDrawer();
+        leaflet_layer_control.drawerIsOpen = false;
+    } else {
+        leaflet_layer_control.openDrawer();
+        leaflet_layer_control.drawerIsOpen = true;
+    }
 };
