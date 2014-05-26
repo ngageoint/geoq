@@ -70,13 +70,12 @@ leaflet_layer_control.parsers.infoFromLayer = function (obj){
     var html = "";
     obj = obj || {};
 
-    html+=leaflet_layer_control.parsers.textIfExists({name: obj.name, header:true});
+    html+=leaflet_layer_control.parsers.textIfExists({name: obj.name, title:"Layer", header:true});
     html+=leaflet_layer_control.parsers.textIfExists({name: obj._url, title:"URL", linkify:true, linkSuffix:"?request=GetCapabilities", style:'font-size:.7em'});
 
     if (obj._layers) {
         var count = _.toArray(obj._layers).length;
         html+=leaflet_layer_control.parsers.textIfExists({name: count, title:"Feature Count"});
-        html+="<i>Turning off the layer doesn't hide these hide point features<i>";
         //TODO: Some way to highlight these or show more info?
     }
     if (obj.options) {
@@ -91,7 +90,7 @@ leaflet_layer_control.parsers.infoFromInfoObj = function (obj){
     var html = "";
     obj = obj || {};
 
-    html+=leaflet_layer_control.parsers.textIfExists({name: obj.name, header:true});
+    html+=leaflet_layer_control.parsers.textIfExists({name: obj.name, title:"Layer", header:true});
     html+=leaflet_layer_control.parsers.textIfExists({name: obj.type, title:"Type"});
     html+=leaflet_layer_control.parsers.textIfExists({name: obj.url, title:"URL", linkify:true, linkSuffix:"?request=GetCapabilities", style:'font-size:.7em'});
     html+=leaflet_layer_control.parsers.textIfExists({name: obj.layer, title:"Layers"});
@@ -291,8 +290,43 @@ leaflet_layer_control.addLayerControl = function (map, options) {
             function setOpacity(layer,num){
                 if (layer.setStyle){
                     layer.setStyle({opacity:num, fillOpacity:num});
-                } else  if (layer.setOpacity){
+                } else if (layer.setOpacity){
                     layer.setOpacity(num);
+                }
+
+                if (num==0){
+                    if (layer._layers) {
+                        _.each(layer._layers,function(f){
+                            $(f._icon).hide();
+                            if (f._shadow){
+                                $(f._shadow).hide();
+                            }
+                        });
+
+                    }
+
+                    if (layer.getContainer) {
+                        var $lc = $(layer.getContainer());
+                        $lc.zIndex(1);
+                        $lc.hide();
+                    }
+                } else {
+                    if (layer._layers) {
+                        _.each(layer._layers,function(f){
+                            $(f._icon).show().css({opacity:num});
+                            if (f._shadow){
+                                $(f._shadow).show().css({opacity:num});
+                            }
+
+                        });
+                    }
+
+                    if (layer.getContainer) {
+                        var $lc = $(layer.getContainer());
+                        zIndexesOfHighest++;
+                        $lc.zIndex(zIndexesOfHighest);
+                        $lc.show();
+                    }
                 }
             }
 
@@ -303,13 +337,6 @@ leaflet_layer_control.addLayerControl = function (map, options) {
 
             _.each(all_active_layers,function(l){
                 setOpacity(l,0);
-                if (l.getContainer) {
-                    var $lc = $(l.getContainer());
-                    $lc.zIndex(1);
-                    $lc.hide();
-                }
-                //GeoJSON features are kept in a different layer, so hiding them won't work
-                //TODO: Indicate this somehow, or hide them with magic
             });
 
             var selectedLayers = data.tree.getSelectedNodes();
@@ -320,12 +347,6 @@ leaflet_layer_control.addLayerControl = function (map, options) {
                     if (layer._map && layer._initHooksCalled) {
                         //It's a layer that's been already built
                         setOpacity(layer,1);
-                        if (layer.getContainer) {
-                            var $lc = $(layer.getContainer());
-                            zIndexesOfHighest++;
-                            $lc.zIndex(zIndexesOfHighest);
-                            $lc.show();
-                        }
                     } else {
                         //It's an object with layer info, not yet built
                         var name = layer.name;
@@ -345,12 +366,7 @@ leaflet_layer_control.addLayerControl = function (map, options) {
                             });
                             aoi_feature_edit.map.addLayer(newLayer);
 
-                            if (newLayer.getContainer) {
-                                var $lc = $(newLayer.getContainer());
-                                zIndexesOfHighest++;
-                                $lc.zIndex(zIndexesOfHighest);
-                                $lc.show();
-                            }
+                            setOpacity(newLayer,1);
 
                             layer_obj.data = newLayer;
 
