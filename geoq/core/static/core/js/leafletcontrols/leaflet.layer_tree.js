@@ -7,7 +7,6 @@ var leaflet_layer_control = {};
 //TODO: have an info control that modifies things like opactiy/IA tools/icons
 //TODO: Save info about layer configuration, then have a way to load that back in or save as settings for a Job
 //TODO: Have a control to add new layers
-//TODO: Show count of features next to layer title
 
 leaflet_layer_control.$map = undefined;
 leaflet_layer_control.$drawer = undefined;
@@ -38,12 +37,15 @@ leaflet_layer_control.initDrawer = function(){
 
 leaflet_layer_control.show_info = function (objToShow, node) {
     var html = "";
+    var $html; //TODO: This is kinda wonky, should always return jquery objects not strings of html
+
     if (typeof objToShow == "string"){
         html = objToShow;
     } else {
         if (objToShow.options && objToShow._leaflet_id) {
             //Probably a Leaflet layer
             html = leaflet_layer_control.parsers.infoFromLayer(objToShow);
+            $html = leaflet_layer_control.parsers.opacityControls(objToShow);
         } else if (objToShow.name && objToShow.url && objToShow.type) {
             //Probably a map info object
             html = leaflet_layer_control.parsers.infoFromInfoObj(objToShow);
@@ -62,6 +64,9 @@ leaflet_layer_control.show_info = function (objToShow, node) {
         }
     }
     leaflet_layer_control.$drawer_tray.html(html);
+    if ($html){
+        leaflet_layer_control.$drawer_tray.append($html);
+    }
 };
 //=========================================
 
@@ -81,7 +86,6 @@ leaflet_layer_control.parsers.infoFromLayer = function (obj){
     if (obj.options) {
         html+=leaflet_layer_control.parsers.textIfExists({name: obj.options.attribution});
         html+=leaflet_layer_control.parsers.textIfExists({name: obj.options.layers, title:"Layers"});
-        html+=leaflet_layer_control.parsers.textIfExists({name: obj.options.opacity, title:"Opacity"});
     }
 
     return html;
@@ -157,16 +161,42 @@ leaflet_layer_control.parsers.textIfExists = function(options) {
         if (header) {
             html+="</h5>";
         }
-        if (style){
+        if (style && html){
             style = style.replace(/'/g, '"');
             html = "<span style='"+style+"'>"+html+"</span>";
         }
-        if (!noBreak){
+        if (!noBreak && html){
             html += "<br/>";
         }
     }
 
     return html;
+};
+
+leaflet_layer_control.parsers.opacityControls = function(layer) {
+    if (!layer || !layer.options || typeof layer.options.opacity=="undefined") {
+        return undefined;
+    }
+    var opacity = Math.round(layer.options.opacity * 100)+"%";
+    var $opacity = $('<div>');
+    var $opacity_title = $("<span>")
+        .html("Opacity: <b>"+opacity+"</b> (")
+        .appendTo($opacity);
+    _.each([100,80,50,25,0],function(num){
+        $("<span>")
+            .text(num+"% ")
+            .css({color:'#39c',cursor:'pointer'})
+            .bind('click mouseup',function(){
+                leaflet_layer_control.setLayerOpacity(layer,num/100);
+                $opacity_title
+                    .html("Opacity: <b>"+(num)+"%</b> (");
+            })
+            .appendTo($opacity);
+    });
+    $("<span>")
+        .html(")")
+        .appendTo($opacity);
+    return $opacity;
 };
 
 //=========================================
@@ -241,6 +271,52 @@ leaflet_layer_control.removeDuplicateLayers = function(layerList, layer){
     });
 
 };
+
+
+leaflet_layer_control.zIndexesOfHighest = 2;
+leaflet_layer_control.setLayerOpacity = function (layer, amount){
+
+    if (layer.setStyle){
+        layer.setStyle({opacity:amount, fillOpacity:amount});
+    } else if (layer.setOpacity){
+        layer.setOpacity(amount);
+    }
+
+    if (amount==0){
+        if (layer._layers) {
+            _.each(layer._layers,function(f){
+                $(f._icon).hide();
+                if (f._shadow){
+                    $(f._shadow).hide();
+                }
+            });
+
+        }
+
+        if (layer.getContainer) {
+            var $lc = $(layer.getContainer());
+            $lc.zIndex(1);
+            $lc.hide();
+        }
+    } else {
+        if (layer._layers) {
+            _.each(layer._layers,function(f){
+                $(f._icon).show().css({opacity:amount});
+                if (f._shadow){
+                    $(f._shadow).show().css({opacity:amount});
+                }
+
+            });
+        }
+
+        if (layer.getContainer) {
+            var $lc = $(layer.getContainer());
+            leaflet_layer_control.zIndexesOfHighest++;
+            $lc.zIndex(leaflet_layer_control.zIndexesOfHighest);
+            $lc.show();
+        }
+    }
+};
 leaflet_layer_control.addLayerControl = function (map, options) {
 
     //Hide the existing layer control
@@ -268,7 +344,6 @@ leaflet_layer_control.addLayerControl = function (map, options) {
     //Build the layer schema
     var treeData = leaflet_layer_control.layerDataList(options);
 
-    var zIndexesOfHighest = 2;
     $tree.fancytree({
 //        extensions: ["dnd"],
         checkbox: true,
@@ -287,56 +362,13 @@ leaflet_layer_control.addLayerControl = function (map, options) {
         select: function (event, data) {
             // A checkbox has been checked or unchecked
 
-            function setOpacity(layer,num){
-                if (layer.setStyle){
-                    layer.setStyle({opacity:num, fillOpacity:num});
-                } else if (layer.setOpacity){
-                    layer.setOpacity(num);
-                }
-
-                if (num==0){
-                    if (layer._layers) {
-                        _.each(layer._layers,function(f){
-                            $(f._icon).hide();
-                            if (f._shadow){
-                                $(f._shadow).hide();
-                            }
-                        });
-
-                    }
-
-                    if (layer.getContainer) {
-                        var $lc = $(layer.getContainer());
-                        $lc.zIndex(1);
-                        $lc.hide();
-                    }
-                } else {
-                    if (layer._layers) {
-                        _.each(layer._layers,function(f){
-                            $(f._icon).show().css({opacity:num});
-                            if (f._shadow){
-                                $(f._shadow).show().css({opacity:num});
-                            }
-
-                        });
-                    }
-
-                    if (layer.getContainer) {
-                        var $lc = $(layer.getContainer());
-                        zIndexesOfHighest++;
-                        $lc.zIndex(zIndexesOfHighest);
-                        $lc.show();
-                    }
-                }
-            }
-
             //TODO: Loop through sub-folder objects, too
 
             var all_layers = _.flatten(aoi_feature_edit.layers);
             var all_active_layers = _.filter(all_layers,function(l){return (l._initHooksCalled && l._map)});
 
             _.each(all_active_layers,function(l){
-                setOpacity(l,0);
+                leaflet_layer_control.setLayerOpacity(l,0);
             });
 
             var selectedLayers = data.tree.getSelectedNodes();
@@ -346,7 +378,7 @@ leaflet_layer_control.addLayerControl = function (map, options) {
 
                     if (layer._map && layer._initHooksCalled) {
                         //It's a layer that's been already built
-                        setOpacity(layer,1);
+                        leaflet_layer_control.setLayerOpacity(layer,1);
                     } else {
                         //It's an object with layer info, not yet built
                         var name = layer.name;
@@ -366,7 +398,7 @@ leaflet_layer_control.addLayerControl = function (map, options) {
                             });
                             aoi_feature_edit.map.addLayer(newLayer);
 
-                            setOpacity(newLayer,1);
+                            leaflet_layer_control.setLayerOpacity(newLayer,1);
 
                             layer_obj.data = newLayer;
 
