@@ -4,7 +4,7 @@ var leaflet_layer_control = {};
 //TODO: Pull ordering from map object
 //TODO: Allow drag-and-drop sorting that controls layer
 //TODO: Show layer-relevant icons
-//TODO: have an info control that modifies things like opactiy/IA tools/icons
+//TODO: have an info control that modifies things like IA tools/icons
 //TODO: Save info about layer configuration, then have a way to load that back in or save as settings for a Job
 //TODO: Have a control to add new layers
 
