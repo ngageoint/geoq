@@ -54,10 +54,6 @@ aoi_feature_edit.init = function () {
             },
             pointToLayer: aoi_feature_edit.featureLayer_pointToLayer
         });
-        //var feature_type = aoi_feature_edit.feature_types[ftype.id];
-        //if (feature_type && feature_type.hasOwnProperty("style")) {
-        //    featureLayer.style = feature_type.style;
-        //}
 
         featureLayer.name = ftype.name;
         aoi_feature_edit.featureLayers[ftype.id] = featureLayer;
@@ -231,7 +227,19 @@ aoi_feature_edit.map_init = function (map, bounds) {
     var options = aoi_feature_edit.buildTreeLayers();
     leaflet_layer_control.addLayerControl(map, options);
 
+    function help_onclick() {
+        window.open('/static/html/aoi_edit_help.html');
+    }
 
+    var help_control = new L.Control.Button({
+        'iconUrl': '/static/images/question.png',
+        'onClick': help_onclick,
+        'hideText': true,
+        'doToggle': false,
+        'toggleStatus': false
+    });
+
+    help_control.addTo(map, {'position':'topleft'});
 
     function onSuccess(data, textStatus, jqXHR) {
         if (data[0] && data[0].geojson) {
