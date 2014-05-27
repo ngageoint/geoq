@@ -18,9 +18,10 @@ leaflet_helper.proxify = function (url) {
 
     return proxiedURL;
 };
-leaflet_helper.layer_conversion = function (lyr) {
+leaflet_helper.layer_conversion = function (lyr, map) {
 
-    var proxiedURL = leaflet_helper.proxify(lyr.url);
+    var url = leaflet_helper.constructors.urlTemplater(lyr.url, map, lyr.layerParams);
+    var proxiedURL = leaflet_helper.proxify(url);
 
     var options = {
         layers: lyr.layer,
@@ -76,9 +77,9 @@ leaflet_helper.layer_conversion = function (lyr) {
             outputLayer = new L.KML(proxiedURL, layerOptions);
         }
     } else if (lyr.type == 'Social Networking Link') {
-        //TODO: load it
-        outputLayer = leaflet_helper.constructors.geojson(options,proxiedURL);
+        outputLayer = leaflet_helper.constructors.geojson(options,proxiedURL, map);
     }
+    //Make sure the name is set for showing up in the layer menu
     if (lyr.name && outputLayer) outputLayer.name = lyr.name;
 
     return outputLayer;

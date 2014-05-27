@@ -14,13 +14,59 @@ leaflet_helper.constructors.identifyParser = function(result){
         parser = leaflet_helper.parsers.addDynamicCapimageData;
         parserName = "CAP GeoJSON";
 
+    } else if (result &&
+        result.stat == "ok" && result.photos && result.photos.page &&
+        result.photos.photo && result.photos.perpage) {
+
+        parser = leaflet_helper.parsers.flickrImages;
+        parserName = "Flickr Photo Search";
     }
     //ADD new parser detectors here
 
     return {parser: parser, parserName:parserName};
 };
 
-leaflet_helper.constructors.geojson = function(options, proxiedURL) {
+
+leaflet_helper.constructors.urlTemplater =function(url, map, layer_json){
+    if (url.indexOf("{") < 0) return url;
+
+    //Turn search strings into underscore templates to make parseable text (safer than an eval statement)
+    _.templateSettings.interpolate = /\{\{(.+?)\}\}/g;
+    var _url_template = _.template(url);
+
+    //Get map info that will be added into the url if needed
+    var mapExtent=map.getBounds();
+    var center = map.getCenter();
+    var size = map.getSize();
+    var mapState={
+        zoom:map.getZoom(),
+        lat:center.lat,
+        lon:center.lng,
+        lng:center.lng,
+        n:mapExtent._northEast.lat,
+        s:mapExtent._southWest.lat,
+        e:mapExtent._northEast.lng,
+        w:mapExtent._southWest.lng,
+        width:size.x,
+        height:size.y
+    };
+
+    //Feed the generated variables into the template, and return the result
+    layer_json = $.extend(layer_json,mapState);
+    layer_json.tags = layer_json.tags || "disaster";
+
+    var new_url;
+    try {
+        new_url = _url_template(layer_json);
+    } catch (ex) {
+        log.error ("Error in parsing a URL template: " + ex.message);
+    }
+
+    return new_url || url;
+};
+
+
+leaflet_helper.constructors.geojson = function(options, proxiedURL, map) {
     var outputLayer;
 
     var resultobj = $.ajax({
@@ -42,11 +88,11 @@ leaflet_helper.constructors.geojson = function(options, proxiedURL) {
         } else {
             var parserInfo = leaflet_helper.constructors.identifyParser(result, options);
             if (parserInfo && parserInfo.parser) {
-                outputLayer = parserInfo.parser(result, options);
+                outputLayer = parserInfo.parser(result, options, map);
+
                 var features = "NONE";
                 if (result && result.features && result.features.length) features = result.features.length;
-
-                log.info("JSON layer was created from :", proxiedURL, "features:", result.features.length, "parser type:", parserInfo.parserName);
+                log.info("JSON layer was created from :", proxiedURL, "features:", features, "parser type:", parserInfo.parserName);
 
                 if (outputLayer) {
                     outputLayer.name = options.name || (options.type+ " layer");
@@ -82,6 +128,53 @@ leaflet_helper.parsers.addDynamicCapimageData = function (result) {
         jsonObjects.push(json);
     });
     log.info("A FEMA CAP layer was loaded, with", result.features.length, "features");
+
+    function onEachFeature(feature, layer) {
+        // does this feature have a property named popupContent?
+        if (feature.properties && feature.properties.popupContent) {
+            layer.bindPopup(feature.properties.popupContent);
+        }
+    }
+
+    return new L.geoJson(jsonObjects, {onEachFeature: onEachFeature});
+};
+leaflet_helper.parsers.flickrImages = function (result, options, map) {
+    var jsonObjects = [];
+    var photos = result.photos;
+
+    $(photos.photo).each(function () {
+        var feature = $(this)[0];
+
+        var id=feature.id;
+        var title=feature.title || "Flickr Photo";
+        var secret=feature.secret;
+        var server=feature.server;
+        var farm=feature.farm;
+        var owner=feature.owner;
+        var base=id+'_'+secret+'_s.jpg';
+        var major=id+'_'+secret+'_z.jpg';
+        var imageURL= 'http://farm'+farm+'.static.flickr.com/'+server+'/'+major;
+        var thumbnailURL='http://farm'+farm+'.static.flickr.com/'+server+'/'+base;
+
+        var center = map.getCenter();
+
+        var json = {
+            type: "Feature",
+            properties: {
+                name: title,
+                image: imageURL,
+                thumbnail: thumbnailURL,
+                popupContent: "<a href='" + imageURL + "'><img style='width:256px' src='" + thumbnailURL + "' /></a>"
+            },
+            geometry: {
+                type: "Point",
+                coordinates: [center.lng, center.lat] //TODO: Make this either random, or show in a tray to dnd onto map
+            }
+        };
+        jsonObjects.push(json);
+    });
+
+    log.info("A Flickr Social Photos layer was loaded, with "+ photos.photo.length+" features");
 
     function onEachFeature(feature, layer) {
         // does this feature have a property named popupContent?

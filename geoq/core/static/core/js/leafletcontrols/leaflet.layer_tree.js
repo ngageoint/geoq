@@ -402,7 +402,7 @@ leaflet_layer_control.addLayerControl = function (map, options) {
                         if (!name && layer.options) name = layer.options.name;
                         log.info("Creating a map layer", name, " URL: ", layer.url);
 
-                        var newLayer = leaflet_helper.layer_conversion(layer);
+                        var newLayer = leaflet_helper.layer_conversion(layer, map);
                         if (newLayer) {
                             aoi_feature_edit.map.addLayer(newLayer);
                             leaflet_layer_control.setLayerOpacity(newLayer,1);

@@ -138,7 +138,7 @@ aoi_feature_edit.map_init = function (map, bounds) {
 
     if (custom_map.hasOwnProperty("layers")) {
         _.each(custom_map.layers, function (layer_data) {
-            var built_layer = leaflet_helper.layer_conversion(layer_data);
+            var built_layer = leaflet_helper.layer_conversion(layer_data, map);
             if (built_layer !== undefined) {
                 if (layer_data.isBaseLayer) {
                     baseLayers[layer_data.name] = built_layer;
