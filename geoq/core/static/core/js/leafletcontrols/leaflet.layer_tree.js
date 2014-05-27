@@ -385,21 +385,11 @@ leaflet_layer_control.addLayerControl = function (map, options) {
                         if (!name && layer.options) name = layer.options.name;
                         log.info("Creating a map layer", name, " URL: ", layer.url);
 
-                        //TODO: Move this to generic layer loading script
-                        if (layer.type == "WMS"){
-
-                            var newLayer = L.tileLayer.wms(layer.url, {
-                                layers: layer.layer,
-                                format: layer.format || 'image/png',
-                                transparent: layer.transparent,
-                                attribution: layer.attribution,
-                                name: layer.name,
-                                details: layer
-                            });
+                        var newLayer = leaflet_helper.layer_conversion(layer);
+                        if (newLayer) {
                             aoi_feature_edit.map.addLayer(newLayer);
-
                             leaflet_layer_control.setLayerOpacity(newLayer,1);
-
+                            //TODO: Rethink if this should become a sub-item of the object
                             layer_obj.data = newLayer;
 
                             //Replace the old object list with the new layer

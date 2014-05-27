@@ -24,8 +24,11 @@ leaflet_helper.layer_conversion = function (lyr) {
         opacity: lyr.opacity,
         zIndex: lyr.zIndex,
         visibile: lyr.shown,
-        url: lyr.url
+        url: lyr.url,
+        name: lyr.name,
+        details: lyr.details
     };
+
     var layerParams = lyr.layerParams || {};
     var layerOptions;
     var outputLayer = undefined;
