@@ -156,9 +156,6 @@ aoi_feature_edit.map_init = function (map, bounds) {
             if (built_layer) aoi_feature_edit.map.addLayer(built_layer);
         });
     }
-    //TODO: Remove all this code when layer builder is working
-//    var layercontrol = L.control.layers(baseLayers, layerSwitcher).addTo(aoi_feature_edit.map);
-//TODO: Maps are not showing as visible in the loader...
 
     aoi_feature_edit.addMapControlButtons(aoi_feature_edit.map);
 
@@ -209,7 +206,6 @@ aoi_feature_edit.map_init = function (map, bounds) {
                 aoi_feature_edit.drawnItems.addLayer(layer);
             });
             featureLayer.addTo(aoi_feature_edit.map);
-//            layercontrol.addOverlay(featureLayer, featureType.name);
             aoi_feature_edit.layers.features.push(featureLayer);
         } else {
             log.error("A FeatureLayer was supposed to be drawn, but didn't seem to exist.")
@@ -413,25 +409,38 @@ aoi_feature_edit.buildTreeLayers = function(){
         return layers;
     }
 
+    function layers_only_social(){
+        var layers = [];
+        try {
+            var all_layers = JSON.parse(aoi_feature_edit.aoi_map_json.all_layers);
+            layers = _.filter(all_layers, function(l){
+                return (l.type == "Social Networking Link");
+            });
+        } catch (ex) {
+            log.error("aoi_map_json.all_layers isn't being parsed as valid JSON.")
+        }
+        return layers;
+
+    }
+
     var options = {};
     options.titles = [];
     options.layers = [];
 
-    //1
     options.titles.push('AOI Base Maps');
     options.layers.push(aoi_feature_edit.layers.base);
 
-    //0
     options.titles.push('Other Base Maps');
     options.layers.push(layers_only_non_transparent(aoi_feature_edit.layers.base));
 
-    //2
     options.titles.push('Features');
     options.layers.push(aoi_feature_edit.layers.features);
 
-    //2
     options.titles.push('Data Feeds');
     options.layers.push(aoi_feature_edit.layers.overlays);
+
+    options.titles.push('Social Networking Feeds');
+    options.layers.push(layers_only_social());
 
     return options;
 };
