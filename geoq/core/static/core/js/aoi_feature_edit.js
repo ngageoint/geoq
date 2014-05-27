@@ -104,11 +104,12 @@ aoi_feature_edit.get_feature_type = function (i) {
 aoi_feature_edit.mapResize = function () {
     var toLower = parseInt($('div.navbar-inner').css('height'));
     var newHeight = $(window).height() - toLower;
+
     $(map).height(newHeight);
-    //$(map).css('top', toLower + 'px');
+    $('#layer_info_drawer').height(newHeight-10);
 
     $('.navbar-fixed-top').css('margin-bottom', 0);
-    $('body').css({'padding-left': 0, 'padding-right': 0});
+    $('body').height(newHeight-20).css({'padding-left': 0, 'padding-right': 0});
 
     if (aoi_feature_edit.map && aoi_feature_edit.map.invalidateSize) {
         aoi_feature_edit.map.invalidateSize(false);
@@ -417,10 +418,9 @@ aoi_feature_edit.buildTreeLayers = function(){
                 return (l.type == "Social Networking Link");
             });
         } catch (ex) {
-            log.error("aoi_map_json.all_layers isn't being parsed as valid JSON.")
+            log.error("aoi_map_json.all_layers isn't being parsed as valid JSON.");
         }
         return layers;
-
     }
 
     var options = {};

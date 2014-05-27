@@ -7,6 +7,9 @@ var leaflet_layer_control = {};
 //TODO: have an info control that modifies things like IA tools/icons
 //TODO: Save info about layer configuration, then have a way to load that back in or save as settings for a Job
 //TODO: Have a control to add new layers
+//TODO: Layer drawer have a button to create a layer
+//TODO: Be able to drag and drop layers onto the page
+//TODO: Integrate with GeoNode to auto-build layers in GeoServer
 
 leaflet_layer_control.$map = undefined;
 leaflet_layer_control.$drawer = undefined;
@@ -22,6 +25,10 @@ leaflet_layer_control.initDrawer = function(){
         .attr({id:"layer_info_drawer"});
     leaflet_layer_control.$drawer = $drawer;
     leaflet_layer_control.$map.after($drawer);
+
+
+    $('<a id="add_layer_button" href="/maps/layers/create" target="_new" class="btn">Add A Layer</a>')
+        .appendTo($drawer);
 
     var $drawer_inner = $("<div>")
         .addClass("inner-padding")
@@ -76,7 +83,7 @@ leaflet_layer_control.parsers.infoFromLayer = function (obj){
     obj = obj || {};
 
     html+=leaflet_layer_control.parsers.textIfExists({name: obj.name, title:"Layer", header:true});
-    html+=leaflet_layer_control.parsers.textIfExists({name: obj._url, title:"URL", linkify:true, linkSuffix:"?request=GetCapabilities", style:'font-size:.7em'});
+    html+=leaflet_layer_control.parsers.textIfExists({name: obj._url, title:"URL", linkify:true, linkSuffix:"?request=GetCapabilities", style_class:'scroll-link'});
 
     if (obj._layers) {
         var count = _.toArray(obj._layers).length;
@@ -96,9 +103,9 @@ leaflet_layer_control.parsers.infoFromInfoObj = function (obj){
 
     html+=leaflet_layer_control.parsers.textIfExists({name: obj.name, title:"Layer", header:true});
     html+=leaflet_layer_control.parsers.textIfExists({name: obj.type, title:"Type"});
-    html+=leaflet_layer_control.parsers.textIfExists({name: obj.url, title:"URL", linkify:true, linkSuffix:"?request=GetCapabilities", style:'font-size:.7em'});
+    html+=leaflet_layer_control.parsers.textIfExists({name: obj.url, title:"URL", linkify:true, linkSuffix:"?request=GetCapabilities", style_class:'scroll-link'});
     html+=leaflet_layer_control.parsers.textIfExists({name: obj.layer, title:"Layers"});
-    html+=leaflet_layer_control.parsers.textIfExists({name: obj.description});
+    html+=leaflet_layer_control.parsers.textIfExists({name: obj.description, style_class:'scroll-link'});
     return html;
 };
 leaflet_layer_control.parsers.infoFromObject = function (obj){
@@ -131,6 +138,7 @@ leaflet_layer_control.parsers.textIfExists = function(options) {
     var linkify = options.linkify;
     var linkSuffix = options.linkSuffix;
     var style = options.style;
+    var style_class = options.style_class;
 
     var html = "";
     if (typeof obj != "undefined") {
@@ -156,14 +164,22 @@ leaflet_layer_control.parsers.textIfExists = function(options) {
                 html += text;
             }
         } else {
+            log.error("Something was sent to a layer info area that wasn't valid text");
             html += obj; //TODO: Think through this... .toString should always be true
         }
         if (header) {
             html+="</h5>";
         }
-        if (style && html){
-            style = style.replace(/'/g, '"');
-            html = "<span style='"+style+"'>"+html+"</span>";
+        if ((style || style_class) && html){
+            var style_input = "";
+            if (style) {
+                style = style.replace(/'/g, '"');
+                style_input += " style='"+style+"'";
+            }
+            if (style_class) {
+                style_input += " class='"+style_class+"'";
+            }
+            html = "<span "+style_input+">"+html+"</span>";
         }
         if (!noBreak && html){
             html += "<br/>";
