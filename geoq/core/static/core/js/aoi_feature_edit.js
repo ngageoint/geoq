@@ -101,11 +101,14 @@ aoi_feature_edit.mapResize = function () {
     var toLower = parseInt($('div.navbar-inner').css('height'));
     var newHeight = $(window).height() - toLower;
     $(map).height(newHeight);
-    $(map).css('top', toLower + 'px');
+    //$(map).css('top', toLower + 'px');
 
     $('.navbar-fixed-top').css('margin-bottom', 0);
     $('body').css({'padding-left': 0, 'padding-right': 0});
 
+    if (aoi_feature_edit.map && aoi_feature_edit.map.invalidateSize) {
+        aoi_feature_edit.map.invalidateSize(false);
+    }
 };
 aoi_feature_edit.map_init = function (map, bounds) {
     var custom_map = aoi_feature_edit.aoi_map_json;
@@ -133,25 +136,22 @@ aoi_feature_edit.map_init = function (map, bounds) {
     }
 
     if (custom_map.hasOwnProperty("layers")) {
-        _.each(custom_map.layers, function (l) {
-            var built_layer = leaflet_helper.layer_conversion(l);
+        _.each(custom_map.layers, function (layer_data) {
+            var built_layer = leaflet_helper.layer_conversion(layer_data);
             if (built_layer !== undefined) {
-                if (l.isBaseLayer) {
-                    baseLayers[l.name] = built_layer;
+                if (layer_data.isBaseLayer) {
+                    baseLayers[layer_data.name] = built_layer;
                     aoi_feature_edit.layers.base.push(built_layer);
                 } else {
-                    layerSwitcher[l.name] = built_layer;
+                    layerSwitcher[layer_data.name] = built_layer;
                     aoi_feature_edit.layers.overlays.push(built_layer);
                 }
             } else {
-                log.error("Tried to add a layer, but didn't work: "+lyr.url)
+                log.error("Tried to add a layer, but didn't work: "+layer_data.url)
             }
-        aoi_feature_edit.map.addLayer(built_layer);
+            if (built_layer) aoi_feature_edit.map.addLayer(built_layer);
         });
     }
-    //TODO: Remove all this code when layer builder is working
-//    var layercontrol = L.control.layers(baseLayers, layerSwitcher).addTo(aoi_feature_edit.map);
-//TODO: Maps are not showing as visible in the loader...
 
     aoi_feature_edit.addMapControlButtons(aoi_feature_edit.map);
 
@@ -202,7 +202,6 @@ aoi_feature_edit.map_init = function (map, bounds) {
                 aoi_feature_edit.drawnItems.addLayer(layer);
             });
             featureLayer.addTo(aoi_feature_edit.map);
-//            layercontrol.addOverlay(featureLayer, featureType.name);
             aoi_feature_edit.layers.features.push(featureLayer);
         } else {
             log.error("A FeatureLayer was supposed to be drawn, but didn't seem to exist.")
@@ -224,6 +223,7 @@ aoi_feature_edit.map_init = function (map, bounds) {
     aoi_feature_edit.buildDrawingControl(aoi_feature_edit.drawnItems);
     leaflet_helper.addGeocoderControl(map);
 
+    leaflet_layer_control.init();
     var options = aoi_feature_edit.buildTreeLayers();
     leaflet_layer_control.addLayerControl(map, options);
 
@@ -248,7 +248,7 @@ aoi_feature_edit.map_init = function (map, bounds) {
             featureCollection.features.push($.parseJSON(data[0].geojson));
             aoi_feature_edit.featureLayers[tnum].addData(featureCollection);
 
-            var layer = feature_hash[data[0].pk].layer
+            var layer = feature_hash[data[0].pk].layer;
             aoi_feature_edit.drawnItems.addLayer(layer);
         }
     }
@@ -417,25 +417,38 @@ aoi_feature_edit.buildTreeLayers = function(){
         return layers;
     }
 
+    function layers_only_social(){
+        var layers = [];
+        try {
+            var all_layers = JSON.parse(aoi_feature_edit.aoi_map_json.all_layers);
+            layers = _.filter(all_layers, function(l){
+                return (l.type == "Social Networking Link");
+            });
+        } catch (ex) {
+            log.error("aoi_map_json.all_layers isn't being parsed as valid JSON.")
+        }
+        return layers;
+
+    }
+
     var options = {};
     options.titles = [];
     options.layers = [];
 
-    //1
     options.titles.push('AOI Base Maps');
     options.layers.push(aoi_feature_edit.layers.base);
 
-    //0
     options.titles.push('Other Base Maps');
     options.layers.push(layers_only_non_transparent(aoi_feature_edit.layers.base));
 
-    //2
     options.titles.push('Features');
     options.layers.push(aoi_feature_edit.layers.features);
 
-    //2
     options.titles.push('Data Feeds');
     options.layers.push(aoi_feature_edit.layers.overlays);
+
+    options.titles.push('Social Networking Feeds');
+    options.layers.push(layers_only_social());
 
     return options;
 };

@@ -13,6 +13,8 @@ leaflet_helper.proxy_path = "/geoq/proxy/";
 
 leaflet_helper.layer_conversion = function (lyr) {
 
+    var proxiedURL = leaflet_helper.proxy_path + encodeURI(lyr.url);
+
     var options = {
         layers: lyr.layer,
         format: lyr.format,
@@ -21,8 +23,12 @@ leaflet_helper.layer_conversion = function (lyr) {
         subdomains: lyr.subdomains,
         opacity: lyr.opacity,
         zIndex: lyr.zIndex,
-        visibile: lyr.shown
+        visibile: lyr.shown,
+        url: lyr.url,
+        name: lyr.name,
+        details: lyr.details
     };
+
     var layerParams = lyr.layerParams || {};
     var layerOptions;
     var outputLayer = undefined;
@@ -56,11 +62,10 @@ leaflet_helper.layer_conversion = function (lyr) {
         outputLayer = new L.esri.clusteredFeatureLayer(lyr.url, layerOptions);
     } else if (lyr.type == 'GeoJSON') {
         layerOptions = options;
-        var url = leaflet_helper.proxy_path + lyr.url;
 
         var resultobj = $.ajax({
             type: 'GET',
-            url: url,
+            url: proxiedURL,
             dataType: 'json',
             async: false
         });
@@ -68,7 +73,7 @@ leaflet_helper.layer_conversion = function (lyr) {
         if (resultobj.status == 200) {
             var result = JSON.parse(resultobj.responseText);
             if (result && result.error && result.error.message){
-                log.error("JSON layer error, message was:", result.error.message, "url:", url);
+                log.error("JSON layer error, message was:", result.error.message, "url:", proxiedURL);
             } else {
                 var isESRIpseudoJSON = false;
                 //TODO: Move to a dynamic type-detector module
@@ -89,10 +94,16 @@ leaflet_helper.layer_conversion = function (lyr) {
             log.error ("A JSON layer was requested, but no valid response was received from the server, result:", resultobj);
         }
     } else if (lyr.type == 'KML') {
-        layerOptions = options;
-        layerOptions['async'] = true;
-        outputLayer = new L.KML(leaflet_helper.proxy_path + encodeURI(lyr.url), layerOptions);
+        if (/kmz$/i.test(proxiedURL)) {
+            log.error("Trying to load a KML layer that ends with KMZ - these aren't supported, skipping");
+            outputLayer = undefined;
+        } else {
+            layerOptions = options;
+            layerOptions['async'] = true;
+            outputLayer = new L.KML(proxiedURL, layerOptions);
+        }
     }
+    if (lyr.name && outputLayer) outputLayer.name = lyr.name;
 
     return outputLayer;
 };
