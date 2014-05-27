@@ -383,7 +383,7 @@ leaflet_layer_control.addLayerControl = function (map, options) {
                         //It's an object with layer info, not yet built
                         var name = layer.name;
                         if (!name && layer.options) name = layer.options.name;
-                        log.info(name, " = ", layer.url);
+                        log.info("Creating a map layer", name, " URL: ", layer.url);
 
                         //TODO: Move this to generic layer loading script
                         if (layer.type == "WMS"){

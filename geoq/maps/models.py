@@ -53,6 +53,7 @@ SERVICE_TYPES = (
                 ('GPX', 'GPX'),
                 #('GML','GML'),
                 ('WMTS', 'WMTS'),
+                ('Social Networking Link', 'Social Networking Link'),
                 #('MapBox', 'MapBox'),
                 #('TileServer','TileServer'),
                 #('GetCapabilities', 'GetCapabilities'),
@@ -60,19 +61,6 @@ SERVICE_TYPES = (
 
 INFO_FORMATS = [(n, n) for n in sorted(['application/vnd.ogc.wms_xml',
                                        'application/xml', 'text/html', 'text/plain'])]
-
-PARSER_CATEGORIES = (
-                    ('palanterra', 'palanterra'),
-                    ('uscg_ships', 'uscg_ships'),
-                    ('icnet', 'icnet'),
-                    ('dg_wmts_time', 'dg_wmts_time'),
-                    ('geomedia_triaged', 'geomedia_triaged'),
-                    ('harvester_earthquake', 'harvester_earthquake'),
-                    ('harvester_fire', 'harvester_fire'),
-                    ('harvester_tsunami', 'harvester_tsunami'),
-                    ('harvester_flood', 'harvester_flood'),
-                    ('harvester_volcano', 'harvester_volcano'),
-)
 
 
 class Layer(models.Model):
@@ -83,7 +71,7 @@ class Layer(models.Model):
     name = models.CharField(max_length=200, help_text='Name that will be displayed within GeoQ')
     type = models.CharField(choices=SERVICE_TYPES, max_length=75)
     """TODO: Make this url field a CharField"""
-    url = models.URLField(help_text='URL of service. If WMS or ESRI, can be any valid URL. Otherwise, the URL will require a local proxy')
+    url = models.URLField(help_text='URL of service. If WMS or ESRI, can be any valid URL. Otherwise, the URL will require a local proxy', max_length=500)
     layer = models.CharField(max_length=800, null=True, blank=True, help_text='Layer names can sometimes be comma-separated, and are not needed for data layers (KML, GeoRSS, GeoJSON...)')
     image_format = models.CharField(null=True, blank=True, choices=IMAGE_FORMATS, max_length=75, help_text='The MIME type of the image format to use for tiles on WMS layers (image/png, image/jpeg image/gif...). Double check that the server exposes this exactly - some servers push png instead of image/png.')
     styles = models.CharField(null=True, blank=True, max_length=200, help_text='The name of a style to use for this layer (only useful for WMS layers if the server exposes it.)')
@@ -96,12 +84,12 @@ class Layer(models.Model):
     ## Advanced layer options
     objects = models.GeoManager()
     extent = models.PolygonField(null=True, blank=True, help_text='Extent of the layer.')
-    layer_parsing_function = models.CharField(max_length=100, blank=True, null=True, choices=PARSER_CATEGORIES, help_text='Advanced - The javascript function used to parse a data service (GeoJSON, GeoRSS, KML), needs to be an internally known parser. Contact an admin if you need data parsed in a new way.')
+    layer_parsing_function = models.CharField(max_length=100, blank=True, null=True,  help_text='Advanced - The javascript function used to parse a data service (GeoJSON, GeoRSS, KML), needs to be an internally known parser. Contact an admin if you need data parsed in a new way.')
     enable_identify = models.BooleanField(default=False, help_text='Advanced - Allow user to click map to query layer for details. The map server must support queries for this layer.')
     info_format = models.CharField(max_length=75, null=True, blank=True, choices=INFO_FORMATS, help_text='Advanced - what format the server returns for an WMS-I query')
     root_field = models.CharField(max_length=100, null=True, blank=True, help_text='Advanced - For WMS-I (queryable) layers, the root field returned by server. Leave blank for default (will usually be "FIELDS" in returned XML).')
     fields_to_show = models.CharField(max_length=200, null=True, blank=True, help_text='Fields to show when someone uses the identify tool to click on the layer. Leave blank for all.')
-    downloadableLink = models.URLField(max_length=300, null=True, blank=True, help_text='URL of link to supporting tool (such as a KML document that will be shown as a download button)')
+    downloadableLink = models.URLField(max_length=400, null=True, blank=True, help_text='URL of link to supporting tool (such as a KML document that will be shown as a download button)')
     layer_params = JSONField(null=True, blank=True, help_text='JSON key/value pairs to be sent to the web service.  ex: {"crs":"urn:ogc:def:crs:EPSG::4326"}')
     spatial_reference = models.CharField(max_length=32, blank=True, null=True, default="EPSG:4326", help_text='The spatial reference of the service.  Should be in ESPG:XXXX format.')
     constraints = models.TextField(null=True, blank=True, help_text='Constrain layer data displayed to certain feature types')
@@ -358,4 +346,4 @@ class FeatureType(models.Model):
 
 class GeoeventsSource(models.Model):
     name = models.CharField(max_length=200)
-    url = models.URLField(help_text='URL of service location. Requires JSONP support')
+    url = models.URLField(help_text='URL of service location. Requires JSONP support', max_length=500)
