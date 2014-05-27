@@ -11,9 +11,16 @@ leaflet_helper.styles = {
 };
 leaflet_helper.proxy_path = "/geoq/proxy/";
 
+leaflet_helper.proxify = function (url) {
+    //TODO: Don't add if string already starts with proxy
+    var proxiedURL = leaflet_helper.proxy_path + encodeURI(url);
+    proxiedURL = proxiedURL.replace(/%253D/g,'%3D');
+
+    return proxiedURL;
+};
 leaflet_helper.layer_conversion = function (lyr) {
 
-    var proxiedURL = leaflet_helper.proxy_path + encodeURI(lyr.url);
+    var proxiedURL = leaflet_helper.proxify(lyr.url);
 
     var options = {
         layers: lyr.layer,
@@ -33,15 +40,11 @@ leaflet_helper.layer_conversion = function (lyr) {
     var layerOptions;
     var outputLayer = undefined;
 
-    log.trace('Layer requested being drawn. Layer options are', options);
-    log.trace('LayerParams are', layerParams);
-
     var esriPluginInstalled = L.hasOwnProperty('esri');
     if (!esriPluginInstalled) {
         log.warn('Esri Leaflet plugin not installed.  Esri layer types disabled.');
     }
 
-    //TODO: Combine these with the leaflet.layer_tree.js code for layer loading
     if (lyr.type == 'WMS') {
         layerOptions = _.extend(options, layerParams);
         outputLayer = new L.tileLayer.wms(lyr.url, layerOptions);
@@ -61,38 +64,8 @@ leaflet_helper.layer_conversion = function (lyr) {
         }
         outputLayer = new L.esri.clusteredFeatureLayer(lyr.url, layerOptions);
     } else if (lyr.type == 'GeoJSON') {
-        layerOptions = options;
+        outputLayer = leaflet_helper.constructors.geojson(options,proxiedURL);
 
-        var resultobj = $.ajax({
-            type: 'GET',
-            url: proxiedURL,
-            dataType: 'json',
-            async: false
-        });
-        //TODO: Switch away from async to sync and run function on success.
-        if (resultobj.status == 200) {
-            var result = JSON.parse(resultobj.responseText);
-            if (result && result.error && result.error.message){
-                log.error("JSON layer error, message was:", result.error.message, "url:", proxiedURL);
-            } else {
-                var isESRIpseudoJSON = false;
-                //TODO: Move to a dynamic type-detector module
-                if (result &&
-                    result.geometryType && result.geometryType == "esriGeometryPoint" &&
-                    result.features && result.features.length &&
-                    result.features[0] && result.features[0].attributes) isESRIpseudoJSON = true;
-
-                if (isESRIpseudoJSON) {
-                    outputLayer = leaflet_helper.addDynamicCapimageData(result);
-                } else {
-                    outputLayer = new L.GeoJSON(result, layerOptions);
-                }
-                outputLayer.name = lyr.name || (lyr.type+ " layer");
-                log.info("JSON layer was created from :", lyr.url, "features:", result.features.length);
-            }
-        } else {
-            log.error ("A JSON layer was requested, but no valid response was received from the server, result:", resultobj);
-        }
     } else if (lyr.type == 'KML') {
         if (/kmz$/i.test(proxiedURL)) {
             log.error("Trying to load a KML layer that ends with KMZ - these aren't supported, skipping");
@@ -104,6 +77,7 @@ leaflet_helper.layer_conversion = function (lyr) {
         }
     } else if (lyr.type == 'Social Networking Link') {
         //TODO: load it
+        outputLayer = leaflet_helper.constructors.geojson(options,proxiedURL);
     }
     if (lyr.name && outputLayer) outputLayer.name = lyr.name;
 
@@ -121,38 +95,9 @@ leaflet_helper.createMarker = {
     }
 };
 
-leaflet_helper.addDynamicCapimageData = function (result) {
-    var jsonObjects = [];
-    $(result.features).each(function () {
-        var feature = $(this)[0];
-        var json = {
-            type: "Feature",
-            properties: {
-                name: feature.attributes.ID + " - " + feature.attributes.DaysOld + " days old",
-                image: feature.attributes.ImageURL,
-                thumbnail: feature.attributes.ThumbnailURL,
-                popupContent: "<a href='" + feature.attributes.ImageURL + "'><img style='width:256px' src='" + feature.attributes.ThumbnailURL + "' /></a>"
-            },
-            geometry: {
-                type: "Point",
-                coordinates: [feature.geometry.x, feature.geometry.y]
-            }
-        };
-        jsonObjects.push(json);
-    });
-    log.info("A FEMA CAP layer was loaded, with", result.features.length, "features");
 
-    function onEachFeature(feature, layer) {
-        // does this feature have a property named popupContent?
-        if (feature.properties && feature.properties.popupContent) {
-            layer.bindPopup(feature.properties.popupContent);
-        }
-    }
 
-//    L.geoJson(jsonObjects, {onEachFeature: onEachFeature}).addTo(aoi_feature_edit.map);
-    return new L.geoJson(jsonObjects, {onEachFeature: onEachFeature});
-};
-
+//====================================
 leaflet_helper.addGeocoderControl = function(map){
 
     var options = {
