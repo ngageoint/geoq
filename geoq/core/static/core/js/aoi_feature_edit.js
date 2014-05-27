@@ -353,7 +353,8 @@ aoi_feature_edit.buildDrawingControl = function (drawnItems) {
             //}
         },
         edit: {
-            featureGroup: drawnItems
+            featureGroup: drawnItems,
+            remove: false
         }
     });
 
