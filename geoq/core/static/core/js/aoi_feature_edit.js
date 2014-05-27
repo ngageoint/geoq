@@ -293,6 +293,30 @@ aoi_feature_edit.map_init = function (map, bounds) {
         aoi_feature_edit.current_feature_type_id = map_item_type;
     });
 
+    function onSuccessEdit(data, textStatus, jqXHR) {}
+    function onErrorEdit(jqXHR, textStatus, errorThrown) {
+            alert("Error while editing feature: " + errorThrown);
+    }
+
+    map.on('draw:edited', function (e) {
+        var layers = e.layers;
+        layers.eachLayer(function (layer) {
+            var geojson = layer.toGeoJSON();
+            geojson = JSON.stringify(geojson);
+
+            $.ajax({
+                type: "POST",
+                url: aoi_feature_edit.edit_feature_url,
+                data: { aoi: aoi_feature_edit.aoi_id,
+                        geometry: geojson
+                },
+                success: onSuccessEdit,
+                error: onErrorEdit,
+                dataType: "json"
+            });
+        });
+    });
+
     //Resize the map
     aoi_feature_edit.mapResize();
     //Resize it on screen resize, but no more than every .3 seconds
@@ -329,7 +353,8 @@ aoi_feature_edit.buildDrawingControl = function (drawnItems) {
             //}
         },
         edit: {
-            featureGroup: drawnItems
+            featureGroup: drawnItems,
+            remove: false
         }
     });
 
