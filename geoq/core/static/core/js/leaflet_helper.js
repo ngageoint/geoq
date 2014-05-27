@@ -102,6 +102,8 @@ leaflet_helper.layer_conversion = function (lyr) {
             layerOptions['async'] = true;
             outputLayer = new L.KML(proxiedURL, layerOptions);
         }
+    } else if (lyr.type == 'Social Networking Link') {
+        //TODO: load it
     }
     if (lyr.name && outputLayer) outputLayer.name = lyr.name;
 
