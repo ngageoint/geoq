@@ -12,7 +12,7 @@ from django.core.exceptions import ObjectDoesNotExist
 from django.forms.util import ValidationError
 from django.http import Http404, HttpResponse, HttpResponseRedirect
 from django.shortcuts import get_object_or_404, redirect
-from django.views.generic import DetailView, ListView, TemplateView, View, DeleteView, CreateView
+from django.views.generic import DetailView, ListView, TemplateView, View, DeleteView, CreateView, UpdateView
 
 from models import Project, Job, AOI
 from geoq.maps.models import Layer, Map
@@ -242,6 +242,17 @@ class CreateJobView(CreateView):
         self.object.reviewers.add(self.request.user)
         self.object.save()
         return HttpResponseRedirect(self.get_success_url())
+
+
+class UpdateJobView(UpdateView):
+    """
+    Update Job
+    """
+
+    def get_form_kwargs(self):
+        kwargs = super(UpdateJobView, self).get_form_kwargs()
+        kwargs['project'] = kwargs['instance'].project_id if hasattr(kwargs['instance'],'project_id') else 0
+        return kwargs
 
 
 class ChangeAOIStatus(View):

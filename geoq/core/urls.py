@@ -11,7 +11,7 @@ from models import AOI, Project, Job
 from proxies import proxy_to
 from views import (BatchCreateAOIS, CreateFeaturesView, Dashboard, DetailedListView,
     JobDetailedListView, AOIDetailedListView, ChangeAOIStatus, JobDelete, AOIDelete, CreateJobView,
-    CreateProjectView, redirect_to_unassigned_aoi, aoi_delete)
+    UpdateJobView, CreateProjectView, redirect_to_unassigned_aoi, aoi_delete)
 from geoq.maps.views import feature_delete
 
 urlpatterns = patterns('',
@@ -48,7 +48,7 @@ urlpatterns = patterns('',
                            form_class=JobForm)),
         name='job-create'),
     url(r'^jobs/update/(?P<pk>\d+)/?$',
-        login_required(UpdateView.as_view(queryset=Job.objects.all(),
+        login_required(UpdateJobView.as_view(queryset=Job.objects.all(),
                            template_name='core/generic_form.html',
                            form_class=JobForm)),
         name='job-update'),
