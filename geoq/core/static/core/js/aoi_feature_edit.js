@@ -22,7 +22,7 @@ aoi_feature_edit.MapMarker = L.Icon.extend({
         iconSize: new L.Point(25, 41),
         repeatMode: true,
         text: 'Draw a marker',
-        iconUrl: '/static/images/badge_images/silver.png' //TODO: Replace with better default image
+        iconUrl: aoi_feature_edit.static_root + '/images/badge_images/silver.png' //TODO: Replace with better default image
     }
 });
 
@@ -229,11 +229,11 @@ aoi_feature_edit.map_init = function (map, bounds) {
     leaflet_layer_control.addLayerControl(map, options);
 
     function help_onclick() {
-        window.open('/static/html/aoi_edit_help.html');
+        window.open(aoi_feature_edit.help_url);
     }
 
     var help_control = new L.Control.Button({
-        'iconUrl': '/static/images/question.png',
+        'iconUrl': aoi_feature_edit.static_root + 'images/question.png',
         'onClick': help_onclick,
         'hideText': true,
         'doToggle': false,

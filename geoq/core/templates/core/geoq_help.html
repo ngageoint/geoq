@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+{% load bootstrap_toolkit %}
+{% load url from future %}
+
+<html>
+<head lang="en">
+    <meta charset="UTF-8">
+    <title>GeoQ Help</title>
+    <script src="{{ STATIC_URL }}/core/js/jquery.min.js"></script>
+
+    {% bootstrap_stylesheet_tag %}
+    {% bootstrap_stylesheet_tag "responsive" %}
+    {% bootstrap_javascript_tag %}
+
+    <style type="text/css">
+        /* CSS used here will be applied after bootstrap.css */
+        .panel a {
+            color:#777;
+        }
+
+        .panel a:hover {
+            text-decoration:none;
+            color:#222;
+        }
+
+        .panel .table td {
+            border-color: #f3f3f3;
+        }
+
+        img {
+            border:5px solid black;
+        }
+        </style>
+</head>
+<body>
+{% block container %}
+<div class="container">
+    <h1>
+        <a name="user-content-geoq" class="anchor" href="#geoq"><span class="octicon octicon-link"></span></a>GeoQ</h1>
+    <hr>
+    <div class="container">
+        <div class="row">
+            <div class="col-sm-3">
+                <div class="panel-group" id="accordion">
+                    <div class="panel panel-default">
+                        <div class="panel-heading">
+                            <h4 class="panel-title">
+                                <a data-toggle="collapse" data-parent="#accordion" href="#collapseOne"><span class="glyphicon glyphicon-folder-close"></span> GeoQ Overview</a>
+                            </h4>
+                        </div>
+                        <div id="collapseOne" class="panel-collapse collapse in">
+                            <div class="panel-body">
+                                <table class="table">
+                                    <tbody>
+                                    <tr>
+                                        <td>
+                                            <a href="#about"><span class="glyphicon glyphicon-file text-info"></span> About</a>
+                                            <h4>
+                                                <a name="user-content-geographic-work-queueing-and-tasking-system" class="anchor"
+                                                   href="#geographic-work-queueing-and-tasking-system">
+                                                    <span class="octicon octicon-link"></span>
+                                                </a>
+                                                Geographic Work Queueing and Tasking System
+                                            </h4>
+                                            <p>The aim of the GeoQ system is to create an open source geographic tasking
+                                                system that allows teams to collect geographic data across a large area,
+                                                but manage the work in smaller geographic regions. Large areas can be
+                                                quickly broken up into small 1km squares and assigned to a team.
+                                                System transparency informs all groups about workflow to avoid
+                                                duplication of effort.
+                                            </p>
+                                            <p>The GeoQ software was developed at the National Geospatial-Intelligence
+                                                Agency (NGA) as a joint effort between NGA and The MITRE Corporation.
+                                                The government has "unlimited rights" and is releasing this software into
+                                                the public domain to increase the impact of government investments by
+                                                providing developers with the opportunity to take things in new directions.
+                                                You can copy, modify, combine with other software, distribute and perform
+                                                the work, even for commercial purposes, all without asking permission.
+                                                NGA assumes no responsibility for the use of the software by any parties,
+                                                and makes no guarantees, expressed or implied, about the software quality,
+                                                reliability, or any other characteristic.   We would appreciate
+                                                acknowledgement if the software is used. However, the following suggested
+                                                derivative or modified statement is optional:  "Elements of this work
+                                                contain GeoQ: The National Geospatial-Intelligence Agency and The MITRE
+                                                Corporation jointly produced this work."
+                                            </p>
+                                        </td>
+                                    </tr>
+                                    </tbody></table>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="panel panel-default">
+                        <div class="panel-heading">
+                            <h4 class="panel-title">
+                                <a data-toggle="collapse" data-parent="#accordion" href="#collapseThree"><span class="glyphicon glyphicon-user"></span> Starting a New Project</a>
+                            </h4>
+                        </div>
+                        <div id="collapseThree" class="panel-collapse collapse">
+                            <div class="panel-body">
+                                <table class="table">
+                                    <tbody><tr>
+                                        <td>
+                                            <a href="#create-project">Create Project</a>
+                                            <p></p>
+                                            <p>
+                                                The highest element within a GeoQ workflow, a Project will normally encompass
+                                                all the activities surrounding a particular event. Projects can be thought of
+                                                as a folder that will organize all work done for that event. Historically,
+                                                Projects have been created for situations such as Superstorm Sandy, the
+                                                tornado that struck Moore, OK, and Typhoon Haiyan in the Philippines.
+                                            </p>
+                                            <p>
+                                                To create a Project, simply click the <a href="#">Create</a> link on the
+                                                GeoQ home page:
+                                                <br/>
+                                            </p>
+                                            <img src="{{ STATIC_URL }}/images/help/GeoQ%20Create%20Project%20link.png">
+                                            <p>
+                                                <br/>or the 'New' button from the Project list page: <br/><br/>
+                                            </p>
+                                            <img src="{{ STATIC_URL }}/images/help/GeoQ%20Project%20Create%20link2.png">
+                                            <p>
+                                                <br/>The Create Project page will allow you to enter the appropriate information
+                                                regarding your new project:<br/>
+                                            </p>
+                                            <img src="{{ STATIC_URL }}/images/help/GeoQ%20Project%20Create.png">
+                                            <p>
+                                                <br/>Once saved, you'll now be able to add Jobs to your Project.
+                                            </p>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td>
+                                            <a href="#">Create Jobs</a>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td>
+                                            <a href="#">Create AOI's</a>
+                                        </td>
+                                    </tr>
+                                    </tbody></table>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="panel panel-default">
+                        <div class="panel-heading">
+                            <h4 class="panel-title">
+                                <a data-toggle="collapse" data-parent="#accordion" href="#collapseTwo"><span class="glyphicon glyphicon-th"></span> Maps, Layers, and Features</a>
+                            </h4>
+                        </div>
+                        <div id="collapseTwo" class="panel-collapse collapse">
+                            <div class="panel-body">
+                                <table class="table">
+                                    <tbody><tr>
+                                        <td>
+                                            <a href="#">Maps</a>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td>
+                                            <a href="#">Layers</a>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td>
+                                            <a href="#">Features</a>
+                                        </td>
+                                    </tr>
+                                    </tbody></table>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="panel panel-default">
+                        <div class="panel-heading">
+                            <h4 class="panel-title">
+                                <a data-toggle="collapse" data-parent="#accordion" href="#collapseFour">
+                                    <span class="glyphicon glyphicon-file"></span> Editing an AOI</a>
+                            </h4>
+                        </div>
+                        <div id="collapseFour" class="panel-collapse collapse">
+                            <div class="panel-body">
+                                <table class="table">
+                                    <tbody><tr>
+                                        <td>
+                                            <a href="#"><span class="glyphicon glyphicon-usd"></span> Selecting AOI</a>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td>
+                                            <a href="#"><span class="glyphicon glyphicon-user"></span> Page Overview</a>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td>
+                                            <a href="#"><span class="glyphicon glyphicon-tasks"></span> Tools</a>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td>
+                                            <a href="#"><span class="glyphicon glyphicon-shopping-cart"></span> Submitting</a>
+                                        </td>
+                                    </tr>
+                                    </tbody></table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-sm-9">
+            </div>
+        </div>
+    </div>
+</div> <!-- container -->
+{% endblock %}
+
+</body>
+</html>
