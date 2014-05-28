@@ -11,7 +11,7 @@ from django.core.urlresolvers import reverse
 from django.core.exceptions import ObjectDoesNotExist
 from django.forms.util import ValidationError
 from django.http import Http404, HttpResponse, HttpResponseRedirect
-from django.shortcuts import get_object_or_404, redirect
+from django.shortcuts import get_object_or_404, redirect, render
 from django.views.generic import DetailView, ListView, TemplateView, View, DeleteView, CreateView, UpdateView
 
 from models import Project, Job, AOI
@@ -364,6 +364,10 @@ def aoi_delete(request, pk):
         raise Http404
 
     return HttpResponse(status=200)
+
+def display_help(request):
+    return render(request, 'core/geoq_help.html')
+
 
 @login_required
 def batch_create_aois(request, *args, **kwargs):
