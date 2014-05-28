@@ -112,7 +112,7 @@ leaflet_helper.constructors.geojson_success = function (data, proxiedURL, map, o
     }
 
     if (result && result.error && result.error.message){
-        log.error("JSON layer error, message was:", result.error.message, "url:", proxiedURL);
+        log.error("JSON layer error, message was: " + result.error.message + " url: "+ proxiedURL);
     } else {
         var parserInfo = leaflet_helper.constructors.identifyParser(result);
         if (parserInfo && parserInfo.parser) {
@@ -120,7 +120,7 @@ leaflet_helper.constructors.geojson_success = function (data, proxiedURL, map, o
 
             var features = "NONE";
             if (result && result.features && result.features.length) features = result.features.length;
-            log.info("JSON layer was created from :", proxiedURL, "features:", features, "parser type:", parserInfo.parserName);
+            log.info("JSON layer was created from : "+ proxiedURL+ " - features:"+ features+ " - parser type: ", parserInfo.parserName);
         }
     }
     return outputLayer;

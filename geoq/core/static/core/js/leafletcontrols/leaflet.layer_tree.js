@@ -7,7 +7,6 @@ var leaflet_layer_control = {};
 //TODO: have an info control that modifies things like IA tools/icons
 //TODO: Save info about layer configuration, then have a way to load that back in or save as settings for a Job
 //TODO: Have a control to add new layers
-//TODO: Layer drawer have a button to create a layer
 //TODO: Be able to drag and drop layers onto the page
 //TODO: Integrate with GeoNode to auto-build layers in GeoServer
 //TODO: When adding ?request=GetCapabilities links to layers, do it smartly
