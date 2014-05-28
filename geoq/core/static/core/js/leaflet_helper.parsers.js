@@ -1,6 +1,6 @@
 //====================================
 leaflet_helper.constructors = {};
-leaflet_helper.constructors.identifyParser = function(result, options){
+leaflet_helper.constructors.identifyParser = function(result){
     //Use GeoJSON as the standard to try if no matches are found
     var parser = L.GeoJSON;
     var parserName = "Leaflet GeoJSON";
@@ -77,14 +77,19 @@ leaflet_helper.constructors.urlTemplater =function(url, map, layer_json){
 };
 
 
-leaflet_helper.constructors.geojson = function(options, proxiedURL, map) {
-    var outputLayer = new L.geoJson(undefined, {onEachFeature: leaflet_helper.parsers.standard_onEachFeature});
+leaflet_helper.constructors.geojson = function(lyr, map, useLayerInstead) {
+    var outputLayer = useLayerInstead || new L.geoJson(undefined, {onEachFeature: leaflet_helper.parsers.standard_onEachFeature});
+
+    var url = leaflet_helper.constructors.urlTemplater(lyr.url, map, lyr.layerParams);
+    var proxiedURL = leaflet_helper.proxify(url);
 
     $.ajax({
         type: 'GET',
         url: proxiedURL,
-        dataType: 'json',
-        success: function(data){leaflet_helper.constructors.geojson_success(data, proxiedURL, map, outputLayer, options);},
+        dataType: lyr.format || 'json',
+        success: function(data){
+            leaflet_helper.constructors.geojson_success(data, proxiedURL, map, outputLayer);
+        },
         error: leaflet_helper.constructors.geojson_error
     });
 
@@ -93,7 +98,7 @@ leaflet_helper.constructors.geojson = function(options, proxiedURL, map) {
 leaflet_helper.constructors.geojson_error = function (resultobj){
     log.error ("A JSON layer was requested, but no valid response was received from the server, result:", resultobj);
 };
-leaflet_helper.constructors.geojson_success = function (data, proxiedURL, map, outputLayer, options) {
+leaflet_helper.constructors.geojson_success = function (data, proxiedURL, map, outputLayer) {
     var result;
     if (typeof data=="object") {
         result = data;
@@ -109,9 +114,9 @@ leaflet_helper.constructors.geojson_success = function (data, proxiedURL, map, o
     if (result && result.error && result.error.message){
         log.error("JSON layer error, message was:", result.error.message, "url:", proxiedURL);
     } else {
-        var parserInfo = leaflet_helper.constructors.identifyParser(result, options);
+        var parserInfo = leaflet_helper.constructors.identifyParser(result);
         if (parserInfo && parserInfo.parser) {
-            parserInfo.parser(result, options, map, outputLayer);
+            parserInfo.parser(result, map, outputLayer);
 
             var features = "NONE";
             if (result && result.features && result.features.length) features = result.features.length;
@@ -129,7 +134,7 @@ leaflet_helper.parsers.standard_onEachFeature = function (feature, layer) {
         layer.bindPopup(feature.properties.popupContent);
     }
 };
-leaflet_helper.parsers.addDynamicCapimageData = function (result, options, map, outputLayer) {
+leaflet_helper.parsers.addDynamicCapimageData = function (result, map, outputLayer) {
     //TODO: Handle de-dupes of all features returned
 
     var jsonObjects = [];
@@ -161,7 +166,7 @@ leaflet_helper.parsers.addDynamicCapimageData = function (result, options, map, 
 
     return outputLayer;
 };
-leaflet_helper.parsers.instagramImages = function (result, options, map, outputLayer) {
+leaflet_helper.parsers.instagramImages = function (result, map, outputLayer) {
     var jsonObjects = [];
     var photos = result.data;
 
@@ -206,7 +211,7 @@ leaflet_helper.parsers.instagramImages = function (result, options, map, outputL
 
     return outputLayer;
 };
-leaflet_helper.parsers.flickrImages = function (result, options, map, outputLayer) {
+leaflet_helper.parsers.flickrImages = function (result, map, outputLayer) {
     var jsonObjects = [];
     var photos = result.photos;
 
@@ -254,7 +259,7 @@ leaflet_helper.parsers.flickrImages = function (result, options, map, outputLaye
     }
     return outputLayer;
 };
-leaflet_helper.parsers.youTube = function (result, options, map, outputLayer){
+leaflet_helper.parsers.youTube = function (result, map, outputLayer){
     //TODO: Parsing YouTube requires OAuth2, need a server component to do the handshake
     log.info("YouTube changed their API, v3 is not yet supported.")
 };
