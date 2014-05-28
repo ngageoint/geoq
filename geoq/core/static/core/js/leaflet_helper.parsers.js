@@ -20,6 +20,12 @@ leaflet_helper.constructors.identifyParser = function(result){
 
         parser = leaflet_helper.parsers.flickrImages;
         parserName = "Flickr Photo Search";
+    } else if (result &&
+        result.meta && result.meta.code && result.meta.code==200 &&
+        result.data && result.data.length) {
+
+        parser = leaflet_helper.parsers.instagramImages;
+        parserName = "Instagram Search";
     }
     //ADD new parser detectors here
 
@@ -48,7 +54,8 @@ leaflet_helper.constructors.urlTemplater =function(url, map, layer_json){
         e:mapExtent._northEast.lng,
         w:mapExtent._southWest.lng,
         width:size.x,
-        height:size.y
+        height:size.y,
+        radius:2
     };
 
     //Feed the generated variables into the template, and return the result
@@ -108,17 +115,25 @@ leaflet_helper.constructors.geojson = function(options, proxiedURL, map) {
 
 //====================================
 leaflet_helper.parsers = {};
+leaflet_helper.parsers.standard_onEachFeature = function (feature, layer) {
+    // does this feature have a property named popupContent?
+    if (feature.properties && feature.properties.popupContent) {
+        layer.bindPopup(feature.properties.popupContent);
+    }
+};
 leaflet_helper.parsers.addDynamicCapimageData = function (result) {
     var jsonObjects = [];
     $(result.features).each(function () {
         var feature = $(this)[0];
+        var popupContent = "<a href='" + feature.attributes.ImageURL + "' target='_new'><img style='width:256px' src='" + feature.attributes.ThumbnailURL + "' /></a>";
+
         var json = {
             type: "Feature",
             properties: {
                 name: feature.attributes.ID + " - " + feature.attributes.DaysOld + " days old",
                 image: feature.attributes.ImageURL,
                 thumbnail: feature.attributes.ThumbnailURL,
-                popupContent: "<a href='" + feature.attributes.ImageURL + "'><img style='width:256px' src='" + feature.attributes.ThumbnailURL + "' /></a>"
+                popupContent: popupContent
             },
             geometry: {
                 type: "Point",
@@ -129,14 +144,47 @@ leaflet_helper.parsers.addDynamicCapimageData = function (result) {
     });
     log.info("A FEMA CAP layer was loaded, with", result.features.length, "features");
 
-    function onEachFeature(feature, layer) {
-        // does this feature have a property named popupContent?
-        if (feature.properties && feature.properties.popupContent) {
-            layer.bindPopup(feature.properties.popupContent);
-        }
-    }
+    return new L.geoJson(jsonObjects, {onEachFeature: leaflet_helper.parsers.standard_onEachFeature});
+};
+leaflet_helper.parsers.instagramImages = function (result, options, map) {
+    var jsonObjects = [];
+    var photos = result.data;
 
-    return new L.geoJson(jsonObjects, {onEachFeature: onEachFeature});
+    _.each(photos,function(image){
+
+        var imageURL = image.link;
+        var thumbnailURL = image.images.thumbnail.url;
+
+        var id = image.id;
+        var title = "Instagram: "+id;
+        var location = image.location;
+
+        var popupContent = "<h5>Instagram Picture</h5>";
+        popupContent += "Posted by: "+image.user.username+"<br/>";
+        popupContent += "<a href='" + imageURL + "' target='_new'><img style='width:150px' src='" + thumbnailURL + "' /></a>";
+        //TODO: Add Delete this button
+
+        var json = {
+            type: "Feature",
+            properties: {
+                name: title,
+                image: imageURL,
+                thumbnail: thumbnailURL,
+                popupContent: popupContent
+            },
+            geometry: {
+                type: "Point",
+                coordinates: [location.longitude, location.latitude]
+            }
+        };
+        jsonObjects.push(json);
+
+    });
+
+    log.info("An Instagram Social Photos layer was loaded, with "+ photos.length+" features");
+
+    return new L.geoJson(jsonObjects, {onEachFeature: leaflet_helper.parsers.standard_onEachFeature});
+
 };
 leaflet_helper.parsers.flickrImages = function (result, options, map) {
     var jsonObjects = [];
@@ -157,6 +205,10 @@ leaflet_helper.parsers.flickrImages = function (result, options, map) {
         var thumbnailURL='http://farm'+farm+'.static.flickr.com/'+server+'/'+base;
 
         var center = map.getCenter();
+        var popupContent = "<h5>Flickr Picture</h5>";
+        popupContent += "Posted by: "+owner+"<br/>";
+        popupContent += "<a href='" + imageURL + "' target='_new'><img style='width:256px' src='" + thumbnailURL + "' /></a>";
+        //TODO: Add Delete this button
 
         var json = {
             type: "Feature",
@@ -164,7 +216,7 @@ leaflet_helper.parsers.flickrImages = function (result, options, map) {
                 name: title,
                 image: imageURL,
                 thumbnail: thumbnailURL,
-                popupContent: "<a href='" + imageURL + "'><img style='width:256px' src='" + thumbnailURL + "' /></a>"
+                popupContent: popupContent
             },
             geometry: {
                 type: "Point",
@@ -176,12 +228,5 @@ leaflet_helper.parsers.flickrImages = function (result, options, map) {
 
     log.info("A Flickr Social Photos layer was loaded, with "+ photos.photo.length+" features");
 
-    function onEachFeature(feature, layer) {
-        // does this feature have a property named popupContent?
-        if (feature.properties && feature.properties.popupContent) {
-            layer.bindPopup(feature.properties.popupContent);
-        }
-    }
-
-    return new L.geoJson(jsonObjects, {onEachFeature: onEachFeature});
+    return new L.geoJson(jsonObjects, {onEachFeature: leaflet_helper.parsers.standard_onEachFeature});
 };
