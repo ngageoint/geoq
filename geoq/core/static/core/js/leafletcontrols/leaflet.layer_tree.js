@@ -10,6 +10,7 @@ var leaflet_layer_control = {};
 //TODO: Layer drawer have a button to create a layer
 //TODO: Be able to drag and drop layers onto the page
 //TODO: Integrate with GeoNode to auto-build layers in GeoServer
+//TODO: When adding ?request=GetCapabilities links to layers, do it smartly
 
 leaflet_layer_control.$map = undefined;
 leaflet_layer_control.$drawer = undefined;
@@ -198,7 +199,7 @@ leaflet_layer_control.parsers.opacityControls = function(layer) {
     var $opacity_title = $("<span>")
         .html("Opacity: <b>"+opacity+"</b> (")
         .appendTo($opacity);
-    _.each([100,80,50,25,0],function(num){
+    _.each([100,75,50,25,0],function(num){
         $("<span>")
             .text(num+"% ")
             .css({color:'#39c',cursor:'pointer'})
@@ -401,7 +402,7 @@ leaflet_layer_control.addLayerControl = function (map, options) {
                         if (!name && layer.options) name = layer.options.name;
                         log.info("Creating a map layer", name, " URL: ", layer.url);
 
-                        var newLayer = leaflet_helper.layer_conversion(layer);
+                        var newLayer = leaflet_helper.layer_conversion(layer, map);
                         if (newLayer) {
                             aoi_feature_edit.map.addLayer(newLayer);
                             leaflet_layer_control.setLayerOpacity(newLayer,1);

@@ -138,7 +138,7 @@ aoi_feature_edit.map_init = function (map, bounds) {
 
     if (custom_map.hasOwnProperty("layers")) {
         _.each(custom_map.layers, function (layer_data) {
-            var built_layer = leaflet_helper.layer_conversion(layer_data);
+            var built_layer = leaflet_helper.layer_conversion(layer_data, map);
             if (built_layer !== undefined) {
                 if (layer_data.isBaseLayer) {
                     baseLayers[layer_data.name] = built_layer;
@@ -447,9 +447,19 @@ aoi_feature_edit.buildTreeLayers = function(){
         var layers = [];
         try {
             var all_layers = JSON.parse(aoi_feature_edit.aoi_map_json.all_layers);
-            layers = _.filter(all_layers, function(l){
+            var social_layers = _.filter(all_layers, function(l){
                 return (l.type == "Social Networking Link");
             });
+            _.each(social_layers,function(l){
+                var l_all = _.clone(l);
+                l_all.name = l.name + " - All";
+                layers.push(l_all);
+
+//                var l_found = _.clone(l);
+//                l_found.name = l.name + " - Flagged";
+//                layers.push(l_found);
+            });
+
         } catch (ex) {
             log.error("aoi_map_json.all_layers isn't being parsed as valid JSON.");
         }
