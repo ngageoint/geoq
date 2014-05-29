@@ -7,7 +7,6 @@ var leaflet_layer_control = {};
 //TODO: have an info control that modifies things like IA tools/icons
 //TODO: Save info about layer configuration, then have a way to load that back in or save as settings for a Job
 //TODO: Have a control to add new layers
-//TODO: Layer drawer have a button to create a layer
 //TODO: Be able to drag and drop layers onto the page
 //TODO: Integrate with GeoNode to auto-build layers in GeoServer
 //TODO: When adding ?request=GetCapabilities links to layers, do it smartly
@@ -44,37 +43,46 @@ leaflet_layer_control.initDrawer = function(){
 };
 
 leaflet_layer_control.show_info = function (objToShow, node) {
-    var html = "";
-    var $html; //TODO: This is kinda wonky, should always return jquery objects not strings of html
+    var html_objects = [];
 
     if (typeof objToShow == "string"){
-        html = objToShow;
+        html_objects.push(objToShow);
     } else {
         if (objToShow.options && objToShow._leaflet_id) {
             //Probably a Leaflet layer
-            html = leaflet_layer_control.parsers.infoFromLayer(objToShow);
-            $html = leaflet_layer_control.parsers.opacityControls(objToShow);
+            html_objects.push(leaflet_layer_control.parsers.infoFromLayer(objToShow));
+            html_objects.push(leaflet_layer_control.parsers.opacityControls(objToShow));
+
+            if (leaflet_layer_control.likelyHasFeatures(objToShow)) {
+                var $btn = $('<a href="#" class="btn">Refresh based on current map</a>')
+                    .on('click',function(){
+                        leaflet_helper.constructors.geojson(objToShow.config, aoi_feature_edit.map, objToShow);
+                    });
+                html_objects.push($btn);
+            }
         } else if (objToShow.name && objToShow.url && objToShow.type) {
             //Probably a map info object
-            html = leaflet_layer_control.parsers.infoFromInfoObj(objToShow);
+            html_objects.push(leaflet_layer_control.parsers.infoFromInfoObj(objToShow));
         } else {
 
             if (typeof objToShow == "object"){
                 var obj_size = _.toArray(objToShow).length;
                 if (obj_size > 1) {
                     //Show all items from the object
-                    html = leaflet_layer_control.parsers.infoFromObject(objToShow);
+                    html_objects.push(leaflet_layer_control.parsers.infoFromObject(objToShow));
                 } else {
                     //Likely a title/folder of the tree
-                    html = leaflet_layer_control.parsers.infoFromFolder(node);
+                    html_objects.push(leaflet_layer_control.parsers.infoFromFolder(node));
                 }
             }
         }
     }
-    leaflet_layer_control.$drawer_tray.html(html);
-    if ($html){
-        leaflet_layer_control.$drawer_tray.append($html);
-    }
+
+    //Clear the tray and add each html object generated from above
+    leaflet_layer_control.$drawer_tray.empty();
+    _.each(html_objects,function(html){
+        leaflet_layer_control.$drawer_tray.append(html);
+    });
 };
 //=========================================
 
@@ -106,7 +114,7 @@ leaflet_layer_control.parsers.infoFromInfoObj = function (obj){
     html+=leaflet_layer_control.parsers.textIfExists({name: obj.type, title:"Type"});
     html+=leaflet_layer_control.parsers.textIfExists({name: obj.url, title:"URL", linkify:true, linkSuffix:"?request=GetCapabilities", style_class:'scroll-link'});
     html+=leaflet_layer_control.parsers.textIfExists({name: obj.layer, title:"Layers"});
-    html+=leaflet_layer_control.parsers.textIfExists({name: obj.description, style_class:'scroll-link'});
+//    html+=leaflet_layer_control.parsers.textIfExists({name: obj.description, style_class:'scroll-link'});
     return html;
 };
 leaflet_layer_control.parsers.infoFromObject = function (obj){
@@ -396,6 +404,10 @@ leaflet_layer_control.addLayerControl = function (map, options) {
                     if (layer._map && layer._initHooksCalled) {
                         //It's a layer that's been already built
                         leaflet_layer_control.setLayerOpacity(layer,1);
+
+                        if (leaflet_layer_control.likelyHasFeatures(layer)) {
+                            leaflet_helper.constructors.geojson(layer.config, map);
+                        }
                     } else {
                         //It's an object with layer info, not yet built
                         var name = layer.name;
@@ -491,7 +503,11 @@ leaflet_layer_control.toggleZooming=function($control){
         if (map.tap) map.tap.enable();}
     );
 };
-
+leaflet_layer_control.likelyHasFeatures = function(layer){
+    return ((layer.config && layer.config.type &&
+            (layer.config.type=="GeoJSON" || layer.config.type=="Social Networking Link")) ||
+            (layer.config && layer.config.format && layer.config.format=="json"));
+};
 
 //TODO: Abstract these
 leaflet_layer_control.drawerIsOpen = false;

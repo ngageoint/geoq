@@ -26,6 +26,10 @@ leaflet_helper.constructors.identifyParser = function(result){
 
         parser = leaflet_helper.parsers.instagramImages;
         parserName = "Instagram Search";
+    } else if (result) {
+
+        parser = leaflet_helper.parsers.youTube;
+        parserName = "YouTube Videos";
     }
     //ADD new parser detectors here
 
@@ -73,41 +77,51 @@ leaflet_helper.constructors.urlTemplater =function(url, map, layer_json){
 };
 
 
-leaflet_helper.constructors.geojson = function(options, proxiedURL, map) {
-    var outputLayer;
+leaflet_helper.constructors.geojson = function(lyr, map, useLayerInstead) {
+    var outputLayer = useLayerInstead || new L.geoJson(undefined, {onEachFeature: leaflet_helper.parsers.standard_onEachFeature});
 
-    var resultobj = $.ajax({
+    var url = leaflet_helper.constructors.urlTemplater(lyr.url, map, lyr.layerParams);
+    var proxiedURL = leaflet_helper.proxify(url);
+
+    $.ajax({
         type: 'GET',
         url: proxiedURL,
-        dataType: 'json',
-        async: false
+        dataType: lyr.format || 'json',
+        success: function(data){
+            leaflet_helper.constructors.geojson_success(data, proxiedURL, map, outputLayer);
+        },
+        error: leaflet_helper.constructors.geojson_error
     });
-    //TODO: Switch away from async to sync and run function on success.
-    if (resultobj.status == 200) {
-        var result;
+
+    return outputLayer;
+};
+leaflet_helper.constructors.geojson_error = function (resultobj){
+    log.error ("A JSON layer was requested, but no valid response was received from the server, result:", resultobj);
+};
+leaflet_helper.constructors.geojson_success = function (data, proxiedURL, map, outputLayer) {
+    var result;
+    if (typeof data=="object") {
+        result = data;
+    } else {
         try {
-            result = JSON.parse(resultobj.responseText);
+            result = JSON.parse(data);
         } catch (ex){
             log.error("Error parsing JSON returned from server");
+            return;
         }
-        if (result && result.error && result.error.message){
-            log.error("JSON layer error, message was:", result.error.message, "url:", proxiedURL);
-        } else {
-            var parserInfo = leaflet_helper.constructors.identifyParser(result, options);
-            if (parserInfo && parserInfo.parser) {
-                outputLayer = parserInfo.parser(result, options, map);
+    }
 
-                var features = "NONE";
-                if (result && result.features && result.features.length) features = result.features.length;
-                log.info("JSON layer was created from :", proxiedURL, "features:", features, "parser type:", parserInfo.parserName);
-
-                if (outputLayer) {
-                    outputLayer.name = options.name || (options.type+ " layer");
-                }
-            }
-        }
+    if (result && result.error && result.error.message){
+        log.error("JSON layer error, message was: " + result.error.message + " url: "+ proxiedURL);
     } else {
-        log.error ("A JSON layer was requested, but no valid response was received from the server, result:", resultobj);
+        var parserInfo = leaflet_helper.constructors.identifyParser(result);
+        if (parserInfo && parserInfo.parser) {
+            parserInfo.parser(result, map, outputLayer);
+
+            var features = "NONE";
+            if (result && result.features && result.features.length) features = result.features.length;
+            log.info("JSON layer was created from : "+ proxiedURL+ " - features:"+ features+ " - parser type: ", parserInfo.parserName);
+        }
     }
     return outputLayer;
 };
@@ -116,12 +130,13 @@ leaflet_helper.constructors.geojson = function(options, proxiedURL, map) {
 //====================================
 leaflet_helper.parsers = {};
 leaflet_helper.parsers.standard_onEachFeature = function (feature, layer) {
-    // does this feature have a property named popupContent?
     if (feature.properties && feature.properties.popupContent) {
         layer.bindPopup(feature.properties.popupContent);
     }
 };
-leaflet_helper.parsers.addDynamicCapimageData = function (result) {
+leaflet_helper.parsers.addDynamicCapimageData = function (result, map, outputLayer) {
+    //TODO: Handle de-dupes of all features returned
+
     var jsonObjects = [];
     $(result.features).each(function () {
         var feature = $(this)[0];
@@ -142,11 +157,16 @@ leaflet_helper.parsers.addDynamicCapimageData = function (result) {
         };
         jsonObjects.push(json);
     });
-    log.info("A FEMA CAP layer was loaded, with", result.features.length, "features");
+    outputLayer.addData(jsonObjects);
+    if (result.features && result.features.length) {
+        log.info("A FEMA CAP layer was updated adding "+ result.features.length+ " features");
+    } else {
+        log.info("A FEMA CAP request was returned, but no features were found");
+    }
 
-    return new L.geoJson(jsonObjects, {onEachFeature: leaflet_helper.parsers.standard_onEachFeature});
+    return outputLayer;
 };
-leaflet_helper.parsers.instagramImages = function (result, options, map) {
+leaflet_helper.parsers.instagramImages = function (result, map, outputLayer) {
     var jsonObjects = [];
     var photos = result.data;
 
@@ -162,7 +182,7 @@ leaflet_helper.parsers.instagramImages = function (result, options, map) {
         var popupContent = "<h5>Instagram Picture</h5>";
         popupContent += "Posted by: "+image.user.username+"<br/>";
         popupContent += "<a href='" + imageURL + "' target='_new'><img style='width:150px' src='" + thumbnailURL + "' /></a>";
-        //TODO: Add Delete this button
+        //TODO: Add "Delete This" button
 
         var json = {
             type: "Feature",
@@ -181,12 +201,17 @@ leaflet_helper.parsers.instagramImages = function (result, options, map) {
 
     });
 
-    log.info("An Instagram Social Photos layer was loaded, with "+ photos.length+" features");
 
-    return new L.geoJson(jsonObjects, {onEachFeature: leaflet_helper.parsers.standard_onEachFeature});
+    outputLayer.addData(jsonObjects);
+    if (photos && photos.length) {
+        log.info("An Instagram Social Photos layer was appended with "+ photos.length+" features");
+    } else {
+        log.info("An Instagram Social Photos response was returned, but with no features.");
+    }
 
+    return outputLayer;
 };
-leaflet_helper.parsers.flickrImages = function (result, options, map) {
+leaflet_helper.parsers.flickrImages = function (result, map, outputLayer) {
     var jsonObjects = [];
     var photos = result.photos;
 
@@ -226,7 +251,15 @@ leaflet_helper.parsers.flickrImages = function (result, options, map) {
         jsonObjects.push(json);
     });
 
-    log.info("A Flickr Social Photos layer was loaded, with "+ photos.photo.length+" features");
-
-    return new L.geoJson(jsonObjects, {onEachFeature: leaflet_helper.parsers.standard_onEachFeature});
+    outputLayer.addData(jsonObjects);
+    if (photos.photo && photos.photo.length) {
+        log.info("A Flickr Photos layer was loaded, with "+ photos.photo.length+" features");
+    } else {
+        log.info("An Flickr Photos response was returned, but with no features.");
+    }
+    return outputLayer;
+};
+leaflet_helper.parsers.youTube = function (result, map, outputLayer){
+    //TODO: Parsing YouTube requires OAuth2, need a server component to do the handshake
+    log.info("YouTube changed their API, v3 is not yet supported.")
 };

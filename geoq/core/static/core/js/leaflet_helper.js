@@ -20,9 +20,6 @@ leaflet_helper.proxify = function (url) {
 };
 leaflet_helper.layer_conversion = function (lyr, map) {
 
-    var url = leaflet_helper.constructors.urlTemplater(lyr.url, map, lyr.layerParams);
-    var proxiedURL = leaflet_helper.proxify(url);
-
     var options = {
         layers: lyr.layer,
         format: lyr.format,
@@ -64,8 +61,8 @@ leaflet_helper.layer_conversion = function (lyr, map) {
             layerOptions.createMarker = leaflet_helper.createMarker[layerOptions.createMarker];
         }
         outputLayer = new L.esri.clusteredFeatureLayer(lyr.url, layerOptions);
-    } else if (lyr.type == 'GeoJSON') {
-        outputLayer = leaflet_helper.constructors.geojson(options,proxiedURL);
+    } else if (lyr.type == 'GeoJSON' || lyr.type == 'Social Networking Link') {
+        outputLayer = leaflet_helper.constructors.geojson(lyr, map);
 
     } else if (lyr.type == 'KML') {
         if (/kmz$/i.test(proxiedURL)) {
@@ -73,14 +70,16 @@ leaflet_helper.layer_conversion = function (lyr, map) {
             outputLayer = undefined;
         } else {
             layerOptions = options;
-            layerOptions['async'] = true;
+
+            var url = leaflet_helper.constructors.urlTemplater(lyr.url, map, lyr.layerParams);
+            var proxiedURL = leaflet_helper.proxify(url);
+
             outputLayer = new L.KML(proxiedURL, layerOptions);
         }
-    } else if (lyr.type == 'Social Networking Link') {
-        outputLayer = leaflet_helper.constructors.geojson(options,proxiedURL, map);
     }
     //Make sure the name is set for showing up in the layer menu
     if (lyr.name && outputLayer) outputLayer.name = lyr.name;
+    if (outputLayer) outputLayer.config = lyr;
 
     return outputLayer;
 };
