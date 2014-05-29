@@ -216,6 +216,7 @@ INSTALLED_APPS = (
     'geoq.core',
     'geoq.maps',
     'geoq.mgrs',
+    'geoq.feedback',
 )
 
 # A sample logging configuration. The only tangible logging

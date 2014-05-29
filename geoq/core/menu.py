@@ -14,10 +14,10 @@ def menu(active=None, request_path=None, request_user=None):
 
     sort_key = lambda t: t[1].get('index', None)
 
-    #help_dropdown = {
-    #    'Submit Feedback':  {'index': 1, 'url':  reverse_lazy('home'), 'active': False},
-    #    'FAQs':  {'index': 2, 'url': reverse_lazy('home'), 'active': False},
-    #    }
+    help_dropdown = {
+        'Submit Feedback':  {'index': 1, 'url':  reverse_lazy('feedback-view'), 'active': False},
+        'User Guide':  {'index': 2, 'url': reverse_lazy('help_page'), 'active': False},
+        }
 
     maps_dropdown = {
         'Maps': {'index': 1, 'url': reverse_lazy('map-list'), 'active': False},
@@ -25,14 +25,16 @@ def menu(active=None, request_path=None, request_user=None):
         'Feature Types': {'index': 2, 'url': reverse_lazy('feature-type-list'), 'active': False}
     }
     menu_maps = {'Maps':  {'index': 4, 'url': '#', 'active': False, 'dropdown': order_dict(maps_dropdown, sort_key)}}
+    menu_help = {'Help': {'index': 6, 'url': '#', 'active': False, 'dropdown' : order_dict(help_dropdown, sort_key)}}
     menu_items = {
         'Projects': {'index': 2, 'url': reverse_lazy('project-list'), 'active': False},
         'Jobs': {'index': 3, 'url': reverse_lazy('job-list'), 'active': False}
-        #'Help': {'index': 6, 'url': '#', 'active': False, 'dropdown': order_dict(help_dropdown, sort_key)},
     }
 
     if(request_user.groups.filter(name='admin_group') or request_user.is_superuser):
         menu_items.update(menu_maps)
+
+    menu_items.update(menu_help)
 
     if request_path:
         for i in menu_items.keys():
