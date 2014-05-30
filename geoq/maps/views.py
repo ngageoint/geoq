@@ -146,6 +146,7 @@ class MapListView(ListView):
 
     def get_context_data(self, **kwargs):
         context = super(MapListView, self).get_context_data(**kwargs)
+        context['admin'] = self.request.user.is_superuser or self.request.user.groups.filter(name='admin_group').count() > 0
         return context
 
 
@@ -163,6 +164,7 @@ class FeatureTypeListView(ListView):
 
     def get_context_data(self, **kwargs):
         context = super(FeatureTypeListView, self).get_context_data(**kwargs)
+        context['admin'] = self.request.user.is_superuser or self.request.user.groups.filter(name='admin_group').count() > 0
         return context
 
 
@@ -180,6 +182,7 @@ class LayerListView(ListView):
 
     def get_context_data(self, **kwargs):
         context = super(LayerListView, self).get_context_data(**kwargs)
+        context['admin'] = self.request.user.is_superuser or self.request.user.groups.filter(name='admin_group').count() > 0
         return context
 
 
