@@ -450,6 +450,7 @@ aoi_feature_edit.buildTreeLayers = function(){
             var social_layers = _.filter(all_layers, function(l){
                 return (l.type == "Social Networking Link");
             });
+            aoi_feature_edit.layers.social = social_layers;
             _.each(social_layers,function(l){
                 var l_all = _.clone(l);
                 l_all.name = l.name + " - All";

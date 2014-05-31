@@ -391,8 +391,6 @@ leaflet_layer_control.addLayerControl = function (map, options) {
             var all_layers = _.flatten(aoi_feature_edit.layers);
             var all_active_layers = _.filter(all_layers,function(l){return (l._initHooksCalled && l._map)});
 
-            //TODO: This isn't looping through Social Networking Layers, Instagrams stay on site.
-
             _.each(all_active_layers,function(l){
                 leaflet_layer_control.setLayerOpacity(l,0);
             });
@@ -410,10 +408,10 @@ leaflet_layer_control.addLayerControl = function (map, options) {
                             leaflet_helper.constructors.geojson(layer.config, map);
                         }
                     } else {
-                        //It's an object with layer info, not yet built
+                        //It's an object with layer info, not yet built - build the layer from the config data
                         var name = layer.name;
                         if (!name && layer.options) name = layer.options.name;
-                        log.info("Creating a map layer", name, " URL: ", layer.url);
+                        log.info("Creating a map layer " + name+ " URL: " + layer.url);
 
                         var newLayer = leaflet_helper.layer_conversion(layer, map);
                         if (newLayer) {
@@ -430,6 +428,13 @@ leaflet_layer_control.addLayerControl = function (map, options) {
                                     }
 
                                 });
+                            });
+
+                            //TODO: This should be consolidated into one move event
+                            //TODO: The 'refresh layer json' should be a function added to the layer
+                            map.on('moveend', function (e) {
+                                leaflet_helper.constructors.geojson(layer, map, newLayer);
+                                log.info('> moveend');
                             });
                         }
                     }
