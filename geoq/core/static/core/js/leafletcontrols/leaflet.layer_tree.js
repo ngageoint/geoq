@@ -1,6 +1,5 @@
 var leaflet_layer_control = {};
 
-//TODO: Add to Layer module a "show on all map" variable and a "is Base Layer" variable
 //TODO: Pull ordering from map object
 //TODO: Allow drag-and-drop sorting that controls layer
 //TODO: Show layer-relevant icons
@@ -391,6 +390,8 @@ leaflet_layer_control.addLayerControl = function (map, options) {
 
             var all_layers = _.flatten(aoi_feature_edit.layers);
             var all_active_layers = _.filter(all_layers,function(l){return (l._initHooksCalled && l._map)});
+
+            //TODO: This isn't looping through Social Networking Layers, Instagrams stay on site.
 
             _.each(all_active_layers,function(l){
                 leaflet_layer_control.setLayerOpacity(l,0);

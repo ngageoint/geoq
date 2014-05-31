@@ -70,7 +70,6 @@ class Layer(models.Model):
 
     name = models.CharField(max_length=200, help_text='Name that will be displayed within GeoQ')
     type = models.CharField(choices=SERVICE_TYPES, max_length=75)
-    """TODO: Make this url field a CharField"""
     url = models.URLField(help_text='URL of service. If WMS or ESRI, can be any valid URL. Otherwise, the URL will require a local proxy', max_length=500)
     layer = models.CharField(max_length=800, null=True, blank=True, help_text='Layer names can sometimes be comma-separated, and are not needed for data layers (KML, GeoRSS, GeoJSON...)')
     image_format = models.CharField(null=True, blank=True, choices=IMAGE_FORMATS, max_length=75, help_text='The MIME type of the image format to use for tiles on WMS layers (image/png, image/jpeg image/gif...). Double check that the server exposes this exactly - some servers push png instead of image/png.')
@@ -93,9 +92,13 @@ class Layer(models.Model):
     layer_params = JSONField(null=True, blank=True, help_text='JSON key/value pairs to be sent to the web service.  ex: {"crs":"urn:ogc:def:crs:EPSG::4326"}')
     spatial_reference = models.CharField(max_length=32, blank=True, null=True, default="EPSG:4326", help_text='The spatial reference of the service.  Should be in ESPG:XXXX format.')
     constraints = models.TextField(null=True, blank=True, help_text='Constrain layer data displayed to certain feature types')
+    disabled = models.BooleanField(default=False, blank=True, help_text="If unchecked, Don't show this layer when listing all layers")
+    layer_info_link = models.URLField(null=True, blank=True, help_text='URL of info about the service, or a help doc or something', max_length=500)
+    created_at = models.DateTimeField(auto_now_add=True, null=True)
+    updated_at = models.DateTimeField(auto_now_add=True, null=True)
 
     ## Primarily for http://trac.osgeo.org/openlayers/wiki/OpenLayersOptimization
-    additional_domains = models.TextField(null=True, blank=True, help_text='Semicolon seperated list of additional domains for the layer.')
+    additional_domains = models.TextField(null=True, blank=True, help_text='Semicolon seperated list of additional domains for the layer. Only used if you want to cycle through domains for load-balancing')
 
     def __unicode__(self):
         return '{0}'.format(self.name)
@@ -142,6 +145,7 @@ class Layer(models.Model):
             "fieldsToShow": self.fields_to_show,
             "description": self.description,
             "downloadableLink": self.downloadableLink,
+            "layer_info_link" : self.layer_info_link,
             "styles": self.styles,
         }
 
@@ -211,6 +215,7 @@ class Map(models.Model):
                 "fieldsToShow": map_layer.layer.fields_to_show,
                 "description": map_layer.layer.description,
                 "downloadableLink": map_layer.layer.downloadableLink,
+                "layer_info_link": map_layer.layer.layer_info_link,
                 "styles": map_layer.layer.styles,
                 "zIndex": map_layer.stack_order,
             }
@@ -224,7 +229,8 @@ class Map(models.Model):
     def all_map_layers_json(self):
         map_services = list()
         for layer in Layer.objects.all():
-            map_services.append(layer.layer_json())
+            if not layer.disabled:
+                map_services.append(layer.layer_json())
         return json.dumps(map_services)
 
     def to_json(self):
