@@ -432,10 +432,12 @@ leaflet_layer_control.addLayerControl = function (map, options) {
 
                             //TODO: This should be consolidated into one move event
                             //TODO: The 'refresh layer json' should be a function added to the layer
-                            map.on('moveend', function (e) {
-                                leaflet_helper.constructors.geojson(layer, map, newLayer);
-                                log.info('> moveend');
-                            });
+                            if (layer.type == "Social Networking Link") {
+                                map.on('moveend', function (e) {
+                                    leaflet_helper.constructors.geojson(layer, map, newLayer);
+                                    log.info('> moveend');
+                                });
+                            }
                         }
                     }
 
