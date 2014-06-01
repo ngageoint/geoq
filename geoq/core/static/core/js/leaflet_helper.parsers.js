@@ -64,7 +64,7 @@ leaflet_helper.constructors.urlTemplater =function(url, map, layer_json){
 
     //Feed the generated variables into the template, and return the result
     layer_json = $.extend(layer_json,mapState);
-    layer_json.tags = layer_json.tags || "disaster";
+    layer_json.tags = aoi_feature_edit.tags  || "disaster";
 
     var new_url;
     try {
@@ -117,6 +117,9 @@ leaflet_helper.constructors.geojson_success = function (data, proxiedURL, map, o
         var parserInfo = leaflet_helper.constructors.identifyParser(result);
         if (parserInfo && parserInfo.parser) {
             parserInfo.parser(result, map, outputLayer);
+
+            //TODO: Track IDs of individual features, then don't readd duplicates
+
 
             var features = "NONE";
             if (result && result.features && result.features.length) features = result.features.length;
@@ -178,9 +181,11 @@ leaflet_helper.parsers.instagramImages = function (result, map, outputLayer) {
         var id = image.id;
         var title = "Instagram: "+id;
         var location = image.location;
+        var tags = image.tags.join(", ");
 
         var popupContent = "<h5>Instagram Picture</h5>";
         popupContent += "Posted by: "+image.user.username+"<br/>";
+        if (tags) popupContent += "Tags: "+tags+"<br/>";
         popupContent += "<a href='" + imageURL + "' target='_new'><img style='width:150px' src='" + thumbnailURL + "' /></a>";
         //TODO: Add "Delete This" button
 
@@ -190,7 +195,8 @@ leaflet_helper.parsers.instagramImages = function (result, map, outputLayer) {
                 name: title,
                 image: imageURL,
                 thumbnail: thumbnailURL,
-                popupContent: popupContent
+                popupContent: popupContent,
+                tags: aoi_feature_edit.tags || "Disaster"
             },
             geometry: {
                 type: "Point",
@@ -232,6 +238,7 @@ leaflet_helper.parsers.flickrImages = function (result, map, outputLayer) {
         var center = map.getCenter();
         var popupContent = "<h5>Flickr Picture</h5>";
         popupContent += "Posted by: "+owner+"<br/>";
+        if (aoi_feature_edit.tags) popupContent += "Tags: "+aoi_feature_edit.tags+"<br/>";
         popupContent += "<a href='" + imageURL + "' target='_new'><img style='width:256px' src='" + thumbnailURL + "' /></a>";
         //TODO: Add Delete this button
 
@@ -241,7 +248,8 @@ leaflet_helper.parsers.flickrImages = function (result, map, outputLayer) {
                 name: title,
                 image: imageURL,
                 thumbnail: thumbnailURL,
-                popupContent: popupContent
+                popupContent: popupContent,
+                tags: aoi_feature_edit.tags || "Disaster"
             },
             geometry: {
                 type: "Point",

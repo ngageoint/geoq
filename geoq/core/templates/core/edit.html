@@ -47,6 +47,7 @@
         aoi_feature_edit.job_absolute_url = "{{ object.job.get_absolute_url }}";
         aoi_feature_edit.job_name = "{{ object.job.name }}";
         aoi_feature_edit.aoi_id = "{{ object.id }}";
+        aoi_feature_edit.tags = "{{ object.job.tags }}";
 
         aoi_feature_edit.aoi_map_json = {{ map.to_json|safe|default:"{}" }};
         aoi_feature_edit.aoi_extents_geojson = {{ object.polygon.json|safe }};;
