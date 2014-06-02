@@ -18,7 +18,7 @@ urlpatterns = patterns('',
     url(r'^features/create/?$',
         login_required(CreateFeatures.as_view()),
         name='feature-create'),
-                       
+
     url(r'^features/edit/?$',
         login_required(EditFeatures.as_view()),
         name='feature-edit'),
@@ -62,11 +62,11 @@ urlpatterns = patterns('',
                          name='layer-list'),
 
     url(r'^layers/create/?$',
-        login_required(CreateView.as_view(template_name='core/generic_form.html', form_class=LayerForm)),
+        login_required(CreateView.as_view(template_name='core/crispy_form.html', form_class=LayerForm)),
         name='layer-create'),
 
     url(r'^layers/update/(?P<pk>\d+)/?$',
-        login_required(UpdateView.as_view(template_name='core/generic_form.html',
+        login_required(UpdateView.as_view(template_name='core/crispy_form.html',
                            queryset=LayerForm.Meta.model.objects.all(),
                            form_class=LayerForm)),
         name='layer-update'),

@@ -6,6 +6,9 @@ from geoq.core.forms import StyledModelForm
 from django.forms.models import inlineformset_factory
 from models import Feature, FeatureType, Map, Layer, MapLayer
 
+from crispy_forms.helper import FormHelper
+from crispy_forms.layout import HTML, Layout, Fieldset, ButtonHolder, Submit
+
 
 class FeatureForm(StyledModelForm):
     class Meta:
@@ -26,6 +29,38 @@ class MapForm(StyledModelForm):
 class LayerForm(StyledModelForm):
     class Meta:
         model = Layer
+
+    def __init__(self, *args, **kwargs):
+        super(LayerForm, self).__init__(*args, **kwargs)
+
+        self.helper = FormHelper()
+        self.helper.layout = Layout(
+            Fieldset(None, 'name', 'type', 'url', 'layer', 'attribution', 'description', 'image_format'),
+            HTML('<hr/><p><a class="btn" data-toggle="collapse" data-target="#more-options">extended form options &raquo;</a></p>'),
+            Fieldset('Advanced',
+                     'styles',
+                     'refreshrate',
+                     'transparent',
+                     'enable_identify',
+                     'token',
+                     'additional_domains',
+                     'constraints',
+                     'extent',
+                     'layer_parsing_function',
+                     'info_format',
+                     'root_field',
+                     'fields_to_show',
+                     'downloadableLink',
+                     'spatial_reference',
+                     'layer_params',
+                     css_class='collapse',
+                     css_id='more-options',
+                     ),
+            ButtonHolder(
+                HTML('<hr/><p></p>'),
+                Submit('Save', 'Save', css_class='button white btn'),
+            ),
+        )
 
 
 class MapLayerForm(StyledModelForm):
