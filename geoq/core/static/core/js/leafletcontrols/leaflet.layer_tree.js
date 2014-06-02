@@ -1,6 +1,5 @@
 var leaflet_layer_control = {};
 
-//TODO: Add to Layer module a "show on all map" variable and a "is Base Layer" variable
 //TODO: Pull ordering from map object
 //TODO: Allow drag-and-drop sorting that controls layer
 //TODO: Show layer-relevant icons
@@ -409,10 +408,10 @@ leaflet_layer_control.addLayerControl = function (map, options) {
                             leaflet_helper.constructors.geojson(layer.config, map);
                         }
                     } else {
-                        //It's an object with layer info, not yet built
+                        //It's an object with layer info, not yet built - build the layer from the config data
                         var name = layer.name;
                         if (!name && layer.options) name = layer.options.name;
-                        log.info("Creating a map layer", name, " URL: ", layer.url);
+                        log.info("Creating a map layer " + name+ " URL: " + layer.url);
 
                         var newLayer = leaflet_helper.layer_conversion(layer, map);
                         if (newLayer) {
@@ -430,6 +429,15 @@ leaflet_layer_control.addLayerControl = function (map, options) {
 
                                 });
                             });
+
+                            //TODO: This should be consolidated into one move event
+                            //TODO: The 'refresh layer json' should be a function added to the layer
+                            if (layer.type == "Social Networking Link") {
+                                map.on('moveend', function (e) {
+                                    leaflet_helper.constructors.geojson(layer, map, newLayer);
+                                    log.info('> moveend');
+                                });
+                            }
                         }
                     }
 

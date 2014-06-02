@@ -27,10 +27,11 @@ class LayerAdmin(reversion.VersionAdmin, admin.OSMGeoAdmin):
     save_as = True
     search_fields = ['name', 'url', 'type', ]
     normal_fields = ('name', 'type', 'url', 'layer', 'attribution', 'description', 'image_format')
-    advanced_fields = (
+    advanced_fields = ( 'disabled',
      'styles', 'refreshrate', 'transparent', 'enable_identify',
-    'token', 'additional_domains', 'constraints', 'extent', 'layer_parsing_function', 'info_format',
-    'root_field', 'fields_to_show', 'downloadableLink', 'spatial_reference', 'layer_params' )
+     'token', 'additional_domains', 'constraints', 'extent', 'layer_parsing_function', 'info_format',
+     'root_field', 'fields_to_show', 'downloadableLink', 'spatial_reference', 'layer_params',
+     'layer_info_link' )
 
     desc = 'The settings below are advanced.  Please contact and admin if you have questions.'
     fieldsets = (

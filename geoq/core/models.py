@@ -104,6 +104,7 @@ class Job(GeoQBase):
     progress = models.SmallIntegerField(max_length=2, blank=True, null=True)
     project = models.ForeignKey(Project, related_name="project")
     grid = models.CharField(max_length=5, choices=GRID_SERVICE_CHOICES, default=GRID_SERVICE_VALUES[0], help_text='Select usng for Jobs inside the US, otherwise use mgrs')
+    tags = models.CharField(max_length=50, blank=True, null=True, help_text='Useful tags to search social media with')
 
     map = models.ForeignKey('maps.Map', blank=True, null=True)
     feature_types = models.ManyToManyField('maps.FeatureType', blank=True, null=True)
