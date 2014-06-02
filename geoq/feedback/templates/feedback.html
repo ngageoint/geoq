@@ -19,6 +19,14 @@
                     <input type="text" name="name" value="" id="name"/>
                     <label id="id_email">Email:</label>
                     <input type="text" name="email" value="" id="Email"/>
+                    <label id="id_topic">Topic:</label>
+                    <select name="topic" id="Topic">
+                        {% for entry in topics %}
+                        <option value="{{ entry.id }}">{{ entry.name }}</option>
+                        {% endfor %}
+                    </select>
+
+
                 </div><!-- end name_email -->
                 <div id="message">
                     <label id="id_message">Message:</label>
@@ -28,7 +36,7 @@
                 <div id="submit">
                     <input type="submit" onclick="YY_checkform('theform','name','#q','0','Field \'name\' is empty.','Email','#S','2','Field \'Email\' appears not to be valid.','message','2','1','Field \'message\' is empty.');return document.MM_returnValue" />
                 </div><!-- end submit -->
-                <input class="hidden" type="hidden" name="topic" value="Home : Feedback Form Submission" id="subject" />
+                <!-- input class="hidden" type="hidden" name="topic" value="Home : Feedback Form Submission" id="subject" / -->
             </form>
 
             {% if form.errors %}

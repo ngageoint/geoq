@@ -5,7 +5,7 @@
 
 from django.http import HttpResponse, HttpResponseRedirect
 from django.shortcuts import render
-from models import Feedback
+from models import Feedback, Topic
 from django.template import RequestContext, Context
 from django.core.urlresolvers import reverse
 from forms import FeedbackForm
@@ -13,15 +13,17 @@ from forms import FeedbackForm
 def feedbackview(request):
 
     form = FeedbackForm(request.POST or None)
+    topics = Topic.objects.all()
 
     if request.method == 'POST':
+        import pdb;pdb.set_trace()
         if form.is_valid():
             form.save(commit=True)
             return HttpResponseRedirect(reverse('thanks'))
         else:
-            return render(request, 'feedback.html', {'form': form })
+            return render(request, 'feedback.html', {'form': form, 'topics': topics })
 
-    return render(request, 'feedback.html', {'form': FeedbackForm()})
+    return render(request, 'feedback.html', {'form': FeedbackForm(), 'topics': topics})
 
 def thankyou(request):
 		return render(request, 'thankyou.html')

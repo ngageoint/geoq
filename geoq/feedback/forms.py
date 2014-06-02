@@ -3,9 +3,9 @@
 # is subject to the Rights in Technical Data-Noncommercial Items clause at DFARS 252.227-7013 (FEB 2012)
 
 from django import forms
-from models import Feedback
+from models import Feedback,Topic
 
 class FeedbackForm(forms.ModelForm):
     class Meta:
         model = Feedback
-        field = ('name','email','message')
+        field = ('name','email','topic', 'message')

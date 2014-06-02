@@ -5,10 +5,23 @@
 
 from django.contrib.gis.db import models
 
+class Topic(models.Model):
+    name = models.CharField(max_length=50)
+
+    def __unicode__(self):
+        return self.name
+
+
 
 # A simple feedback form with four fields.
 class Feedback(models.Model):
+    title = models.CharField(max_length=80)
     name = models.CharField(max_length=50)
     email = models.EmailField()
-    topic = models.CharField(max_length=80)
+    topic = models.ForeignKey(Topic)
     message = models.TextField()
+
+
+    def __unicode__(self):
+        return self.title
+
