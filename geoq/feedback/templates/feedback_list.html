@@ -1,0 +1,98 @@
+{% extends "core/base.html" %}
+
+{% block container %}
+<link rel="stylesheet" href="{{ STATIC_URL }}/css/theme.blue.css" />
+<script src="{{ STATIC_URL }}/js/jquery.tablesorter.min.js"></script>
+<script src="{{ STATIC_URL }}/js/jquery.tablesorter.widgets.min.js"></script>
+<script type="application/javascript">
+    $(function() {
+        $(".tablesorter")
+            .tablesorter({
+                    theme: 'blue',
+                    cssChildRow: 'tablesorter-childRow',
+                    widgets: ['zebra', 'filter', 'pager'],
+                    widgetOptions: {
+                        pager_output: '{startRow} - {endRow} / {filteredRows} ({totalRows})',
+                        pager_removeRows: false,
+                        filter_childRows: true,
+                        filter_cssFilter: 'tablesorter-filter',
+                        filter_startsWith: false,
+                        filter_ignoreCase: true
+                    }
+                });
+
+        $('.tablesorter-childRow td').hide();
+
+        $('.tablesorter').delegate('.toggle', 'click', function() {
+            $(this).closest('tr').nextUntil('tr.tablesorter-hasChildRow').find('td').toggle();
+
+            return false;
+        });
+
+        $('button.toggle-option').click(function() {
+            var c = $('.tablesorter')[1].config.widgetOptions,
+                    o = !c.filter_childRows;
+            c.filter_childRows = o;
+            $('.state').html(o.toString());
+            $('table').trigger('search', false);
+            return false;
+        });
+    });
+</script>
+
+<div class="row-fluid">
+    <div class="span4 offset1">
+        <h3> GeoQ Feedback</h3>
+    </div>
+</div>
+
+<div id="feedback_wrap">
+
+    <div id="feedback" class="row-fluid">
+        <div id="c_form" class="span9 offset1">
+            <table class="tablesorter">
+                <colgroup>
+                    <col width="40" />
+                    <col width="80" />
+                    <col width="60" />
+                    <col width="40" />
+                    <col width="150" />
+                </colgroup>
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Name</th>
+                        <th>Email</th>
+                        <th>Topic</th>
+                        <th>Title</th>
+                    </tr>
+                </thead>
+                <tbody>
+                <td>
+                    {% for entry in object_list %}
+                    <tr>
+                        <td rowspan="2">
+                            <a href="#" class="toggle">{{ entry.id }}</a>
+                        </td>
+                        <td>{{ entry.name }}</td>
+                        <td>{{ entry.email }}</td>
+                        <td>{{ entry.topic }}</td>
+                        <td>{{ entry.title }}</td>
+                    </tr>
+                    <tr class="tablesorter-childRow">
+                        <td colspan="4">
+                            <div class="bold">Description:</div>
+                            <div>{{ entry.message }}</div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </td>
+                </tbody>
+            </table>
+
+        </div><!-- end c_form -->
+    </div><!-- end contact -->
+
+</div><!-- end contact_wrap -->
+
+{% endblock %}

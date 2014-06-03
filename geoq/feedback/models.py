@@ -6,7 +6,7 @@
 from django.contrib.gis.db import models
 
 class Topic(models.Model):
-    name = models.CharField(max_length=50)
+    name = models.CharField(max_length=50, unique=True)
 
     def __unicode__(self):
         return self.name
@@ -15,7 +15,7 @@ class Topic(models.Model):
 
 # A simple feedback form with four fields.
 class Feedback(models.Model):
-    title = models.CharField(max_length=80)
+    title = models.CharField(max_length=80, default='GeoQ Feedback')
     name = models.CharField(max_length=50)
     email = models.EmailField()
     topic = models.ForeignKey(Topic)

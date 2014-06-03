@@ -15,9 +15,12 @@ def menu(active=None, request_path=None, request_user=None):
     sort_key = lambda t: t[1].get('index', None)
 
     help_dropdown = {
-        'Submit Feedback':  {'index': 1, 'url':  reverse_lazy('feedback-view'), 'active': False},
-        'User Guide':  {'index': 2, 'url': reverse_lazy('help_page'), 'active': False},
+        'User Guide':  {'index': 1, 'url': reverse_lazy('help_page'), 'active': False},
+        'Submit Feedback':  {'index': 2, 'url':  reverse_lazy('feedback-create'), 'active': False},
         }
+
+    if(request_user.groups.filter(name='admin_group') or request_user.is_superuser):
+        help_dropdown['View Feedback'] = {'index':3, 'url': reverse_lazy('feedback-list'), 'active': False}
 
     maps_dropdown = {
         'Maps': {'index': 1, 'url': reverse_lazy('map-list'), 'active': False},

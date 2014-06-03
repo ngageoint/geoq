@@ -9,14 +9,14 @@ from models import Feedback, Topic
 from django.template import RequestContext, Context
 from django.core.urlresolvers import reverse
 from forms import FeedbackForm
+from django.views.generic import ListView
 
-def feedbackview(request):
+def feedbackcreate(request):
 
     form = FeedbackForm(request.POST or None)
     topics = Topic.objects.all()
 
     if request.method == 'POST':
-        import pdb;pdb.set_trace()
         if form.is_valid():
             form.save(commit=True)
             return HttpResponseRedirect(reverse('thanks'))
@@ -27,3 +27,11 @@ def feedbackview(request):
 
 def thankyou(request):
 		return render(request, 'thankyou.html')
+
+
+class FeedbackListView(ListView):
+    model = Feedback
+
+    def get_context_data(self, **kwargs):
+        context = super(FeedbackListView, self).get_context_data(**kwargs)
+        return context

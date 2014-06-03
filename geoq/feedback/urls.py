@@ -4,11 +4,14 @@
 
 from django.contrib.auth.decorators import login_required
 from django.conf.urls import patterns, url
-from views import feedbackview, thankyou
+from views import feedbackcreate, thankyou, FeedbackListView
+from models import Feedback
 
 urlpatterns = patterns('',
 
-    url(r'^/?$', feedbackview, name='feedback-view'),
+    url(r'^create/?$', feedbackcreate, name='feedback-create'),
+    url(r'^view?$', FeedbackListView.as_view(template_name='feedback_list.html',
+           queryset=Feedback.objects.all()), name='feedback-list'),
 
     url(r'^thankyou/?$', thankyou, name='thanks'),
 
