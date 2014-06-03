@@ -187,6 +187,9 @@ TEMPLATE_DIRS = (
     SITE_ROOT,
 )
 
+# works with crispy forms.
+CRISPY_TEMPLATE_PACK = 'bootstrap'
+
 INSTALLED_APPS = (
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -211,6 +214,7 @@ INSTALLED_APPS = (
     'django_select2',
     'leaflet',
     'jsonfield',
+    'crispy_forms',
 
     'geoq.accounts', # TODO:Accounts -- Figure out what we are doing
     'geoq.core',
