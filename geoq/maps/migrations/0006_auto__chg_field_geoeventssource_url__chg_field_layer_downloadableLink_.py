@@ -19,7 +19,11 @@ class Migration(SchemaMigration):
         db.alter_column(u'maps_layer', 'url', self.gf('django.db.models.fields.URLField')(max_length=500))
 
         # Changing field 'Layer.layer_params'
-        db.alter_column(u'maps_layer', 'layer_params', self.gf('jsonfield.fields.JSONField')(null=True))
+        db.execute("""ALTER TABLE "maps_layer" \
+                    ALTER COLUMN "layer_params" \
+                    TYPE json using cast(layer_params as json), \
+                    ALTER COLUMN "layer_params" DROP NOT NULL, \
+                    ALTER COLUMN "layer_params" DROP DEFAULT; """)
 
     def backwards(self, orm):
 
