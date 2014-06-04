@@ -11,7 +11,8 @@ from models import AOI, Project, Job
 from proxies import proxy_to
 from views import (BatchCreateAOIS, CreateFeaturesView, Dashboard, DetailedListView,
     JobDetailedListView, AOIDetailedListView, ChangeAOIStatus, JobDelete, AOIDelete, CreateJobView,
-    CreateProjectView, redirect_to_unassigned_aoi, aoi_delete)
+    UpdateJobView, CreateProjectView, redirect_to_unassigned_aoi, aoi_delete, display_help)
+from geoq.maps.views import feature_delete
 
 urlpatterns = patterns('',
     url(r'^$', Dashboard.as_view(), name='home'),
@@ -47,7 +48,7 @@ urlpatterns = patterns('',
                            form_class=JobForm)),
         name='job-create'),
     url(r'^jobs/update/(?P<pk>\d+)/?$',
-        login_required(UpdateView.as_view(queryset=Job.objects.all(),
+        login_required(UpdateJobView.as_view(queryset=Job.objects.all(),
                            template_name='core/generic_form.html',
                            form_class=JobForm)),
         name='job-update'),
@@ -66,7 +67,7 @@ urlpatterns = patterns('',
     url(r'^aois/(?P<status>[a-zA-Z_ ]+)?/?$', AOIDetailedListView.as_view(template_name='core/aoi_list.html'), name='aoi-list'),
     url(r'^aois/work/(?P<pk>\d+)/?$',
         login_required(CreateFeaturesView.as_view()), name='aoi-work'),
-    url(r'^aois/update-status/(?P<pk>\d+)/(?P<status>Unassigned|Assigned|In work|Submitted|Completed)/?$', login_required(
+    url(r'^aois/update-status/(?P<pk>\d+)/(?P<status>Unassigned|Assigned|In work|In review|Completed)/?$', login_required(
         ChangeAOIStatus.as_view()),
         name="aoi-update-status"),
     url(r'^aois/create/?$', login_required(
@@ -85,8 +86,11 @@ urlpatterns = patterns('',
 
     url(r'^aois/deleter/(?P<pk>\d+)/?$', login_required( aoi_delete ), name='aoi-deleter'),
 
+    url(r'^features/delete/(?P<pk>\d+)/?$', login_required( feature_delete ), name='feature-delete'),
+
     # OTHER URLS
     url(r'^edit/?$', TemplateView.as_view(template_name='core/edit.html'), name='edit'),
+    url(r'^help/?$', display_help, name='help_page'),
     url(r'^api/geo/usng/?$', 'core.views.usng', name='usng'),
     url(r'^api/geo/mgrs/?$', 'core.views.mgrs', name='mgrs'),
     url(r'^proxy/(?P<path>.*)$', proxy_to, {'target_url': ''}),

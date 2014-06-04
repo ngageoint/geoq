@@ -17,6 +17,9 @@ def proxy_to(request, path, target_url):
     url = url.replace('http:/', 'http://', 1)
     url = url.replace('http:///', 'http://')
 
+    url = url.replace('https:/', 'https://', 1)
+    url = url.replace('https:///', 'https://')
+
     testurl = False
     errorCode = ''
     status = {}

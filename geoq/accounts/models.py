@@ -10,7 +10,6 @@ from django.template.defaultfilters import slugify
 
 from userena.models import UserenaBaseProfile
 
-from django.db.models.signals import pre_save, post_save
 
 class Organization(models.Model):
     name = models.CharField(max_length=250)
@@ -42,6 +41,7 @@ class EmailDomain(models.Model):
 
     def __str__(self):
         return self.email_domain
+
 
 class UserProfile(UserenaBaseProfile):
     user = models.OneToOneField(User,
@@ -130,7 +130,6 @@ class UserAuthorization(models.Model):
             # if they are not staff and they have the permission, remove it.
             self.user.groups.remove(1)
 
-
         # TODO -- make this work!
         # *** If person is authorized and part of an organization, then they can add people from that org.
 
@@ -140,7 +139,4 @@ class UserAuthorization(models.Model):
         #     permissions_granted_by
         #     and self.authorized != user_presave.authorized:
 
-
         super(UserAuthorization, self).save()
-
-

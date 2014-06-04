@@ -7,6 +7,7 @@ CACHE/*
 *.log
 *.pot
 *.pyc
+*.pyo
 geoq/local_settings.py
 local_settings.py
 dev-geoq-django

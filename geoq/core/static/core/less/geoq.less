@@ -1,5 +1,6 @@
 @gray: #555;
 @graylight: #eee;
+@grayshaded: #f6f6f6;
 
 
 
@@ -74,6 +75,9 @@
   >li:last-child{
   border-bottom: none;
   }
+  li.shaded{
+    background-color:@grayshaded;
+  }
 
   .statlist{
     li{
@@ -90,7 +94,6 @@
       a{
         color:@gray;
       }
-
     }
 
     .stat-counts{
@@ -112,13 +115,6 @@
 }
 
 .aoi-status{
-  font-size: 28px;
-  color: @gray;
-  font-weight: bold;
-}
-
-.aoi-status{
-  font-size: 28px;
   color: @gray;
   font-weight: bold;
 }
@@ -138,7 +134,7 @@
 .job-detail-popup {
   div {
     height: 16px;
-      
+
     label {
       display: inline-block;
       width: 60px;

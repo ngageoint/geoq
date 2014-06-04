@@ -1,12 +1,15 @@
 
 from django.conf.urls import patterns, include, url
 from django.views.generic import RedirectView
+from django.conf import settings
 
 from forms import SignupFormExtra
 
 from userena import views as userena_views
 
 from accounts.views import point_to_404
+
+logout_page = getattr(settings, 'LOGOUT_URL', '/geoq')
 
 
 urlpatterns = patterns('',
@@ -29,7 +32,7 @@ urlpatterns = patterns('',
         name='userena_signin'),
     url(r'^signout/$',
        userena_views.signout,
-       #{'next_page': 'geoq/'},
+       {'next_page': logout_page},
        name='userena_signout'),
 
 

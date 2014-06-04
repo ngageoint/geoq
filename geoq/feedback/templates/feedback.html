@@ -1,0 +1,66 @@
+{% extends "core/base.html" %}
+
+{% block container %}
+<div class="row-fluid">
+    <div class="span4 offset1">
+        <h3> GeoQ Feedback</h3>
+    </div>
+</div>
+
+<div id="feedback_wrap">
+
+    <div id="feedback" class="row-fluid">
+        <div id="c_form" class="span8 offset1">
+            <form name="theform" action="" method="post" id="theform">
+                {% csrf_token %}
+                <div id="name_email">
+
+                    <label id="id_name">Name:</label>
+                    <input type="text" name="name" value="" id="name"/>
+                    <label id="id_email">Email:</label>
+                    <input type="text" name="email" value="" id="Email"/>
+                        <label id="title_name">Issue Title:</label>
+                        <input type="text" name="title" value="" id="Title"/>
+                        <label id="id_topic">Topic:</label>
+                        <select name="topic" id="Topic">
+                            {% for entry in topics %}
+                            <option value="{{ entry.id }}">{{ entry.name }}</option>
+                            {% endfor %}
+                        </select>
+
+
+
+                </div>
+                <!-- end name_email -->
+                <div id="message">
+                    <label id="id_message">Message:</label>
+                    <textarea name="message" rows="8"></textarea>
+
+                </div>
+                <!-- end message -->
+                <div id="submit">
+                    <input type="submit"
+                           onclick="YY_checkform('theform','name','#q','0','Field \'name\' is empty.','Email','#S','2','Field \'Email\' appears not to be valid.','message','2','1','Field \'message\' is empty.');return document.MM_returnValue"/>
+                </div>
+                <!-- end submit -->
+                <!-- input class="hidden" type="hidden" name="topic" value="Home : Feedback Form Submission" id="subject" / -->
+            </form>
+
+            {% if form.errors %}
+            {% for field in form %}
+            {% for error in field.errors %}
+            <div class="alert alert-error">
+                <strong>{{ error|escape }}</strong>
+            </div>
+            {% endfor %}
+            {% endfor %}
+            {% endif %}
+
+        </div>
+        <!-- end c_form -->
+    </div>
+    <!-- end contact -->
+
+</div><!-- end contact_wrap -->
+
+{% endblock %}

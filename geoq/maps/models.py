@@ -10,6 +10,7 @@ from django.core.exceptions import ValidationError
 from django.utils.datastructures import SortedDict
 from django.core.urlresolvers import reverse
 from jsonfield import JSONField
+from datetime import datetime
 
 IMAGE_FORMATS = (
                 ('image/png', 'image/png'),
@@ -40,18 +41,19 @@ IMAGE_FORMATS = (
 )
 
 SERVICE_TYPES = (
+                ('WMS', 'WMS'),
+                ('KML', 'KML'),
+                ('GeoRSS', 'GeoRSS'),
                 ('ESRI Tiled Map Service', 'ESRI Tiled Map Service'),
                 ('ESRI Dynamic Map Layer', 'ESRI Dynamic Map Layer'),
                 ('ESRI Feature Layer', 'ESRI Feature Layer'),
                 ('GeoJSON', 'GeoJSON'),
-                ('WMS', 'WMS'),
-                ('ESRI Clustered Feature Layer', 'ESRI Clustered Feature Layer')
+                ('ESRI Clustered Feature Layer', 'ESRI Clustered Feature Layer'),
                 #('ArcGIS93Rest', 'ArcGIS93Rest'),
-                #('KML', 'KML'),
-                #('GeoRSS', 'GeoRSS'),
-                #('GPX','GPX'),
+                ('GPX', 'GPX'),
                 #('GML','GML'),
-                #('WMTS', 'WMTS'),
+                ('WMTS', 'WMTS'),
+                ('Social Networking Link', 'Social Networking Link'),
                 #('MapBox', 'MapBox'),
                 #('TileServer','TileServer'),
                 #('GetCapabilities', 'GetCapabilities'),
@@ -60,29 +62,15 @@ SERVICE_TYPES = (
 INFO_FORMATS = [(n, n) for n in sorted(['application/vnd.ogc.wms_xml',
                                        'application/xml', 'text/html', 'text/plain'])]
 
-PARSER_CATEGORIES = (
-                    ('palanterra', 'palanterra'),
-                    ('uscg_ships', 'uscg_ships'),
-                    ('icnet', 'icnet'),
-                    ('dg_wmts_time', 'dg_wmts_time'),
-                    ('geomedia_triaged', 'geomedia_triaged'),
-                    ('harvester_earthquake', 'harvester_earthquake'),
-                    ('harvester_fire', 'harvester_fire'),
-                    ('harvester_tsunami', 'harvester_tsunami'),
-                    ('harvester_flood', 'harvester_flood'),
-                    ('harvester_volcano', 'harvester_volcano'),
-)
-
 
 class Layer(models.Model):
     """
     A layer object that can be added to any map.
     """
 
-    name = models.CharField(max_length=200)
+    name = models.CharField(max_length=200, help_text='Name that will be displayed within GeoQ')
     type = models.CharField(choices=SERVICE_TYPES, max_length=75)
-    """TODO: Make this url field a CharField"""
-    url = models.URLField(help_text='URL of service. If WMS or ESRI, can be any valid URL. Otherwise, the URL will require a local proxy')
+    url = models.URLField(help_text='URL of service. If WMS or ESRI, can be any valid URL. Otherwise, the URL will require a local proxy', max_length=500)
     layer = models.CharField(max_length=800, null=True, blank=True, help_text='Layer names can sometimes be comma-separated, and are not needed for data layers (KML, GeoRSS, GeoJSON...)')
     image_format = models.CharField(null=True, blank=True, choices=IMAGE_FORMATS, max_length=75, help_text='The MIME type of the image format to use for tiles on WMS layers (image/png, image/jpeg image/gif...). Double check that the server exposes this exactly - some servers push png instead of image/png.')
     styles = models.CharField(null=True, blank=True, max_length=200, help_text='The name of a style to use for this layer (only useful for WMS layers if the server exposes it.)')
@@ -95,18 +83,22 @@ class Layer(models.Model):
     ## Advanced layer options
     objects = models.GeoManager()
     extent = models.PolygonField(null=True, blank=True, help_text='Extent of the layer.')
-    layer_parsing_function = models.CharField(max_length=100, blank=True, null=True, choices=PARSER_CATEGORIES, help_text='Advanced - The javascript function used to parse a data service (GeoJSON, GeoRSS, KML), needs to be an internally known parser. Contact an admin if you need data parsed in a new way.')
+    layer_parsing_function = models.CharField(max_length=100, blank=True, null=True,  help_text='Advanced - The javascript function used to parse a data service (GeoJSON, GeoRSS, KML), needs to be an internally known parser. Contact an admin if you need data parsed in a new way.')
     enable_identify = models.BooleanField(default=False, help_text='Advanced - Allow user to click map to query layer for details. The map server must support queries for this layer.')
     info_format = models.CharField(max_length=75, null=True, blank=True, choices=INFO_FORMATS, help_text='Advanced - what format the server returns for an WMS-I query')
     root_field = models.CharField(max_length=100, null=True, blank=True, help_text='Advanced - For WMS-I (queryable) layers, the root field returned by server. Leave blank for default (will usually be "FIELDS" in returned XML).')
     fields_to_show = models.CharField(max_length=200, null=True, blank=True, help_text='Fields to show when someone uses the identify tool to click on the layer. Leave blank for all.')
-    downloadableLink = models.URLField(max_length=300, null=True, blank=True, help_text='URL of link to supporting tool (such as a KML document that will be shown as a download button)')
+    downloadableLink = models.URLField(max_length=400, null=True, blank=True, help_text='URL of link to supporting tool (such as a KML document that will be shown as a download button)')
     layer_params = JSONField(null=True, blank=True, help_text='JSON key/value pairs to be sent to the web service.  ex: {"crs":"urn:ogc:def:crs:EPSG::4326"}')
     spatial_reference = models.CharField(max_length=32, blank=True, null=True, default="EPSG:4326", help_text='The spatial reference of the service.  Should be in ESPG:XXXX format.')
-    constraints = models.TextField(null=True, blank=True)
+    constraints = models.TextField(null=True, blank=True, help_text='Constrain layer data displayed to certain feature types')
+    disabled = models.BooleanField(default=False, blank=True, help_text="If unchecked, Don't show this layer when listing all layers")
+    layer_info_link = models.URLField(null=True, blank=True, help_text='URL of info about the service, or a help doc or something', max_length=500)
+    created_at = models.DateTimeField(auto_now_add=True, null=True)
+    updated_at = models.DateTimeField(auto_now_add=True, null=True)
 
     ## Primarily for http://trac.osgeo.org/openlayers/wiki/OpenLayersOptimization
-    additional_domains = models.TextField(null=True, blank=True, help_text='Semicolon seperated list of additional domains for the layer.')
+    additional_domains = models.TextField(null=True, blank=True, help_text='Semicolon seperated list of additional domains for the layer. Only used if you want to cycle through domains for load-balancing')
 
     def __unicode__(self):
         return '{0}'.format(self.name)
@@ -127,10 +119,36 @@ class Layer(models.Model):
 
     def get_layer_params(self):
         """
-        Converts a layer's parameters to json.
+        Returns the layer_params attribute, which should be json
         """
-
         return self.layer_params
+
+    def layer_json(self):
+        return {
+            "id": self.id,
+            "name": self.name,
+            "format": self.image_format,
+            "type": self.type,
+            "url": self.url,
+            "subdomains": self.get_layer_urls(),
+            "layer": self.layer,
+            "transparent": self.transparent,
+            "layerParams": self.layer_params,
+            "refreshrate": self.refreshrate,
+            "token": self.token,
+            "attribution": self.attribution,
+            "spatialReference": self.spatial_reference,
+            "layerParsingFunction": self.layer_parsing_function,
+            "enableIdentify": self.enable_identify,
+            "rootField": self.root_field,
+            "infoFormat": self.info_format,
+            "fieldsToShow": self.fields_to_show,
+            "description": self.description,
+            "downloadableLink": self.downloadableLink,
+            "layer_info_link" : self.layer_info_link,
+            "styles": self.styles,
+        }
+
 
     class Meta:
         ordering = ["name"]
@@ -197,6 +215,7 @@ class Map(models.Model):
                 "fieldsToShow": map_layer.layer.fields_to_show,
                 "description": map_layer.layer.description,
                 "downloadableLink": map_layer.layer.downloadableLink,
+                "layer_info_link": map_layer.layer.layer_info_link,
                 "styles": map_layer.layer.styles,
                 "zIndex": map_layer.stack_order,
             }
@@ -207,13 +226,21 @@ class Map(models.Model):
 
         return map_services
 
+    def all_map_layers_json(self):
+        map_services = list()
+        for layer in Layer.objects.all():
+            if not layer.disabled:
+                map_services.append(layer.layer_json())
+        return json.dumps(map_services)
+
     def to_json(self):
         return json.dumps({
             "center_x": self.center_x,
             "center_y": self.center_y,
             "zoom": self.zoom,
             "projection": self.projection or "EPSG:4326",
-            "layers": self.map_layers_json()
+            "layers": self.map_layers_json(),
+            "all_layers": self.all_map_layers_json()
         })
 
     def get_absolute_url(self):
@@ -266,11 +293,14 @@ class Feature(models.Model):
         Returns geoJSON of the feature.
         Try to conform to https://github.com/mapbox/simplestyle-spec/tree/master/1.0.0
         """
-
+        
         geojson = SortedDict()
         geojson["type"] = "Feature"
         geojson["properties"] = dict(id=self.id,
-                                     template=self.template.id if hasattr(self.template, "id") else None
+                                     template=self.template.id if hasattr(self.template, "id") else None,
+                                     analyst=self.analyst.username,
+                                     created_at=datetime.strftime(self.created_at, '%Y-%m-%dT%H:%M:%S%Z'),
+                                     updated_at=datetime.strftime(self.updated_at, '%Y-%m-%dT%H:%M:%S%Z')
                                      )
         geojson["geometry"] = json.loads(self.the_geom.json)
 
@@ -322,4 +352,4 @@ class FeatureType(models.Model):
 
 class GeoeventsSource(models.Model):
     name = models.CharField(max_length=200)
-    url = models.URLField(help_text='URL of service location. Requires JSONP support')
+    url = models.URLField(help_text='URL of service location. Requires JSONP support', max_length=500)

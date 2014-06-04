@@ -7,19 +7,27 @@
     <script type="text/javascript">
     function mapInit(map, bounds) {
 
-        extentStyle = {
+        var extentStyle = {
             "weight":2,
             "color":"red",
             "fill":null,
             "opacity":.7
         }
 
-        aoi_extents = L.geoJson({{ object.aois_envelope.json|safe }},
+        var aoi_extents = L.geoJson({{ object.aois_envelope.json|safe }},
                 {style: extentStyle});
         aoi_extents.addTo(map);
 
         // Map doesn't update without this delay.
-        setTimeout(function(){map.fitBounds(aoi_extents.getBounds())}, 1);
+        setTimeout(function(){
+            try {
+                //AOI is sometimes getting no bounds data, which causes error
+                var test = aoi_extents.getBounds().getCenter();
+                map.fitBounds(aoi_extents.getBounds());
+            } catch(ex){
+                log.error("aoi_extents not being passed in valid bounds");
+            }
+        }, 1);
 
 
         var drawnItems = new L.FeatureGroup();
@@ -63,7 +71,7 @@
                     </button>
                     <ul class="dropdown-menu">
                         {% if 'accounts.add_job' in request.base_perms %}
-                        <li><a href="{% url 'job-create' %}">Add New Job</a></li>
+                        <li><a href="{% url 'job-create' %}?project={{ object.id }}">Add New Job</a></li>
                         {% endif %}
                     </ul>
                 </div>

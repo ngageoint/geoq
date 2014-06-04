@@ -14,7 +14,7 @@ sys.path.append(os.path.dirname(os.path.realpath(__file__)))
 setup(
     name="geoq",
     packages=['geoq'],
-    version='0.0.0.1',
+    version='0.0.0.2',
     url="",
     author="Site Admin",
     author_email="admin@localhost"
@@ -37,12 +37,17 @@ def install_fixture(options):
     sh("python manage.py loaddata {fixture}".format(fixture=fixture))
 
 
+def _perms_check():
+    sh("python manage.py check_permissions")  # Check userena perms
+    sh("python manage.py clean_expired")  # Clean our expired userena perms
+
+
 @task
 def install_dev_fixtures():
     """ Installs development fixtures in the correct order """
     fixtures = [
-        'geoq/fixtures/initial_data.json',  # Users and site-wide data
-        'geoq/accounts/fixture/initial_data.json',
+        'geoq/fixtures/initial_data.json',  # user permissions
+        'geoq/accounts/fixture/initial_data.json',  # dummy users and groups
         'geoq/maps/fixtures/initial_data_types.json',  # Maps
         'geoq/core/fixture/initial_data.json',
         #'geoq/badges/fixtures/initial_data.json', # Removing badges for now, b/c not working
@@ -52,8 +57,7 @@ def install_dev_fixtures():
         sh("python manage.py loaddata {fixture}".format(fixture=fixture))
 
     sh("python manage.py migrate --all")
-    sh("python manage.py check_permissions")  # Check userena perms
-    sh("python manage.py clean_expired")  # Clean our expired userena perms
+    _perms_check()
 
 
 @task
@@ -61,6 +65,11 @@ def sync():
     """ Runs the syncdb process with migrations """
     sh("python manage.py syncdb --noinput")
     sh("python manage.py migrate --all --no-initial-data")
+
+    fixture = 'geoq/fixtures/initial_data.json'
+    sh("python manage.py loaddata {fixture}".format(fixture=fixture))
+    _perms_check()
+
 
 @task
 def reset_dev_env():
@@ -71,6 +80,7 @@ def reset_dev_env():
     createdb()
     sync()
     install_dev_fixtures()
+
 
 @cmdopts([
     ('bind=', 'b', 'Bind server to provided IP address and port number.'),
@@ -125,11 +135,12 @@ def create_db_user():
     user = settings.DATABASES.get('default').get('USER')
     password = settings.DATABASES.get('default').get('PASSWORD')
 
-    sh('psql -d {database} -c {sql}'.format(database=database,
-                                            sql='"CREATE USER {user} WITH PASSWORD \'{password}\';"'.format(user=user,
-                                                                                                            password=password)))
+    sh('psql -d {database} -c {sql}'.format(
+        database=database,
+        sql='"CREATE USER {user} WITH PASSWORD \'{password}\';"'.format(user=user, password=password)))
 # Order matters for the list of apps, otherwise migrations reset may fail.
 _APPS = ['maps', 'accounts', 'badges', 'core']
+
 
 @task
 def reset_migrations():
@@ -138,6 +149,7 @@ def reset_migrations():
     """
     for app in _APPS:
         sh('python manage.py migrate %s 0001 --fake  --delete-ghost-migrations' % app)
+
 
 @task
 def reset_migrations_full():

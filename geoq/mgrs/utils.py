@@ -3,7 +3,12 @@
 # is subject to the Rights in Technical Data-Noncommercial Items clause at DFARS 252.227-7013 (FEB 2012)
 
 import subprocess
+# from django.contrib.gis.geos import *
 from geojson import MultiPolygon, Feature, FeatureCollection
+from exceptions import ProgramException
+
+import logging
+logger = logging.getLogger(__name__)
 
 class Grid:
 
@@ -31,15 +36,31 @@ class Grid:
 
     # given a lat/lon combination, determine its 1km MGRS grid
     def get_mgrs(self,lat,lon):
-        input = "%s,%s" % (lon, lat)
-        process = subprocess.Popen(["GeoConvert","-w","-m","-p","-3","--input-string",input],stdout=subprocess.PIPE)
-        return process.communicate()[0].rstrip()
+        try:
+            input = "%s,%s" % (lon, lat)
+            process = subprocess.Popen(["GeoConvert","-w","-m","-p","-3","--input-string",input],stdout=subprocess.PIPE)
+            return process.communicate()[0].rstrip()
+        except Exception:
+            import traceback
+            errorCode = 'Program Error: ' + traceback.format_exc()
+            if errorCode and len(errorCode):
+                logger.error(errorCode)
+
+            raise ProgramException('Unable to execute GeoConvert program')
 
 
     def get_polygon(self,mgrs_list):
-        m_string = ';'.join(mgrs_list)
-        process = subprocess.Popen(["GeoConvert","-w","-g","-p","0","--input-string",m_string],stdout=subprocess.PIPE)
-        result = process.communicate()[0].rstrip().split('\n')
+        try:
+            m_string = ';'.join(mgrs_list)
+            process = subprocess.Popen(["GeoConvert","-w","-g","-p","0","--input-string",m_string],stdout=subprocess.PIPE)
+            result = process.communicate()[0].rstrip().split('\n')
+        except Exception:
+            import traceback
+            errorCode = 'Program Error: ' + traceback.format_exc()
+            if errorCode and len(errorCode):
+                logger.error(errorCode)
+
+            raise ProgramException('Error executing GeoConvert program')
 
         for i,val in enumerate(result):
             result[i] = tuple(float(x) for x in val.split())

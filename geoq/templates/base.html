@@ -18,18 +18,6 @@
     <script src="{{ STATIC_URL }}core/js/html5.js"></script>
     <![endif]-->
     <script src="{{ STATIC_URL }}core/js/jquery.min.js"></script>
-    <script src="{{ STATIC_URL }}core/js/log4javascript.js"></script>
-    <script type="text/javascript">
-        var log;
-        if (document.location.hash && document.location.hash.indexOf("debug") > 0) {
-            log = log4javascript.getDefaultLogger();
-            var browserConsoleAppender = new log4javascript.BrowserConsoleAppender();
-            log.addAppender(browserConsoleAppender);
-        } else {
-            var output = (typeof console!="undefined") ? function (x) {console.log(x)} : function(){};
-            log = {warn:output,log:output,error:output,info:output,debug:output,trace:output};
-        }
-    </script>
 
     {% bootstrap_stylesheet_tag %}
     {% bootstrap_stylesheet_tag "responsive" %}
@@ -61,10 +49,7 @@
 {% block container %}
     <div class="container">
 
-
-
         {% block content %}Empty page{% endblock %}
-
 
         <!--<footer class="row">
         {% block footer %}

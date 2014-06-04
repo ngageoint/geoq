@@ -26,7 +26,7 @@ L.KML = L.FeatureGroup.extend({
 		} catch(e) {}
 		req.onreadystatechange = function() {
 			if (req.readyState != 4) return;
-			if(req.status == 200) cb(req.responseXML, options);
+			if(req.status == 200 && req.responseXML) cb(req.responseXML, options);
 		};
 		req.send(null);
 	},

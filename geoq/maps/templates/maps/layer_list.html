@@ -6,8 +6,7 @@
 
         <div class="span12">
             <span class="list-view-header">Layers</span>
-            {% if 'maps.add_map' in request.base_perms %}
-            <!-- span><a class="btn btn-small pull-right" href="{% url 'layer-create' %}">Add New</a></span -->
+            {% if admin %}
             <div class="btn-group pull-right">
                 <a class="btn btn-mini" href="{% url 'layer-create' %}">Add New</a>
                 <button class="btn btn-mini dropdown-toggle" data-toggle="dropdown">
