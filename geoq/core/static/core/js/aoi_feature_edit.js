@@ -41,7 +41,6 @@ aoi_feature_edit.init = function () {
             };
         }
 
-
         var featureLayer = L.geoJson(null, {
             style: function (ftype) {
                 var feature_type = aoi_feature_edit.feature_types[ftype.properties.template];

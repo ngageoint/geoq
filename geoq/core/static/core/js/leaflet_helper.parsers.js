@@ -22,11 +22,11 @@ leaflet_helper.constructors.identifyParser = function(result){
         parserName = "Flickr Photo Search";
     } else if (result &&
         result.meta && result.meta.code && result.meta.code==200 &&
-        result.data && result.data.length) {
+        result.data && _.isArray(result.data)) {
 
         parser = leaflet_helper.parsers.instagramImages;
         parserName = "Instagram Search";
-    } else if (result) {
+    } else if (result && result.summary=="YouTube") {
 
         parser = leaflet_helper.parsers.youTube;
         parserName = "YouTube Videos";
@@ -173,38 +173,47 @@ leaflet_helper.parsers.instagramImages = function (result, map, outputLayer) {
     var jsonObjects = [];
     var photos = result.data;
 
+    if (!outputLayer.options) { outputLayer.options = {}};
+    if (!outputLayer.options.items) { outputLayer.options.items = []};
+
     _.each(photos,function(image){
+        var itemFound = false;
+        _.each(outputLayer.options.items,function(item){
+           if (item.id == image.id) itemFound = true;
+        });
+        if (!itemFound) {
+            outputLayer.options.items.push(image);
 
-        var imageURL = image.link;
-        var thumbnailURL = image.images.thumbnail.url;
+            var imageURL = image.link;
+            var thumbnailURL = image.images.thumbnail.url;
 
-        var id = image.id;
-        var title = "Instagram: "+id;
-        var location = image.location;
-        var tags = image.tags.join(", ");
+            var id = image.id;
+            var title = "Instagram: "+id;
+            var location = image.location;
+            var tags = image.tags.join(", ");
 
-        var popupContent = "<h5>Instagram Picture</h5>";
-        popupContent += "Posted by: "+image.user.username+"<br/>";
-        if (tags) popupContent += "Tags: "+tags+"<br/>";
-        popupContent += "<a href='" + imageURL + "' target='_new'><img style='width:150px' src='" + thumbnailURL + "' /></a>";
-        //TODO: Add "Delete This" button
+            var popupContent = "<h5>Instagram Picture</h5>";
+            popupContent += "Posted by: "+image.user.username+"<br/>";
+            if (tags) popupContent += "Tags: "+tags+"<br/>";
+            popupContent += "<a href='" + imageURL + "' target='_new'><img style='width:150px' src='" + thumbnailURL + "' /></a>";
+            //TODO: Add "Delete This" button
 
-        var json = {
-            type: "Feature",
-            properties: {
-                name: title,
-                image: imageURL,
-                thumbnail: thumbnailURL,
-                popupContent: popupContent,
-                tags: aoi_feature_edit.tags || "Disaster"
-            },
-            geometry: {
-                type: "Point",
-                coordinates: [location.longitude, location.latitude]
-            }
-        };
-        jsonObjects.push(json);
-
+            var json = {
+                type: "Feature",
+                properties: {
+                    name: title,
+                    image: imageURL,
+                    thumbnail: thumbnailURL,
+                    popupContent: popupContent,
+                    tags: aoi_feature_edit.tags || "Disaster"
+                },
+                geometry: {
+                    type: "Point",
+                    coordinates: [location.longitude, location.latitude]
+                }
+            };
+            jsonObjects.push(json);
+        }
     });
 
 
@@ -221,42 +230,53 @@ leaflet_helper.parsers.flickrImages = function (result, map, outputLayer) {
     var jsonObjects = [];
     var photos = result.photos;
 
+    if (!outputLayer.options) { outputLayer.options = {}};
+    if (!outputLayer.options.items) { outputLayer.options.items = []};
+
     $(photos.photo).each(function () {
         var feature = $(this)[0];
-
         var id=feature.id;
-        var title=feature.title || "Flickr Photo";
-        var secret=feature.secret;
-        var server=feature.server;
-        var farm=feature.farm;
-        var owner=feature.owner;
-        var base=id+'_'+secret+'_s.jpg';
-        var major=id+'_'+secret+'_z.jpg';
-        var imageURL= 'http://farm'+farm+'.static.flickr.com/'+server+'/'+major;
-        var thumbnailURL='http://farm'+farm+'.static.flickr.com/'+server+'/'+base;
 
-        var center = map.getCenter();
-        var popupContent = "<h5>Flickr Picture</h5>";
-        popupContent += "Posted by: "+owner+"<br/>";
-        if (aoi_feature_edit.tags) popupContent += "Tags: "+aoi_feature_edit.tags+"<br/>";
-        popupContent += "<a href='" + imageURL + "' target='_new'><img style='width:256px' src='" + thumbnailURL + "' /></a>";
-        //TODO: Add Delete this button
+        var itemFound = false;
+        _.each(outputLayer.options.items,function(item){
+           if (item.id == id) itemFound = true;
+        });
+        if (!itemFound) {
+            outputLayer.options.items.push(feature);
 
-        var json = {
-            type: "Feature",
-            properties: {
-                name: title,
-                image: imageURL,
-                thumbnail: thumbnailURL,
-                popupContent: popupContent,
-                tags: aoi_feature_edit.tags || "Disaster"
-            },
-            geometry: {
-                type: "Point",
-                coordinates: [center.lng, center.lat] //TODO: Make this either random, or show in a tray to dnd onto map
-            }
-        };
-        jsonObjects.push(json);
+            var title=feature.title || "Flickr Photo";
+            var secret=feature.secret;
+            var server=feature.server;
+            var farm=feature.farm;
+            var owner=feature.owner;
+            var base=id+'_'+secret+'_s.jpg';
+            var major=id+'_'+secret+'_z.jpg';
+            var imageURL= 'http://farm'+farm+'.static.flickr.com/'+server+'/'+major;
+            var thumbnailURL='http://farm'+farm+'.static.flickr.com/'+server+'/'+base;
+
+            var center = map.getCenter();
+            var popupContent = "<h5>Flickr Picture</h5>";
+            popupContent += "Posted by: "+owner+"<br/>";
+            if (aoi_feature_edit.tags) popupContent += "Tags: "+aoi_feature_edit.tags+"<br/>";
+            popupContent += "<a href='" + imageURL + "' target='_new'><img style='width:256px' src='" + thumbnailURL + "' /></a>";
+            //TODO: Add Delete this button
+
+            var json = {
+                type: "Feature",
+                properties: {
+                    name: title,
+                    image: imageURL,
+                    thumbnail: thumbnailURL,
+                    popupContent: popupContent,
+                    tags: aoi_feature_edit.tags || "Disaster"
+                },
+                geometry: {
+                    type: "Point",
+                    coordinates: [center.lng, center.lat] //TODO: Make this either random, or show in a tray to dnd onto map
+                }
+            };
+            jsonObjects.push(json);
+        }
     });
 
     outputLayer.addData(jsonObjects);

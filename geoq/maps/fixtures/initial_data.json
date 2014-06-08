@@ -59,10 +59,10 @@
     "pk": 3, 
     "model": "maps.layer", 
     "fields": {
-        "layer": "", 
+        "layer": "0",
         "layer_parsing_function": null, 
         "downloadableLink": "", 
-        "image_format": "png24", 
+        "image_format": "png",
         "enable_identify": false, 
         "fields_to_show": "", 
         "additional_domains": "", 
@@ -76,8 +76,8 @@
         "refreshrate": null, 
         "name": "National Map", 
         "spatial_reference": "EPSG:4326", 
-        "url": "http://raster.nationalmap.gov/ArcGIS/rest/services/TNM_Large_Scale_Imagery/MapServer/export", 
-        "layer_params": "{\"dpi\":92,\"f\":\"image\"}", 
+        "url": "http://raster.nationalmap.gov/arcgis/services/Orthoimagery/USGS_EROS_Ortho_NAIP/ImageServer/WMSServer",
+        "layer_params": "",
         "token": "", 
         "info_format": null, 
         "constraints": ""

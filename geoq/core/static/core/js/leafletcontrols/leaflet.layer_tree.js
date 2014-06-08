@@ -10,6 +10,9 @@ var leaflet_layer_control = {};
 //TODO: Integrate with GeoNode to auto-build layers in GeoServer
 //TODO: When adding ?request=GetCapabilities links to layers, do it smartly
 
+//TODO: When features are being addded, check for ids
+//TODO: Cycle through icons, add twitter/flickr/instagram/youtube icons and a few standard ones
+
 leaflet_layer_control.$map = undefined;
 leaflet_layer_control.$drawer = undefined;
 leaflet_layer_control.$drawer_tray = undefined;
@@ -300,6 +303,9 @@ leaflet_layer_control.removeDuplicateLayers = function(layerList, layer){
 leaflet_layer_control.zIndexesOfHighest = 2;
 leaflet_layer_control.setLayerOpacity = function (layer, amount){
 
+    if (!layer.options) layer.options={};
+    layer.options.opacity = amount;
+
     if (layer.setStyle){
         layer.setStyle({opacity:amount, fillOpacity:amount});
     } else if (layer.setOpacity){
@@ -358,8 +364,6 @@ leaflet_layer_control.addLayerControl = function (map, options) {
         'toggleStatus': false  // bool
     };
     var layerButton = new L.Control.Button(layerButtonOptions).addTo(map);
-
-
 
     //Build the tree
     var $tree = $("<div>")
@@ -434,8 +438,13 @@ leaflet_layer_control.addLayerControl = function (map, options) {
                             //TODO: The 'refresh layer json' should be a function added to the layer
                             if (layer.type == "Social Networking Link") {
                                 map.on('moveend', function (e) {
-                                    leaflet_helper.constructors.geojson(layer, map, newLayer);
-                                    log.info('> moveend');
+                                    var currentOpacity = 1;
+                                    if (newLayer.options) {
+                                        currentOpacity = newLayer.options.opacity;
+                                    }
+                                    if (currentOpacity > 0) {
+                                        leaflet_helper.constructors.geojson(layer, map, newLayer);
+                                    }
                                 });
                             }
                         }
