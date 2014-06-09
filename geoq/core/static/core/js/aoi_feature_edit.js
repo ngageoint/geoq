@@ -316,6 +316,8 @@ aoi_feature_edit.map_init = function (map, bounds) {
         });
     });
 
+    $('div.leaflet-draw.leaflet-control').find('a').popover({trigger:"hover",placement:"right"})
+
     //Resize the map
     aoi_feature_edit.mapResize();
     //Resize it on screen resize, but no more than every .3 seconds
