@@ -1,6 +1,7 @@
 {% extends "core/base.html" %}
 {% load compress %}
 {% load leaflet_tags %}
+{% load geoserver_job_link %}
 {% block static_libraries %}
     {% leaflet_js %}
     <script src="{{ STATIC_URL }}core/js/leaflet_helper.js"></script>
@@ -52,11 +53,11 @@
         function highlightFeature(e) {
             var layer = e.target;
             layer.setStyle({
-                color: 'darkgreen',
+                color: 'black',
                 weight: 3,
                 opacity: 1,
-                fillOpacity: 1,
-                fillColor: 'darkgreen'
+                fillOpacity:.3,
+                fillColor: 'gray'
             });
         }
 
@@ -194,6 +195,18 @@
                                 </div>
                             </td>
                         </tr>
+                        {% geoserver_job_link object.id "wfs" as geoserver_job_wfs %}
+                        {% geoserver_job_link object.id "kml" as geoserver_job_kml %}
+                        {% if geoserver_job_wfs %}
+                        <tr>
+                            <td><b>KML:</b></td>
+                            <td><a href="{{geoserver_job_kml}}">Link</a></td>
+                        </tr>
+                        <tr>
+                            <td><b>WFS URL:</b></td>
+                            <td>{{geoserver_job_wfs}}</td>
+                        </tr>
+                        {% endif %}
                     </table>
                 </div>
 

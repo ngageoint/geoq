@@ -4,6 +4,11 @@
 {% load dynurl %}
 {% block static_libraries %}
     {% leaflet_js plugins="draw" %}
+    <style>
+        .popover {
+            min-width: 200px ! important;
+        }
+    </style>
     <script src="http://maps.googleapis.com/maps/api/js?sensor=false&libraries=places"></script>
     <script src="{{ STATIC_URL }}core/js/jquery.geocomplete.js"></script>
 
@@ -28,8 +33,9 @@
         layer.setStyle({
             "weight":2,
             "color":"red",
-            "fill":null,
-            "opacity":.7
+            "opacity":.7,
+            fillOpacity: 0.3,
+            fillColor: 'red'
         })
     }
 
@@ -47,8 +53,9 @@
             extentStyle = {
                 "weight":2,
                 "color":"red",
-                "fill":null,
-                "opacity":.7
+                "opacity":.7,
+                fillOpacity: 0.3,
+                fillColor: 'red'
             }
 
 
@@ -65,7 +72,7 @@
                 draw: {
                     position: 'topleft',
                     polygon: {
-                        title: 'Draw a polygon!',
+                        title: 'Draw an Area to be searched',
                         allowIntersection: false,
                         drawError: {
                             color: '#b00b00',
@@ -80,13 +87,18 @@
                         shapeOptions: {
                             color: '#662d91'
                         }
-                    }
+                    },
+                    polyline: false
                 },
                 edit: {
-                    featureGroup: aois
+                    featureGroup: aois,
+                    remove: false
                 }
             });
             map.addControl(drawControl);
+            $('a.leaflet-draw-edit-edit')
+                    .attr("title","Click AOI box to delete it");
+            $('div.leaflet-draw.leaflet-control').find('a').popover({trigger:"hover",placement:"right"})
 
             var callback = function(data, textStatus, jqXHR){
                 var features = L.geoJson(data, {
@@ -218,16 +230,17 @@
 
 {% block container %}
     <div class="row-fluid container-narrow">
-    <h2>Create new AOIS</h2>
+    <h2>Create new Area Of Interest (AOI)</h2>
+    <h3>Please zoom in to at least city level before drawing Areas to process</h3>
     <div id="map" class="thumbnail" style="height: 450px; width: 100%;">{% leaflet_map "map" %}</div>
         <br/>
     <div class="row">
         <div class="col-md-3">
-        <label>AOI Name</label>
+        <label>Name for these AOI cells:</label>
         <input type="text" name="aoi-name" id="aoi-name" value="{{ object.name }}"/>
         </div>
         <div class="cod-md-3">
-            <label>Find Location:</label>
+            <label>Zoom map to Location:</label>
             <input type="text" id="geocomplete" />
         </div>
     </div>

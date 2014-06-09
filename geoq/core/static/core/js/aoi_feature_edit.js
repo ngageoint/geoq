@@ -41,7 +41,6 @@ aoi_feature_edit.init = function () {
             };
         }
 
-
         var featureLayer = L.geoJson(null, {
             style: function (ftype) {
                 var feature_type = aoi_feature_edit.feature_types[ftype.properties.template];
@@ -316,6 +315,8 @@ aoi_feature_edit.map_init = function (map, bounds) {
             });
         });
     });
+
+    $('div.leaflet-draw.leaflet-control').find('a').popover({trigger:"hover",placement:"right"})
 
     //Resize the map
     aoi_feature_edit.mapResize();
