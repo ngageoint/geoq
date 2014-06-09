@@ -260,6 +260,9 @@ LOGGING = {
 #GAMIFICATION_SERVER = 'http://localhost:6111'
 #GAMIFICATION_PROJECT = 'django_geoq'
 
+#GeoServer
+GEOSERVER_WFS_JOB_LAYER = None
+
 # Override production settings with local settings if they exist
 try:
     from local_settings import *
