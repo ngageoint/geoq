@@ -158,7 +158,7 @@ aoi_feature_edit.map_init = function (map, bounds) {
     //Build a red box surrounding the AOI and zoom to that
     var aoi_extents = L.geoJson(aoi_feature_edit.aoi_extents_geojson,
         {
-            style: leaflet_helper.styles.extentStyle,
+            style: leaflet_helper.styles.extentStyle_hollow,
             zIndex: 1000,
             name: "Bounds of this AOI"
         });
@@ -336,9 +336,6 @@ aoi_feature_edit.buildDrawingControl = function (drawnItems) {
     //feature_id = feature_id || aoi_feature_edit.current_feature_type_id || 1;
     //var feature = aoi_feature_edit.get_feature_type(feature_id);
 
-    //TODO: Add editing back in - currently is not catching edits, as features are saved
-    // to server as soon as they are entered
-
     var drawControl = new L.Control.Draw({
         position: "topleft",
 
@@ -359,12 +356,27 @@ aoi_feature_edit.buildDrawingControl = function (drawnItems) {
         }
     });
 
-
     //Create the drawing objects control
-
     aoi_feature_edit.map.addControl(drawControl);
     aoi_feature_edit.drawcontrol = drawControl;
 
+    //Change the color of the icons
+    var icons = $('div.leaflet-draw.leaflet-control').find('a');
+    _.each(aoi_feature_edit.feature_types, function (ftype) {
+        var $icon = undefined;
+        _.each (icons,function(icon_obj){
+            var $icon_obj = $(icon_obj);
+            var icon_title = $icon_obj.attr('title') || $icon_obj.attr('data-original-title');
+            if (icon_title == ftype.name){
+                $icon = $icon_obj;
+            }
+        });
+
+        if ($icon) {
+            var bg_color = ftype.style.color || 'white';
+            $icon.css({backgroundColor:bg_color,opacity:0.7, borderColor:bg_color, borderWidth:1});
+        }
+    });
 };
 
 aoi_feature_edit.addMapControlButtons = function (map) {

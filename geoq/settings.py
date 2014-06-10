@@ -261,7 +261,7 @@ LOGGING = {
 #GAMIFICATION_PROJECT = 'django_geoq'
 
 #GeoServer
-GEOSERVER_WFS_JOB_LAYER = None
+GEOSERVER_WFS_JOB_LAYER = ''
 
 # Override production settings with local settings if they exist
 try:
