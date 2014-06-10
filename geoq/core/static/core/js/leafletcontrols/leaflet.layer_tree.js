@@ -97,8 +97,21 @@ leaflet_layer_control.parsers.infoFromLayer = function (obj){
     html+=leaflet_layer_control.parsers.textIfExists({name: obj._url, title:"URL", linkify:true, linkSuffix:"?request=GetCapabilities", style_class:'scroll-link'});
 
     if (obj._layers) {
-        var count = obj.getLayers().length; //_.toArray(obj._layers).length;
+        var features = obj.getLayers();
+        var count = features.length;
         html+=leaflet_layer_control.parsers.textIfExists({name: count, title:"Features in this job"});
+
+        var number_by_analyst = 0;
+        _.each (features,function(feature){
+            var properties = feature.feature.properties || {};
+            if (properties.analyst == aoi_feature_edit.analyst_name) {
+                number_by_analyst++;
+            }
+        });
+
+        if (number_by_analyst){
+            html+=leaflet_layer_control.parsers.textIfExists({name: number_by_analyst, title:"Features you entered"});
+        }
         //TODO: Some way to highlight these or show more info?
     }
     if (obj.options) {

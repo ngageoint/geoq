@@ -18,11 +18,12 @@ aoi_feature_edit.MapMarker = L.Icon.extend({
     options: {
         id: 0,
         shadowUrl: null,
-        iconAnchor: new L.Point(12, 41),
-        iconSize: new L.Point(25, 41),
+        iconAnchor: new L.Point(7, 24),
+        iconSize: new L.Point(15, 24),
         repeatMode: true,
         text: 'Draw a marker',
-        iconUrl: aoi_feature_edit.static_root + '/images/badge_images/silver.png' //TODO: Replace with better default image
+        iconUrl: aoi_feature_edit.static_root + '/leaflet/images/green-marker-icon.png'
+
     }
 });
 

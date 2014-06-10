@@ -48,6 +48,7 @@
         aoi_feature_edit.job_name = "{{ object.job.name }}";
         aoi_feature_edit.aoi_id = "{{ object.id }}";
         aoi_feature_edit.tags = "{{ object.job.tags }}";
+        aoi_feature_edit.analyst_name = "{{ request.user.username }}";
 
         aoi_feature_edit.aoi_map_json = {{ map.to_json|safe|default:"{}" }};
         aoi_feature_edit.aoi_extents_geojson = {{ object.polygon.json|safe }};;
