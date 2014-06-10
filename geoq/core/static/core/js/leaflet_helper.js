@@ -4,7 +4,7 @@
 var leaflet_helper = {};
 
 leaflet_helper.styles = {
-    extentStyle: {"weight": 2, "color": "red", "opacity": 1, "fillColor": "white", "fillOpacity": 0 },
+    extentStyle: {"weight": 2, "color": "red", "opacity": 1, "fillColor": "red", "fillOpacity":.2 },
     completed: {"weight": 2, "color": "green", "fillColor": "green", "fillOpacity": .9, "opacity": 1},
     in_work: {"weight": 2, "color": "yellow", "fillColor": "orange", "fillOpacity": .9, "opacity": 1},
     assigned: {"weight": 2, "color": "orange", "fillColor": "orange", "fillOpacity": .9, "opacity": 1}
