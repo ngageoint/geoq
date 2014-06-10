@@ -97,8 +97,8 @@ leaflet_layer_control.parsers.infoFromLayer = function (obj){
     html+=leaflet_layer_control.parsers.textIfExists({name: obj._url, title:"URL", linkify:true, linkSuffix:"?request=GetCapabilities", style_class:'scroll-link'});
 
     if (obj._layers) {
-        var count = _.toArray(obj._layers).length;
-        html+=leaflet_layer_control.parsers.textIfExists({name: count, title:"Feature Count"});
+        var count = obj.getLayers().length; //_.toArray(obj._layers).length;
+        html+=leaflet_layer_control.parsers.textIfExists({name: count, title:"Features in this job"});
         //TODO: Some way to highlight these or show more info?
     }
     if (obj.options) {

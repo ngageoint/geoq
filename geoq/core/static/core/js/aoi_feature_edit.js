@@ -114,10 +114,6 @@ aoi_feature_edit.map_init = function (map, bounds) {
     var custom_map = aoi_feature_edit.aoi_map_json;
     aoi_feature_edit.map = map;
 
-    // SRJ: move zoom control
-    //aoi_feature_edit.map.removeControl(aoi_feature_edit.map.zoomControl);
-    //aoi_feature_edit.map.addControl(L.control.zoom({position: 'bottomright'}));
-
     var baseLayers = {};
     var layerSwitcher = {};
     //var editableLayers = new L.FeatureGroup();
@@ -206,7 +202,6 @@ aoi_feature_edit.map_init = function (map, bounds) {
         } else {
             log.error("A FeatureLayer was supposed to be drawn, but didn't seem to exist.")
         }
-
     });
 
     aoi_feature_edit.layers.features = aoi_feature_edit.featureLayers;
@@ -346,9 +341,6 @@ aoi_feature_edit.buildDrawingControl = function (drawnItems) {
 
             markers: aoi_feature_edit.all_markers,
             polygons: aoi_feature_edit.all_polygons
-            // rectangle: {
-            //    shapeOptions: aoi_feature_edit.feature_types[aoi_feature_edit.current_feature_type_id].style
-            //}
         },
         edit: {
             featureGroup: drawnItems,
@@ -360,7 +352,7 @@ aoi_feature_edit.buildDrawingControl = function (drawnItems) {
     aoi_feature_edit.map.addControl(drawControl);
     aoi_feature_edit.drawcontrol = drawControl;
 
-    //Change the color of the icons
+    //Change the color of the icons or add an Image of the icon if there is one
     var icons = $('div.leaflet-draw.leaflet-control').find('a');
     _.each(aoi_feature_edit.feature_types, function (ftype) {
         var $icon = undefined;
@@ -373,8 +365,17 @@ aoi_feature_edit.buildDrawingControl = function (drawnItems) {
         });
 
         if ($icon) {
-            var bg_color = ftype.style.color || 'white';
-            $icon.css({backgroundColor:bg_color,opacity:0.7, borderColor:bg_color, borderWidth:1});
+            var bg_color = ftype.style.color;
+            var bg_image = ftype.style.iconUrl || ftype.style.icon;
+
+            if (bg_color) {
+                $icon.css({backgroundColor:bg_color,opacity:0.7, borderColor:bg_color, borderWidth:1});
+            }
+            if (bg_image) {
+                bg_image = 'url("'+bg_image+'")';
+                $icon.css({background:bg_image, backgroundSize:'contain', backgroundRepeat:'no-repeat'});
+
+            }
         }
     });
 };
