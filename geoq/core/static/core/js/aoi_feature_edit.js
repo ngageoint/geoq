@@ -14,18 +14,9 @@ aoi_feature_edit.options = {
 aoi_feature_edit.all_polygons = [];
 aoi_feature_edit.all_markers = [];
 
-aoi_feature_edit.MapMarker = L.Icon.extend({
-    options: {
-        id: 0,
-        shadowUrl: null,
-        iconAnchor: new L.Point(7, 24),
-        iconSize: new L.Point(15, 24),
-        repeatMode: true,
-        text: 'Draw a marker',
-        iconUrl: aoi_feature_edit.static_root + '/leaflet/images/green-marker-icon.png'
+aoi_feature_edit.available_icons = [];
 
-    }
-});
+aoi_feature_edit.MapMarker = null;
 
 aoi_feature_edit.init = function () {
 
@@ -58,6 +49,26 @@ aoi_feature_edit.init = function () {
         featureLayer.name = ftype.name;
         aoi_feature_edit.featureLayers[ftype.id] = featureLayer;
     });
+
+    //Set up icons to be used by feeds
+    var icons = "blue green orange purple yellow red gray".split(" ");
+    _.each(icons,function(icon){
+        aoi_feature_edit.available_icons.push(aoi_feature_edit.static_root + "/leaflet/images/"+icon+"-marker-icon.png");
+    });
+
+    //Set up base icon
+    aoi_feature_edit.MapMarker = L.Icon.extend({
+        options: {
+            id: 0,
+            shadowUrl: null,
+            iconAnchor: new L.Point(7, 24),
+            iconSize: new L.Point(15, 24),
+            repeatMode: true,
+            text: 'Draw a marker',
+            iconUrl: aoi_feature_edit.available_icons[0]
+        }
+    });
+
 };
 
 aoi_feature_edit.featureLayer_pointToLayer = function (feature, latlng) {
@@ -470,16 +481,25 @@ aoi_feature_edit.buildTreeLayers = function(){
                 var l_all = _.clone(l);
                 l_all.name = l.name + " - All";
                 layers.push(l_all);
-
-//                var l_found = _.clone(l);
-//                l_found.name = l.name + " - Flagged";
-//                layers.push(l_found);
             });
 
         } catch (ex) {
             log.error("aoi_map_json.all_layers isn't being parsed as valid JSON.");
         }
         return layers;
+    }
+
+    function removeEmptyParents(options){
+        var optionsNew = {titles:[], layers:[]};
+
+        _.each(options.layers,function(layerGroup,i){
+            if (layerGroup.length > 0) {
+                optionsNew.titles.push(options.titles[i]);
+                optionsNew.layers.push(options.layers[i]);
+            }
+        });
+
+        return optionsNew;
     }
 
     var options = {};
@@ -500,6 +520,8 @@ aoi_feature_edit.buildTreeLayers = function(){
 
     options.titles.push('Social Networking Feeds');
     options.layers.push(layers_only_social());
+
+    options = removeEmptyParents(options);
 
     return options;
 };
@@ -566,8 +588,8 @@ aoi_feature_edit.createPolygonOptions = function (opts) {
     options.allowIntersection = false;
     options.drawError = { color: '#b00b00', timeout: 1000};
 
-    options.shapeOptions = opts.style || {borderColor: "black", backgroundColor: "brown"},
-        options.showArea = true;
+    options.shapeOptions = opts.style || {borderColor: "black", backgroundColor: "brown"};
+    options.showArea = true;
     options.id = opts.id;
 
     return options;
