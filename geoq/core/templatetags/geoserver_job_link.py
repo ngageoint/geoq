@@ -9,12 +9,10 @@ register = template.Library()
 # settings value
 @register.assignment_tag
 def geoserver_job_link(job, kind):
-    if job is None:
+    if job is None or settings.GEOSERVER_WFS_JOB_LAYER is None or not settings.GEOSERVER_WFS_JOB_LAYER:
         return None
     base_url = settings.GEOSERVER_WFS_JOB_LAYER + str(job)
     if(kind == 'kml'):
-        print "I should be pointing to kml generation"
         return base_url + "&outputFormat=kml"
     else:
-        print "I should be pointing to the WFS link"
         return base_url
