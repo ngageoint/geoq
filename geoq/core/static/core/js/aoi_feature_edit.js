@@ -8,18 +8,13 @@ aoi_feature_edit.layers = {features:[], base:[], overlays:[]};
 
 var feature_hash = {};
 aoi_feature_edit.drawnItems = new L.FeatureGroup();
-aoi_feature_edit.options = {
-};
-
+aoi_feature_edit.options = {};
 aoi_feature_edit.all_polygons = [];
 aoi_feature_edit.all_markers = [];
-
 aoi_feature_edit.available_icons = [];
-
 aoi_feature_edit.MapMarker = null;
 
 aoi_feature_edit.init = function () {
-
     aoi_feature_edit.drawcontrol = null;
     aoi_feature_edit.featureLayers = [];
     aoi_feature_edit.icons = {};
