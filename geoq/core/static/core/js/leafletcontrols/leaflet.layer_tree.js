@@ -505,6 +505,7 @@ leaflet_layer_control.drawEachLayer=function(data,map){
                     //TODO: This should be consolidated into one move event
                     //TODO: The 'refresh layer json' should be a function added to the layer
                     if (layer.type == "Social Networking Link") {
+                        leaflet_filter_bar.showInputTags();
                         map.on('moveend viewreset', function (e) {
                             var currentOpacity = 1;
                             if (newLayer.options) {
