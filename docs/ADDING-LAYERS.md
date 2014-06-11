@@ -8,7 +8,6 @@
 3. Name: pick something appropriate - "FEMA EA Disaster Reporter Photos"
 4. Type: "ESRI Cluster Feature Layer"
 5. Url: This is the Url for the restful endpoint - "http://services.femadata.com/arcgis/rest/services/ExternalAffairs/DisasterReporterService/MapServer/0"
-6. Image Format: "json"
 7. Layer params: This is used to pass information to layer handler.  You can use any of the parameters for an [ArcGIS Query Map Service Layer](http://resources.arcgis.com/en/help/arcgis-rest-api/index.html#//02r3000000p1000000).  Additionaly, you if you want to customize your markers, you will need to set "createMarker" with an appropriate function name from the leaflet_helper.createMarker javascript object.
    Supported functions are:
     1. esriImageMapService - Processes images from an ESRI MapService
