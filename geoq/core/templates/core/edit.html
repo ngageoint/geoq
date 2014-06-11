@@ -17,6 +17,7 @@
     <script src="{{ STATIC_URL }}core/js/leafletcontrols/leaflet.simple_button.js"></script>
 	<script src="{{ STATIC_URL }}core/js/leaflet.OSMGeocoder/Control.OSMGeocoder.js"></script>
 	<script src="{{ STATIC_URL }}core/js/leafletcontrols/leaflet.layer_tree.js"></script>
+    <script src="{{ STATIC_URL }}core/js/leafletcontrols/leaflet.filter_bar.js"></script>
     <script src="{{ STATIC_URL }}core/js/fancytree/jquery.fancytree.js" type="text/javascript"></script>
     <script src="{{ STATIC_URL }}core/js/fancytree/jquery.fancytree.dnd.js" type="text/javascript"></script>
 
@@ -92,10 +93,28 @@
             top: 0px;
             left: 0px;
             width: 300px;
-{#            height: 100%;#}
             background-color: lightblue;
             padding-top: 50px;
             margin-left: -300px;
+        }
+
+        #filter_bar_drawer {
+            position: absolute;
+            top: 0px;
+            left: 0px;
+            width: 300px;
+            background-color: lightblue;
+            padding-top: 50px;
+            margin-left: -300px;
+        }
+
+        #tag_list_box {
+            margin-bottom: 0;
+            width: 78px;
+            font-size: 10px;
+            line-height: 14px;
+            height: 14px;
+            text-align: right;
         }
 
         form.leaflet-control-geocoder-form {

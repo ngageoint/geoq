@@ -220,11 +220,15 @@ aoi_feature_edit.map_init = function (map, bounds) {
     }, 1);
 
 
-    //var drawnItems = new L.FeatureGroup();
     leaflet_helper.addLocatorControl(map);
     aoi_feature_edit.buildDrawingControl(aoi_feature_edit.drawnItems);
     leaflet_helper.addGeocoderControl(map);
 
+    //Build the filter drawer (currently on left, TODO: move to bottom)
+    leaflet_filter_bar.init();
+    leaflet_filter_bar.addLayerControl(map, {});
+
+    //Build the layer tree on the left
     leaflet_layer_control.init();
     var options = aoi_feature_edit.buildTreeLayers();
     leaflet_layer_control.addLayerControl(map, options);
