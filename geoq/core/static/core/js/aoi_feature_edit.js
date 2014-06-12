@@ -8,13 +8,12 @@ aoi_feature_edit.layers = {features:[], base:[], overlays:[]};
 
 var feature_hash = {};
 aoi_feature_edit.drawnItems = new L.FeatureGroup();
-aoi_feature_edit.options = {
-};
+aoi_feature_edit.options = {};
 
 aoi_feature_edit.all_polygons = [];
 aoi_feature_edit.all_markers = [];
 
-aoi_feature_edit.MapMarker = L.Icon.extend({
+aoi_feature_edit.MapIcon = L.Icon.extend({
     options: {
         id: 0,
         shadowUrl: null,
@@ -26,6 +25,8 @@ aoi_feature_edit.MapMarker = L.Icon.extend({
     }
 });
 
+aoi_feature_edit.icon_style = {};
+
 aoi_feature_edit.init = function () {
 
     aoi_feature_edit.drawcontrol = null;
@@ -34,11 +35,20 @@ aoi_feature_edit.init = function () {
 
     _.each(aoi_feature_edit.feature_types, function (ftype) {
         // if this is a point, create icon for it first
-        if (ftype.type == 'Point' && ftype.style && (ftype.style.iconUrl || ftype.style.icon)) {
-            aoi_feature_edit.icons[ftype.id] = {
-                iconUrl: ftype.style.iconUrl || ftype.style.icon,
-                text: ftype.name
-            };
+        if (ftype.type == 'Point' && ftype.style) {
+//            aoi_feature_edit.icon_style[ftype.id] = aoi_feature_edit.createPointOptions(ftype);
+            aoi_feature_edit.icon_style[ftype.id] = ftype.style || {"type":"image"};
+            if (ftype.style.type == 'maki') {
+//                aoi_feature_edit.icons[ftype.id] = {
+//                    iconUrl: options.icon.options.iconUrl,
+//                    text: options.icon.options.text
+//                };
+                aoi_feature_edit.icons[ftype.id] = L.MakiMarkers.Icon;
+            }
+            else {
+                aoi_feature_edit.icons[ftype.id] = aoi_feature_edit.MapIcon;
+            }
+
         }
 
         var featureLayer = L.geoJson(null, {
@@ -60,8 +70,10 @@ aoi_feature_edit.init = function () {
 };
 
 aoi_feature_edit.featureLayer_pointToLayer = function (feature, latlng) {
+
     return new L.Marker(latlng, {
-        icon: new aoi_feature_edit.MapMarker(aoi_feature_edit.icons[feature.properties.template])
+//        icon: new aoi_feature_edit.MapIcon(aoi_feature_edit.icons[feature.properties.template])
+        icon: new aoi_feature_edit.icons[feature.properties.template](aoi_feature_edit.icon_style[feature.properties.template])
     });
 };
 aoi_feature_edit.featureLayer_onEachFeature = function (feature, layer, featureLayer) {
@@ -560,19 +572,21 @@ aoi_feature_edit.createPolygonOptions = function (opts) {
 };
 
 aoi_feature_edit.createPointOptions = function (opts) {
-    var options = null;
+    var options = {};
 
-    if (opts && opts.style && (opts.style.iconUrl || opts.style.icon)) {
-        options = {};
-        var marker = new aoi_feature_edit.MapMarker({
-            iconUrl: opts.style.iconUrl || opts.style.icon,
-            text: opts.name
-        });
-
-        options.icon = marker;
-        options.repeatMode = true;
-        options.id = opts.id;
+    if (opts.name) {
+        options.title = opts.name;
     }
+
+    if (opts.style) {
+        options.style = opts.style;
+    }
+
+    options.icon = new aoi_feature_edit.icons[opts.id](aoi_feature_edit.icon_style[opts.id]);
+
+
+    options.repeatMode = true;
+    options.id = opts.id;
 
     return options;
 };
