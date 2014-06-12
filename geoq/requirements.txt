@@ -20,4 +20,3 @@ psycopg2==2.5.1
 requests==1.2.3
 six==1.4.1
 geojson==1.0.7
-django-crispy-forms==1.4.0

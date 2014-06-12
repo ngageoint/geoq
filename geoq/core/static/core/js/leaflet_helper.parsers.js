@@ -76,9 +76,24 @@ leaflet_helper.constructors.urlTemplater =function(url, map, layer_json){
     return new_url || url;
 };
 
-
+leaflet_helper.constructors.geojson_layer_count = 0;
 leaflet_helper.constructors.geojson = function(lyr, map, useLayerInstead) {
-    var outputLayer = useLayerInstead || new L.geoJson(undefined, {onEachFeature: leaflet_helper.parsers.standard_onEachFeature});
+
+    function iconCallback(feature, latlng){
+        var layerNum = leaflet_helper.constructors.geojson_layer_count % aoi_feature_edit.available_icons.length;
+        var icon = new aoi_feature_edit.MapMarker({
+            iconUrl: aoi_feature_edit.available_icons[layerNum],
+            text: lyr.name
+        });
+        return L.marker(latlng, {icon: icon});
+    }
+
+    var outputLayer = useLayerInstead || new L.geoJson(undefined,{
+        onEachFeature: leaflet_helper.parsers.standard_onEachFeature,
+        pointToLayer: iconCallback
+    });
+
+    if (!useLayerInstead) leaflet_helper.constructors.geojson_layer_count++;
 
     var url = leaflet_helper.constructors.urlTemplater(lyr.url, map, lyr.layerParams);
     var proxiedURL = leaflet_helper.proxify(url);
@@ -117,9 +132,6 @@ leaflet_helper.constructors.geojson_success = function (data, proxiedURL, map, o
         var parserInfo = leaflet_helper.constructors.identifyParser(result);
         if (parserInfo && parserInfo.parser) {
             parserInfo.parser(result, map, outputLayer);
-
-            //TODO: Track IDs of individual features, then don't readd duplicates
-
 
             var features = "NONE";
             if (result && result.features && result.features.length) features = result.features.length;
