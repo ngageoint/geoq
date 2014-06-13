@@ -119,7 +119,7 @@
                     </button>
                     <ul class="dropdown-menu">
                         {% if 'accounts.add_job' in request.base_perms %}
-                        <li><a href="{% url 'job-create-aois' object.id%}">Add AOIs</a></li>
+                        <li><a href="{% url 'job-create-aois' object.id%}">Create Workcells</a></li>
                         {% endif %}
                         {% if 'accounts.delete_job' in request.base_perms %}
                         <li><a href="{% url 'job-delete' object.id %}">Delete Job</a></li>
@@ -213,18 +213,6 @@
                         </tr>
                     </table>
                 </div>
-
-            {% if 'accounts.change_aoi' in request.base_perms %}
-            {% if object.unassigned_aois %}
-                {% if request.user == object.in_work_aois.0.analyst or request.user == object.in_work_aois.0.reviewer %}
-                <a href="{% url 'aoi-work' object.in_work_aois.0.id %}" class="btn btn-large btn-success pull-right" style="margin-top:80px">
-                {% else %}
-                <a href="{% url 'job-next-aoi' object.id%}" class="btn btn-large btn-success pull-right" style="margin-top:80px">
-                {% endif %}
-                    Contribute to this job.
-                    <i class="icon-long-arrow-right"></i></a>
-            {% endif %}
-            {% endif %}
             </div>
 
             <div class="row body">

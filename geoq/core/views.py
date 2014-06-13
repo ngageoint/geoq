@@ -102,7 +102,7 @@ def redirect_to_unassigned_aoi(request, pk):
     job = get_object_or_404(Job, id=pk)
 
     try:
-        return HttpResponseRedirect(job.aois.filter(status='Unassigned')[0].get_absolute_url())
+        return HttpResponseRedirect(job.aois.filter(status='Unassigned').order_by('priority')[0].get_absolute_url())
     except IndexError:
         return HttpResponseRedirect(job.get_absolute_url())
 

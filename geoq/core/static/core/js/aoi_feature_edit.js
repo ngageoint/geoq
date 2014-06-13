@@ -36,13 +36,8 @@ aoi_feature_edit.init = function () {
     _.each(aoi_feature_edit.feature_types, function (ftype) {
         // if this is a point, create icon for it first
         if (ftype.type == 'Point' && ftype.style) {
-//            aoi_feature_edit.icon_style[ftype.id] = aoi_feature_edit.createPointOptions(ftype);
             aoi_feature_edit.icon_style[ftype.id] = ftype.style || {"type":"image"};
             if (ftype.style.type == 'maki') {
-//                aoi_feature_edit.icons[ftype.id] = {
-//                    iconUrl: options.icon.options.iconUrl,
-//                    text: options.icon.options.text
-//                };
                 aoi_feature_edit.icons[ftype.id] = L.MakiMarkers.Icon;
             }
             else {
