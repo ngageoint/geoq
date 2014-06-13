@@ -16,6 +16,7 @@ var leaflet_layer_control = {};
 leaflet_layer_control.$map = undefined;
 leaflet_layer_control.$drawer = undefined;
 leaflet_layer_control.$drawer_tray = undefined;
+leaflet_layer_control.$tree = undefined;
 
 leaflet_layer_control.init = function(){
     leaflet_layer_control.$map = $("#map");
@@ -97,8 +98,21 @@ leaflet_layer_control.parsers.infoFromLayer = function (obj){
     html+=leaflet_layer_control.parsers.textIfExists({name: obj._url, title:"URL", linkify:true, linkSuffix:"?request=GetCapabilities", style_class:'scroll-link'});
 
     if (obj._layers) {
-        var count = _.toArray(obj._layers).length;
-        html+=leaflet_layer_control.parsers.textIfExists({name: count, title:"Feature Count"});
+        var features = obj.getLayers();
+        var count = features.length;
+        html+=leaflet_layer_control.parsers.textIfExists({name: count, title:"Features in this job"});
+
+        var number_by_analyst = 0;
+        _.each (features,function(feature){
+            var properties = feature.feature.properties || {};
+            if (properties.analyst == aoi_feature_edit.analyst_name) {
+                number_by_analyst++;
+            }
+        });
+
+        if (number_by_analyst){
+            html+=leaflet_layer_control.parsers.textIfExists({name: number_by_analyst, title:"Features you entered"});
+        }
         //TODO: Some way to highlight these or show more info?
     }
     if (obj.options) {
@@ -395,66 +409,12 @@ leaflet_layer_control.addLayerControl = function (map, options) {
             var all_layers = _.flatten(aoi_feature_edit.layers);
             var all_active_layers = _.filter(all_layers,function(l){return (l._initHooksCalled && l._map)});
 
+            //TODO: Find the checkbox that changed, and only modify that one
             _.each(all_active_layers,function(l){
                 leaflet_layer_control.setLayerOpacity(l,0);
             });
 
-            var selectedLayers = data.tree.getSelectedNodes();
-            _.each(selectedLayers,function(layer_obj, layerOrder){
-                if (layer_obj && layer_obj.data) {
-                    var layer = layer_obj.data;
-
-                    if (layer._map && layer._initHooksCalled) {
-                        //It's a layer that's been already built
-                        leaflet_layer_control.setLayerOpacity(layer,1);
-
-                        if (leaflet_layer_control.likelyHasFeatures(layer)) {
-                            leaflet_helper.constructors.geojson(layer.config, map);
-                        }
-                    } else {
-                        //It's an object with layer info, not yet built - build the layer from the config data
-                        var name = layer.name;
-                        if (!name && layer.options) name = layer.options.name;
-                        log.info("Creating a map layer " + name+ " URL: " + layer.url);
-
-                        var newLayer = leaflet_helper.layer_conversion(layer, map);
-                        if (newLayer) {
-                            aoi_feature_edit.map.addLayer(newLayer);
-                            leaflet_layer_control.setLayerOpacity(newLayer,1);
-                            //TODO: Rethink if this should become a sub-item of the object
-                            layer_obj.data = newLayer;
-
-                            //Replace the old object list with the new layer
-                            _.each(aoi_feature_edit.layers,function(layerGroup,l_i){
-                                _.each(layerGroup,function(layerGroupItem,l_l){
-                                    if (layerGroupItem.id == layer.id) {
-                                        layerGroup[l_l] = newLayer;
-                                    }
-
-                                });
-                            });
-
-                            //TODO: This should be consolidated into one move event
-                            //TODO: The 'refresh layer json' should be a function added to the layer
-                            if (layer.type == "Social Networking Link") {
-                                map.on('moveend', function (e) {
-                                    var currentOpacity = 1;
-                                    if (newLayer.options) {
-                                        currentOpacity = newLayer.options.opacity;
-                                    }
-                                    if (currentOpacity > 0) {
-                                        leaflet_helper.constructors.geojson(layer, map, newLayer);
-                                    }
-                                });
-                            }
-                        }
-                    }
-
-                } else {
-                    log.error("A layer with no data was clicked");
-                }
-
-            });
+            leaflet_layer_control.drawEachLayer(data,map);
         },
 
         focus: function (event, data) {
@@ -499,10 +459,73 @@ leaflet_layer_control.addLayerControl = function (map, options) {
     });
 //    leaflet_layer_control.toggleZooming($tree);
 
+    leaflet_layer_control.$tree = $tree;
+
     var $drawer = $("#layer_info_drawer");
     $tree.appendTo($drawer);
 
 };
+leaflet_layer_control.drawEachLayer=function(data,map){
+
+    var selectedLayers = data.tree.getSelectedNodes();
+    _.each(selectedLayers,function(layer_obj, layerOrder){
+        if (layer_obj && layer_obj.data) {
+            var layer = layer_obj.data;
+
+            if (layer._map && layer._initHooksCalled) {
+                //It's a layer that's been already built
+                leaflet_layer_control.setLayerOpacity(layer,1);
+
+                if (leaflet_layer_control.likelyHasFeatures(layer)) {
+                    leaflet_helper.constructors.geojson(layer.config, map);
+                }
+            } else {
+                //It's an object with layer info, not yet built - build the layer from the config data
+                var name = layer.name;
+                if (!name && layer.options) name = layer.options.name;
+                log.info("Creating a map layer " + name+ " URL: " + layer.url);
+
+                var newLayer = leaflet_helper.layer_conversion(layer, map);
+                if (newLayer) {
+                    aoi_feature_edit.map.addLayer(newLayer);
+                    leaflet_layer_control.setLayerOpacity(newLayer,1);
+                    //TODO: Rethink if this should become a sub-item of the object
+                    layer_obj.data = newLayer;
+
+                    //Replace the old object list with the new layer
+                    _.each(aoi_feature_edit.layers,function(layerGroup,l_i){
+                        _.each(layerGroup,function(layerGroupItem,l_l){
+                            if (layerGroupItem.id == layer.id) {
+                                layerGroup[l_l] = newLayer;
+                            }
+
+                        });
+                    });
+
+                    //TODO: This should be consolidated into one move event
+                    //TODO: The 'refresh layer json' should be a function added to the layer
+                    if (layer.type == "Social Networking Link") {
+                        leaflet_filter_bar.showInputTags();
+                        map.on('moveend viewreset', function (e) {
+                            var currentOpacity = 1;
+                            if (newLayer.options) {
+                                currentOpacity = newLayer.options.opacity;
+                            }
+                            if (currentOpacity > 0) {
+                                leaflet_helper.constructors.geojson(layer, map, newLayer);
+                            }
+                        });
+                    }
+                }
+            }
+
+        } else {
+            log.error("A layer with no data was clicked");
+        }
+    });
+
+};
+
 leaflet_layer_control.toggleZooming=function($control){
     $control.on('mouseover',function(){
         var map=aoi_feature_edit.map;

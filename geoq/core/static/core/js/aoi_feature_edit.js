@@ -8,37 +8,33 @@ aoi_feature_edit.layers = {features:[], base:[], overlays:[]};
 
 var feature_hash = {};
 aoi_feature_edit.drawnItems = new L.FeatureGroup();
-aoi_feature_edit.options = {
-};
-
+aoi_feature_edit.options = {};
 aoi_feature_edit.all_polygons = [];
 aoi_feature_edit.all_markers = [];
-
-aoi_feature_edit.MapMarker = L.Icon.extend({
-    options: {
-        id: 0,
-        shadowUrl: null,
-        iconAnchor: new L.Point(12, 41),
-        iconSize: new L.Point(25, 41),
-        repeatMode: true,
-        text: 'Draw a marker',
-        iconUrl: aoi_feature_edit.static_root + '/images/badge_images/silver.png' //TODO: Replace with better default image
-    }
-});
+aoi_feature_edit.available_icons = [];
+aoi_feature_edit.MapMarker = null;
 
 aoi_feature_edit.init = function () {
-
     aoi_feature_edit.drawcontrol = null;
     aoi_feature_edit.featureLayers = [];
     aoi_feature_edit.icons = {};
 
     _.each(aoi_feature_edit.feature_types, function (ftype) {
         // if this is a point, create icon for it first
-        if (ftype.type == 'Point' && ftype.style && (ftype.style.iconUrl || ftype.style.icon)) {
-            aoi_feature_edit.icons[ftype.id] = {
-                iconUrl: ftype.style.iconUrl || ftype.style.icon,
-                text: ftype.name
-            };
+        if (ftype.type == 'Point' && ftype.style) {
+//            aoi_feature_edit.icon_style[ftype.id] = aoi_feature_edit.createPointOptions(ftype);
+            aoi_feature_edit.icon_style[ftype.id] = ftype.style || {"type":"image"};
+            if (ftype.style.type == 'maki') {
+//                aoi_feature_edit.icons[ftype.id] = {
+//                    iconUrl: options.icon.options.iconUrl,
+//                    text: options.icon.options.text
+//                };
+                aoi_feature_edit.icons[ftype.id] = L.MakiMarkers.Icon;
+            }
+            else {
+                aoi_feature_edit.icons[ftype.id] = aoi_feature_edit.MapIcon;
+            }
+
         }
 
         var featureLayer = L.geoJson(null, {
@@ -57,11 +53,32 @@ aoi_feature_edit.init = function () {
         featureLayer.name = ftype.name;
         aoi_feature_edit.featureLayers[ftype.id] = featureLayer;
     });
+
+    //Set up icons to be used by feeds
+    var icons = "blue green orange purple yellow red gray".split(" ");
+    _.each(icons,function(icon){
+        aoi_feature_edit.available_icons.push(aoi_feature_edit.static_root + "/leaflet/images/"+icon+"-marker-icon.png");
+    });
+
+    //Set up base icon
+    aoi_feature_edit.MapMarker = L.Icon.extend({
+        options: {
+            id: 0,
+            shadowUrl: null,
+            iconAnchor: new L.Point(7, 24),
+            iconSize: new L.Point(15, 24),
+            repeatMode: true,
+            text: 'Draw a marker',
+            iconUrl: aoi_feature_edit.available_icons[0]
+        }
+    });
+
 };
 
 aoi_feature_edit.featureLayer_pointToLayer = function (feature, latlng) {
     return new L.Marker(latlng, {
-        icon: new aoi_feature_edit.MapMarker(aoi_feature_edit.icons[feature.properties.template])
+//        icon: new aoi_feature_edit.MapIcon(aoi_feature_edit.icons[feature.properties.template])
+        icon: new aoi_feature_edit.icons[feature.properties.template](aoi_feature_edit.icon_style[feature.properties.template])
     });
 };
 aoi_feature_edit.featureLayer_onEachFeature = function (feature, layer, featureLayer) {
@@ -113,10 +130,6 @@ aoi_feature_edit.mapResize = function () {
 aoi_feature_edit.map_init = function (map, bounds) {
     var custom_map = aoi_feature_edit.aoi_map_json;
     aoi_feature_edit.map = map;
-
-    // SRJ: move zoom control
-    //aoi_feature_edit.map.removeControl(aoi_feature_edit.map.zoomControl);
-    //aoi_feature_edit.map.addControl(L.control.zoom({position: 'bottomright'}));
 
     var baseLayers = {};
     var layerSwitcher = {};
@@ -206,7 +219,6 @@ aoi_feature_edit.map_init = function (map, bounds) {
         } else {
             log.error("A FeatureLayer was supposed to be drawn, but didn't seem to exist.")
         }
-
     });
 
     aoi_feature_edit.layers.features = aoi_feature_edit.featureLayers;
@@ -218,11 +230,15 @@ aoi_feature_edit.map_init = function (map, bounds) {
     }, 1);
 
 
-    //var drawnItems = new L.FeatureGroup();
     leaflet_helper.addLocatorControl(map);
     aoi_feature_edit.buildDrawingControl(aoi_feature_edit.drawnItems);
     leaflet_helper.addGeocoderControl(map);
 
+    //Build the filter drawer (currently on left, TODO: move to bottom)
+    leaflet_filter_bar.init();
+    leaflet_filter_bar.addLayerControl(map, {hiddenTagInput:true});
+
+    //Build the layer tree on the left
     leaflet_layer_control.init();
     var options = aoi_feature_edit.buildTreeLayers();
     leaflet_layer_control.addLayerControl(map, options);
@@ -346,9 +362,6 @@ aoi_feature_edit.buildDrawingControl = function (drawnItems) {
 
             markers: aoi_feature_edit.all_markers,
             polygons: aoi_feature_edit.all_polygons
-            // rectangle: {
-            //    shapeOptions: aoi_feature_edit.feature_types[aoi_feature_edit.current_feature_type_id].style
-            //}
         },
         edit: {
             featureGroup: drawnItems,
@@ -360,7 +373,7 @@ aoi_feature_edit.buildDrawingControl = function (drawnItems) {
     aoi_feature_edit.map.addControl(drawControl);
     aoi_feature_edit.drawcontrol = drawControl;
 
-    //Change the color of the icons
+    //Change the color of the icons or add an Image of the icon if there is one
     var icons = $('div.leaflet-draw.leaflet-control').find('a');
     _.each(aoi_feature_edit.feature_types, function (ftype) {
         var $icon = undefined;
@@ -373,8 +386,17 @@ aoi_feature_edit.buildDrawingControl = function (drawnItems) {
         });
 
         if ($icon) {
-            var bg_color = ftype.style.color || 'white';
-            $icon.css({backgroundColor:bg_color,opacity:0.7, borderColor:bg_color, borderWidth:1});
+            var bg_color = ftype.style.color;
+            var bg_image = ftype.style.iconUrl || ftype.style.icon;
+
+            if (bg_color) {
+                $icon.css({backgroundColor:bg_color,opacity:0.7, borderColor:bg_color, borderWidth:1});
+            }
+            if (bg_image) {
+                bg_image = 'url("'+bg_image+'")';
+                $icon.css({background:bg_image, backgroundSize:'contain', backgroundRepeat:'no-repeat'});
+
+            }
         }
     });
 };
@@ -468,16 +490,25 @@ aoi_feature_edit.buildTreeLayers = function(){
                 var l_all = _.clone(l);
                 l_all.name = l.name + " - All";
                 layers.push(l_all);
-
-//                var l_found = _.clone(l);
-//                l_found.name = l.name + " - Flagged";
-//                layers.push(l_found);
             });
 
         } catch (ex) {
             log.error("aoi_map_json.all_layers isn't being parsed as valid JSON.");
         }
         return layers;
+    }
+
+    function removeEmptyParents(options){
+        var optionsNew = {titles:[], layers:[]};
+
+        _.each(options.layers,function(layerGroup,i){
+            if (layerGroup.length > 0) {
+                optionsNew.titles.push(options.titles[i]);
+                optionsNew.layers.push(options.layers[i]);
+            }
+        });
+
+        return optionsNew;
     }
 
     var options = {};
@@ -498,6 +529,8 @@ aoi_feature_edit.buildTreeLayers = function(){
 
     options.titles.push('Social Networking Feeds');
     options.layers.push(layers_only_social());
+
+    options = removeEmptyParents(options);
 
     return options;
 };
@@ -564,27 +597,29 @@ aoi_feature_edit.createPolygonOptions = function (opts) {
     options.allowIntersection = false;
     options.drawError = { color: '#b00b00', timeout: 1000};
 
-    options.shapeOptions = opts.style || {borderColor: "black", backgroundColor: "brown"},
-        options.showArea = true;
+    options.shapeOptions = opts.style || {borderColor: "black", backgroundColor: "brown"};
+    options.showArea = true;
     options.id = opts.id;
 
     return options;
 };
 
 aoi_feature_edit.createPointOptions = function (opts) {
-    var options = null;
+    var options = {};
 
-    if (opts && opts.style && (opts.style.iconUrl || opts.style.icon)) {
-        options = {};
-        var marker = new aoi_feature_edit.MapMarker({
-            iconUrl: opts.style.iconUrl || opts.style.icon,
-            text: opts.name
-        });
-
-        options.icon = marker;
-        options.repeatMode = true;
-        options.id = opts.id;
+    if (opts.name) {
+        options.title = opts.name;
     }
+
+    if (opts.style) {
+        options.style = opts.style;
+    }
+
+    options.icon = new aoi_feature_edit.icons[opts.id](aoi_feature_edit.icon_style[opts.id]);
+
+
+    options.repeatMode = true;
+    options.id = opts.id;
 
     return options;
 };

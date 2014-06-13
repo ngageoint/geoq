@@ -386,3 +386,13 @@ def batch_create_aois(request, *args, **kwargs):
                                         polygon=GEOSGeometry(json.dumps(aoi.get('geometry')))) for aoi in aois])
 
     return HttpResponse()
+
+
+class JobGeoJSON(ListView):
+    model = Job
+
+    def get(self, request, *args, **kwargs):
+        job = get_object_or_404(Job, pk=self.kwargs.get('pk'))
+        geojson = job.features_geoJSON()
+
+        return HttpResponse(geojson, mimetype="application/json", status=200)

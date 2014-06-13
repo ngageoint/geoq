@@ -128,6 +128,11 @@ LEAFLET_CONFIG = {
             'js': [STATIC_URL + 'leaflet/ClusteredFeatureLayer.js', STATIC_URL + 'leaflet/leaflet.markercluster.js'],
             'repo': 'https://github.com/Esri/esri-leaflet'
         },
+        'MakiMarkers': {
+            'css': [],
+            'js': [STATIC_URL + 'leaflet/Leaflet.MakiMarkers.js'],
+            'repo': 'https://github.com/jseppi/Leaflet.MakiMarkers'
+        }
     }
 }
 

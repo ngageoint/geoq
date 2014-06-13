@@ -11,7 +11,7 @@ from models import AOI, Project, Job
 from proxies import proxy_to
 from views import (BatchCreateAOIS, CreateFeaturesView, Dashboard, DetailedListView,
     JobDetailedListView, AOIDetailedListView, ChangeAOIStatus, JobDelete, AOIDelete, CreateJobView,
-    UpdateJobView, CreateProjectView, redirect_to_unassigned_aoi, aoi_delete, display_help)
+    UpdateJobView, CreateProjectView, redirect_to_unassigned_aoi, aoi_delete, display_help, JobGeoJSON)
 from geoq.maps.views import feature_delete
 
 urlpatterns = patterns('',
@@ -94,4 +94,5 @@ urlpatterns = patterns('',
     url(r'^api/geo/usng/?$', 'core.views.usng', name='usng'),
     url(r'^api/geo/mgrs/?$', 'core.views.mgrs', name='mgrs'),
     url(r'^proxy/(?P<path>.*)$', proxy_to, {'target_url': ''}),
+    url(r'^api/job/(?P<pk>\d+).geojson$', JobGeoJSON.as_view(), name='json-job'),
 )
