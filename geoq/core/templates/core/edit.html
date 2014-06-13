@@ -4,7 +4,7 @@
 {% load django_select2_tags %}
 {% block static_libraries %}
 
-    {% leaflet_js plugins="draw, esri, esriCluster" %}
+    {% leaflet_js plugins="draw, esri, esriCluster, MakiMarkers" %}
     {% import_django_select2_js %}
     <script src="{{ STATIC_URL }}core/js/jquery-migrate-1.2.1.min.js"></script>
     <script src="{{ STATIC_URL }}core/js/leaflet_helper.js"></script>
@@ -61,7 +61,7 @@
 
         aoi_feature_edit.percent_complete = {% widthratio object.job.complete.count 100 100%};
         aoi_feature_edit.description = "{{ object.description |safe}}";
-        aoi_feature_edit.static_root = "{{ STATIC_URL }}";
+        aoi_feature_edit.static_root = "{{ STATIC_URL }}" + "images/markers/";
         aoi_feature_edit.help_url = "{% url 'help_page' %}";
 
         aoi_feature_edit.init();
