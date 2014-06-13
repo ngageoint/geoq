@@ -293,16 +293,33 @@ class Feature(models.Model):
         Returns geoJSON of the feature.
         Try to conform to https://github.com/mapbox/simplestyle-spec/tree/master/1.0.0
         """
-        
+
+        properties = dict(id=self.id,
+                          template=self.template.id if hasattr(self.template, "id") else None,
+                          analyst=self.analyst.username,
+                          created_at=datetime.strftime(self.created_at, '%Y-%m-%dT%H:%M:%S%Z'),
+                          updated_at=datetime.strftime(self.updated_at, '%Y-%m-%dT%H:%M:%S%Z'),
+                          )
+        feature_type = FeatureType.objects.get(id=self.template.id)
+        # if feature_type.style.has_key('color'):
+        #     color = feature_type.style['color']
+        #     if color == 'orange':
+        #         color = '#ff6600'
+        #     if color == 'red':
+        #         color = '#ff0000'
+        #     if color == 'green':
+        #         color = '#00ff00'
+        #     if color == 'blue':
+        #         color = '#0000ff'
+        #     properties['color'] = color
+
         geojson = SortedDict()
         geojson["type"] = "Feature"
-        geojson["properties"] = dict(id=self.id,
-                                     template=self.template.id if hasattr(self.template, "id") else None,
-                                     analyst=self.analyst.username,
-                                     created_at=datetime.strftime(self.created_at, '%Y-%m-%dT%H:%M:%S%Z'),
-                                     updated_at=datetime.strftime(self.updated_at, '%Y-%m-%dT%H:%M:%S%Z')
-                                     )
+        geojson["properties"] = properties
         geojson["geometry"] = json.loads(self.the_geom.json)
+
+        if feature_type:
+            geojson["style"] = feature_type.style_to_geojson()
 
         return json.dumps(geojson) if as_json else geojson
 
@@ -339,6 +356,25 @@ class FeatureType(models.Model):
                                name=self.name,
                                type=self.type,
                                style=self.style))
+
+    def style_to_geojson(self):
+        local_style = self.style
+
+        if local_style and local_style.has_key('color'):
+            local_style['stroke-color'] = local_style['color']
+            local_style['fill-color'] = local_style['color']
+            local_style.pop('color', None)
+        if local_style and local_style.has_key('weight'):
+            local_style['stroke-width'] = local_style['weight']
+            local_style.pop('weight', None)
+        if local_style and local_style.has_key('fill'):
+            local_style['fill-opacity'] = local_style['fill']
+            local_style.pop('fill', None)
+        if local_style and local_style.has_key('iconUrl'):
+            local_style['external-graphic'] = 'http://geo-q.com' + local_style['iconUrl']
+            local_style.pop('iconUrl', None)
+
+        return local_style
 
     def featuretypes(self):
         return FeatureType.objects.all()

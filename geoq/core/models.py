@@ -173,11 +173,7 @@ class Job(GeoQBase):
         geojson["properties"] = dict(id=self.id)
         geojson["features"] = [n.geoJSON(as_json=False) for n in self.feature_set.all()]
 
-
-        #TODO: Add GeoJSON Style/color info
-        #TODO: Add GeoJSON Boxes of completed AOIs, or have available as another feeds
-
-        return json.dumps(geojson) if as_json else geojson
+        return json.dumps(geojson, indent=2) if as_json else geojson
 
 
 class AOI(GeoQBase):
