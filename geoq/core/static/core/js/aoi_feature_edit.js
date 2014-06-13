@@ -14,8 +14,6 @@ aoi_feature_edit.all_markers = [];
 aoi_feature_edit.available_icons = [];
 aoi_feature_edit.MapMarker = null;
 
-//});
-
 aoi_feature_edit.init = function () {
     aoi_feature_edit.drawcontrol = null;
     aoi_feature_edit.featureLayers = [];
