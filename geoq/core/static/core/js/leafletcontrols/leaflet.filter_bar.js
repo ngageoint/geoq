@@ -28,25 +28,30 @@ leaflet_filter_bar.initDrawer = function(){
     leaflet_filter_bar.$drawer_tray = $drawer_tray;
     $drawer_tray.html("Filter Information Here");
 };
+leaflet_filter_bar.showInputTags = function(){
+    if (leaflet_filter_bar.$tags_input){
+        leaflet_filter_bar.$tags_input.show();
+    }
+};
 leaflet_filter_bar.addLayerControl = function (map, options) {
 
-//    var $layerButton = $('<a id="toggle-drawer" href="#" class="btn">Filters</a>');
-//    var layerButtonOptions = {
-//        'html': $layerButton,
-//        'onClick': leaflet_filter_bar.toggleDrawer,
-//        'hideText': false,
-//        position: 'bottomright',
-//        'maxWidth': 60,
-//        'doToggle': true,
-//        'toggleStatus': false
-//    };
-//    var layerButton = new L.Control.Button(layerButtonOptions).addTo(map);
+    if (options.showDrawer){
+        var $layerButtonDrawer = $('<a id="toggle-drawer" href="#" class="btn">Filters</a>');
+        var layerButtonDrawerOptions = {
+            'html': $layerButtonDrawer,
+            'onClick': leaflet_filter_bar.toggleDrawer,
+            'hideText': false,
+            position: 'bottomright',
+            'maxWidth': 60,
+            'doToggle': true,
+            'toggleStatus': false
+        };
+        var layerButtonDrawer = new L.Control.Button(layerButtonDrawerOptions).addTo(map);
+    }
 
     var $layerButton = $('<input type="text" id="tag_list_box"/>');
     $layerButton
-        .attr('value', aoi_feature_edit.tags || "Disaster")
-        .popover({title:"Tags to search social media on",placement:"left",trigger:"hover"});
-
+        .attr('value', aoi_feature_edit.tags || "Disaster");
 
     var layerButtonOptions = {
         'html': $layerButton,
@@ -67,7 +72,6 @@ leaflet_filter_bar.addLayerControl = function (map, options) {
         if ( oldContent !== newContent ) {
             aoi_feature_edit.tags = newContent;
 
-            console.log("LOOKUP "+ newContent);
             //Refresh existing Social Layers
             _.each(aoi_feature_edit.layers.social,function(layer){
                 if (layer.type == "Social Networking Link" && layer._initHooksCalled) {
@@ -79,7 +83,6 @@ leaflet_filter_bar.addLayerControl = function (map, options) {
                         leaflet_helper.constructors.geojson(layer.config, map, layer);
                     }
                 }
-
             })
         }
     }
@@ -88,13 +91,20 @@ leaflet_filter_bar.addLayerControl = function (map, options) {
         if (this.searching) clearTimeout( this.searching );
         this.searching = setTimeout(function() {
             _refreshFeeds();
-        }, 300 );
+        }, 1000 );
     }
 
     leaflet_filter_bar.$tags_input = $(layerButton._container);
-    leaflet_filter_bar.$tags_input
-        .bind('input keydown keyup keypress focus',function(event) {
 
+    //Hide it by default
+    if (options.hiddenTagInput){
+        leaflet_filter_bar.$tags_input.hide();
+    }
+
+    //Set up some UI conveniences
+    leaflet_filter_bar.$tags_input
+        .attr('title',"Social Tags")
+        .bind('input keydown keyup keypress focus',function(event) {
             switch( event.keyCode ) {
                 case 13:
                     event.preventDefault();
@@ -106,6 +116,10 @@ leaflet_filter_bar.addLayerControl = function (map, options) {
                     break;
             }
         });
+    leaflet_filter_bar.$tags_input.find('input')
+        .bind('focus',function() { $(this).select(); })
+        .bind('mouseup',function(e) {e.preventDefault();});
+
 };
 
 

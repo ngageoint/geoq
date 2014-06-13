@@ -237,7 +237,7 @@ aoi_feature_edit.map_init = function (map, bounds) {
 
     //Build the filter drawer (currently on left, TODO: move to bottom)
     leaflet_filter_bar.init();
-    leaflet_filter_bar.addLayerControl(map, {});
+    leaflet_filter_bar.addLayerControl(map, {hiddenTagInput:true});
 
     //Build the layer tree on the left
     leaflet_layer_control.init();

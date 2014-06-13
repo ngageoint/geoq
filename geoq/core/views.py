@@ -395,4 +395,4 @@ class JobGeoJSON(ListView):
         job = get_object_or_404(Job, pk=self.kwargs.get('pk'))
         geojson = job.features_geoJSON()
 
-        return HttpResponse(geojson, mimetype="application/json", status=400)
+        return HttpResponse(geojson, mimetype="application/json", status=200)
