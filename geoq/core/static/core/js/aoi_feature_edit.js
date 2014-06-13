@@ -12,14 +12,26 @@ aoi_feature_edit.options = {};
 aoi_feature_edit.all_polygons = [];
 aoi_feature_edit.all_markers = [];
 aoi_feature_edit.available_icons = [];
-aoi_feature_edit.MapMarker = null;
-
-});
+aoi_feature_edit.MapIcon = null;
 
 aoi_feature_edit.init = function () {
     aoi_feature_edit.drawcontrol = null;
     aoi_feature_edit.featureLayers = [];
     aoi_feature_edit.icons = {};
+    aoi_feature_edit.icon_style = {};
+
+
+    //Set up base icon
+    aoi_feature_edit.MapIcon = L.Icon.extend({
+        options: {
+            id: 0,
+            shadowUrl: null,
+            iconAnchor: new L.Point(7, 24),
+            iconSize: new L.Point(15, 24),
+            repeatMode: true,
+            text: 'Draw a marker'
+        }
+    });
 
     _.each(aoi_feature_edit.feature_types, function (ftype) {
         // if this is a point, create icon for it first
@@ -60,19 +72,6 @@ aoi_feature_edit.init = function () {
     var icons = "blue green orange purple yellow red gray".split(" ");
     _.each(icons,function(icon){
         aoi_feature_edit.available_icons.push(aoi_feature_edit.static_root + "/leaflet/images/"+icon+"-marker-icon.png");
-    });
-
-    //Set up base icon
-    aoi_feature_edit.MapMarker = L.Icon.extend({
-        options: {
-            id: 0,
-            shadowUrl: null,
-            iconAnchor: new L.Point(7, 24),
-            iconSize: new L.Point(15, 24),
-            repeatMode: true,
-            text: 'Draw a marker',
-            iconUrl: aoi_feature_edit.available_icons[0]
-        }
     });
 
 };
@@ -611,6 +610,7 @@ aoi_feature_edit.createPointOptions = function (opts) {
 
     if (opts.name) {
         options.title = opts.name;
+        options.text = opts.name;
     }
 
     if (opts.style) {
@@ -618,7 +618,6 @@ aoi_feature_edit.createPointOptions = function (opts) {
     }
 
     options.icon = new aoi_feature_edit.icons[opts.id](aoi_feature_edit.icon_style[opts.id]);
-
 
     options.repeatMode = true;
     options.id = opts.id;
