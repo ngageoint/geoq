@@ -409,9 +409,18 @@ class JobKML(ListView):
         locations = job.feature_set.all()
         feature_types = FeatureType.objects.all()
 
+        aoi_count = job.aois.count()
+        aoi_complete = job.complete().count()
+        aoi_pct = int(100 * float(aoi_complete)/float(aoi_count))
+
+        doc_name = 'GeoQ :: ['+str(aoi_complete)+'/'+str(aoi_count)+' '+str(aoi_pct)+'%] Job: '+str(job.name)
+        description = 'Job #'+str(job.id)+', project: '+str(job.project.name)
+
         output = '<?xml version="1.0" encoding="UTF-8"?>\n'
         output += '<kml xmlns="http://www.opengis.net/kml/2.2">\n'
         output += '  <Document>\n'
+        output += '    <name>'+doc_name+'</name>\n'
+        output += '    <description>'+description+'</description>\n'
         output += '    <Style id="geoq_inwork">\n'
         output += '      <LineStyle>\n'
         output += '        <width>3</width>\n'
@@ -479,6 +488,7 @@ class JobKML(ListView):
                 output += '      </IconStyle>\n'
             output += '    </Style>\n'
 
+        output += '   <Folder><name>Observations</name>\n'
         for loc in locations:
             template_name = loc.template.name
             analyst_name = loc.analyst.username
@@ -493,6 +503,8 @@ class JobKML(ListView):
             output += '      '+str(loc.the_geom.kml)+'\n'
             output += '    </Placemark>\n'
 
+        output += '   </Folder>\n'
+        output += '   <Folder><name>Work Cells</name>\n'
         for aoi in job.aois.all():
             style = 'complete'
             if aoi.status == 'In work':
@@ -504,6 +516,7 @@ class JobKML(ListView):
             output += '      '+str(aoi.polygon.kml)+'\n'
             output += '    </Placemark>\n'
 
+        output += '   </Folder>\n'
         output += '  </Document>\n'
         output += '</kml>'
 
