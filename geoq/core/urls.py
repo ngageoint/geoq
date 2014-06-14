@@ -93,5 +93,6 @@ urlpatterns = patterns('',
     url(r'^api/geo/mgrs/?$', 'core.views.mgrs', name='mgrs'),
     url(r'^proxy/(?P<path>.*)$', proxy_to, {'target_url': ''}),
     url(r'^api/job[s ]?/(?P<pk>\d+).geojson$', JobGeoJSON.as_view(), name='json-job'),
+    url(r'^api/job[s ]?/(?P<pk>\d+).kml$', JobKML.as_view(), name='kml-job'),
 
 )

@@ -206,6 +206,11 @@
                             <td><b>WFS URL:</b></td>
                             <td>{{geoserver_job_wfs}}</td>
                         </tr>
+                        {% else %}
+                        <tr>
+                            <td><b>KML:</b></td>
+                            <td><a href="{% url 'kml-job' object.id %}">Link</a></td>
+                        </tr>
                         {% endif %}
                         <tr>
                             <td><b>GeoJSON:</b></td>
