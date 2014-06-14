@@ -412,6 +412,38 @@ class JobKML(ListView):
         output = '<?xml version="1.0" encoding="UTF-8"?>\n'
         output += '<kml xmlns="http://www.opengis.net/kml/2.2">\n'
         output += '  <Document>\n'
+        output += '    <Style id="geoq_inwork">\n'
+        output += '      <LineStyle>\n'
+        output += '        <width>3</width>\n'
+        output += '        <color>7f00ffff</color>\n'
+        output += '      </LineStyle>\n'
+        output += '      <PolyStyle>\n'
+        output += '        <fill>0</fill>\n'
+        output += '        <outline>1</outline>\n'
+        output += '      </PolyStyle>\n'
+        output += '    </Style>\n'
+
+        output += '    <Style id="geoq_complete">\n'
+        output += '      <LineStyle>\n'
+        output += '        <width>2</width>\n'
+        output += '        <color>7f00ff00</color>\n'
+        output += '      </LineStyle>\n'
+        output += '      <PolyStyle>\n'
+        output += '        <fill>0</fill>\n'
+        output += '        <outline>1</outline>\n'
+        output += '      </PolyStyle>\n'
+        output += '    </Style>\n'
+
+        output += '    <Style id="geoq_unassigned">\n'
+        output += '      <LineStyle>\n'
+        output += '        <width>1</width>\n'
+        output += '        <color>7f0000ff</color>\n'
+        output += '      </LineStyle>\n'
+        output += '      <PolyStyle>\n'
+        output += '        <fill>0</fill>\n'
+        output += '        <outline>1</outline>\n'
+        output += '      </PolyStyle>\n'
+        output += '    </Style>\n'
 
         for feature in feature_types:
             output += '    <Style id="geoq_'+str(feature.id)+'">\n'
@@ -436,7 +468,6 @@ class JobKML(ListView):
                 output += '        <colorMode>normal</colorMode>\n'
                 output += '        <fill>1</fill>\n'
                 output += '        <outline>1</outline>\n'
-
                 output += '      </PolyStyle>\n'
 
             if feature.style.has_key('iconUrl'):
@@ -461,6 +492,18 @@ class JobKML(ListView):
             output += '      <styleUrl>#geoq_'+str(loc.template.id)+'</styleUrl>\n'
             output += '      '+str(loc.the_geom.kml)+'\n'
             output += '    </Placemark>\n'
+
+        for aoi in job.aois.all():
+            style = 'complete'
+            if aoi.status == 'In work':
+                style = 'inwork'
+            if aoi.status == 'Unassigned':
+                style = 'unassigned'
+            output += '    <Placemark>\n'
+            output += '      <styleUrl>#geoq_'+style+'</styleUrl>\n'
+            output += '      '+str(aoi.polygon.kml)+'\n'
+            output += '    </Placemark>\n'
+
         output += '  </Document>\n'
         output += '</kml>'
 
