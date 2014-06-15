@@ -20,7 +20,7 @@ from geoq.maps.models import Layer, Map, FeatureType
 from geoq.mgrs.utils import Grid, GridException
 from geoq.core.utils import send_aoi_create_event
 from geoq.mgrs.exceptions import ProgramException
-from kml_view import JobKML
+from kml_view import *
 
 
 class Dashboard(TemplateView):
