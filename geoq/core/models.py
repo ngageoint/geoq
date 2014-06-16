@@ -175,6 +175,17 @@ class Job(GeoQBase):
 
         return json.dumps(geojson, indent=2) if as_json else geojson
 
+    def grid_geoJSON(self, as_json=True):
+        """
+        Return geoJSON of grid for export
+        """
+
+        geojson = SortedDict()
+        geojson["type"] = "FeatureCollection"
+        geojson["features"] = [json.loads(aoi.grid_geoJSON()) for aoi in self.aois.all()]
+
+        return json.dumps(geojson) if as_json else geojson
+
 
 class AOI(GeoQBase):
     """
@@ -223,6 +234,23 @@ class AOI(GeoQBase):
             priority=self.priority,
             absolute_url=reverse('aoi-work', args=[self.id]),
             delete_url=reverse('aoi-deleter', args=[self.id]))
+        geojson["geometry"] = json.loads(self.polygon.json)
+
+        return json.dumps(geojson)
+
+    def grid_geoJSON(self):
+        """
+        Return geoJSON of workcells for export
+        """
+
+        if self.id is None:
+            self.id = 1
+
+        geojson = SortedDict()
+        geojson["type"] = "Feature"
+        geojson["properties"] = dict(
+            id=self.id,
+            priority=self.priority)
         geojson["geometry"] = json.loads(self.polygon.json)
 
         return json.dumps(geojson)

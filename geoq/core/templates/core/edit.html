@@ -66,7 +66,7 @@
 
         aoi_feature_edit.percent_complete = {% widthratio object.job.complete.count 100 100%};
         aoi_feature_edit.description = "{{ object.description |safe}}";
-        aoi_feature_edit.static_root = "{{ STATIC_URL }}";
+        // aoi_feature_edit.static_root = "{{ STATIC_URL }}" + "images/markers/";
         aoi_feature_edit.help_url = "{% url 'help_page' %}";
 
         aoi_feature_edit.init();
