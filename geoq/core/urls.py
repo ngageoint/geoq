@@ -56,6 +56,9 @@ urlpatterns = patterns('',
     url(r'^jobs/(?P<job_pk>\d+)/create-aois/?$',
         login_required(BatchCreateAOIS.as_view()),
         name='job-create-aois'),
+    url(r'^jobs/(?P<job_pk>\d+)/prioritize-workcells/?$',
+        login_required(PrioritizeWorkcells.as_view()),
+        name='job-prioritize-workcells'),
 
     url(r'^jobs/(?P<job_pk>\d+)/batch-create-aois/?$',
         #login required set in views
@@ -93,5 +96,6 @@ urlpatterns = patterns('',
     url(r'^api/geo/mgrs/?$', 'core.views.mgrs', name='mgrs'),
     url(r'^proxy/(?P<path>.*)$', proxy_to, {'target_url': ''}),
     url(r'^api/job[s ]?/(?P<pk>\d+).geojson$', JobGeoJSON.as_view(), name='json-job'),
+    url(r'^api/job[s ]?/(?P<pk>\d+)/grid/job-workcells.geojson$', GridGeoJSON.as_view(), name='json-job-grid'),
 
 )
