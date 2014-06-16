@@ -135,7 +135,7 @@ aoi_feature_edit.watch_layer = function(layer, watch) {
     watched = oversight.watched;
     if(watch) {
         if(watched.indexOf(name) < 0) watched[watched.length] = name;
-            console.debug("loading", name);
+        layer.on("loading", function () {
             if(pending.indexOf(name) < 0) {
               pending[pending.length] = name;
               $("#layer-status").removeClass("icon-ok");
