@@ -77,7 +77,7 @@ leaflet_helper.constructors.urlTemplater =function(url, map, layer_json){
 };
 
 leaflet_helper.constructors.geojson_layer_count = 0;
-leaflet_helper.constructors.geojson = function(lyr, map, useLayerInstead) {
+leaflet_helper.constructors.geojson = function(layerConfig, map, useLayerInstead) {
 
     //Set up base icon
     var MapMarker = L.Icon.extend({
@@ -92,11 +92,32 @@ leaflet_helper.constructors.geojson = function(lyr, map, useLayerInstead) {
         }
     });
 
+    if (useLayerInstead && (useLayerInstead.geojson_layer_count !== undefined)) {
+        layerConfig.geojson_layer_count = useLayerInstead.geojson_layer_count;
+    } else {
+        leaflet_helper.constructors.geojson_layer_count++;
+        layerConfig.geojson_layer_count = leaflet_helper.constructors.geojson_layer_count;
+    }
+
     function iconCallback(feature, latlng){
-        var layerNum = leaflet_helper.constructors.geojson_layer_count % aoi_feature_edit.available_icons.length;
+        var iconUrl = "";
+        var iconX = 15;
+        var iconY = 24;
+
+        if (layerConfig && layerConfig.layerParams && (layerConfig.layerParams.icon || layerConfig.layerParams.iconUrl)) {
+            iconUrl = layerConfig.layerParams.icon || layerConfig.layerParams.iconUrl;
+            if (layerConfig.layerParams.iconX && layerConfig.layerParams.iconY) {
+                iconX = layerConfig.layerParams.iconX;
+                iconY = layerConfig.layerParams.iconY;
+            }
+        } else {
+            var layerNum = layerConfig.geojson_layer_count % aoi_feature_edit.available_icons.length;
+            iconUrl = aoi_feature_edit.available_icons[layerNum];
+        }
         var icon = new MapMarker({
-            iconUrl: aoi_feature_edit.available_icons[layerNum],
-            text: lyr.name
+            iconUrl: iconUrl,
+            iconSize: new L.Point(iconX, iconY),
+            text: layerConfig.name
         });
         return L.marker(latlng, {icon: icon});
     }
@@ -105,16 +126,17 @@ leaflet_helper.constructors.geojson = function(lyr, map, useLayerInstead) {
         onEachFeature: leaflet_helper.parsers.standard_onEachFeature,
         pointToLayer: iconCallback
     });
+    if (outputLayer.geojson_layer_count == undefined) {
+        outputLayer.geojson_layer_count = layerConfig.geojson_layer_count;
+    }
 
-    if (!useLayerInstead) leaflet_helper.constructors.geojson_layer_count++;
-
-    var url = leaflet_helper.constructors.urlTemplater(lyr.url, map, lyr.layerParams);
+    var url = leaflet_helper.constructors.urlTemplater(layerConfig.url, map, layerConfig.layerParams);
     var proxiedURL = leaflet_helper.proxify(url);
 
     $.ajax({
         type: 'GET',
         url: proxiedURL,
-        dataType: lyr.format || 'json',
+        dataType: layerConfig.format || 'json',
         success: function(data){
             leaflet_helper.constructors.geojson_success(data, proxiedURL, map, outputLayer);
         },
@@ -151,6 +173,11 @@ leaflet_helper.constructors.geojson_success = function (data, proxiedURL, map, o
             log.info("JSON layer was created from : "+ proxiedURL+ " - features:"+ features+ " - parser type: ", parserInfo.parserName);
         }
     }
+
+    if (outputLayer) {
+        leaflet_helper.update_tree_title(outputLayer);
+    }
+
     return outputLayer;
 };
 
@@ -251,6 +278,32 @@ leaflet_helper.parsers.instagramImages = function (result, map, outputLayer) {
 
     return outputLayer;
 };
+
+
+leaflet_helper.update_tree_title = function(outputLayer) {
+    var treeNodes = leaflet_layer_control.$tree.fancytree('getTree').rootNode;
+
+    var layerName = outputLayer.name;
+    var treeItem = null;
+    _.each(treeNodes.children,function(treeCats){
+        _.each(treeCats.children,function(treeNode){
+            var treeNodeTitle = treeNode.title;
+
+            if (_.str.startsWith(treeNodeTitle,layerName)){
+                treeItem = treeNode;
+            }
+        });
+    });
+
+    if (treeItem){
+        if (outputLayer._layers) {
+            var numFeatures = _.toArray(outputLayer._layers).length;
+            treeItem.setTitle(layerName + " ("+numFeatures+")");
+        }
+    }
+
+};
+
 leaflet_helper.parsers.flickrImages = function (result, map, outputLayer) {
     var jsonObjects = [];
     var photos = result.photos;
@@ -310,6 +363,7 @@ leaflet_helper.parsers.flickrImages = function (result, map, outputLayer) {
     } else {
         log.info("An Flickr Photos response was returned, but with no features.");
     }
+
     return outputLayer;
 };
 leaflet_helper.parsers.youTube = function (result, map, outputLayer){
