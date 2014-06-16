@@ -12,6 +12,11 @@
             height: 400px;
             width: 100%;
         }
+
+        #table-div {
+            height: 500px;
+            overflow-y: scroll;
+        }
     </style>
 {% endblock %}
 
@@ -57,7 +62,7 @@
     <div class="row-fluid container-narrow">
                  <form action="{% url 'job-prioritize-workcells' object.id %}" method="post">
                      {% csrf_token %}
-        <div class="span5">
+        <div class="span6">
             <!--- div class="list-view-header">Workcells</div -->
             <h3>
                 <span class="title header">
@@ -66,6 +71,7 @@
                 </span>
 
             </h3>
+                <div id='table-div'>
                 <table class="table table-bordered table-striped header-fixed">
                     <thead>
                         <tr>
@@ -93,12 +99,13 @@
                         {% endfor %}
                     </tbody>
                 </table>
+                </div>
 
         </div>
 
     <div class="row-fluid container-narrow">
         <div class="span8">
-            <div style="position:relative;">
+            <div style="position:relative; padding-top: 20px;">
                 <div class="btn btn-primary" id="file" style="position:absolute;">Click here to import priority values</div>
                 <input type="file" id="import-file" style="opacity:0; z-index:1;" onchange="('#file').value = this.value;" />
             </div>
