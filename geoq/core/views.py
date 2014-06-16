@@ -15,11 +15,12 @@ from django.shortcuts import get_object_or_404, redirect, render
 from django.views.generic import DetailView, ListView, TemplateView, View, DeleteView, CreateView, UpdateView
 
 from models import Project, Job, AOI
-from geoq.maps.models import Layer, Map
+from geoq.maps.models import Layer, Map, FeatureType
 
 from geoq.mgrs.utils import Grid, GridException
 from geoq.core.utils import send_aoi_create_event
 from geoq.mgrs.exceptions import ProgramException
+from kml_view import *
 
 
 class Dashboard(TemplateView):

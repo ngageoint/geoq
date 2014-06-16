@@ -79,9 +79,22 @@ leaflet_helper.constructors.urlTemplater =function(url, map, layer_json){
 leaflet_helper.constructors.geojson_layer_count = 0;
 leaflet_helper.constructors.geojson = function(lyr, map, useLayerInstead) {
 
+    //Set up base icon
+    var MapMarker = L.Icon.extend({
+        options: {
+            id: 0,
+            shadowUrl: null,
+            iconAnchor: new L.Point(7, 24),
+            iconSize: new L.Point(15, 24),
+            repeatMode: true,
+            text: 'Social Media Pointer',
+            iconUrl: aoi_feature_edit.available_icons[0]
+        }
+    });
+
     function iconCallback(feature, latlng){
         var layerNum = leaflet_helper.constructors.geojson_layer_count % aoi_feature_edit.available_icons.length;
-        var icon = new aoi_feature_edit.MapMarker({
+        var icon = new MapMarker({
             iconUrl: aoi_feature_edit.available_icons[layerNum],
             text: lyr.name
         });

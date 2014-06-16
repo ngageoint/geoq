@@ -43,6 +43,10 @@ aoi_feature_edit.init = function () {
             else {
                 aoi_feature_edit.icons[ftype.id] = aoi_feature_edit.MapIcon;
             }
+            if (ftype.name) {
+                aoi_feature_edit.icons[ftype.id].title = ftype.name;
+                aoi_feature_edit.icons[ftype.id].text = ftype.name;
+            }
 
         }
 
@@ -72,10 +76,12 @@ aoi_feature_edit.init = function () {
 };
 
 aoi_feature_edit.featureLayer_pointToLayer = function (feature, latlng) {
-    return new L.Marker(latlng, {
+    var icon = new aoi_feature_edit.icons[feature.properties.template](aoi_feature_edit.icon_style[feature.properties.template])
+    var marker = new L.Marker(latlng, {
 //        icon: new aoi_feature_edit.MapIcon(aoi_feature_edit.icons[feature.properties.template])
-        icon: new aoi_feature_edit.icons[feature.properties.template](aoi_feature_edit.icon_style[feature.properties.template])
+        icon: icon
     });
+    return marker
 };
 aoi_feature_edit.featureLayer_onEachFeature = function (feature, layer, featureLayer) {
     if (feature.properties) {
@@ -348,6 +354,12 @@ aoi_feature_edit.buildDrawingControl = function (drawnItems) {
     //feature_id = feature_id || aoi_feature_edit.current_feature_type_id || 1;
     //var feature = aoi_feature_edit.get_feature_type(feature_id);
 
+    _.each(aoi_feature_edit.all_markers,function(marker){
+        if (marker.title && marker.icon && marker.icon.options) {
+            marker.icon.options.text = marker.title
+        }
+    });
+
     var drawControl = new L.Control.Draw({
         position: "topleft",
 
@@ -612,7 +624,12 @@ aoi_feature_edit.createPointOptions = function (opts) {
         options.style = opts.style;
     }
 
-    options.icon = new aoi_feature_edit.icons[opts.id](aoi_feature_edit.icon_style[opts.id]);
+    var id = opts.id;
+    var style_obj = aoi_feature_edit.icon_style[id];
+    var icon_obj = aoi_feature_edit.icons[id];
+    if (style_obj && icon_obj) {
+        options.icon = new icon_obj(style_obj);
+    }
 
     options.repeatMode = true;
     options.id = opts.id;
