@@ -76,7 +76,7 @@ aoi_feature_edit.init = function () {
 };
 
 aoi_feature_edit.featureLayer_pointToLayer = function (feature, latlng) {
-    var icon = new aoi_feature_edit.icons[feature.properties.template](aoi_feature_edit.icon_style[feature.properties.template])
+    var icon = new aoi_feature_edit.icons[feature.properties.template](aoi_feature_edit.icon_style[feature.properties.template]);
     var marker = new L.Marker(latlng, {
 //        icon: new aoi_feature_edit.MapIcon(aoi_feature_edit.icons[feature.properties.template])
         icon: icon
@@ -127,6 +127,9 @@ aoi_feature_edit.mapResize = function () {
 
     if (aoi_feature_edit.map && aoi_feature_edit.map.invalidateSize) {
         aoi_feature_edit.map.invalidateSize(false);
+
+        var newWidth = $(aoi_feature_edit.map._container).width();
+        $('#aoi-status-box').css('width', newWidth-160);
     }
 };
 aoi_feature_edit.map_init = function (map, bounds) {
@@ -435,10 +438,14 @@ aoi_feature_edit.addMapControlButtons = function (map) {
     var completeButton = new L.Control.Button(completeButtonOptions).addTo(map);
 
 
-    var title = "<h4><a href='" + aoi_feature_edit.job_absolute_url + "'>" + aoi_feature_edit.job_name + "</a> > AOI #" + aoi_feature_edit.aoi_id + " > ";
+    var title = "<h4 id='aoi-status-box'><a href='#'>" + aoi_feature_edit.job_name + "</a> > AOI #" + aoi_feature_edit.aoi_id + " > ";
     title += "<span class='aoi-status muted'>" + aoi_feature_edit.percent_complete + "% Complete > " + aoi_feature_edit.description + "</span></h4>";
+    var $title = $(title)
+        .on('click',function(){
+           window.open(aoi_feature_edit.job_absolute_url);
+        });
     var titleInfoOptions = {
-        'html': title,  // string
+        'html': $title,  // string
         'hideText': false,  // bool
         position: 'topleft',
         'maxWidth': 60,  // number

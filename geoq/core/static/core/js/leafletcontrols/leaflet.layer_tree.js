@@ -579,4 +579,5 @@ leaflet_layer_control.toggleDrawer = function() {
         leaflet_layer_control.openDrawer();
         leaflet_layer_control.drawerIsOpen = true;
     }
+    setTimeout(aoi_feature_edit.mapResize, 400);
 };
