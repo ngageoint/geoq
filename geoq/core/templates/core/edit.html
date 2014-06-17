@@ -58,7 +58,9 @@
 
         aoi_feature_edit.aoi_map_json = {{ map.to_json|safe|default:"{}" }};
         aoi_feature_edit.aoi_extents_geojson = {{ object.polygon.json|safe }};;
-        aoi_feature_edit.job_features_geojson = {{ object.job.features_geoJSON|safe }};;
+        aoi_feature_edit.aoi_properties = {{ object.properties_json|safe }};
+
+        aoi_feature_edit.job_features_geojson = {{ object.job.features_geoJSON|safe }};
         aoi_feature_edit.feature_types = feature_types;
         aoi_feature_edit.create_feature_url = "{% url 'feature-create' %}";
         aoi_feature_edit.edit_feature_url = "{% url 'feature-edit' %}";
@@ -66,7 +68,7 @@
 
         aoi_feature_edit.percent_complete = {% widthratio object.job.complete.count 100 100%};
         aoi_feature_edit.description = "{{ object.description |safe}}";
-        // aoi_feature_edit.static_root = "{{ STATIC_URL }}" + "images/markers/";
+        aoi_feature_edit.static_root = "{{ STATIC_URL }}";
         aoi_feature_edit.help_url = "{% url 'help_page' %}";
 
         aoi_feature_edit.init();
@@ -93,6 +95,9 @@
 {#            width: 100%;#}
             cursor: crosshair;
         }
+        .aoi-status {
+            font-size: 18px;
+        }
         #layer_info_drawer {
             position: absolute;
             top: 0px;
@@ -114,8 +119,9 @@
         }
 
         #aoi-status-box {
-            max-height: 78px;
+            max-height: 64px;
             cursor: pointer;
+            overflow-y: hidden;
         }
 
         #tag_list_box {
