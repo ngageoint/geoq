@@ -10,6 +10,7 @@ from django.contrib.gis.geos import MultiPolygon
 from django.core.urlresolvers import reverse
 from django.utils.datastructures import SortedDict
 from managers import AOIManager
+from jsonfield import JSONField
 
 TRUE_FALSE = [(0, 'False'), (1, 'True')]
 
@@ -24,6 +25,7 @@ class GeoQBase(models.Model):
     name = models.CharField(max_length=200)
     description = models.TextField()
     updated_at = models.DateTimeField(auto_now=True)
+    properties = JSONField(null=True, help_text='JSON key/value pairs associated with this object, e.g. {"usng":"18 S TJ 87308 14549", "favorite":"true"}')
 
     def __unicode__(self):
         return self.name
