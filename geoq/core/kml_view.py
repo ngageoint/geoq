@@ -4,6 +4,8 @@ from django.http import HttpResponse
 from models import Job
 from geoq.maps.models import FeatureType
 from django.shortcuts import get_object_or_404
+from datetime import datetime
+from pytz import timezone
 
 
 class JobKML(ListView):
@@ -121,10 +123,18 @@ class JobKML(ListView):
             analyst_name = str(loc.analyst.username)
             dtg = str(loc.created_at)
             job_id = str(loc.job.id)
-            desc = 'Posted by '+analyst_name+' at '+dtg+' in Job #'+job_id
             #TODO: Add links to Jobs and Projects
 
+            datetime_obj = datetime.strptime(dtg, "%Y-%m-%d %H:%M:%S.%f+00:00")
+            datetime_obj_utc = datetime_obj.replace(tzinfo=timezone('UTC'))
+
+            date_time = datetime_obj_utc.strftime('%Y-%m-%dT%H:%M:%SZ')
+            date_time_desc = datetime_obj_utc.strftime('%Y-%m-%d %H:%M:%S')
+
+            desc = 'Posted by '+analyst_name+' at '+date_time_desc+' Zulu (UTC) in Job #'+job_id
+
             output += '    <Placemark><name>'+template_name+'</name>\n'
+            output += '      <TimeStamp><when>'+date_time+'</when></TimeStamp>\n'
             output += '      <description>'+desc+'</description>\n'
             output += '      <styleUrl>#geoq_'+str(loc.template.id)+'</styleUrl>\n'
             output += '      '+str(loc.the_geom.kml)+'\n'
