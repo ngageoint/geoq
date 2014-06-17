@@ -126,35 +126,49 @@ aoi_feature_edit.mapResize = function () {
 
 aoi_feature_edit.layer_oversight = {
   pending: [],
-  watched: []
+  watched: [],
+  warned: [],
+  failing: []
 }
+
 aoi_feature_edit.watch_layer = function(layer, watch) {
     oversight = aoi_feature_edit.layer_oversight;
     name = layer.name;
     pending = oversight.pending;
     watched = oversight.watched;
+    failing = oversight.failing;
     if(watch) {
         if(watched.indexOf(name) < 0) watched[watched.length] = name;
-        layer.on("loading", function () {
-            if(pending.indexOf(name) < 0) {
+        layer.on("loading", function (evt) {
+            if(pending.indexOf(name) < 0 && failing.indexOf(name) < 0) {
               pending[pending.length] = name;
-              $("#layer-status").removeClass("icon-ok");
               $("#layer-status").addClass("icon-refresh");
             }
         });
-        layer.on("load", function() {
-             if(watched.indexOf(name) > -1) {
-                pending.splice(watched.indexOf(name),1);
-             }
-             if(pending.length == 0) {
-                  $("#layer-status").removeClass("icon-refresh");
-                  $("#layer-status").addClass("icon-ok");
-             }
+        layer.on("load", function(evt) {
+             if(pending.indexOf(name) > -1) pending.splice(watched.indexOf(name),1);
+             if(pending.length == 0) $("#layer-status").removeClass("icon-refresh");
+        });
+        layer.on("tileerror", function(evt) {
+          var errorSrc = evt.target.name;
+          var layerErrorI = $("#layer-error");
+          if(!layerErrorI.hasClass("icon-flag")) layerErrorI.addClass("icon-flag");
+          if(pending.indexOf(errorSrc) > -1) pending.splice(pending.indexOf(errorSrc),1);
+          if(pending.length == 0) layerErrorI.removeClass("icon-refresh");
+
+          if(failing.indexOf(errorSrc) < 0) {
+            failing[failing.length] = errorSrc;
+          }
+          var toggleDrawer = $("#toggle-drawer");
+          toggleDrawer.tooltip("destroy");
+          toggleDrawer.prop("title", "Layer Issue(s): " + failing.join(", "));
+          toggleDrawer.tooltip();
         });
     } else {
         if(watched.indexOf(name) > -1) {
             layer.off("loading");
             layer.off("load");
+            layer.off("tileerror");
         }
     }
 }
