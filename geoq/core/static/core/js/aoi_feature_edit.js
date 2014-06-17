@@ -132,7 +132,51 @@ aoi_feature_edit.mapResize = function () {
         $('#aoi-status-box').css('width', newWidth-160);
     }
 };
+
+aoi_feature_edit.layer_oversight = {
+  pending: [],
+  watched: []
+}
+aoi_feature_edit.watch_layer = function(layer, watch) {
+    oversight = aoi_feature_edit.layer_oversight;
+    name = layer.name;
+    pending = oversight.pending;
+    watched = oversight.watched;
+    if(watch) {
+        if(watched.indexOf(name) < 0) watched[watched.length] = name;
+        layer.on("loading", function () {
+            if(pending.indexOf(name) < 0) {
+              pending[pending.length] = name;
+              $("#layer-status").removeClass("icon-ok");
+              $("#layer-status").addClass("icon-refresh");
+            }
+        });
+        layer.on("load", function() {
+             if(watched.indexOf(name) > -1) {
+                pending.splice(watched.indexOf(name),1);
+             }
+             if(pending.length == 0) {
+                  $("#layer-status").removeClass("icon-refresh");
+                  $("#layer-status").addClass("icon-ok");
+             }
+        });
+    } else {
+        if(watched.indexOf(name) > -1) {
+            layer.off("loading");
+            layer.off("load");
+        }
+    }
+}
+
 aoi_feature_edit.map_init = function (map, bounds) {
+
+    map.on("layer_add", function(e) {
+        aoi_feature_edit.watch_layer(e.layer, true);
+    });
+    map.on("layer_remove", function(e) {
+        aoi_feature_edit.watch_layer(e.layer, false);
+    });
+
     var custom_map = aoi_feature_edit.aoi_map_json;
     aoi_feature_edit.map = map;
 
@@ -167,7 +211,10 @@ aoi_feature_edit.map_init = function (map, bounds) {
             } else {
                 log.error("Tried to add a layer, but didn't work: "+layer_data.url)
             }
-            if (built_layer) aoi_feature_edit.map.addLayer(built_layer);
+            if (built_layer) {
+                aoi_feature_edit.map.addLayer(built_layer);
+                aoi_feature_edit.watch_layer(built_layer, true);
+            }
         });
     }
 
