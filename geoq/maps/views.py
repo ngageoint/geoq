@@ -128,8 +128,9 @@ def create_update_map(request, pk=None):
 
         if form.is_valid() and maplayers_formset.is_valid():
             form.save()
+            maplayers_formset.instance = form.instance
             maplayers_formset.save()
-            return HttpResponseRedirect(reverse('job-list'))
+            return HttpResponseRedirect(reverse('map-list'))
     else:
         form = MapForm(prefix='map', instance=map_obj)
         maplayers_formset = MapInlineFormset(prefix='layers', instance=map_obj)
