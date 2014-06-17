@@ -44,7 +44,7 @@
 
         {% if aoi.analyst in reviewers %}
             aoi_feature_edit.finishLabel = "Complete AOI";
-            aoi_feature_edit.finishUrl = "{% url 'aoi-update-status' object.id "Completed" %}";
+            aoi_feature_edit.finishUrl = "{% url 'aoi-update-status' object.id 'Completed' %}";
         {% else %}
             aoi_feature_edit.finishLabel = "Submit AOI";
             aoi_feature_edit.finishUrl = "{% url 'aoi-update-status' object.id 'In review' %}";
