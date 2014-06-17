@@ -10,8 +10,9 @@ var leaflet_layer_control = {};
 //TODO: Integrate with GeoNode to auto-build layers in GeoServer
 //TODO: When adding ?request=GetCapabilities links to layers, do it smartly
 
-//TODO: When features are being addded, check for ids
-//TODO: Cycle through icons, add twitter/flickr/instagram/youtube icons and a few standard ones
+//TODO: When changing order of Google Maps, always put below Features layers
+
+//TODO: Add twitter/flickr/instagram/youtube icons
 
 leaflet_layer_control.$map = undefined;
 leaflet_layer_control.$drawer = undefined;
@@ -154,8 +155,8 @@ leaflet_layer_control.parsers.infoFromFolder = function (obj){
 };
 leaflet_layer_control.parsers.textIfExists = function(options) {
     options = options || {};
-    var obj = options.name;
-    var title = options.title;
+    var obj = options.name || "";
+    var title = options.title || "";
     var noBold = options.noBold;
     var noBreak = options.noBreak;
     var header = options.header;
@@ -270,7 +271,8 @@ leaflet_layer_control.layerDataList = function (options) {
                         if (options.style.opacity == 1 || options.style.fillOpacity == 1){
                             layer_obj.selected = true;
                         }
-                    } else if (options && options.opacity && options.opacity == 1) {
+                    }
+                    if (options && options.opacity && options.opacity == 1) {
                         layer_obj.selected = true;
                     }
                 } else if (layer.options && layer.options.opacity){
@@ -341,7 +343,10 @@ leaflet_layer_control.setLayerOpacity = function (layer, amount){
             var $lc = $(layer.getContainer());
             $lc.zIndex(1);
             $lc.hide();
+        } else if (layer._container) {
+            $(layer._container).css('opacity',amount);
         }
+
     } else {
         if (layer._layers) {
             _.each(layer._layers,function(f){
@@ -358,6 +363,11 @@ leaflet_layer_control.setLayerOpacity = function (layer, amount){
             leaflet_layer_control.zIndexesOfHighest++;
             $lc.zIndex(leaflet_layer_control.zIndexesOfHighest);
             $lc.show();
+        } else if (layer._container) {
+            var $lc = $(layer._container);
+            leaflet_layer_control.zIndexesOfHighest++;
+            $lc.zIndex(leaflet_layer_control.zIndexesOfHighest);
+            $lc.css('opacity',amount);
         }
     }
 };
@@ -570,4 +580,5 @@ leaflet_layer_control.toggleDrawer = function() {
         leaflet_layer_control.openDrawer();
         leaflet_layer_control.drawerIsOpen = true;
     }
+    setTimeout(aoi_feature_edit.mapResize, 400);
 };

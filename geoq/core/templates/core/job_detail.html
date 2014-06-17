@@ -121,6 +121,9 @@
                         {% if 'accounts.add_job' in request.base_perms %}
                         <li><a href="{% url 'job-create-aois' object.id%}">Create Workcells</a></li>
                         {% endif %}
+                        {% if 'accounts.add_job' in request.base_perms %}
+                        <li><a href="{% url 'job-prioritize-workcells' object.id %}">Prioritize Workcells</a></li>
+                        {% endif %}
                         {% if 'accounts.delete_job' in request.base_perms %}
                         <li><a href="{% url 'job-delete' object.id %}">Delete Job</a></li>
                         {% endif %}
@@ -200,16 +203,24 @@
                         {% if geoserver_job_wfs %}
                         <tr>
                             <td><b>KML:</b></td>
-                            <td><a href="{{geoserver_job_kml}}">Link</a></td>
+                            <td><a href="{{geoserver_job_kml}}">GeoServer Link</a></td>
                         </tr>
                         <tr>
                             <td><b>WFS URL:</b></td>
                             <td>{{geoserver_job_wfs}}</td>
                         </tr>
-                        {% endif %}
+                        {%  endif %}
+                        <tr>
+                            <td><b>KML:</b></td>
+                            <td><a href="{% url 'kml-job' object.id %}" title="Best for use in other programs such as the Event Pages">Link</a> ||
+                            <a href="{% url 'kml-networked-job' object.id %}" title="Refereshes every 2 min when viewed in Google Earth">Networked Link</a>
+                            </td>
+                        </tr>
                         <tr>
                             <td><b>GeoJSON:</b></td>
-                            <td><a href="{% url 'json-job' object.id %}">Link</a></td>
+                            <td><a href="{% url 'json-job' object.id %}">Link</a> ||
+                                <a href="{% url 'json-job-grid' object.id %}">Job Grid</a>
+                            </td>
                         </tr>
                     </table>
                 </div>

@@ -78,6 +78,27 @@ leaflet_helper.layer_conversion = function (lyr, map) {
 
             outputLayer = new L.KML(proxiedURL, layerOptions);
         }
+    } else if (lyr.type == 'Bing') {
+        var key = lyr.token;
+//        var overrideUrl = lyr.url; //TODO: Modify library to use alternate URL, or to pass through proxy and swap key
+        if (key && key.length > 20) {
+            outputLayer = new L.BingLayer(key);
+        }
+    } else if (lyr.type == 'Google Maps') {
+        var layerName = lyr.layer;
+        if (layerName && layerName.toUpperCase) {
+            layerName = layerName.toUpperCase();
+            //Only allow these 4 types
+            if ("TERRAIN ROADMAP SATELLITE HYBRID".indexOf(layerName) < 0) {
+                layerName = undefined;
+            }
+        }
+
+        if (layerName) {
+            outputLayer = new L.Google(layerName);
+        } else {
+            outputLayer = new L.Google();
+        }
     }
     //Make sure the name is set for showing up in the layer menu
     if (lyr.name && outputLayer) outputLayer.name = lyr.name;

@@ -15,11 +15,12 @@ from django.shortcuts import get_object_or_404, redirect, render
 from django.views.generic import DetailView, ListView, TemplateView, View, DeleteView, CreateView, UpdateView
 
 from models import Project, Job, AOI
-from geoq.maps.models import Layer, Map
+from geoq.maps.models import Layer, Map, FeatureType
 
 from geoq.mgrs.utils import Grid, GridException
 from geoq.core.utils import send_aoi_create_event
 from geoq.mgrs.exceptions import ProgramException
+from kml_view import *
 
 
 class Dashboard(TemplateView):
@@ -300,6 +301,35 @@ class ChangeAOIStatus(View):
             return HttpResponse(json.dumps(error), status=error.get('error'))
 
 
+class PrioritizeWorkcells(TemplateView):
+    http_method_names = ['post','get']
+    template_name = 'core/prioritize_workcells.html'
+
+    def get_context_data(self, **kwargs):
+        cv = super(PrioritizeWorkcells, self).get_context_data(**kwargs)
+        cv['object'] = get_object_or_404(Job, pk=self.kwargs.get('job_pk'))
+        cv['workcells'] = AOI.objects.filter(job_id=self.kwargs.get('job_pk')).order_by('id')
+        return cv
+
+
+    def post(self, request, **kwargs):
+        job = get_object_or_404(Job, id=self.kwargs.get('job_pk'))
+        import pdb; pdb.set_trace()
+        idvals = iter(request.POST.getlist('id'))
+        prvals = iter(request.POST.getlist('priority'))
+        workcells = AOI.objects.filter(job=job)
+
+        for idval in idvals:
+            id = int(idval)
+            priority = int(next(prvals))
+            cell = workcells.get(id=id)
+            cell.priority = priority
+            cell.save()
+
+
+        return HttpResponseRedirect(job.get_absolute_url())
+
+
 def usng(request):
     """
     Proxy to USNG service.
@@ -394,5 +424,14 @@ class JobGeoJSON(ListView):
     def get(self, request, *args, **kwargs):
         job = get_object_or_404(Job, pk=self.kwargs.get('pk'))
         geojson = job.features_geoJSON()
+
+        return HttpResponse(geojson, mimetype="application/json", status=200)
+
+class GridGeoJSON(ListView):
+    model = Job
+
+    def get(self, request, *args, **kwargs):
+        job = get_object_or_404(Job, pk=self.kwargs.get('pk'))
+        geojson = job.grid_geoJSON()
 
         return HttpResponse(geojson, mimetype="application/json", status=200)
