@@ -296,13 +296,15 @@ class Feature(models.Model):
         Returns geoJSON of the feature.
         Try to conform to https://github.com/mapbox/simplestyle-spec/tree/master/1.0.0
         """
-
-        properties = dict(id=self.id,
+        properties_main = self.properties or {}
+        properties_built = dict(id=self.id,
                           template=self.template.id if hasattr(self.template, "id") else None,
                           analyst=self.analyst.username,
                           created_at=datetime.strftime(self.created_at, '%Y-%m-%dT%H:%M:%S%Z'),
                           updated_at=datetime.strftime(self.updated_at, '%Y-%m-%dT%H:%M:%S%Z'),
                           )
+        properties = dict(properties_built.items() + properties_main.items())
+
         feature_type = FeatureType.objects.get(id=self.template.id)
         # if feature_type.style.has_key('color'):
         #     color = feature_type.style['color']

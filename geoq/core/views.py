@@ -15,7 +15,7 @@ from django.shortcuts import get_object_or_404, redirect, render
 from django.views.generic import DetailView, ListView, TemplateView, View, DeleteView, CreateView, UpdateView
 
 from models import Project, Job, AOI
-from geoq.maps.models import Layer, Map, FeatureType
+from geoq.maps.models import *
 
 from geoq.mgrs.utils import Grid, GridException
 from geoq.core.utils import send_aoi_create_event
@@ -410,15 +410,38 @@ def update_job_data(request, *args, **kwargs):
     if attribute and value:
         aoi = get_object_or_404(AOI, pk=aoi_pk)
 
-        properties_main = aoi.properties or {}
-        properties_main[attribute] = value
-        aoi.properties = properties_main
+        if value == 'status':
+            aoi.status = value
+        elif value == 'priority':
+            aoi.priority = int(value)
+        else:
+            properties_main = aoi.properties or {}
+            properties_main[attribute] = value
+            aoi.properties = properties_main
 
-        # setattr(aoi, attribute, value)
         aoi.save()
         return HttpResponse(value, mimetype="application/json", status=200)
     else:
-        return HttpResponse('{"status":"error"}', mimetype="application/json", status=400)
+        return HttpResponse('{"status":"attribute and value not passed in"}', mimetype="application/json", status=400)
+
+
+
+@login_required
+def update_feature_data(request, *args, **kwargs):
+    feature_pk = kwargs.get('pk')
+    attribute = request.POST.get('id')
+    value = request.POST.get('value')
+    if attribute and value:
+        feature = get_object_or_404(Feature, pk=feature_pk)
+
+        properties_main = feature.properties or {}
+        properties_main[attribute] = value
+        feature.properties = properties_main
+
+        feature.save()
+        return HttpResponse(value, mimetype="application/json", status=200)
+    else:
+        return HttpResponse('{"status":"attribute and value not passed in"}', mimetype="application/json", status=400)
 
 
 @login_required

@@ -100,5 +100,6 @@ urlpatterns = patterns('',
     url(r'^api/job[s ]?/(?P<pk>\d+).networked.kml$', JobKMLNetworkLink.as_view(), name='kml-networked-job'),
     url(r'^api/job[s ]?/(?P<pk>\d+)/grid/job-workcells.geojson$', GridGeoJSON.as_view(), name='json-job-grid'),
     url(r'^api/job/update/(?P<pk>\d+)$', update_job_data, name='update-job-data'),
+    url(r'^api/feature/update/(?P<pk>\d+)$', update_feature_data, name='update-feature-data'),
 
 )

@@ -62,6 +62,11 @@ aoi_feature_edit.init = function () {
             },
             pointToLayer: aoi_feature_edit.featureLayer_pointToLayer
         });
+        featureLayer.on('click', function(e){
+            if (typeof leaflet_layer_control!="undefined"){
+                leaflet_layer_control.show_feature_info(e.layer.feature);
+            }
+        });
 
         featureLayer.name = ftype.name;
         aoi_feature_edit.featureLayers[ftype.id] = featureLayer;
@@ -98,11 +103,18 @@ aoi_feature_edit.featureLayer_onEachFeature = function (feature, layer, featureL
         if (feature.properties.analyst){
             popupContent += '<b>Analyst:</b> ' + feature.properties.analyst;
         }
-        if (feature.properties.created_at){
-            popupContent += '<br/><b>Created:</b> ' + feature.properties.created_at;
-        }
         if (feature.properties.updated_at){
-            popupContent += '<br/><b>Updated:</b> ' + feature.properties.updated_at;
+            var datetime = feature.properties.updated_at;
+            datetime = datetime.replace("T"," ");
+            datetime = datetime.replace("UTC"," UTC");
+            var dtg = moment(datetime);
+
+            if (dtg.isValid()){
+                popupContent += '<br/><b>Updated:</b> ' + dtg.calendar();
+            }
+        }
+        if (feature.properties.feature_note){
+            popupContent += '<br/><b>Note:</b> ' + feature.properties.feature_note;
         }
         if (feature.properties.id){
             popupContent += '<br/><a onclick="javascript:deleteFeature(\'' + feature.properties.id + '\', \'/geoq/features/delete/' + feature.properties.id + '\');">Delete Feature</a>';
@@ -136,7 +148,7 @@ aoi_feature_edit.mapResize = function () {
 aoi_feature_edit.layer_oversight = {
   pending: [],
   watched: []
-}
+};
 aoi_feature_edit.watch_layer = function(layer, watch) {
     oversight = aoi_feature_edit.layer_oversight;
     name = layer.name;
@@ -349,7 +361,6 @@ aoi_feature_edit.map_init = function (map, bounds) {
         var id = e.layerType.slice(-1);
         var map_item_type = parseInt(id);
         if (isNaN(map_item_type)){
-            //TODO: This is a temporary fix when the feature editing type isn't set properly
             var features = _.toArray(aoi_feature_edit.feature_types);
             if (features && features[0] && features[0].id) {
                 map_item_type = features[0].id;
@@ -487,7 +498,7 @@ aoi_feature_edit.addMapControlButtons = function (map) {
 
     var title = "<h4 id='aoi-status-box'><a href='#'>" + aoi_feature_edit.job_name + "</a> > AOI #" + aoi_feature_edit.aoi_id + " > ";
     if (aoi_feature_edit.aoi_properties && aoi_feature_edit.aoi_properties.usng) {
-        title += " USNG: "+aoi_feature_edit.aoi_properties.usng + " >";
+        title += " USNG: "+aoi_feature_edit.aoi_properties.usng + " > ";
     }
     title += "<span class='aoi-status muted'>" + aoi_feature_edit.percent_complete + "% Complete > " + aoi_feature_edit.description + "</span></h4>";
     var $title = $(title)
