@@ -14,7 +14,7 @@ from django.http import Http404, HttpResponse, HttpResponseRedirect
 from django.shortcuts import get_object_or_404, redirect, render
 from django.views.generic import DetailView, ListView, TemplateView, View, DeleteView, CreateView, UpdateView
 
-from models import Project, Job, AOI
+from models import Project, Job, AOI, Comment
 from geoq.maps.models import Layer, Map, FeatureType
 
 from geoq.mgrs.utils import Grid, GridException
@@ -93,6 +93,7 @@ class CreateFeaturesView(DetailView):
         cv['aoi'].analyst = self.request.user
         cv['aoi'].status = 'In work'
         cv['aoi'].save()
+        Comment(user=cv['aoi'].analyst,aoi=cv['aoi'],text="Workcell opened by user").save()
         return cv
 
 
@@ -280,6 +281,7 @@ class ChangeAOIStatus(View):
 
         if aoi.user_can_complete(request.user):
             aoi = self._update_aoi(request, aoi, status)
+            Comment(aoi=aoi,user=request.user,text='changed status to %s' % status).save()
 
         try:
             url = request.META['HTTP_REFERER']
@@ -293,6 +295,7 @@ class ChangeAOIStatus(View):
 
         if aoi.user_can_complete(request.user):
             aoi = self._update_aoi(request, aoi, status)
+            Comment(aoi=aoi,user=request.user,text='changed status to %s' % status).save()
 
             # send aoi completion event for badging
             send_aoi_create_event(request.user, aoi.id, aoi.features.all().count())
@@ -438,6 +441,27 @@ def batch_create_aois(request, *args, **kwargs):
                                         polygon=GEOSGeometry(json.dumps(aoi.get('geometry')))) for aoi in aois])
 
     return HttpResponse()
+
+@login_required
+def add_workcell_comment(request, *args, **kwargs):
+    aoi = get_object_or_404(AOI, id=kwargs.get('pk'))
+    user = request.user
+    comment_text = request.POST['comment']
+
+    if comment_text:
+        comment = Comment(user=user, aoi=aoi, text=comment_text)
+        comment.save()
+
+    return HttpResponse()
+
+class LogJSON(ListView):
+    model = AOI
+
+    def get(self,request,*args,**kwargs):
+        aoi = get_object_or_404(AOI, id=kwargs.get('pk'))
+        log = aoi.logJSON()
+
+        return HttpResponse(json.dumps(log), mimetype="application/json", status=200)
 
 
 class JobGeoJSON(ListView):
