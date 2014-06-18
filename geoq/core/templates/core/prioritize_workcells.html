@@ -15,6 +15,7 @@
 
         #table-div {
             height: 500px;
+            width: 700px;
             overflow-y: scroll;
         }
     </style>
@@ -77,6 +78,8 @@
                         <tr>
                             <th>Workcell ID</th>
                             <th>Priority</th>
+                            <th>Status</th>
+                            <th>Location</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -84,7 +87,7 @@
                         <tr>
                             <input type="hidden" name="id" value="{{ cell.id }}">
                             <td value="{{ cell.id }}">
-                                {{ cell.id }}
+                                <a href='{% url 'aoi-work' cell.id %}' target="_blank">{{ cell.id }}</a>
                             </td>
                             <td>
                                 <select name="priority" id="priority-{{ cell.id }}">
@@ -94,6 +97,13 @@
                                     <option value="4" {% if cell.priority == 4 %}selected="selected"{% endif %}>4</option>
                                     <option value="5" {% if cell.priority == 5 %}selected="selected"{% endif %}>5</option>
                                 </select>
+                            </td>
+                            <td>
+                                {{ cell.status }}
+                            </td>
+                            <td>
+                                {{ cell.properties.usng }}
+                                {{ cell.properties.mgrs }}
                             </td>
                         </tr>
                         {% endfor %}
