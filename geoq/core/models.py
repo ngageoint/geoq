@@ -192,7 +192,7 @@ class Job(GeoQBase):
 
 class AOI(GeoQBase):
     """
-    Low-level organizational object.
+    Low-level organizational object. Now (6/1/14) referred to as a 'Workcell'
     """
 
     STATUS_VALUES = ['Unassigned', 'In work', 'In review', 'Completed'] #'Assigned'
@@ -212,6 +212,10 @@ class AOI(GeoQBase):
     def __unicode__(self):
         aoi_obj = '%s - AOI %s' % (self.name, self.id)
         return aoi_obj
+
+    @property
+    def log(self):
+        return Comment.objects.filter(aoi=self).order_by('created_at')
 
     #def save(self):
     # if analyst or reviewer updated, then create policy to give them permission to edit this object.....
@@ -240,6 +244,9 @@ class AOI(GeoQBase):
         geojson["geometry"] = json.loads(self.polygon.json)
 
         return json.dumps(geojson)
+
+    def logJSON(self):
+        return [ob.to_dict() for ob in self.log]
 
     def properties_json(self):
         """
@@ -286,5 +293,20 @@ class AOI(GeoQBase):
         verbose_name_plural = 'Areas of Interest'
 
 
-# if not 'syncdb' in sys.argv[1:2] and not 'migrate' in sys.argv[1:2]:
-#     from accounts.meta_badges import *
+class Comment(models.Model):
+    """
+    Track comments regarding work on a Workcell
+    """
+    user = models.ForeignKey(User, blank=True, null=True, help_text="User who made comment")
+    aoi = models.ForeignKey(AOI, blank=False, null=False, help_text="Associated AOI for comment")
+    text = models.CharField(max_length=200)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __unicode__(self):
+        comment_obj = '%s Comment on %s' % (self.user, self.aoi.id)
+        return comment_obj
+
+    def to_dict(self):
+        format = "%a %b %d %H:%M:%S %Y"
+        o = {'user': self.user.username, 'timestamp': self.created_at.strftime(format), 'text': self.text}
+        return o

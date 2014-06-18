@@ -24,7 +24,6 @@ leaflet_layer_control.init = function(){
 };
 leaflet_layer_control.initDrawer = function(){
     //Build the drawer with an Accordion and add it after the map
-
     var $drawer = $("<div>")
         .attr({id:"layer_info_drawer"});
     leaflet_layer_control.$drawer = $drawer;
