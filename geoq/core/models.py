@@ -215,7 +215,7 @@ class AOI(GeoQBase):
 
     @property
     def log(self):
-        return Comment.objects.filter(aoi=self).order_by('-created_at')
+        return Comment.objects.filter(aoi=self).order_by('created_at')
 
     #def save(self):
     # if analyst or reviewer updated, then create policy to give them permission to edit this object.....
@@ -244,6 +244,9 @@ class AOI(GeoQBase):
         geojson["geometry"] = json.loads(self.polygon.json)
 
         return json.dumps(geojson)
+
+    def logJSON(self):
+        return [ob.to_dict() for ob in self.log]
 
     def properties_json(self):
         """
@@ -300,6 +303,10 @@ class Comment(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __unicode__(self):
-        comment_obj = '%s Comment %s' % (self.user, self.id)
+        comment_obj = '%s Comment on %s' % (self.user, self.aoi.id)
         return comment_obj
 
+    def to_dict(self):
+        format = "%a %b %d %H:%M:%S %Y"
+        o = {'user': self.user.username, 'timestamp': self.created_at.strftime(format), 'text': self.text}
+        return o
