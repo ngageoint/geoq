@@ -79,7 +79,8 @@
     {% compress css %}
         {% leaflet_css plugins="draw"%}
         {% import_django_select2_css %}
-	<link rel="stylesheet" href="{{ STATIC_URL }}core/js/leaflet.OSMGeocoder/Control.OSMGeocoder.css" />
+    	<link rel="stylesheet" href="{{ STATIC_URL }}core/js/leaflet.OSMGeocoder/Control.OSMGeocoder.css" />
+    	<link rel="stylesheet" href="{{ STATIC_URL }}bootstrap.min.css" />
 
     {% endcompress %}
     <style type="text/css">
@@ -104,9 +105,20 @@
             top: 0px;
             left: 0px;
             width: 300px;
-            background-color: lightblue;
+{#            background-color: lightblue;#}
             padding-top: 50px;
             margin-left: -300px;
+        }
+        .gray-header {
+            padding: 3px 7px;
+            font-size: 14px;
+            font-weight: bold;
+            background-color: #f5f5f5;
+            border: 1px solid #ddd;
+            color: #9da0a4;
+            -webkit-border-radius: 4px 0 4px 0;
+            -moz-border-radius: 4px 0 4px 0;
+            border-radius: 4px 0 4px 0;
         }
 
         #filter_bar_drawer {
@@ -189,27 +201,26 @@
         }
 
         #drawer_tray_top {
-            max-height: 100px;
-            position: inherit;
         }
         .status_block {
-            width: 138px;
+            width: 130px;
             display: inline-block;
         }
         #drawer_tray_bottom {
-            min-height: 100px;
-            max-height: 150px;
-            vertical-align: bottom;
-            bottom: 0;
+{#            min-height: 100px;#}
+{#            max-height: 150px;#}
+{#            vertical-align: bottom;#}
+{#            bottom: 0;#}
+            font-size: 10px;
         }
         .drawer_tray {
-            width: 281px;
-            font-family: tahoma, arial, helvetica;
-            background-color: white;
+{#            width: 281px;#}
+{#            font-family: tahoma, arial, helvetica;#}
+{#            background-color: white;#}
             border: 1px dotted gray;
-            position: absolute;
-            display: inline-block;
-            overflow-y: scroll;
+{#            position: absolute;#}
+{#            display: inline-block;#}
+{#            overflow-y: scroll;#}
         }
 
         #add_layer_button {
@@ -221,11 +232,9 @@
 
         .scroll-link {
             font-size: .7em;
-            min-height: 20px;
-            max-height: 38px;
-            overflow-y: scroll;
+            max-height: 20px;
+            overflow-x: scroll;
             display: inline-block;
-            width: 270px;
             background-color: aliceblue;
         }
 
