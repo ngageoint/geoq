@@ -10,10 +10,11 @@
         var user = "{{ request.user.username }}";
 
         var badge_container = $("#badge-container");
-        if ( user != undefined && user.length > 0 ) {
+        if ( user != undefined && user.length > 0 && host && project) {
+            var badgeUrl = host + '/users/' + user + '/projects/' + project + '/badges';
             $.ajax({
                 type: 'GET',
-                url: host + '/users/' + user + '/projects/' + project + '/badges',
+                url: badgeUrl,
                 dataType: 'json',
                 timeout: 3000,
                 success: function (badges, textstatus, jqXHR) {

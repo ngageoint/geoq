@@ -51,6 +51,7 @@ class Project(GeoQBase):
         ("Volcano", "Volcano"),
         ("Pandemic", "Pandemic"),
         ("Exercise", "Exercise"),
+        ("Special Event", "Special Event")
         ]
 
     project_type = models.CharField(max_length=50, choices=PROJECT_TYPES)
@@ -243,6 +244,23 @@ class AOI(GeoQBase):
         geojson["geometry"] = json.loads(self.polygon.json)
 
         return json.dumps(geojson)
+
+    def properties_json(self):
+        """
+        Returns json of the feature properties.
+        """
+
+        if self.id is None:
+            self.id = 1
+
+        properties_main = self.properties or {}
+        properties_built = dict(
+            status=self.status,
+            analyst=(self.analyst.username if self.analyst is not None else 'Unassigned'),
+            priority=self.priority)
+        prop_json = dict(properties_built.items() + properties_main.items())
+
+        return json.dumps(prop_json)
 
     def grid_geoJSON(self):
         """

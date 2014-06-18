@@ -20,11 +20,11 @@
     function highlightFeature(e) {
         var layer = e.target;
         layer.setStyle({
-            color: 'darkgreen',
+            color: 'red',
             weight: 3,
             opacity: 1,
             fillOpacity: 1,
-            fillColor: 'darkgreen'
+            fillColor: 'red'
         });
     }
 
@@ -32,10 +32,10 @@
         var layer = e.target;
         layer.setStyle({
             "weight":2,
-            "color":"red",
+            "color":"darkgreen",
             "opacity":.7,
             fillOpacity: 0.3,
-            fillColor: 'red'
+            fillColor: 'darkgreen'
         })
     }
 
@@ -52,10 +52,10 @@
 
             extentStyle = {
                 "weight":2,
-                "color":"red",
+                "color":"darkgreen",
                 "opacity":.7,
                 fillOpacity: 0.3,
-                fillColor: 'red'
+                fillColor: 'darkgreen'
             }
 
 
@@ -107,7 +107,7 @@
                     },
                     onEachFeature: function(feature, layer) {
 
-                        job_properties = feature.properties;
+//                        job_properties = feature.properties;
 //                        popupContent = _.template('{% filter escapejs %}{% include "core/job_detail_aoi_popup.html" %}{% endfilter %}', job_properties);
 //                        layer.bindPopup(popupContent);
 //
@@ -156,7 +156,7 @@
                               if (response.responseText) {
                                   message = JSON.parse(response.responseText);
                                   if (message.details) {
-                                      alert(message.details);
+                                      log.error(message.details);
                                   }
                               }
                           },

@@ -70,6 +70,7 @@ class CreateFeatures(View):
 
         return HttpResponse(json.dumps(feature_list), mimetype="application/json")
 
+
 class EditFeatures(View):
     """
     Reads feature info from post request and updates associated feature object.

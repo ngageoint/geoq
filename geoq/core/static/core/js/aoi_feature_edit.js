@@ -129,7 +129,7 @@ aoi_feature_edit.mapResize = function () {
         aoi_feature_edit.map.invalidateSize(false);
 
         var newWidth = $(aoi_feature_edit.map._container).width();
-        $('#aoi-status-box').css('width', newWidth-160);
+        $('#aoi-status-box').css('width', newWidth-164);
     }
 };
 
@@ -305,9 +305,9 @@ aoi_feature_edit.map_init = function (map, bounds) {
     leaflet_filter_bar.addLayerControl(map, {hiddenTagInput:true});
 
     //Build the layer tree on the left
-    leaflet_layer_control.init();
+    var $drawer = leaflet_layer_control.init();
     var options = aoi_feature_edit.buildTreeLayers();
-    leaflet_layer_control.addLayerControl(map, options);
+    leaflet_layer_control.addLayerControl(map, options, $drawer);
 
     function help_onclick() {
         window.open(aoi_feature_edit.help_url);
@@ -500,6 +500,9 @@ aoi_feature_edit.addMapControlButtons = function (map) {
 
 
     var title = "<h4 id='aoi-status-box'><a href='#'>" + aoi_feature_edit.job_name + "</a> > AOI #" + aoi_feature_edit.aoi_id + " > ";
+    if (aoi_feature_edit.aoi_properties && aoi_feature_edit.aoi_properties.usng) {
+        title += " USNG: "+aoi_feature_edit.aoi_properties.usng + " >";
+    }
     title += "<span class='aoi-status muted'>" + aoi_feature_edit.percent_complete + "% Complete > " + aoi_feature_edit.description + "</span></h4>";
     var $title = $(title)
         .on('click',function(){

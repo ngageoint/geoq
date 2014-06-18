@@ -56,6 +56,7 @@ class BatchCreateAOIS(TemplateView):
         response = AOI.objects.bulk_create([AOI(name=job.name,
                                             job=job,
                                             description=job.description,
+                                        properties=aoi.get('properties'),
                                             polygon=GEOSGeometry(json.dumps(aoi.get('geometry')))) for aoi in aois])
 
         return HttpResponse()
@@ -226,6 +227,7 @@ class CreateProjectView(CreateView):
         self.object.save()
         return HttpResponseRedirect(self.get_success_url())
 
+
 class CreateJobView(CreateView):
     """
     Create view that adds the user that created the job as a reviewer.
@@ -302,7 +304,7 @@ class ChangeAOIStatus(View):
 
 
 class PrioritizeWorkcells(TemplateView):
-    http_method_names = ['post','get']
+    http_method_names = ['post', 'get']
     template_name = 'core/prioritize_workcells.html'
 
     def get_context_data(self, **kwargs):
@@ -335,7 +337,7 @@ def usng(request):
     Proxy to USNG service.
     """
 
-    base_url = "http://app01.ozone.nga.mil/geoserver/wfs"
+    base_url = "http://app01.ozone.nga.mil/geoserver/wfs" #TODO: Move this to settings
 
     bbox = request.GET.get('bbox')
 
@@ -401,6 +403,25 @@ def display_help(request):
 
 
 @login_required
+def update_job_data(request, *args, **kwargs):
+    aoi_pk = kwargs.get('pk')
+    attribute = request.POST.get('id')
+    value = request.POST.get('value')
+    if attribute and value:
+        aoi = get_object_or_404(AOI, pk=aoi_pk)
+
+        properties_main = aoi.properties or {}
+        properties_main[attribute] = value
+        aoi.properties = properties_main
+
+        # setattr(aoi, attribute, value)
+        aoi.save()
+        return HttpResponse(value, mimetype="application/json", status=200)
+    else:
+        return HttpResponse('{"status":"error"}', mimetype="application/json", status=400)
+
+
+@login_required
 def batch_create_aois(request, *args, **kwargs):
     aois = request.POST.get('aois')
     job = Job.objects.get(id=kwargs.get('job_pk'))
@@ -413,6 +434,7 @@ def batch_create_aois(request, *args, **kwargs):
     response = AOI.objects.bulk_create([AOI(name=(aoi.get('name')),
                                         job=job,
                                         description=job.description,
+                                        properties=aoi.get('properties'),
                                         polygon=GEOSGeometry(json.dumps(aoi.get('geometry')))) for aoi in aois])
 
     return HttpResponse()
@@ -426,6 +448,7 @@ class JobGeoJSON(ListView):
         geojson = job.features_geoJSON()
 
         return HttpResponse(geojson, mimetype="application/json", status=200)
+
 
 class GridGeoJSON(ListView):
     model = Job

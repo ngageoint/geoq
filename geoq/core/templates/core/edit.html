@@ -21,6 +21,7 @@
     <script src="{{ STATIC_URL }}core/js/fancytree/jquery.fancytree.js" type="text/javascript"></script>
     <script src="{{ STATIC_URL }}core/js/fancytree/jquery.fancytree.dnd.js" type="text/javascript"></script>
     <script src="{{ STATIC_URL }}core/js/underscore.string.min.js" type="text/javascript"></script>
+    <script src="{{ STATIC_URL }}core/js/jquery.jeditable.js" type="text/javascript"></script>
 
 	<script src="{{ STATIC_URL }}core/js/geojson-js-utils/geojson-utils.js"></script>
 	<script src="{{ STATIC_URL }}core/js/jsmaptools/jsmaptools.js"></script>
@@ -58,7 +59,9 @@
 
         aoi_feature_edit.aoi_map_json = {{ map.to_json|safe|default:"{}" }};
         aoi_feature_edit.aoi_extents_geojson = {{ object.polygon.json|safe }};;
-        aoi_feature_edit.job_features_geojson = {{ object.job.features_geoJSON|safe }};;
+        aoi_feature_edit.aoi_properties = {{ object.properties_json|safe }};
+
+        aoi_feature_edit.job_features_geojson = {{ object.job.features_geoJSON|safe }};
         aoi_feature_edit.feature_types = feature_types;
         aoi_feature_edit.create_feature_url = "{% url 'feature-create' %}";
         aoi_feature_edit.edit_feature_url = "{% url 'feature-edit' %}";
@@ -93,6 +96,9 @@
 {#            width: 100%;#}
             cursor: crosshair;
         }
+        .aoi-status {
+            font-size: 18px;
+        }
         #layer_info_drawer {
             position: absolute;
             top: 0px;
@@ -114,8 +120,9 @@
         }
 
         #aoi-status-box {
-            max-height: 78px;
+            max-height: 64px;
             cursor: pointer;
+            overflow-y: hidden;
         }
 
         #tag_list_box {
@@ -181,17 +188,26 @@
 {#            background-color: transparent;#}
         }
 
-        #drawer_tray {
+        #drawer_tray_top {
+            max-height: 100px;
+            position: inherit;
+        }
+        .status_block {
+            width: 138px;
+            display: inline-block;
+        }
+        #drawer_tray_bottom {
             min-height: 100px;
             max-height: 150px;
-            width: 286px;
             vertical-align: bottom;
+            bottom: 0;
+        }
+        .drawer_tray {
+            width: 281px;
             font-family: tahoma, arial, helvetica;
             background-color: white;
             border: 1px dotted gray;
             position: absolute;
-            bottom: 0;
-{#            margin-bottom: 55px;#}
             display: inline-block;
             overflow-y: scroll;
         }
