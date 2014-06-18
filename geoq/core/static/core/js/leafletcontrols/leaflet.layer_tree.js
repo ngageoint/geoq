@@ -2,7 +2,6 @@ var leaflet_layer_control = {};
 
 //TODO: Pull ordering from map object
 //TODO: Allow drag-and-drop sorting that controls layer
-//TODO: Show layer-relevant icons
 //TODO: have an info control that modifies things like IA tools/icons
 //TODO: Save info about layer configuration, then have a way to load that back in or save as settings for a Job
 //TODO: Have a control to add new layers
@@ -12,13 +11,12 @@ var leaflet_layer_control = {};
 
 //TODO: When changing order of Google Maps, always put below Features layers
 
-//TODO: Add twitter/flickr/instagram/youtube icons
-
 leaflet_layer_control.$map = undefined;
 leaflet_layer_control.$drawer = undefined;
 leaflet_layer_control.$drawer_tray = undefined;
 leaflet_layer_control.$tree = undefined;
 leaflet_layer_control.accordion_sections = [];
+leaflet_layer_control.$feature_info = undefined;
 
 leaflet_layer_control.init = function(){
     leaflet_layer_control.$map = $("#map");
@@ -31,35 +29,23 @@ leaflet_layer_control.initDrawer = function(){
     leaflet_layer_control.$drawer = $drawer;
     leaflet_layer_control.$map.after($drawer);
 
-//    leaflet_layer_control.addCellInfo($drawer);
-
-//    $('<a id="add_layer_button" href="/maps/layers/create" target="_new" class="btn">Add A Layer</a>')
-//        .appendTo($drawer);
-
-    var $accordion = $("<div>")
+    var $accordion = $('<div>')
         .addClass("accordion")
         .attr('id','layer-control-accordion')
         .appendTo($drawer);
-//    var $drawer_tray = $("<div>")
-//        .attr({id:"drawer_tray_bottom"})
-//        .addClass('drawer_tray')
-//        .appendTo($drawer_inner);
 
-//    leaflet_layer_control.$drawer_tray = $drawer_tray;
-//    $drawer_tray.html("Click a layer above to see more information.");
-    // Build the first row of the accordion if workcell info exists
+    //Build the first row of the accordion if workcell info exists
     leaflet_layer_control.addWorkCellInfo($accordion);
 
-    // Build the next row of the accordion with details about a selected feature
+    //Build the next row of the accordion with details about a selected feature
     leaflet_layer_control.addFeatureInfo($accordion);
 
-    // The Layer Controls should also be built and added later, such as
-    // var options = aoi_feature_edit.bauildTreeLayers();
+    //The Layer Controls should also be built and added later, such as
+    // var options = aoi_feature_edit.buildTreeLayers();
     // leaflet_layer_control.addLayerControl(map, options, $accordion);
 
     return $accordion;
 };
-
 //leaflet_layer_control.drawAccordion = function($accordion){
 //    $accordion.collapse();
 //    _.each(leaflet_layer_control.accordion_sections,function(section,i){
@@ -72,47 +58,13 @@ leaflet_layer_control.initDrawer = function(){
 //    $accordion.css('height','inherit');
 //};
 
-//leaflet_layer_control.addCellInfo = function ($drawer) {
-//
-//    if (aoi_feature_edit.aoi_properties){
-//        var $drawer_inner = $("<div>")
-//            .addClass("inner-padding")
-//            .appendTo($drawer);
-//        var $drawer_tray = $("<div>")
-//            .attr({id:"drawer_tray_top"})
-//            .addClass('drawer_tray')
-//            .appendTo($drawer_inner);
-//
-//        var workcell_note = 'Click here to add a note';
-//        $.each(aoi_feature_edit.aoi_properties, function(index, value) {
-//            var skipIt = false;
-//            if (index == 'workcell_note') {
-//                workcell_note = value;
-//                skipIt = true;
-//            }
-//            if (!skipIt){
-//                var html = '<b>'+_.str.capitalize(index)+'</b>: '+_.str.capitalize(value);
-//                $('<div>')
-//                    .addClass('status_block')
-//                    .html(html)
-//                    .appendTo($drawer_tray);
-//            }
-//        });
-
-leaflet_layer_control.addFeatureInfo = function($accordion) {
+leaflet_layer_control.addFeatureInfo = function($accordion){
     //TODO: Fill this in
 
-    var $content = leaflet_layer_control.buildAccordionPanel($accordion, "Feature Details");
-    $("<div>")
-        .html("Click a feature on the map to see information associated with it")
+    var $content = leaflet_layer_control.buildAccordionPanel($accordion,"Feature Details");
+    leaflet_layer_control.$feature_info = $("<div>")
+        .html("Click a feature on the map to see an information associated with it")
         .appendTo($content);
-
-//        $('<div>')
-//            .addClass('edit')
-//            .attr('id','workcell_note')
-//            .html(workcell_note)
-//            .appendTo($drawer_tray)
-//            .editable('/geoq/api/job/update/'+aoi_feature_edit.aoi_id);
 
 };
 
@@ -132,7 +84,7 @@ leaflet_layer_control.buildAccordionPanel = function($accordion,title){
         .text(title)
         .appendTo($drawerInner);
 
-    var $contentHolder = $('<div id="collapse'+sectionName+'" class="accordion-body collapse">')
+    var $contentHolder = $('<div id="collapse'+sectionName+'" class="accordion-body collapse in">')
         .appendTo($drawerHolder);
     var $content = $("<div>")
         .addClass('accordion-inner')
@@ -150,16 +102,52 @@ leaflet_layer_control.addWorkCellInfo = function($accordion) {
         return;
     }
 
+    var editableUrl = '/geoq/api/job/update/'+aoi_feature_edit.aoi_id;
+
     var $content = leaflet_layer_control.buildAccordionPanel($accordion,"Work Cell Details");
     $content.attr({id:"drawer_tray_top"});
 
     var workcell_note = 'Click here to add a note';
     $.each(aoi_feature_edit.aoi_properties, function(index, value) {
-        //TODO: Show drop down for AOI status
+
         var skipIt = false;
         if (index == 'workcell_note') {
             workcell_note = value;
             skipIt = true;
+        }
+        if (index == 'status') {
+            skipIt = true;
+            var $status = $('<div>')
+                .addClass('status_block')
+                .html('<b>Status</b>: ')
+                .appendTo($content);
+            $('<span class="editable" id="status" style="display: inline">'+_.str.capitalize(value)+'</span>')
+                .appendTo($status)
+                .editable(editableUrl, {
+                    data   : " {'Unassigned':'Unassigned','In work':'In work','Completed':'Completed'}",
+                    type   : 'select',
+                    submit : 'OK',
+                    style  : 'inherit',
+                    tooltip: 'Click to change the status of this cell'
+                });
+
+        }
+        if (index == 'priority') {
+            skipIt = true;
+            var $status = $('<div>')
+                .addClass('status_block')
+                .html('<b>Priority</b>: ')
+                .appendTo($content);
+            $('<span class="editable tight" id="priority" style="display: inline">'+_.str.capitalize(value)+'</span>')
+                .appendTo($status)
+                .editable(editableUrl, {
+                    data   : " {'1':'1','2':'2','3':'3','4':'4','5':'5'}",
+                    type   : 'select',
+                    submit : 'OK',
+                    style  : 'inherit',
+                    tooltip: 'Click to change the priority of this cell'
+                });
+
         }
         if (!skipIt){
             var html = '<b>'+_.str.capitalize(index)+'</b>: '+_.str.capitalize(value);
@@ -170,15 +158,51 @@ leaflet_layer_control.addWorkCellInfo = function($accordion) {
         }
     });
 
+    //Add the note editing piece at the end
     $('<div>')
-        .addClass('edit')
+        .addClass('editable')
         .attr('id','workcell_note')
         .html(workcell_note)
         .appendTo($content)
-        .editable('/geoq/api/job/update/'+aoi_feature_edit.aoi_id);
+        .editable(editableUrl);
 
 };
+leaflet_layer_control.show_feature_info = function (feature) {
 
+    var $content = leaflet_layer_control.$feature_info;
+    if (!feature || !feature.properties || !$content || jQuery.isEmptyObject($content)) {
+        return;
+    }
+    $content.empty();
+
+    var editableUrl = '/geoq/api/feature/update/'+feature.properties.id;
+
+    var feature_note = "Click here to add a note to this feature";
+    $.each(feature.properties, function(index, value) {
+
+        var skipIt = false;
+        if (index == 'feature_note') {
+            feature_note = value;
+            skipIt = true;
+        }
+
+        if (!skipIt){
+            var html = '<b>'+_.str.capitalize(index)+'</b>: '+_.str.capitalize(value);
+            $('<div>')
+                .html(html)
+                .appendTo($content);
+        }
+    });
+
+    //Add the note editing piece at the end
+    $('<div>')
+        .addClass('editable')
+        .attr('id','feature_note')
+        .html(feature_note)
+        .appendTo($content)
+        .editable(editableUrl);
+
+};
 leaflet_layer_control.show_info = function (objToShow, node) {
     var html_objects = [];
 
@@ -505,28 +529,26 @@ leaflet_layer_control.setLayerOpacity = function (layer, amount){
         }
     }
 };
-
-leaflet_layer_control.addLayerControlInfoPanel = function($content) {
+leaflet_layer_control.addLayerControlInfoPanel = function($content){
     var $drawer_inner = $("<div>")
         .addClass("inner-padding")
         .appendTo($content);
     var $drawer_tray = $("<div>")
-        .attr({id: "drawer_tray_bottom"})
+        .attr({id:"drawer_tray_bottom"})
         .addClass('drawer_tray')
         .appendTo($drawer_inner);
 
     leaflet_layer_control.$drawer_tray = $drawer_tray;
-    $drawer_tray.html("Click a layer above to see more information");
+    $drawer_tray.html("Click a layer above to see more information.");
 
 };
-leaflet_layer_control.addLayerControl = function (map, options, $drawer) {
+
+leaflet_layer_control.addLayerControl = function (map, options, $accordion) {
 
     //Hide the existing layer control
     $('.leaflet-control-layers.leaflet-control').css({display: 'none'});
 
-
-    var $layerButton = $('<a id="toggle-drawer" href="#" class="btn" title="" rel="tooltip">Layers <i id="layer-status"> </i><i id="layer-error"> </i></a>');
-
+    var $layerButton = $('<a id="toggle-drawer" href="#" class="btn">Layers <i id="layer-status"> </i></a>');
     var layerButtonOptions = {
         'html': $layerButton,
         'onClick': leaflet_layer_control.toggleDrawer,  // callback function
@@ -584,14 +606,15 @@ leaflet_layer_control.addLayerControl = function (map, options, $drawer) {
 
     leaflet_layer_control.$tree = $tree;
 
-    var $content = leaflet_layer_control.buildAccordionPanel($accordion, "Geo Layers for Map");
+    var $content = leaflet_layer_control.buildAccordionPanel($accordion,"Geo Layers for Map");
 
     $tree.appendTo($content);
 
     //TODO: Replace this with a form later to allow user to quick-add layers
-
     $('<a id="add_layer_button" href="/maps/layers/create" target="_new" class="btn">Add A Layer</a>')
         .appendTo($content);
+
+    leaflet_layer_control.addLayerControlInfoPanel($content)
 };
 leaflet_layer_control.drawEachLayer=function(data,map){
 
