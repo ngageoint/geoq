@@ -403,6 +403,25 @@ def display_help(request):
 
 
 @login_required
+def update_job_data(request, *args, **kwargs):
+    aoi_pk = kwargs.get('pk')
+    attribute = request.POST.get('id')
+    value = request.POST.get('value')
+    if attribute and value:
+        aoi = get_object_or_404(AOI, pk=aoi_pk)
+
+        properties_main = aoi.properties or {}
+        properties_main[attribute] = value
+        aoi.properties = properties_main
+
+        # setattr(aoi, attribute, value)
+        aoi.save()
+        return HttpResponse(value, mimetype="application/json", status=200)
+    else:
+        return HttpResponse('{"status":"error"}', mimetype="application/json", status=400)
+
+
+@login_required
 def batch_create_aois(request, *args, **kwargs):
     aois = request.POST.get('aois')
     job = Job.objects.get(id=kwargs.get('job_pk'))

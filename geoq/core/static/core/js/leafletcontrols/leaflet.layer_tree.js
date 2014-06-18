@@ -21,7 +21,7 @@ leaflet_layer_control.$tree = undefined;
 
 leaflet_layer_control.init = function(){
     leaflet_layer_control.$map = $("#map");
-    leaflet_layer_control.initDrawer();
+    return leaflet_layer_control.initDrawer();
 };
 leaflet_layer_control.initDrawer = function(){
     //Build the drawer and add it after the map
@@ -30,20 +30,56 @@ leaflet_layer_control.initDrawer = function(){
     leaflet_layer_control.$drawer = $drawer;
     leaflet_layer_control.$map.after($drawer);
 
-
-    $('<a id="add_layer_button" href="/maps/layers/create" target="_new" class="btn">Add A Layer</a>')
-        .appendTo($drawer);
+    leaflet_layer_control.addCellInfo($drawer);
 
     var $drawer_inner = $("<div>")
         .addClass("inner-padding")
         .appendTo($drawer);
     var $drawer_tray = $("<div>")
-        .attr({id:"drawer_tray"})
+        .attr({id:"drawer_tray_bottom"})
+        .addClass('drawer_tray')
         .appendTo($drawer_inner);
 
     leaflet_layer_control.$drawer_tray = $drawer_tray;
-    $drawer_tray.html("Click a layer above to see more information.")
+    $drawer_tray.html("Click a layer above to see more information.");
 
+    return $drawer;
+};
+
+leaflet_layer_control.addCellInfo = function ($drawer) {
+
+    if (aoi_feature_edit.aoi_properties){
+        var $drawer_inner = $("<div>")
+            .addClass("inner-padding")
+            .appendTo($drawer);
+        var $drawer_tray = $("<div>")
+            .attr({id:"drawer_tray_top"})
+            .addClass('drawer_tray')
+            .appendTo($drawer_inner);
+
+        var workcell_note = 'Click here to add a note';
+        $.each(aoi_feature_edit.aoi_properties, function(index, value) {
+            var skipIt = false;
+            if (index == 'workcell_note') {
+                workcell_note = value;
+                skipIt = true;
+            }
+            if (!skipIt){
+                var html = '<b>'+_.str.capitalize(index)+'</b>: '+_.str.capitalize(value);
+                $('<div>')
+                    .addClass('status_block')
+                    .html(html)
+                    .appendTo($drawer_tray);
+            }
+        });
+
+        $('<div>')
+            .addClass('edit')
+            .attr('id','workcell_note')
+            .html(workcell_note)
+            .appendTo($drawer_tray)
+            .editable('/geoq/api/job/update/'+aoi_feature_edit.aoi_id);
+    }
 };
 
 leaflet_layer_control.show_info = function (objToShow, node) {
@@ -371,11 +407,10 @@ leaflet_layer_control.setLayerOpacity = function (layer, amount){
         }
     }
 };
-leaflet_layer_control.addLayerControl = function (map, options) {
+leaflet_layer_control.addLayerControl = function (map, options, $drawer) {
 
     //Hide the existing layer control
     $('.leaflet-control-layers.leaflet-control').css({display: 'none'});
-
 
     var $layerButton = $('<a id="toggle-drawer" href="#" class="btn">Layers <i id="layer-status"> </i></a>');
     var layerButtonOptions = {
@@ -467,13 +502,13 @@ leaflet_layer_control.addLayerControl = function (map, options) {
 //        }
 
     });
-//    leaflet_layer_control.toggleZooming($tree);
 
     leaflet_layer_control.$tree = $tree;
 
-    var $drawer = $("#layer_info_drawer");
     $tree.appendTo($drawer);
 
+    $('<a id="add_layer_button" href="/maps/layers/create" target="_new" class="btn">Add A Layer</a>')
+        .appendTo($drawer);
 };
 leaflet_layer_control.drawEachLayer=function(data,map){
 

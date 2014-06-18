@@ -291,9 +291,9 @@ aoi_feature_edit.map_init = function (map, bounds) {
     leaflet_filter_bar.addLayerControl(map, {hiddenTagInput:true});
 
     //Build the layer tree on the left
-    leaflet_layer_control.init();
+    var $drawer = leaflet_layer_control.init();
     var options = aoi_feature_edit.buildTreeLayers();
-    leaflet_layer_control.addLayerControl(map, options);
+    leaflet_layer_control.addLayerControl(map, options, $drawer);
 
     function help_onclick() {
         window.open(aoi_feature_edit.help_url);

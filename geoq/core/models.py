@@ -251,12 +251,9 @@ class AOI(GeoQBase):
 
         properties_main = self.properties or {}
         properties_built = dict(
-            id=self.id,
             status=self.status,
             analyst=(self.analyst.username if self.analyst is not None else 'Unassigned'),
-            priority=self.priority,
-            absolute_url=reverse('aoi-work', args=[self.id]),
-            delete_url=reverse('aoi-deleter', args=[self.id]))
+            priority=self.priority)
         prop_json = dict(properties_built.items() + properties_main.items())
 
         return json.dumps(prop_json)
