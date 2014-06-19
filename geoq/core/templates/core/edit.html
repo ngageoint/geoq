@@ -93,9 +93,6 @@
             top: -20px;
             left: 0px;
             margin-left: 0px;
-{#            float: left;#}
-{#            height: 94%;#}
-{#            width: 100%;#}
             cursor: crosshair;
         }
         .aoi-status {
@@ -193,11 +190,6 @@
 
         ul.fancytree-container {
             max-width: 280px;
-{#            font-size: 10px;#}
-{#            max-height: 200px;#}
-{#            overflow: auto;#}
-{#            position: relative;#}
-{#            background-color: transparent;#}
         }
 
         #drawer_tray_top {
@@ -234,30 +226,28 @@
             display: inline-block;
             background-color: aliceblue;
         }
+        .hide {
+            display: none;
+        }
+        .linked-item {
+            font-size: 10px;
+            line-height: 1.1em;
+            background-color: #eef;
+            margin: 1px;
+            border: solid black 1px;
+            width: 120px;
+            padding: 2px;
+            border-radius: 5px;
+            overflow: hidden;
+        }
 
-    .popover {
+        .popover {
             min-width: 200px ! important;
         }
 
     </style>
     <script language="JavaScript">
         //TODO: Move out of Edit.html
-
-        function deleteFeature(id, delete_url) {
-            var confirmText = 'Delete feature #' + id + '?';
-        	BootstrapDialog.confirm(confirmText, function(result) {
-                if (result) {
-                    $.ajax({
-                        url: delete_url,
-                        type: 'GET',
-                        success: function(data) {
-                            aoi_feature_edit.deleteFeature(data);
-                        },
-                        failure: function() { log.log('Failed to delete feature ' + id);}
-                    })
-                }
-            });
-        }
 
         function finishAOI() {
             BootstrapDialog.show({

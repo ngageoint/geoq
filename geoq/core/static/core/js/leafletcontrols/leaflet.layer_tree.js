@@ -184,9 +184,54 @@ leaflet_layer_control.show_feature_info = function (feature) {
         if (index == 'feature_note') {
             feature_note = value;
             skipIt = true;
+        } else if (index == 'linked_items') {
+            skipIt = true;
+            if (_.isArray(value) && value.length) {
+                var $status = $('<div>')
+                    .appendTo($content);
+                $('<div>')
+                    .html('<b>Linked Items:</b>')
+                    .addClass('status-block')
+                    .appendTo($status);
+
+                _.each(value,function(linked_item){
+                    var properties = linked_item.properties;
+                    if (!_.isObject(properties)) properties = {};
+
+                    var html = "";
+                    if (linked_item.user) {
+                        html += "Posted by "+linked_item.user+"</br>";
+                    }
+                    if (linked_item.created_at) {
+                        html += "Linked on "+linked_item.created_at+"</br>";
+                    }
+                    if (properties && properties.source) {
+                        html += "Posted from "+properties.source+"</br>";
+                    }
+                    if (properties && properties.id) {
+                        html += "Source ID: "+properties.id+"</br>";
+                    }
+                    if (properties && properties.thumbnail) {
+                        html += "<img src='"+properties.thumbnail+"' width='100'><br/>";
+                    }
+                    if (properties && properties.image) {
+                        html += "<a href='"+properties.image+"' target='_blank'>Linked Image</a>";
+                    }
+                    var img = $('<div>')
+                        .addClass('linked-item status_block')
+                        .popover({
+                            title:'Linked Item',
+                            content:JSON.stringify(properties)||"No properties",
+                            trigger:'hover',
+                            placement:'right'
+                        })
+                        .html(html)
+                        .appendTo($status);
+                });
+            }
         }
 
-        if (!skipIt){
+        if (!skipIt && _.isString(value)){
             var html = '<b>'+_.str.capitalize(index)+'</b>: '+_.str.capitalize(value);
             $('<div>')
                 .html(html)

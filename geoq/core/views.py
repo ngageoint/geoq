@@ -13,6 +13,7 @@ from django.forms.util import ValidationError
 from django.http import Http404, HttpResponse, HttpResponseRedirect
 from django.shortcuts import get_object_or_404, redirect, render
 from django.views.generic import DetailView, ListView, TemplateView, View, DeleteView, CreateView, UpdateView
+from datetime import datetime
 
 from models import Project, Job, AOI, Comment
 from geoq.maps.models import *
@@ -401,6 +402,7 @@ def aoi_delete(request, pk):
 
     return HttpResponse(status=200)
 
+
 def display_help(request):
     return render(request, 'core/geoq_help.html')
 
@@ -428,7 +430,6 @@ def update_job_data(request, *args, **kwargs):
         return HttpResponse('{"status":"attribute and value not passed in"}', mimetype="application/json", status=400)
 
 
-
 @login_required
 def update_feature_data(request, *args, **kwargs):
     feature_pk = kwargs.get('pk')
@@ -438,7 +439,21 @@ def update_feature_data(request, *args, **kwargs):
         feature = get_object_or_404(Feature, pk=feature_pk)
 
         properties_main = feature.properties or {}
-        properties_main[attribute] = value
+
+        if attribute == 'add_link':
+            if properties_main.has_key('linked_items'):
+                properties_main_links = properties_main['linked_items']
+            else:
+                properties_main_links = []
+            link_info = {}
+            link_info['properties'] = json.loads(value)
+            link_info['created_at'] = str(datetime.now())
+            link_info['user'] = str(request.user)
+            properties_main_links.append(link_info)
+            properties_main['linked_items'] = properties_main_links
+        else:
+            properties_main[attribute] = value
+
         feature.properties = properties_main
 
         feature.save()

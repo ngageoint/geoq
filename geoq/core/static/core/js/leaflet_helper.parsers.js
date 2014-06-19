@@ -189,18 +189,41 @@ leaflet_helper.parsers.standard_onEachFeature = function (feature, layer) {
         layer.bindPopup(feature.properties.popupContent);
     }
 };
+leaflet_helper.addLinksToPopup = function (layerName,id,useMove,useHide,useDrop) {
+
+    var spanLink = "<span class='hide layer-name-hint'>"+layerName+"</span>";
+    spanLink += "<span class='hide feature-id-hint'>"+id+"</span>";
+    var output = "";
+    if (useMove) {
+        output += "<br/><a href='#' class='make-draggable-hint'>Click on a feature to link this to it"+spanLink+"</a>"
+    }
+    if (useHide) {
+        output += "<br/><a href='#' class='make-deletable-hint'>Hide this Item"+spanLink+"</a>";
+    }
+    if (useDrop) {
+        output += "<br/><a href='#' class='make-droppable-hint'><span class='text-hint'></span>"+spanLink+"</a>";
+    }
+
+    return output;
+
+};
 leaflet_helper.parsers.addDynamicCapimageData = function (result, map, outputLayer) {
     //TODO: Handle de-dupes of all features returned
 
     var jsonObjects = [];
     $(result.features).each(function () {
         var feature = $(this)[0];
-        var popupContent = "<a href='" + feature.attributes.ImageURL + "' target='_new'><img style='width:256px' src='" + feature.attributes.ThumbnailURL + "' /></a>";
+        var id = feature.attributes.ID;
+
+        var popupContent = "<h5>CAP Item #"+id+"</h5><a href='" + feature.attributes.ImageURL + "' target='_new'><img style='width:256px' src='" + feature.attributes.ThumbnailURL + "' /></a>";
+        popupContent += leaflet_helper.addLinksToPopup(outputLayer.name, id, true, false);
 
         var json = {
             type: "Feature",
             properties: {
-                name: feature.attributes.ID + " - " + feature.attributes.DaysOld + " days old",
+                id: id,
+                source: 'CAP Imagery',
+                name: id + " - " + feature.attributes.DaysOld + " days old",
                 image: feature.attributes.ImageURL,
                 thumbnail: feature.attributes.ThumbnailURL,
                 popupContent: popupContent
@@ -225,8 +248,8 @@ leaflet_helper.parsers.instagramImages = function (result, map, outputLayer) {
     var jsonObjects = [];
     var photos = result.data;
 
-    if (!outputLayer.options) { outputLayer.options = {}};
-    if (!outputLayer.options.items) { outputLayer.options.items = []};
+    if (!outputLayer.options) { outputLayer.options = {}}
+    if (!outputLayer.options.items) { outputLayer.options.items = []}
 
     _.each(photos,function(image){
         var itemFound = false;
@@ -244,16 +267,19 @@ leaflet_helper.parsers.instagramImages = function (result, map, outputLayer) {
             var location = image.location;
             var tags = image.tags.join(", ");
 
+
             var popupContent = "<h5>Instagram Picture</h5>";
             popupContent += "Posted by: "+image.user.username+"<br/>";
             if (tags) popupContent += "Tags: "+tags+"<br/>";
             popupContent += "<a href='" + imageURL + "' target='_new'><img style='width:150px' src='" + thumbnailURL + "' /></a>";
-            //TODO: Add "Delete This" button
+            popupContent += leaflet_helper.addLinksToPopup(outputLayer.name, id, true, true);
 
             var json = {
                 type: "Feature",
                 properties: {
                     name: title,
+                    id: id,
+                    source: 'Instagram',
                     image: imageURL,
                     thumbnail: thumbnailURL,
                     popupContent: popupContent,
@@ -324,6 +350,7 @@ leaflet_helper.parsers.flickrImages = function (result, map, outputLayer) {
 
             var title=feature.title || "Flickr Photo";
             var secret=feature.secret;
+            var id=secret;
             var server=feature.server;
             var farm=feature.farm;
             var owner=feature.owner;
@@ -337,12 +364,14 @@ leaflet_helper.parsers.flickrImages = function (result, map, outputLayer) {
             popupContent += "Posted by: "+owner+"<br/>";
             if (aoi_feature_edit.tags) popupContent += "Tags: "+aoi_feature_edit.tags+"<br/>";
             popupContent += "<a href='" + imageURL + "' target='_new'><img style='width:256px' src='" + thumbnailURL + "' /></a>";
-            //TODO: Add Delete this button
+            popupContent += leaflet_helper.addLinksToPopup(outputLayer.name, id, true, true);
 
             var json = {
                 type: "Feature",
                 properties: {
+                    id: id,
                     name: title,
+                    source: 'Flickr',
                     image: imageURL,
                     thumbnail: thumbnailURL,
                     popupContent: popupContent,

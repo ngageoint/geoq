@@ -83,18 +83,18 @@ aoi_feature_edit.init = function () {
 aoi_feature_edit.featureLayer_pointToLayer = function (feature, latlng) {
     var icon = new aoi_feature_edit.icons[feature.properties.template](aoi_feature_edit.icon_style[feature.properties.template]);
     var marker = new L.Marker(latlng, {
-//        icon: new aoi_feature_edit.MapIcon(aoi_feature_edit.icons[feature.properties.template])
         icon: icon
     });
-    return marker
+    return marker;
 };
 aoi_feature_edit.featureLayer_onEachFeature = function (feature, layer, featureLayer) {
     if (feature.properties) {
-        feature_hash[feature.properties.id] = {layerGroup: featureLayer, layer: layer};
+        var id = feature.properties.id;
+        feature_hash[id] = {layerGroup: featureLayer, layer: layer};
 
         var popupContent = "<h5>Feature</h5>";
-        if (feature.properties.id){
-            popupContent = '<h5>Feature #' + feature.properties.id + '</h5>';
+        if (id){
+            popupContent = '<h5>Feature #' + id + '</h5>';
         }
         if (feature.properties.template) {
             var template = aoi_feature_edit.feature_types[parseInt(feature.properties.template)];
@@ -116,10 +116,36 @@ aoi_feature_edit.featureLayer_onEachFeature = function (feature, layer, featureL
         if (feature.properties.feature_note){
             popupContent += '<br/><b>Note:</b> ' + feature.properties.feature_note;
         }
-        if (feature.properties.id){
-            popupContent += '<br/><a onclick="javascript:deleteFeature(\'' + feature.properties.id + '\', \'/geoq/features/delete/' + feature.properties.id + '\');">Delete Feature</a>';
+        if (id){
+            popupContent += '<br/><a onclick="javascript:aoi_feature_edit.deleteFeature(\'' + id + '\', \'/geoq/features/delete/' + id + '\');">Delete Feature</a>';
         }
+        popupContent += leaflet_helper.addLinksToPopup(featureLayer.name, id, false, false, true);
+
         layer.bindPopup(popupContent);
+    }
+};
+aoi_feature_edit.deleteFeature = function(id, delete_url) {
+    var confirmText = 'Delete feature #' + id + '?';
+    var confirmFunction = function(result) {
+        if (result) {
+            $.ajax({
+                url: delete_url,
+                type: 'GET',
+                success: function(data) {
+                    aoi_feature_edit.deleteFeatureFromHash(data);
+                },
+                failure: function() { log.error('Failed to delete feature ' + id);}
+            })
+        }
+    };
+    BootstrapDialog.confirm(confirmText, confirmFunction);
+};
+aoi_feature_edit.deleteFeatureFromHash = function (id) {
+    var feature = feature_hash[id];
+    if (feature) {
+        feature.layerGroup.removeLayer(feature.layer);
+        aoi_feature_edit.drawnItems.removeLayer(feature.layer);
+        delete feature_hash[id];
     }
 };
 
@@ -162,8 +188,9 @@ aoi_feature_edit.watch_layer = function(layer, watch) {
         layer.on("loading", function () {
             if(pending.indexOf(name) < 0) {
               pending[pending.length] = name;
-              $("#layer-status").removeClass("icon-ok");
-              $("#layer-status").addClass("icon-refresh");
+              $("#layer-status")
+                  .removeClass("icon-ok")
+                  .addClass("icon-refresh");
             }
         });
         layer.on("load", function() {
@@ -171,8 +198,9 @@ aoi_feature_edit.watch_layer = function(layer, watch) {
                 pending.splice(watched.indexOf(name),1);
              }
              if(pending.length == 0) {
-                  $("#layer-status").removeClass("icon-refresh");
-                  $("#layer-status").addClass("icon-ok");
+                  $("#layer-status")
+                      .removeClass("icon-refresh")
+                      .addClass("icon-ok");
              }
         });
         layer.on("tileerror", function(evt) {
@@ -197,7 +225,7 @@ aoi_feature_edit.watch_layer = function(layer, watch) {
             layer.off("tileerror");
         }
     }
-}
+};
 
 aoi_feature_edit.map_init = function (map, bounds) {
 
@@ -392,7 +420,7 @@ aoi_feature_edit.map_init = function (map, bounds) {
 
     function onSuccessEdit(data, textStatus, jqXHR) {}
     function onErrorEdit(jqXHR, textStatus, errorThrown) {
-            alert("Error while editing feature: " + errorThrown);
+            log.error("Error while editing feature: " + errorThrown);
     }
 
     map.on('draw:edited', function (e) {
@@ -414,13 +442,108 @@ aoi_feature_edit.map_init = function (map, bounds) {
         });
     });
 
-    $('div.leaflet-draw.leaflet-control').find('a').popover({trigger:"hover",placement:"right"})
+    //Look for 'Hints' within popups (which only hold text) and replace them with code that runs functions
+    map.on('popupopen', function(popupEvent) {
+        var $holder = $('a.make-draggable-hint').click(function(){
+            var layer = $holder.find('.layer-name-hint').text();
+            var feature_id = $holder.find('.feature-id-hint').text();
+
+            var feature = aoi_feature_edit.findPopupByLayerAndFeature(layer,feature_id);
+            if (feature) {
+                aoi_feature_edit.draggingFeature = feature;
+
+                aoi_feature_edit.map.closePopup();
+            }
+        });
+
+        var $holder2 = $('a.make-deletable-hint').click(function(){
+            var layer = $holder2.find('.layer-name-hint').text();
+            var feature_id = $holder2.find('.feature-id-hint').text();
+
+            var feature = aoi_feature_edit.findPopupByLayerAndFeature(layer,feature_id);
+            if (feature) {
+                aoi_feature_edit.map.closePopup();
+                map.removeLayer(feature);
+            }
+        });
+
+        var $holder3 = $('a.make-droppable-hint');
+        var $text3 = $holder3.find('.text-hint');
+        if (aoi_feature_edit.draggingFeature && !jQuery.isEmptyObject($text3)) {
+            var layer = $holder3.find('.layer-name-hint').text();
+            var feature_id = $holder3.find('.feature-id-hint').text();
+
+            var feature_to_link = aoi_feature_edit.findPopupByLayerAndFeature(layer,feature_id);
+
+            if (feature_to_link) {
+                var feature_from_link = aoi_feature_edit.draggingFeature;
+                var feature_id_from = feature_from_link.feature.properties.id;
+                $text3
+                    .text('Link item #'+feature_id_from+' here')
+                    .on('click',function(){
+
+                        $holder3.empty();
+
+                        var props = _.clone(feature_from_link.feature.properties);
+                        props.popupContent="";
+                        delete props.popupContent;
+
+                        var json = JSON.stringify(props);
+
+                        var editableUrl = '/geoq/api/feature/update/'+feature_id;
+                        $.ajax({
+                            type: "POST",
+                            url: editableUrl,
+                            data: { id: 'add_link',
+                                value: json
+                            },
+                            success: function(){console.log("Success")},
+                            error: function(){console.log("Error")},
+                            dataType: "json"
+                        });
+
+                        aoi_feature_edit.draggingFeature = null;
+                    });
+            } else {
+                $text3
+                    .off('click')
+                    .empty();
+            }
+        } else {
+            if (!jQuery.isEmptyObject($text3)){
+                $text3
+                    .off('click')
+                    .empty();
+            }
+        }
+
+
+    });
+
+    $('div.leaflet-draw.leaflet-control').find('a').popover({trigger:"hover",placement:"right"});
 
     //Resize the map
     aoi_feature_edit.mapResize();
     //Resize it on screen resize, but no more than every .3 seconds
     var lazyResize = _.debounce(aoi_feature_edit.mapResize, 300);
     $(window).resize(lazyResize);
+};
+aoi_feature_edit.findPopupByLayerAndFeature = function (layer_name, feature_id){
+    var all_layers = _.flatten(aoi_feature_edit.layers);
+    var all_active_layers = _.filter(all_layers,function(l){return (l._layers && l._map)});
+    var feature = undefined;
+
+    _.each(all_active_layers,function(layer){
+        if (layer.name == layer_name){
+            _.each(layer._layers,function(f){
+                if (f.feature && f.feature.properties && f.feature.properties.id && (f.feature.properties.id==feature_id)){
+                    feature = f;
+                }
+            });
+        }
+    });
+
+    return feature;
 };
 
 aoi_feature_edit.buildDrawingControl = function (drawnItems) {
@@ -671,15 +794,6 @@ aoi_feature_edit.createFeatureCollection = function (id) {
     featureCollection.properties.id = id;
 
     return featureCollection;
-};
-
-aoi_feature_edit.deleteFeature = function (id) {
-    var feature = feature_hash[id];
-    if (feature) {
-        feature.layerGroup.removeLayer(feature.layer);
-        aoi_feature_edit.drawnItems.removeLayer(feature.layer);
-        delete feature_hash[id];
-    }
 };
 
 aoi_feature_edit.createPolygonOptions = function (opts) {
