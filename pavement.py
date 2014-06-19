@@ -47,9 +47,9 @@ def install_dev_fixtures():
     """ Installs development fixtures in the correct order """
     fixtures = [
         'geoq/fixtures/initial_data.json',  # user permissions
-        'geoq/accounts/fixture/initial_data.json',  # dummy users and groups
+        'geoq/accounts/fixtures/initial_data.json',  # dummy users and groups
         'geoq/maps/fixtures/initial_data_types.json',  # Maps
-        'geoq/core/fixture/initial_data.json',
+        'geoq/core/fixtures/initial_data.json',
         #'geoq/badges/fixtures/initial_data.json', # Removing badges for now, b/c not working
         ]
 
