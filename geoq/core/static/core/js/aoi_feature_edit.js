@@ -491,28 +491,28 @@ aoi_feature_edit.buildDrawingControl = function (drawnItems) {
 
 aoi_feature_edit.addMapControlButtons = function (map) {
 
-    function complete_button_onClick() {
-        $.ajax({
-            type: "POST",
-            url: aoi_feature_edit.finishUrl,
-            dataType: "json",
-            success: function (response) {
-                //geoq.redirect(aoi_feature_edit.complete_redirect_url);
-                finishAOI();
-            }
-        });
-    }
-
-    var completeButtonOptions = {
-        'html': '<a id="aoi-submit" href="#" class="btn">' + aoi_feature_edit.finishLabel+ '</a>',  // string
-        'onClick': complete_button_onClick,  // callback function
-        'hideText': false,  // bool
-        position: 'bottomright',
-        'maxWidth': 60,  // number
-        'doToggle': false,  // bool
-        'toggleStatus': false  // bool
-    };
-    var completeButton = new L.Control.Button(completeButtonOptions).addTo(map);
+//    function complete_button_onClick() {
+//        $.ajax({
+//            type: "POST",
+//            url: aoi_feature_edit.finishUrl,
+//            dataType: "json",
+//            success: function (response) {
+//                //geoq.redirect(aoi_feature_edit.complete_redirect_url);
+//                finishAOI();
+//            }
+//        });
+//    }
+//
+//    var completeButtonOptions = {
+//        'html': '<a id="aoi-submit" href="#" class="btn">' + aoi_feature_edit.finishLabel+ '</a>',  // string
+//        'onClick': complete_button_onClick,  // callback function
+//        'hideText': false,  // bool
+//        position: 'bottomright',
+//        'maxWidth': 60,  // number
+//        'doToggle': false,  // bool
+//        'toggleStatus': false  // bool
+//    };
+//    var completeButton = new L.Control.Button(completeButtonOptions).addTo(map);
 
 
     var title = "<h4 id='aoi-status-box'><a href='#'>" + aoi_feature_edit.job_name + "</a> > AOI #" + aoi_feature_edit.aoi_id + " > ";

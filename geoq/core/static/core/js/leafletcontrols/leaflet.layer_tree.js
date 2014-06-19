@@ -17,6 +17,7 @@ leaflet_layer_control.$drawer_tray = undefined;
 leaflet_layer_control.$tree = undefined;
 leaflet_layer_control.accordion_sections = [];
 leaflet_layer_control.$feature_info = undefined;
+leaflet_layer_control.finish_options = [];
 
 leaflet_layer_control.init = function(){
     leaflet_layer_control.$map = $("#map");
@@ -46,6 +47,9 @@ leaflet_layer_control.initDrawer = function(){
     //The Layer Controls should also be built and added later, such as
     // var options = aoi_feature_edit.buildTreeLayers();
     // leaflet_layer_control.addLayerControl(map, options, $accordion);
+
+    // by default, open work cell details
+    $('#collapse-work-cell-details').collapse('toggle');
 
     return $accordion;
 };
@@ -133,7 +137,7 @@ leaflet_layer_control.buildAccordionPanel = function($accordion,title){
         .text(title)
         .appendTo($drawerInner);
 
-    var $contentHolder = $('<div id="collapse'+sectionName+'" class="accordion-body collapse in">')
+    var $contentHolder = $('<div id="collapse'+sectionName+'" class="accordion-body collapse">')
         .appendTo($drawerHolder);
     var $content = $("<div>")
         .addClass('accordion-inner')
@@ -173,7 +177,7 @@ leaflet_layer_control.addWorkCellInfo = function($accordion) {
             $('<span class="editable" id="status" style="display: inline">'+_.str.capitalize(value)+'</span>')
                 .appendTo($status)
                 .editable(editableUrl, {
-                    data   : " {'Unassigned':'Unassigned','In work':'In work','Completed':'Completed'}",
+                    data   : " {'Unassigned':'Unassigned','In work':'In work', 'In review':'In review', 'Completed':'Completed'}",
                     type   : 'select',
                     submit : 'OK',
                     style  : 'inherit',
@@ -214,6 +218,26 @@ leaflet_layer_control.addWorkCellInfo = function($accordion) {
         .html(workcell_note)
         .appendTo($content)
         .editable(editableUrl);
+
+    // add function buttons
+    var $submitDiv = $('<div id="finish-workcell">')
+        .appendTo($content);
+
+    var $subButton = $('<button>Finish<span class="caret"></span></button>')
+        .addClass("btn btn-primary dropdown-toggle")
+        .attr("data-toggle", "dropdown")
+        .attr("type", "button")
+        .attr("type", "button")
+        .appendTo($submitDiv);
+
+    var $ull = $('<ul>')
+        .addClass("dropdown-menu")
+        .attr("role", "menu")
+        .appendTo($submitDiv);
+
+    for (opt in leaflet_layer_control.finish_options) {
+        $ull.append(leaflet_layer_control.finish_options[opt]);
+    }
 
 };
 leaflet_layer_control.show_feature_info = function (feature) {

@@ -44,12 +44,15 @@
                 geometry_types.push("{{ feature_type.type }}");
         {% endfor %}
 
+        var inreview_status_url = "{% url 'aoi-update-status' object.id 'In review' %}";
+        var unassigned_status_url = "{% url 'aoi-update-status' object.id 'Unassigned' %}";
+        var completed_status_url = "{% url 'aoi-update-status' object.id 'Completed' %}";
+
+        leaflet_layer_control.finish_options.push('<li><a href="#" onclick="complete_button_onClick(inreview_status_url);">Submit for Review</a></li>');
+
         {% if aoi.analyst in reviewers %}
-            aoi_feature_edit.finishLabel = "Complete AOI";
-            aoi_feature_edit.finishUrl = "{% url 'aoi-update-status' object.id 'Completed' %}";
-        {% else %}
-            aoi_feature_edit.finishLabel = "Submit AOI";
-            aoi_feature_edit.finishUrl = "{% url 'aoi-update-status' object.id 'In review' %}";
+            leaflet_layer_control.finish_options.push('<li><a href="#" onclick="complete_button_onClick(unassigned_status_url);">Return for further analysis</a></li>');
+            leaflet_layer_control.finish_options.push('<li><a href="#" onclick="complete_button_onClick(completed_status_url);">Certify as complete</a></li>')
         {% endif %}
 
         aoi_feature_edit.job_absolute_url = "{{ object.job.get_absolute_url }}";
@@ -248,8 +251,17 @@
             padding-top: 10px;
         }
 
-    .popover {
+        #finish-workcell {
+            padding-top: 10px;
+            padding-bottom: 10px;
+        }
+
+        .popover {
             min-width: 200px ! important;
+        }
+
+        .dropdown-menu {
+            top: 93%;
         }
 
     </style>
@@ -274,7 +286,7 @@
 
         function finishAOI() {
             BootstrapDialog.show({
-                title: 'AOI Complete',
+                title: 'Submitted',
                 message: 'Your work has been uploaded. Would you like to:',
                 buttons: [{
                     label: 'Go back to the Job page',
@@ -287,6 +299,18 @@
                         geoq.redirect(aoi_feature_edit.next_aoi_url);
                     }
                 }]
+            });
+        }
+
+        function complete_button_onClick(url) {
+            $.ajax({
+                type: "POST",
+                url: url,
+                dataType: "json",
+                success: function (response) {
+                    //geoq.redirect(aoi_feature_edit.complete_redirect_url);
+                    finishAOI();
+                }
             });
         }
 
