@@ -307,6 +307,6 @@ class Comment(models.Model):
         return comment_obj
 
     def to_dict(self):
-        format = "%a %b %d %H:%M:%S %Y"
+        format = "%D %H:%M:%S"
         o = {'user': self.user.username, 'timestamp': self.created_at.strftime(format), 'text': self.text}
         return o

@@ -235,6 +235,19 @@
             background-color: aliceblue;
         }
 
+        #messages {
+            font-size: 12px;
+        }
+
+        #message_scroll {
+            height: 300px;
+            overflow-y: scroll;
+        }
+
+        #button_row {
+            padding-top: 10px;
+        }
+
     .popover {
             min-width: 200px ! important;
         }
@@ -272,6 +285,36 @@
                     label: 'Work on another AOI',
                     action: function(dialog) {
                         geoq.redirect(aoi_feature_edit.next_aoi_url);
+                    }
+                }]
+            });
+        }
+
+        function submitComment() {
+            BootstrapDialog.show({
+                title: 'Submit Comment',
+                message: "Comment: <input type='text' maxlength='200'>",
+                buttons: [{
+                    label: 'Submit',
+                    action: function(dialog) {
+                        var text = dialog.getModalBody().find('input').val();
+                        $.ajax({
+                            url: document.URL + "/comment",
+                            type: 'POST',
+                            data: {
+                                comment : text,
+                                csrfmiddlewaretoken: '{{ csrf_token }}'
+                            }
+                        })
+                        .done( function (msg) {
+                            leaflet_layer_control.refreshLogInfo();
+                            dialog.close();
+                        });
+                    }
+                }, {
+                    label: 'Cancel',
+                    action: function(dialog) {
+                        dialog.close();
                     }
                 }]
             });
