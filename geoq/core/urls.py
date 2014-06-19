@@ -72,7 +72,7 @@ urlpatterns = patterns('',
         add_workcell_comment, name='add-workcell-comment'),
     url(r'^aois/work/(?P<pk>\d+)/log/?$',
         LogJSON.as_view(), name='workcell_log'),
-    url(r'^aois/update-status/(?P<pk>\d+)/(?P<status>Unassigned|Assigned|In work|In review|Completed)/?$', login_required(
+    url(r'^aois/update-status/(?P<pk>\d+)/(?P<status>Unassigned|Assigned|In work|Awaiting review|In review|Completed)/?$', login_required(
         ChangeAOIStatus.as_view()),
         name="aoi-update-status"),
     url(r'^aois/create/?$', login_required(

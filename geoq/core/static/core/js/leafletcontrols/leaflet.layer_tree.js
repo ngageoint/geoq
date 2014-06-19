@@ -17,6 +17,7 @@ leaflet_layer_control.$drawer_tray = undefined;
 leaflet_layer_control.$tree = undefined;
 leaflet_layer_control.accordion_sections = [];
 leaflet_layer_control.$feature_info = undefined;
+leaflet_layer_control.finish_options = [];
 
 leaflet_layer_control.init = function(){
     leaflet_layer_control.$map = $("#map");
@@ -40,9 +41,15 @@ leaflet_layer_control.initDrawer = function(){
     //Build the next row of the accordion with details about a selected feature
     leaflet_layer_control.addFeatureInfo($accordion);
 
+    //Build an accordion row to view workcell log
+    leaflet_layer_control.addLogInfo($accordion);
+
     //The Layer Controls should also be built and added later, such as
     // var options = aoi_feature_edit.buildTreeLayers();
     // leaflet_layer_control.addLayerControl(map, options, $accordion);
+
+    // by default, open work cell details
+    $('#collapse-work-cell-details').collapse('toggle');
 
     return $accordion;
 };
@@ -68,6 +75,52 @@ leaflet_layer_control.addFeatureInfo = function($accordion){
 
 };
 
+leaflet_layer_control.addLogInfo = function($accordion) {
+
+    var $content = leaflet_layer_control.buildAccordionPanel($accordion, "Workcell Log");
+    //leaflet_layer_control.$feature_info = $("<div>")
+    //    .html("View work log for this cell")
+    //    .appendTo($content);
+    var $messageScroll = $("<div id='message_scroll'>")
+        .addClass("message-panel")
+        .appendTo($content);
+    var $messageTable = $("<table id='message_table'>")
+        .addClass("table table-bordered header-fixed")
+        .appendTo($messageScroll);
+    var $header = $("<thead><tr><th>DateTime</th><th>User</th><th>Comment</th></tr></thead>")
+        .appendTo($messageTable);
+    var $body = $("<tbody id='messages'></tbody>")
+        .appendTo($messageTable);
+    var $buttonRow = $("<div id='button_row'>")
+        .appendTo($content);
+    $("<button>Submit a Comment</button>")
+        .addClass("btn btn-primary")
+        .attr('onclick', 'submitComment()')
+        .appendTo($buttonRow)
+
+    leaflet_layer_control.refreshLogInfo();
+};
+
+leaflet_layer_control.refreshLogInfo = function() {
+    var body = $('#messages');
+    if ($('#messages tr').length > 0) {
+        body.empty();
+    }
+
+    $.ajax({
+        url: document.URL + "/log",
+        dataType: "json"
+    })
+        .done(function(entries) {
+            _.each(entries, function(entry) {
+                var $details = $("<tr><td>" + entry.timestamp + "</td><td>" +
+                    entry.user + "</td><td>" + entry.text + "</td></tr>")
+                    .appendTo(body);
+            })
+        });
+
+};
+
 leaflet_layer_control.buildAccordionPanel = function($accordion,title){
     var sectionName = _.str.dasherize(_.str.stripTags(title));
 
@@ -84,7 +137,7 @@ leaflet_layer_control.buildAccordionPanel = function($accordion,title){
         .text(title)
         .appendTo($drawerInner);
 
-    var $contentHolder = $('<div id="collapse'+sectionName+'" class="accordion-body collapse in">')
+    var $contentHolder = $('<div id="collapse'+sectionName+'" class="accordion-body collapse">')
         .appendTo($drawerHolder);
     var $content = $("<div>")
         .addClass('accordion-inner')
@@ -124,7 +177,7 @@ leaflet_layer_control.addWorkCellInfo = function($accordion) {
             $('<span class="editable" id="status" style="display: inline">'+_.str.capitalize(value)+'</span>')
                 .appendTo($status)
                 .editable(editableUrl, {
-                    data   : " {'Unassigned':'Unassigned','In work':'In work','Completed':'Completed'}",
+                    data   : " {'Unassigned':'Unassigned','In work':'In work', 'In review':'In review', 'Completed':'Completed'}",
                     type   : 'select',
                     submit : 'OK',
                     style  : 'inherit',
@@ -165,6 +218,26 @@ leaflet_layer_control.addWorkCellInfo = function($accordion) {
         .html(workcell_note)
         .appendTo($content)
         .editable(editableUrl);
+
+    // add function buttons
+    var $submitDiv = $('<div id="finish-workcell">')
+        .appendTo($content);
+
+    var $subButton = $('<button>Finish<span class="caret"></span></button>')
+        .addClass("btn btn-primary dropdown-toggle")
+        .attr("data-toggle", "dropdown")
+        .attr("type", "button")
+        .attr("type", "button")
+        .appendTo($submitDiv);
+
+    var $ull = $('<ul>')
+        .addClass("dropdown-menu")
+        .attr("role", "menu")
+        .appendTo($submitDiv);
+
+    for (opt in leaflet_layer_control.finish_options) {
+        $ull.append(leaflet_layer_control.finish_options[opt]);
+    }
 
 };
 leaflet_layer_control.show_feature_info = function (feature) {
@@ -593,7 +666,7 @@ leaflet_layer_control.addLayerControl = function (map, options, $accordion) {
     //Hide the existing layer control
     $('.leaflet-control-layers.leaflet-control').css({display: 'none'});
 
-    var $layerButton = $('<a id="toggle-drawer" href="#" class="btn">Layers <i id="layer-status"> </i></a>');
+    var $layerButton = $('<a id="toggle-drawer" href="#" class="btn">Tools <i id="layer-status"> </i></a>');
     var layerButtonOptions = {
         'html': $layerButton,
         'onClick': leaflet_layer_control.toggleDrawer,  // callback function

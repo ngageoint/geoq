@@ -195,7 +195,7 @@ class AOI(GeoQBase):
     Low-level organizational object. Now (6/1/14) referred to as a 'Workcell'
     """
 
-    STATUS_VALUES = ['Unassigned', 'In work', 'In review', 'Completed'] #'Assigned'
+    STATUS_VALUES = ['Unassigned', 'In work', 'Awaiting review', 'In review', 'Completed'] #'Assigned'
     STATUS_CHOICES = [(choice, choice) for choice in STATUS_VALUES]
 
     PRIORITIES = [(n, n) for n in range(1, 6)]
@@ -307,6 +307,6 @@ class Comment(models.Model):
         return comment_obj
 
     def to_dict(self):
-        format = "%a %b %d %H:%M:%S %Y"
+        format = "%D %H:%M:%S"
         o = {'user': self.user.username, 'timestamp': self.created_at.strftime(format), 'text': self.text}
         return o

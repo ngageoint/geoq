@@ -94,7 +94,7 @@ class CreateFeaturesView(DetailView):
         cv['aoi'].analyst = self.request.user
         cv['aoi'].status = 'In work'
         cv['aoi'].save()
-        Comment(user=cv['aoi'].analyst,aoi=cv['aoi'],text="Workcell opened by user").save()
+        Comment(user=cv['aoi'].analyst,aoi=cv['aoi'],text="Workcell opened").save()
         return cv
 
 
