@@ -11,6 +11,7 @@ from django.core.urlresolvers import reverse
 from django.utils.datastructures import SortedDict
 from managers import AOIManager
 from jsonfield import JSONField
+from collections import defaultdict
 
 TRUE_FALSE = [(0, 'False'), (1, 'True')]
 
@@ -131,8 +132,35 @@ class Job(GeoQBase):
         return self.aois.count()
 
     @property
+    def aoi_counts_html(self):
+        count = defaultdict(int)
+        for cell in AOI.objects.filter(job__id=self.id):
+            count[cell.status] += 1
+
+        return str(', '.join("%s:<b>%r</b>" % (key,val) for (key,val) in count.iteritems()))
+
+    @property
     def user_count(self):
         return self.analysts.count()
+
+    def features_table_html(self):
+
+        count = defaultdict(int)
+        showtable = False
+        # style = defaultdict(int)
+        for feature in self.feature_set.all():
+            count[feature.template.name] += 1
+            showtable = True
+            # if count[feature.template.id] == 1:
+            #     style[feature.template.id] = feature.template.to_json()
+
+        if showtable:
+            rows = '</tr><tr>\n'.join("<td><b>%s</b>:</td><td>%r</td>" % (key,val) for (key,val) in count.iteritems())
+            output = "<table class='job_feature_list'><tr><th>Feature Type</th><th>Submitted</th></tr><tr>\n"+rows+"</tr></table>"
+        else:
+            output = ""
+
+        return output
 
     def unassigned_aois(self):
         """

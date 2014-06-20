@@ -10,9 +10,13 @@
     <li title="This job is {{ object.active }}">
         <i class="icon-check"></i>
         {% if object.active %}
-            Active
+            <span style="color:green">Active</span>
         {% else %}
-            Archived
+            <span style="color:red">Archived</span>
         {% endif %}
     </li>
 </ul>
+<ul class="statlist pull-right" style="clear:right">
+    <li>{{ object.aoi_counts_html|safe }}</li>
+</ul>
+
