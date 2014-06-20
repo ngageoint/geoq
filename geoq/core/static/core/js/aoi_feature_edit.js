@@ -39,6 +39,7 @@ aoi_feature_edit.init = function () {
             aoi_feature_edit.icon_style[ftype.id] = ftype.style || {"type":"image"};
             if (ftype.style.type == 'maki') {
                 aoi_feature_edit.icons[ftype.id] = L.MakiMarkers.Icon;
+                aoi_feature_edit.icons[ftype.id].type = 'maki';
             }
             else {
                 aoi_feature_edit.icons[ftype.id] = aoi_feature_edit.MapIcon;
@@ -405,7 +406,12 @@ aoi_feature_edit.map_init = function (map, bounds) {
     });
 
     map.on('draw:drawstart', function (e) {
-        var id = e.layerType.slice(-1);
+        var id = 1;
+        var matches = e.layerType.match(/\d+$/);
+        if (matches) {
+            id = matches[0];
+        }
+
         var map_item_type = parseInt(id);
         if (isNaN(map_item_type)){
             var features = _.toArray(aoi_feature_edit.feature_types);
@@ -600,13 +606,20 @@ aoi_feature_edit.buildDrawingControl = function (drawnItems) {
             var bg_color = ftype.style.color;
             var bg_image = ftype.style.iconUrl || ftype.style.icon;
 
-            if (bg_color) {
-                $icon.css({backgroundColor:bg_color,opacity:0.7, borderColor:bg_color, borderWidth:1});
-            }
-            if (bg_image) {
-                bg_image = 'url("'+bg_image+'")';
-                $icon.css({background:bg_image, backgroundSize:'contain', backgroundRepeat:'no-repeat'});
+            if (ftype.style.type=="maki"){
+                $icon
+                    .addClass('maki-icon '+bg_image)
+                    .css('backgroundImage', "url(/static/images/maki/images/maki-sprite.png)");
 
+            } else {
+                if (bg_color) {
+                    $icon.css({backgroundColor:bg_color,opacity:0.7, borderColor:bg_color, borderWidth:1});
+                }
+                if (bg_image) {
+                    bg_image = 'url("'+bg_image+'")';
+                    $icon.css({background:bg_image, backgroundSize:'contain', backgroundRepeat:'no-repeat'});
+
+                }
             }
         }
     });
