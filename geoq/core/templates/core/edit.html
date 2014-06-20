@@ -71,7 +71,7 @@
         aoi_feature_edit.next_aoi_url = "{% url 'job-next-aoi' object.job.id %}";
 
         aoi_feature_edit.percent_complete = {% widthratio object.job.complete.count 100 100%};
-        aoi_feature_edit.description = "{{ object.description |safe}}";
+        aoi_feature_edit.description = "{{ object.description|escapejs}}";
         aoi_feature_edit.static_root = "{{ STATIC_URL }}";
         aoi_feature_edit.help_url = "{% url 'help_page' %}";
 
