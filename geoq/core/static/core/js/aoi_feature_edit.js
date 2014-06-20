@@ -612,15 +612,16 @@ aoi_feature_edit.buildDrawingControl = function (drawnItems) {
                     .css('backgroundImage', "url(/static/images/maki/images/maki-sprite.png)");
 
             } else {
-                if (bg_color) {
-                    $icon.css({backgroundColor:bg_color,opacity:0.7, borderColor:bg_color, borderWidth:1});
-                }
                 if (bg_image) {
                     bg_image = 'url("'+bg_image+'")';
                     $icon.css({background:bg_image, backgroundSize:'contain', backgroundRepeat:'no-repeat'});
 
                 }
             }
+            if (bg_color) {
+                $icon.css({backgroundColor:bg_color,opacity:0.7, borderColor:bg_color, borderWidth:1});
+            }
+
         }
     });
 };
