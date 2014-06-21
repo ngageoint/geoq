@@ -1,7 +1,7 @@
 {% verbatim %}
 <div class="job-detail-popup">
 	<h5>
-		<a href="{{ job_properties.absolute_url }}">AOI # {{ job_properties.id }}</a>
+		<a href="{{ job_properties.absolute_url }}">Work Cell # {{ job_properties.id }}</a>
 	</h5>
 	<div>
 		<label>Priority: </label>
@@ -16,7 +16,7 @@
 		<span>{{ job_properties.analyst }}</span>
 	</div>
     <div>
-        <a onclick="javascript:deleteAOI('{{ job_properties.id }}','{{ job_properties.delete_url }}');">Delete AOI</a>
+        <a onclick="javascript:deleteAOI('{{ job_properties.id }}','{{ job_properties.delete_url }}');">Delete Work Cell</a>
     </div>
 </div>
 {% endverbatim %}
