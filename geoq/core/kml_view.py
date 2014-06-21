@@ -21,13 +21,23 @@ class JobKML(ListView):
         aoi_complete = job.complete().count()
         aoi_work = job.in_work().count()
 
-        aoi_comp_pct = int(100 * float(aoi_complete)/float(aoi_count))
+        description = 'Job #'+str(job.id)+': '+str(job.name)+'\n'+str(job.project.name)+'\n'
+
+        if aoi_count == 0:
+            output = '<?xml version="1.0" encoding="UTF-8"?>\n'
+            output += '<kml xmlns="http://www.opengis.net/kml/2.2">\n'
+            output += '  <Document>\n'
+            output += '    <name>Empty Job</name>\n'
+            output += '    <description>'+description+'</description>\n'
+            output += '  </Document>\n'
+            output += '</kml>\n'
+            return HttpResponse(output, mimetype="application/vnd.google-earth.kml+xml", status=200)
+
+        aoi_comp_pct = (100 * float(aoi_complete)/float(aoi_count))
         aoi_work_pct = int(100 * float(aoi_work)/float(aoi_count))
         aoi_tot_pct = int(100 * float(aoi_work+aoi_complete)/float(aoi_count))
 
         doc_name = 'GeoQ C:'+str(aoi_complete)+', W:'+str(aoi_work)+', Tot:'+str(aoi_count)+' ['+str(aoi_tot_pct)+'%]'
-
-        description = 'Job #'+str(job.id)+': '+str(job.name)+'\n'+str(job.project.name)+'\n'
         description = description + 'Complete Cells: ' + str(aoi_complete) + ' ['+str(aoi_comp_pct)+'%], In Work: ' + str(aoi_work) + ' ['+str(aoi_work_pct)+'%], Total: ' + str(aoi_count)
 
         output = '<?xml version="1.0" encoding="UTF-8"?>\n'
