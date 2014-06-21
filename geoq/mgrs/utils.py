@@ -6,6 +6,7 @@ import subprocess
 # from django.contrib.gis.geos import *
 from geojson import MultiPolygon, Feature, FeatureCollection
 from exceptions import ProgramException
+import json
 
 import logging
 logger = logging.getLogger(__name__)
@@ -21,14 +22,21 @@ class Grid:
         if self.sw_mgrs[0:2] != self.ne_mgrs[0:2]:
             raise GridException("Can't create grids across longitudinal boundaries.")
 
-        self.start_100k_easting_index = Grid.LETTERS.index(self.sw_mgrs[3:4])
-        self.end_100k_easting_index = Grid.LETTERS.index(self.ne_mgrs[3:4])
+        try:
+            sw_mgrs_east = self.sw_mgrs[3:4]
+            ne_mgrs_east = self.ne_mgrs[3:4]
+            sw_mgrs_north = self.sw_mgrs[4:5]
+            ne_mgrs_north = self.ne_mgrs[4:5]
 
-        self.start_100k_northing_index = Grid.LETTERS.index(self.sw_mgrs[4:5])
-        self.end_100k_northing_index = Grid.LETTERS.index(self.ne_mgrs[4:5])
+            self.start_100k_easting_index = Grid.LETTERS.index(sw_mgrs_east)
+            self.end_100k_easting_index = Grid.LETTERS.index(ne_mgrs_east)
 
+            self.start_100k_northing_index = Grid.LETTERS.index(sw_mgrs_north)
+            self.end_100k_northing_index = Grid.LETTERS.index(ne_mgrs_north)
+        except:
+            error = dict(sw_mgrs=self.sw_mgrs, ne_mgrs=self.ne_mgrs)
+            raise GeoConvertException(json.dumps(error))
         # need to check for a maximum size limit...
-
 
     # specify a grid point with a 1m designation (add zeros to easting and northing)
     def expand(self,original):
@@ -37,33 +45,51 @@ class Grid:
     # given a lat/lon combination, determine its 1km MGRS grid
     def get_mgrs(self,lat,lon):
         try:
-            input = "%s,%s" % (lon, lat)
-            process = subprocess.Popen(["GeoConvert","-w","-m","-p","-3","--input-string",input],stdout=subprocess.PIPE)
-            return process.communicate()[0].rstrip()
+            #input = "%s %s" % (float(lon), float(lat))
+            # process = subprocess.Popen(["GeoConvert","-w","-m","-p","-3","--input-string",input],stdout=subprocess.PIPE)
+            # return process.communicate()[0].rstrip()
+
+            #Note: This gives shell access, be careful to screen your inputs!
+            shell_command = "echo " + str(float(lat)) + " " + str(float(lon)) + " | GeoConvert -m -p -3"
+            try:
+                process = subprocess.check_output(shell_command, shell=True)
+                output = process.rstrip()
+            except subprocess.CalledProcessError, e:
+                output = e.output
+
+            return output
+
         except Exception:
             import traceback
             errorCode = 'Program Error: ' + traceback.format_exc()
-            if errorCode and len(errorCode):
-                logger.error(errorCode)
-
-            raise ProgramException('Unable to execute GeoConvert program')
-
+            raise ProgramException('Unable to execute GeoConvert program. errorCode = '+errorCode)
 
     def get_polygon(self,mgrs_list):
         try:
-            m_string = ';'.join(mgrs_list)
-            process = subprocess.Popen(["GeoConvert","-w","-g","-p","0","--input-string",m_string],stdout=subprocess.PIPE)
-            result = process.communicate()[0].rstrip().split('\n')
+            # m_string = ';'.join(mgrs_list)
+            # process = subprocess.Popen(["GeoConvert","-w","-g","-p","0","--input-string",m_string],stdout=subprocess.PIPE)
+            # result = process.communicate()[0].rstrip().split('\n')
+
+            #Note: This gives shell access, be careful to screen your inputs!
+            m_string = '\n'.join(mgrs_list)
+            shell_command = "printf '" + m_string + "' | GeoConvert -g -p -0"
+            try:
+                process = subprocess.check_output(shell_command, shell=True)
+                result = process.rstrip().split('\n')
+            except subprocess.CalledProcessError, e:
+                result = e.output
+
         except Exception:
             import traceback
-            errorCode = 'Program Error: ' + traceback.format_exc()
-            if errorCode and len(errorCode):
-                logger.error(errorCode)
+            errorCode = traceback.format_exc()
+            raise ProgramException('Error executing GeoConvert program. errorCode='+errorCode+'. m_string='+m_string)
 
-            raise ProgramException('Error executing GeoConvert program')
-
-        for i,val in enumerate(result):
+        for i, val in enumerate(result):
             result[i] = tuple(float(x) for x in val.split())
+
+        # Flip the lat/lngs
+        for i, (lat, lon) in enumerate(result):
+            result[i] = (lon,lat)
 
         return MultiPolygon([[result]])
 
@@ -114,7 +140,6 @@ class Grid:
 
         return m_array
 
-
     def determine_mgrs_array(self):
         easting_start = int(self.sw_mgrs[5:7])
         easting_end = int(self.ne_mgrs[5:7])
@@ -133,7 +158,6 @@ class Grid:
                 mgrs_array.extend(self.get_array_for_block(n_start,n_end,e_start,e_end,prefix))
 
         return mgrs_array
-
 
     def build_grid_fc(self):
 
@@ -157,4 +181,7 @@ class Grid:
 class GridException(Exception):
     pass
 
+
+class GeoConvertException(Exception):
+    pass
 

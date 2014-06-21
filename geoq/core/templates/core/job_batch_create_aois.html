@@ -230,22 +230,22 @@
 
 {% block container %}
     <div class="row-fluid container-narrow">
-    <h2>Create new Area Of Interest (AOI)</h2>
-    <h3>Please zoom in to at least city level before drawing Areas to process</h3>
+    <h2>Create new Work cells</h2>
+    <h3>Please zoom in to at least city level before drawing work cells</h3>
     <div id="map" class="thumbnail" style="height: 450px; width: 100%;">{% leaflet_map "map" %}</div>
         <br/>
     <div class="row">
         <div class="col-md-3">
-        <label>Name for these AOI cells:</label>
+        <label>Name for this group of work cells:</label>
         <input type="text" name="aoi-name" id="aoi-name" value="{{ object.name }}"/>
         </div>
         <div class="cod-md-3">
-            <label>Zoom map to Location:</label>
+            <label>Zoom above map to Location:</label>
             <input type="text" id="geocomplete" />
         </div>
     </div>
     <div class="row">
-    <btn id="save-aois-button" class="btn btn-success">Save AOIs</btn>
+    <btn id="save-aois-button" class="btn btn-success">Save Work Cells</btn>
     </div>
     </div>
 {% endblock %}

@@ -18,7 +18,7 @@ from datetime import datetime
 from models import Project, Job, AOI, Comment
 from geoq.maps.models import *
 
-from geoq.mgrs.utils import Grid, GridException
+from geoq.mgrs.utils import Grid, GridException, GeoConvertException
 from geoq.core.utils import send_aoi_create_event
 from geoq.mgrs.exceptions import ProgramException
 from kml_view import *
@@ -371,18 +371,30 @@ def mgrs(request):
         return HttpResponse()
 
     bb = bbox.split(',')
+    output = ""
 
-    try:
-        grid = Grid(bb[1], bb[0], bb[3], bb[2])
-        fc = grid.build_grid_fc()
-    except GridException:
-        error = dict(error=500, details="Can't create grids across longitudinal boundaries. Try creating a smaller bounding box",)
-        return HttpResponse(json.dumps(error), status=error.get('error'))
-    except ProgramException:
-        error = dict(error=500, details="Error executing external GeoConvert application. Make sure it is installed on the server",)
-        return HttpResponse(json.dumps(error), status=error.get('error'))
+    if not len(bb) == 4:
+        output = json.dumps(dict(error=500, message='Need 4 corners of a bounding box passed in using EPSG 4386 lat/long format', grid=str(bb)))
+    else:
+        try:
+            grid = Grid(bb[1], bb[0], bb[3], bb[2])
+            fc = grid.build_grid_fc()
+            output = json.dumps(fc)
+        except GridException:
+            error = dict(error=500, details="Can't create grids across longitudinal boundaries. Try creating a smaller bounding box",)
+            return HttpResponse(json.dumps(error), status=error.get('error'), mimetype="application/json")
+        except GeoConvertException, e:
+            error = dict(error=500, details="GeoConvert doesn't recognize those cooridnates", exception=str(e))
+            return HttpResponse(json.dumps(error), status=error.get('error'), mimetype="application/json")
+        except ProgramException, e:
+            error = dict(error=500, details="Error executing external GeoConvert application. Make sure it is installed on the server", exception=str(e))
+            return HttpResponse(json.dumps(error), status=error.get('error'), mimetype="application/json")
+        except Exception, e:
+            import traceback
+            output = json.dumps(dict(error=500, message='Generic Exception', details=traceback.format_exc(), exception=str(e), grid=str(bb)))
 
-    return HttpResponse(fc.__str__(), mimetype="application/json")
+    return HttpResponse(output, mimetype="application/json")
+
 
 def geocode(request):
     """
