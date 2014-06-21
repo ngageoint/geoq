@@ -45,6 +45,7 @@ class JobKML(ListView):
         output += '  <Document>\n'
         output += '    <name>'+doc_name+'</name>\n'
         output += '    <description>'+description+'</description>\n'
+        output += '    <Folder>\n'
         output += '    <Style id="geoq_inwork">\n'
         output += '      <LineStyle>\n'
         output += '        <width>3</width>\n'
@@ -125,8 +126,7 @@ class JobKML(ListView):
         for loc in locations:
             template_name = str(loc.template.name)
             if template_name != last_template:
-                if last_template != "":
-                    output += '   </Folder>\n'
+                output += '   </Folder>\n'
                 output += '   <Folder><name>'+template_name+'</name>\n'
                 last_template = template_name
 
