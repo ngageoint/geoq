@@ -99,7 +99,10 @@ leaflet_helper.layer_conversion = function (lyr, map) {
         } else {
             outputLayer = new L.Google();
         }
+    } else if (lyr.type == 'Leaflet Tile Layer') {
+        outputLayer = L.tileLayer(lyr.url, lyr.layerParams);
     }
+
     //Make sure the name is set for showing up in the layer menu
     if (lyr.name && outputLayer) outputLayer.name = lyr.name;
     if (outputLayer) outputLayer.config = lyr;
