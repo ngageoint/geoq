@@ -107,5 +107,7 @@ urlpatterns = patterns('',
     url(r'^api/job/update/(?P<pk>\d+)$', update_job_data, name='update-job-data'),
     url(r'^api/feature/update/(?P<pk>\d+)$', update_feature_data, name='update-feature-data'),
     url(r'^api/layer[s ]?.json$', LayersJSON.as_view(), name='json-layers'),
+    url(r'^api/prioritize/(?P<method>\w+)?$',
+        'core.views.prioritize_cells', name='batch-prioritize-cells'),
 
 )

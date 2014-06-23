@@ -8,6 +8,10 @@
         .popover {
             min-width: 200px ! important;
         }
+        #current-aois{
+            width: 800px;
+            height: 350px;
+        }
     </style>
     <script src="http://maps.googleapis.com/maps/api/js?sensor=false&libraries=places"></script>
     <script src="{{ STATIC_URL }}core/js/jquery.geocomplete.js"></script>
@@ -16,27 +20,43 @@
 
     var df = null;
     var aois = new L.FeatureGroup();
+    var colors = ['red','#003300','#006600','#009900','#00CC00','#00FF00'];
+    var map_object = null;
+
+    function styleFromPriority(feature){
+        var priority = 5;
+        if (feature.properties && feature.properties.priority) {
+            priority = feature.properties.priority;
+        }
+        var color = colors[1];
+        if (priority > 0 && priority < colors.length) {
+            color = colors[priority];
+        }
+        return {
+            "weight": 2,
+            "color": color,
+            "opacity": .7,
+            fillOpacity: 0.3,
+            fillColor: color
+        };
+    }
 
     function highlightFeature(e) {
         var layer = e.target;
         layer.setStyle({
-            color: 'red',
+            color: colors[0],
             weight: 3,
             opacity: 1,
             fillOpacity: 1,
-            fillColor: 'red'
+            fillColor: colors[0]
         });
     }
 
     function resetHighlight(e) {
         var layer = e.target;
-        layer.setStyle({
-            "weight":2,
-            "color":"darkgreen",
-            "opacity":.7,
-            fillOpacity: 0.3,
-            fillColor: 'darkgreen'
-        })
+
+        var style = styleFromPriority(layer.feature);
+        layer.setStyle(style);
     }
 
     function removeFeature(e) {
@@ -46,174 +66,223 @@
                 aois._layers[key].removeLayer(e.target);
             }
         }
+        updateCellCount();
     }
 
-    function mapInit(map, bounds) {
+    var createWorkCellsFromService = function(data, textStatus, jqXHR){
+        var features = L.geoJson(data, {
+            style: function(feature) {
+                //Test: If this isn't on each feature, do it onEachFeature below
+                return styleFromPriority(feature);
+            },
+            onEachFeature: function(feature, layer) {
 
-            extentStyle = {
-                "weight":2,
-                "color":"darkgreen",
-                "opacity":.7,
-                fillOpacity: 0.3,
-                fillColor: 'darkgreen'
-            }
-
-
-
-            setTimeout(function(){map.fitBounds([[52.429222277955134, -51.50390625],[21.043491216803556,-136.58203125]])}, 1);
-
-
-            var drawnItems = new L.FeatureGroup();
-            df = drawnItems;
-
-            map.addLayer(drawnItems);
-
-            var drawControl = new L.Control.Draw({
-                draw: {
-                    position: 'topleft',
-                    polygon: {
-                        title: 'Draw an Area to be searched',
-                        allowIntersection: false,
-                        drawError: {
-                            color: '#b00b00',
-                            timeout: 1000
-                        },
-                        shapeOptions: {
-                            color: '#bada55'
-                        },
-                        showArea: true
-                    },
-                    circle: {
-                        shapeOptions: {
-                            color: '#662d91'
-                        }
-                    },
-                    polyline: false
-                },
-                edit: {
-                    featureGroup: aois,
-                    remove: false
-                }
-            });
-            map.addControl(drawControl);
-            $('a.leaflet-draw-edit-edit')
-                    .attr("title","Click AOI box to delete it");
-            $('div.leaflet-draw.leaflet-control').find('a').popover({trigger:"hover",placement:"right"})
-
-            var callback = function(data, textStatus, jqXHR){
-                var features = L.geoJson(data, {
-                    style: function(feature) {
-                        return extentStyle;
-                    },
-                    onEachFeature: function(feature, layer) {
-
-//                        job_properties = feature.properties;
-//                        popupContent = _.template('{% filter escapejs %}{% include "core/job_detail_aoi_popup.html" %}{% endfilter %}', job_properties);
-//                        layer.bindPopup(popupContent);
-//
-                        layer.on({
-                            mouseover: highlightFeature,
-                            mouseout: resetHighlight,
-                            click: removeFeature
-                        });
-                    }
+                layer.on({
+                    mouseover: highlightFeature,
+                    mouseout: resetHighlight,
+                    click: removeFeature
                 });
-
-                if (features){
-                    aois.addLayer(features);
-                    //map.removeLayer(drawnItems);
-                    map.addLayer(aois);
-                }
-
-            };
-
-
-            map.on('draw:created', function (e) {
-                // map.fitBounds(e.layer.getBounds());
-                var type = e.layerType,
-                    layer = e.layer;
-
-                if (type === 'rectangle' || type === 'circle' || type === 'polygon' ) {
-                       bboxStr = layer.getBounds().toBBoxString();
-                       $.ajax({
-                          type: "GET",
-                          url: "{% DynamicUrl object.grid %}",
-                          data: { bbox: bboxStr},
-                          contentType: "application/json",
-                          success: callback,
-                          beforeSend: function() {
-                              //map.style.cursor = 'wait';
-                              $("#map").css({
-                                  'cursor': 'wait'
-                              })
-                          },
-                          complete: function() {
-                              $("#map").css({
-                                  'cursor': 'default'
-                              })
-                          },
-                          error: function(response) {
-                              if (response.responseText) {
-                                  message = JSON.parse(response.responseText);
-                                  if (message.details) {
-                                      log.error(message.details);
-                                  }
-                              }
-                          },
-                          dataType: "json"
-                        });
-                }
-
-                drawnItems.addLayer(layer);
-            });
             }
+        });
+
+        if (features){
+            aois.addLayer(features);
+            //map.removeLayer(drawnItems);
+            map_object.addLayer(aois);
+        }
+        updateCellCount();
+    };
+
+    function updateCellCount() {
+        var aoi_count = 0;
+        _.each(aois._layers,function(layergroup){
+            if (layergroup && layergroup._layers){
+                aoi_count += _.toArray(layergroup._layers).length;
+            }
+        });
+        $('#num_workcells').text(aoi_count);
+
+        var boundaries = getBoundaries();
+        $('#current-aois')
+            .val(JSON.stringify(boundaries));
+    }
+
+
+    function mapInit(map) {
+
+        setTimeout(function(){map.fitBounds([[52.429222277955134, -51.50390625],[21.043491216803556,-136.58203125]])}, 1);
+
+        var drawnItems = new L.FeatureGroup();
+        df = drawnItems;
+
+        map.addLayer(drawnItems);
+
+        var drawControl = new L.Control.Draw({
+            draw: {
+                position: 'topleft',
+                polygon: {
+                    title: 'Draw an Area to be searched',
+                    allowIntersection: false,
+                    drawError: {
+                        color: '#b00b00',
+                        timeout: 1000
+                    },
+                    shapeOptions: {
+                        color: '#bada55'
+                    },
+                    showArea: true
+                },
+                circle: {
+                    shapeOptions: {
+                        color: '#662d91'
+                    }
+                },
+                polyline: false
+            },
+            edit: {
+                featureGroup: aois,
+                remove: false
+            }
+        });
+        map.addControl(drawControl);
+        $('a.leaflet-draw-edit-edit')
+                .attr("title","Click Work Cell box to delete it");
+        $('div.leaflet-draw.leaflet-control').find('a').popover({trigger:"hover",placement:"right"})
+
+
+        map.on('draw:created', function (e) {
+            // map.fitBounds(e.layer.getBounds());
+            var type = e.layerType,
+                layer = e.layer;
+
+            if (type === 'rectangle' || type === 'circle' || type === 'polygon' ) {
+               var bboxStr = layer.getBounds().toBBoxString();
+               $.ajax({
+                  type: "GET",
+                  url: "{% DynamicUrl object.grid %}",
+                  data: { bbox: bboxStr},
+                  contentType: "application/json",
+                  success: createWorkCellsFromService,
+                  beforeSend: function() {
+                      //map.style.cursor = 'wait';
+                      $("#map").css({
+                          'cursor': 'wait'
+                      })
+                  },
+                  complete: function() {
+                      $("#map").css({
+                          'cursor': 'default'
+                      })
+                  },
+                  error: function(response) {
+                      if (response.responseText) {
+                          var message = JSON.parse(response.responseText);
+                          if (message.details) {
+                              log.error(message.details);
+                          }
+                      }
+                  },
+                  dataType: "json"
+                });
+            }
+            drawnItems.addLayer(layer);
+            updateCellCount();
+        });
+
+        map_object = map;
+    }
+
+    function getBoundaries() {
+        var boundaries = [];
+
+        var m = aois._map;
+        if (m && (m._container.id == 'map') && (m.hasLayer(aois))){
+            _.each(aois.getLayers(), function(l){
+
+               _.each(l.getLayers(), function(f){
+                   f.feature.name = $('#aoi-name').val();
+                   boundaries.push(f.toGeoJSON());
+               });
+            });
+        } else {
+            log.error("No Map object found");
+        }
+        if (!boundaries.length) boundaries = false;
+
+        return boundaries;
+    }
+
+    function resetBoundaries(data) {
+        var m = aois._map;
+        if (m && (m._container.id == 'map') && (m.hasLayer(aois))){
+            //Remove AOI layers
+            m.removeLayer(aois);
+            aois = new L.FeatureGroup();
+
+            //Add back AOI Layers
+            createWorkCellsFromService(data);
+        }
+    }
 
 
     $(document).ready(function() {
-        $("#save-aois-button").on('click',function(e){
-            boundaries = [];
-            // this doesn't need to be a filter
-            var m = aois._map;
-            if (m) {
-                if (m._container.id == 'map'){
-                   if (m.hasLayer(aois)){
-                       _.each(aois.getLayers(), function(l){
+        $("#save-aois-button").on('click',function(){
+            var boundaries = getBoundaries();
 
-                           _.each(l.getLayers(), function(f){
-                               f.feature.name = $('#aoi-name').val();
-                               boundaries.push(f.toGeoJSON());
-                           });
-                       })
-
-                       $.post("{% url 'job-batch-create-aois' job_pk %}",
-                               { aois: JSON.stringify(boundaries), csrftoken:geoq.csrftoken},
-                               function(data, textStatus, xhr) {
-                                   console.log("Got response: " + textStatus);
-                                   window.location.href = "{% url 'job-detail' job_pk %}";
-                               });
-
-                   }
-               }
+            if (boundaries) {
+                $.post("{% url 'job-batch-create-aois' job_pk %}",
+                   { aois: JSON.stringify(boundaries), csrftoken:geoq.csrftoken},
+                   function(data, textStatus) {
+                       log.log("Batch creating service - Got response: " + textStatus);
+                       window.location.href = "{% url 'job-detail' job_pk %}";
+                   });
             }
-            })
+        });
+
+        $("#prioritize-aois-day-button").on('click',function(){
+            var boundaries = getBoundaries();
+
+            if (boundaries) {
+                $.post("{% url 'batch-prioritize-cells' method='daytime' %}",
+                   { aois: JSON.stringify(boundaries), csrftoken:geoq.csrftoken},
+                   function(data, textStatus) {
+                       log.log("Batch creating service Day- Got response: " + textStatus);
+                       resetBoundaries(data);
+                   });
+            }
+        });
+
+        $("#prioritize-aois-night-button").on('click',function(){
+            var boundaries = getBoundaries();
+
+            if (boundaries) {
+                $.post("{% url 'batch-prioritize-cells' method='nighttime' %}",
+                   { aois: JSON.stringify(boundaries), csrftoken:geoq.csrftoken},
+                   function(data, textStatus) {
+                       log.log("Batch creating service Night- Got response: " + textStatus);
+                       resetBoundaries(data);
+                   });
+            }
         });
 
 
+
+    });
 </script>
         <script>
             $(function() {
                 $("#geocomplete").geocomplete()
                         .bind("geocode:result", function(event,result) {
-                            console.log("Result: " + result.formatted_address);
+                            log.log("Geocode Result: " + result.formatted_address);
                             if ( df._map ) {
                                 df._map.setView([result.geometry.location.lat(),result.geometry.location.lng()],13);
                             }
                         })
                         .bind("geocode:error", function(event,status){
-                            console.log("Error: " + status);
+                            log.error("Geocode: " + status);
                         })
                         .bind("geocode:multiple", function(event,results) {
-                            console.log("Multiple: " + results.length + " results found");
+                            log.log("Geocode Multiple: " + results.length + " results found");
                         });
 
                 $("#find").click(function() {
@@ -236,7 +305,7 @@
         <br/>
     <div class="row">
         <div class="col-md-3">
-        <label>Name for this group of work cells:</label>
+        <label>Name for this group of work cells: (<span id="num_workcells">0</span>)</label>
         <input type="text" name="aoi-name" id="aoi-name" value="{{ object.name }}"/>
         </div>
         <div class="cod-md-3">
@@ -245,7 +314,19 @@
         </div>
     </div>
     <div class="row">
-    <btn id="save-aois-button" class="btn btn-success">Save Work Cells</btn>
+        Prioritize by: <btn id="prioritize-aois-day-button" class="btn btn-warning">Daytime Population</btn>
+        <btn id="prioritize-aois-night-button" class="btn btn-warning">Nighttime Population</btn>
+        <hr/>
     </div>
+
+    <div class="row">
+        <btn id="save-aois-button" class="btn btn-success">Save Work Cells to Job</btn>
+    </div>
+
+    <div class="row">
+        Work Cell detailed data (copy and paste this to tweak or export):</br>
+        <textarea id="current-aois" class="cell-data">{}</textarea>
+    </div>
+
     </div>
 {% endblock %}

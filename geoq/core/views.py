@@ -57,7 +57,7 @@ class BatchCreateAOIS(TemplateView):
         response = AOI.objects.bulk_create([AOI(name=job.name,
                                             job=job,
                                             description=job.description,
-                                        properties=aoi.get('properties'),
+                                            properties=aoi.get('properties'),
                                             polygon=GEOSGeometry(json.dumps(aoi.get('geometry')))) for aoi in aois])
 
         return HttpResponse()
@@ -472,6 +472,39 @@ def update_feature_data(request, *args, **kwargs):
         return HttpResponse(value, mimetype="application/json", status=200)
     else:
         return HttpResponse('{"status":"attribute and value not passed in"}', mimetype="application/json", status=400)
+
+
+@login_required
+def prioritize_cells(request, method, **kwargs):
+    aois_data = request.POST.get('aois')
+    method = method or "daytime"
+
+    try:
+        from random import randrange
+        aois = json.loads(aois_data)
+
+        if method == "daytime":
+            for aoi in aois:
+                if not 'properties' in aoi:
+                    aoi['properties'] = dict()
+
+                aoi['properties']['priority'] = randrange(1, 5)
+        elif method == "nighttime":
+            for aoi in aois:
+                if not 'properties' in aoi:
+                    aoi['properties'] = dict()
+
+                aoi['properties']['priority'] = randrange(1, 5)
+
+        output = aois
+    except Exception, ex:
+        import traceback
+        errorCode = 'Program Error: ' + traceback.format_exc()
+
+        log = dict(error='Could not prioritize Work Cells', message=str(ex), details=errorCode, method=method)
+        return HttpResponse(json.dumps(log), mimetype="application/json", status=500)
+
+    return HttpResponse(json.dumps(output), mimetype="application/json", status=200)
 
 
 @login_required
