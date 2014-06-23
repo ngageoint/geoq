@@ -514,6 +514,36 @@ class LogJSON(ListView):
         return HttpResponse(json.dumps(log), mimetype="application/json", status=200)
 
 
+class LayersJSON(ListView):
+    model = Layer
+
+    def get(self, request, *args, **kwargs):
+        Layers = Layer.objects.all()
+
+        objects = []
+        for layer in Layers:
+            layer_json = dict()
+            for field in layer._meta.get_all_field_names():
+                if not field in ['created_at', 'updated_at', 'extent', 'objects', 'map_layer_set', 'layer_params']:
+                    val = layer.__getattribute__(field)
+
+                    try:
+                        flat_val = str(val)
+                    except UnicodeEncodeError:
+                        flat_val = unicode(val).encode('unicode_escape')
+
+                    layer_json[field] = str(flat_val)
+
+                elif field == 'layer_params':
+                    layer_json[field] = layer.layer_params
+
+            objects.append(layer_json)
+
+        out_json = dict(objects=objects)
+
+        return HttpResponse(json.dumps(out_json), mimetype="application/json", status=200)
+
+
 class JobGeoJSON(ListView):
     model = Job
 

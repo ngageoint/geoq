@@ -99,11 +99,13 @@ urlpatterns = patterns('',
     url(r'^api/geo/usng/?$', 'core.views.usng', name='usng'),
     url(r'^api/geo/mgrs/?$', 'core.views.mgrs', name='mgrs'),
     url(r'^proxy/(?P<path>.*)$', proxy_to, {'target_url': ''}),
+    url(r'^proxy/?$', proxy_to, name='proxy'),
     url(r'^api/job[s ]?/(?P<pk>\d+).geojson$', JobGeoJSON.as_view(), name='json-job'),
     url(r'^api/job[s ]?/(?P<pk>\d+).kml$', JobKML.as_view(), name='kml-job'),
     url(r'^api/job[s ]?/(?P<pk>\d+).networked.kml$', JobKMLNetworkLink.as_view(), name='kml-networked-job'),
     url(r'^api/job[s ]?/(?P<pk>\d+)/grid/job-workcells.geojson$', GridGeoJSON.as_view(), name='json-job-grid'),
     url(r'^api/job/update/(?P<pk>\d+)$', update_job_data, name='update-job-data'),
     url(r'^api/feature/update/(?P<pk>\d+)$', update_feature_data, name='update-feature-data'),
+    url(r'^api/layer[s ]?.json$', LayersJSON.as_view(), name='json-layers'),
 
 )

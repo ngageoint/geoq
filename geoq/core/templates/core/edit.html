@@ -34,7 +34,7 @@
     <script src="{{ STATIC_URL }}core/js/bootstrap-dialog.js"></script>
     <script type="text/javascript">
 
-        leaflet_helper.proxy_path = "{% url 'home' %}" + "proxy/"; //TODO: Standardize expression of proxy locations
+        leaflet_helper.proxy_path = "{% url 'proxy' %}" + "/"; //TODO: Standardize expression of proxy locations
 
         var feature_types = {};
         var geometry_types = [];
