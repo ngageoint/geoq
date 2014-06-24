@@ -227,13 +227,93 @@ leaflet_layer_control.addWorkCellInfo = function($accordion) {
         .addClass("btn btn-primary dropdown-toggle")
         .attr("data-toggle", "dropdown")
         .attr("type", "button")
-        .attr("type", "button")
         .appendTo($submitDiv);
 
     var $ull = $('<ul>')
         .addClass("dropdown-menu")
+        .css({textAlign: "left"})
         .attr("role", "menu")
+        .appendTo($subButton);
+
+    $subButton
+        .click(function(ev) {
+            $ull.dropdown("toggle");
+            return false;
+        });
+
+
+    var $exportButton = $('<button>Export<span class="caret"></span></button>')
+        .addClass("btn btn-warning dropdown-toggle")
+        .css({marginLeft:"20px"})
+        .attr("data-toggle", "dropdown")
+        .attr("type", "button")
         .appendTo($submitDiv);
+
+    var $ul2 = $('<ul>')
+        .addClass("dropdown-menu")
+        .attr("role", "menu")
+        .css({textAlign: "left"})
+        .appendTo($exportButton);
+
+    $exportButton
+        .click(function(ev) {
+            $ul2.dropdown("toggle");
+            return false;
+        });
+
+
+    var $li21 = $('<li>')
+        .attr({role:"presentation"})
+        .appendTo($ul2);
+    $("<a>")
+        .attr({role:"menuitem", tabindex:"-1", href:"#"})
+        .text("Job as KML")
+        .on("click",function(ev){
+            window.open(aoi_feature_edit.api_url_job_kml, "_blank");
+            $ul2.dropdown("toggle");
+            return false;
+        })
+        .appendTo($li21);
+
+    var $li22 = $('<li>')
+        .attr({role:"presentation"})
+        .appendTo($ul2);
+    $("<a>")
+        .attr({role:"menuitem", tabindex:"-1", href:"#"})
+        .text("Job as Networked KML")
+        .on("click",function(ev){
+            window.open(aoi_feature_edit.api_url_job_kml_networked, "_blank");
+            $ul2.dropdown("toggle");
+            return false;
+        })
+        .appendTo($li22);
+
+    var $li23 = $('<li>')
+        .attr({role:"presentation"})
+        .appendTo($ul2);
+    $("<a>")
+        .attr({role:"menuitem", tabindex:"-1", href:"#"})
+        .text("Job as GeoRSS")
+        .on("click",function(ev){
+            window.open(aoi_feature_edit.api_url_job_georss, "_blank");
+            $ul2.dropdown("toggle");
+            return false;
+        })
+        .appendTo($li23);
+
+    var $li24 = $('<li>')
+        .attr({role:"presentation"})
+        .appendTo($ul2);
+    $("<a>")
+        .attr({role:"menuitem", tabindex:"-1", href:"#"})
+        .text("This Cell's bounds as GeoRSS")
+        .on("click",function(ev){
+            window.open(aoi_feature_edit.api_url_aoi_georss, "_blank");
+            $ul2.dropdown("toggle");
+            return false;
+        })
+        .appendTo($li24);
+
 
     for (opt in leaflet_layer_control.finish_options) {
         $ull.append(leaflet_layer_control.finish_options[opt]);

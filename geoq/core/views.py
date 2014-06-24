@@ -531,6 +531,7 @@ def add_workcell_comment(request, *args, **kwargs):
 
     return HttpResponse()
 
+
 class LogJSON(ListView):
     model = AOI
 
@@ -569,6 +570,16 @@ class LayersJSON(ListView):
         out_json = dict(objects=objects)
 
         return HttpResponse(json.dumps(out_json), mimetype="application/json", status=200)
+
+
+class CellJSON(ListView):
+    model = AOI
+
+    def get(self, request, *args, **kwargs):
+        aoi = get_object_or_404(AOI, id=kwargs.get('pk'))
+        cell = aoi.grid_geoJSON()
+
+        return HttpResponse(cell, mimetype="application/json", status=200)
 
 
 class JobGeoJSON(ListView):
