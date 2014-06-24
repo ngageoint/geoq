@@ -18,7 +18,7 @@
                 dataType: 'json',
                 timeout: 3000,
                 success: function (badges, textstatus, jqXHR) {
-                    if (badge_container && badges.length && badges.length[0] && badges.length[0].name) {
+                    if (badge_container && badges.length > 0 ) {
                         for (var i = 0; i < badges.length; i++ ) {
                             badge_container.append("<img id='" + badges[i].name + "' src='" +
                                     badges[i].url + "'></i>&nbsp;" + badges[i].awarded + " &nbsp;");
@@ -38,7 +38,9 @@
     }
 
     $(document).ready(function() {
-        getbadges();
+        if ("{% gamification_value 'GAMIFICATION_SERVER' %}".length > 0) {
+            getbadges();
+        }
     });
 </script>
 
@@ -105,7 +107,7 @@
                     <ul class="nav navbar-right">
 
                         <li id="navbar-badges" class="text-right">
-                            <p id="badge-container" class="navbar-text user-badge" style="display:none">
+                            <p id="badge-container" class="navbar-text user-badge">
                                 <span class="muted">Badges:</span>
                             </p>
                         </li>
