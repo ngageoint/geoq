@@ -231,8 +231,15 @@ leaflet_layer_control.addWorkCellInfo = function($accordion) {
 
     var $ull = $('<ul>')
         .addClass("dropdown-menu")
+        .css({textAlign: "left"})
         .attr("role", "menu")
-        .appendTo($content);
+        .appendTo($subButton);
+
+    $subButton
+        .click(function(ev) {
+            $ull.dropdown("toggle");
+            return false;
+        });
 
 
     var $exportButton = $('<button>Export<span class="caret"></span></button>')
@@ -245,7 +252,8 @@ leaflet_layer_control.addWorkCellInfo = function($accordion) {
     var $ul2 = $('<ul>')
         .addClass("dropdown-menu")
         .attr("role", "menu")
-        .appendTo($content);
+        .css({textAlign: "left"})
+        .appendTo($exportButton);
 
     $exportButton
         .click(function(ev) {
