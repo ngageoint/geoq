@@ -12,396 +12,78 @@
             width: 100%;
             height: 350px;
         }
+        .row {
+            margin-left: 0;
+        }
+        #poly_split_holder {
+            margin-left: 40px;
+        }
+
+        #poly_split_holder input {
+            width:20px;
+            margin-bottom: 0;
+            text-align: center;
+            height: 14px;
+        }
     </style>
     <script src="http://maps.googleapis.com/maps/api/js?sensor=false&libraries=places"></script>
-    <script src="{{ STATIC_URL }}core/js/jquery.geocomplete.js"></script>
-
+    <script src="{{ STATIC_URL }}core/js/jquery.geocomplete.js" type="text/javascript"></script>
+    <script src="{{ STATIC_URL }}core/js/create-aois.js" type="text/javascript"></script>
+    <script src="{{ STATIC_URL }}core/js/leafletcontrols/leaflet.simple_button.js" type="text/javascript"></script>
     <script type="text/javascript">
-    //TODO: Popups are blocking cells, maybe show info differently
-
-    var df = null;
-    var aois = new L.FeatureGroup();
-    var colors = ['red','#003300','#006600','#009900','#00CC00','#00FF00'];
-    var map_object = null;
-
-    function styleFromPriority(feature){
-        var priority = 1;
-        if (feature.properties && feature.properties.priority) {
-            priority = feature.properties.priority;
-        }
-        var color = colors[1];
-        if (priority > 0 && priority < colors.length) {
-            color = colors[priority];
-        }
-        return {
-            "weight": 2,
-            "color": color,
-            "opacity": .7,
-            fillOpacity: 0.3,
-            fillColor: color
-        };
-    }
-
-    function highlightFeature(e) {
-        var layer = e.target;
-        layer.setStyle({
-            color: colors[0],
-            weight: 3,
-            opacity: 1,
-            fillOpacity: 1,
-            fillColor: colors[0]
+        $(document).ready(function(){
+            create_aois.get_grids_url = "{% DynamicUrl object.grid %}";
+            create_aois.save_url = "{% url 'job-batch-create-aois' job_pk %}";
+            create_aois.batch_redirect_url = "{% url 'job-detail' job_pk %}";
+            create_aois.batch_prioritize_rand = "{% url 'batch-prioritize-cells' method='random' %}";
+            create_aois.init();
         });
-        this.openPopup();
-    }
-
-    function resetHighlight(e) {
-        var layer = e.target;
-
-        var style = styleFromPriority(layer.feature);
-        layer.setStyle(style);
-
-        map_object.closePopup();
-    }
-
-    function removeFeature(e) {
-        // get FeatureLayer key
-        for (var key in aois._layers) {
-            if (aois._layers[key]._layers[e.target._leaflet_id]) {
-                aois._layers[key].removeLayer(e.target);
-            }
-        }
-        updateCellCount();
-    }
-
-    var createWorkCellsFromService = function(data){
-        var features = L.geoJson(data, {
-            style: function(feature) {
-                //Test: If this isn't on each feature, do it onEachFeature below
-                return styleFromPriority(feature);
-            },
-            onEachFeature: function(feature, layer) {
-                var popupContent = "Work Cell";
-                if (feature.properties) {
-                    for(var k in feature.properties){
-                        popupContent += "</br><b>"+k+":</b> " + feature.properties[k];
-                    }
-                }
-                layer.bindPopup(popupContent);
-
-                layer.on({
-                    mouseover: highlightFeature,
-                    mouseout: resetHighlight,
-                    click: removeFeature
-                });
-            }
-        });
-
-        if (features){
-            aois.addLayer(features);
-            //map.removeLayer(drawnItems);
-            map_object.addLayer(aois);
-        }
-        updateCellCount();
-    };
-
-    function updateCellCount() {
-        var aoi_count = 0;
-        _.each(aois._layers,function(layergroup){
-            if (layergroup && layergroup._layers){
-                aoi_count += _.toArray(layergroup._layers).length;
-            }
-        });
-        $('#num_workcells').text(aoi_count);
-
-        var boundaries = getBoundaries();
-        $('#current-aois')
-            .val(JSON.stringify(boundaries));
-    }
-
-
-    function mapInit(map) {
-
-        setTimeout(function(){map.fitBounds([[52.429222277955134, -51.50390625],[21.043491216803556,-136.58203125]])}, 1);
-
-        var drawnItems = new L.FeatureGroup();
-        df = drawnItems;
-
-        map.addLayer(drawnItems);
-
-        var drawControl = new L.Control.Draw({
-            draw: {
-                position: 'topleft',
-                polygon: {
-                    title: 'Draw an Area to be searched',
-                    allowIntersection: false,
-                    drawError: {
-                        color: '#b00b00',
-                        timeout: 1000
-                    },
-                    shapeOptions: {
-                        color: '#bada55'
-                    },
-                    showArea: true
-                },
-                circle: {
-                    shapeOptions: {
-                        color: '#662d91'
-                    }
-                },
-                polyline: false
-            },
-            edit: {
-                featureGroup: aois,
-                remove: false
-            }
-        });
-        map.addControl(drawControl);
-        $('a.leaflet-draw-edit-edit')
-                .attr("title","Click Work Cell box to delete it");
-        $('div.leaflet-draw.leaflet-control').find('a').popover({trigger:"hover",placement:"right"})
-
-
-        map.on('draw:created', function (e) {
-            // map.fitBounds(e.layer.getBounds());
-            var type = e.layerType,
-                layer = e.layer;
-
-            if (type === 'rectangle' || type === 'circle' || type === 'polygon' ) {
-               var bboxStr = layer.getBounds().toBBoxString();
-               $.ajax({
-                  type: "GET",
-                  url: "{% DynamicUrl object.grid %}",
-                  data: { bbox: bboxStr},
-                  contentType: "application/json",
-                  success: createWorkCellsFromService,
-                  beforeSend: function() {
-                      //map.style.cursor = 'wait';
-                      $("#map").css({
-                          'cursor': 'wait'
-                      })
-                  },
-                  complete: function() {
-                      $("#map").css({
-                          'cursor': 'default'
-                      })
-                  },
-                  error: function(response) {
-                      if (response.responseText) {
-                          var message = JSON.parse(response.responseText);
-                          if (message.details) {
-                              log.error(message.details);
-                          }
-                      }
-                  },
-                  dataType: "json"
-                });
-            }
-            drawnItems.addLayer(layer);
-            updateCellCount();
-        });
-
-        map_object = map;
-    }
-
-    function removeAllFeatures() {
-        var m = aois._map;
-        if (m && (m._container.id == 'map') && (m.hasLayer(aois))){
-            _.each(m._layers, function(l){
-                if (l._layers || l._path) {
-                    m.removeLayer(l);
-                }
-            });
-            aois = new L.FeatureGroup();
-        }
-    }
-
-    function getBoundaries() {
-        var boundaries = [];
-
-        var m = aois._map;
-        if (m && (m._container.id == 'map') && (m.hasLayer(aois))){
-            _.each(aois.getLayers(), function(l){
-               _.each(l.getLayers(), function(f){
-                   f.feature.name = $('#aoi-name').val();
-                   boundaries.push(f.toGeoJSON());
-               });
-            });
-        } else {
-            log.error("No Map object found");
-        }
-        if (!boundaries.length) boundaries = false;
-
-        return boundaries;
-    }
-
-    function resetBoundaries(data) {
-        if (data==undefined){
-            data = getBoundaries();
-        }
-        removeAllFeatures();
-
-        //Add back AOI Layers
-        createWorkCellsFromService(data);
-    }
-
-    function prioritizeCellsBy(numField){
-        numField = numField || "daypop";
-
-        var m = aois._map;
-        if (m && (m._container.id == 'map') && (m.hasLayer(aois))){
-            var maxPop = 0;
-
-            //Get the highest population count
-            _.each(aois.getLayers(), function(l){
-                _.each(l.getLayers(), function(featureHolder){
-                    var props = featureHolder.feature.properties;
-                    props = props || {};
-
-                    if (props[numField]) {
-                        if (props[numField] > maxPop) maxPop = props[numField];
-                    }
-                });
-            });
-
-            //Group Priorities by 1/maxPops
-            _.each(aois.getLayers(), function(l){
-                _.each(l.getLayers(), function(featureHolder){
-                    var props = featureHolder.feature.properties;
-                    props = props || {};
-
-                    if (props[numField]) {
-                        props.priority = parseInt((5 * props[numField]) / maxPop) || 1;
-                    }
-                });
-            });
-            resetBoundaries();
-        }
-    }
-
-    function setCellsTo(num){
-        num = num || 1;
-
-        var m = aois._map;
-        if (m && (m._container.id == 'map') && (m.hasLayer(aois))){
-
-            _.each(aois.getLayers(), function(l){
-                _.each(l.getLayers(), function(featureHolder){
-                    var props = featureHolder.feature.properties;
-                    props = props || {};
-                    props.priority = num;
-                });
-            });
-            resetBoundaries();
-        }
-    }
-
-    $(document).ready(function() {
-        $("#save-aois-button").on('click',function(){
-            var boundaries = getBoundaries();
-
-            if (boundaries) {
-                $.post("{% url 'job-batch-create-aois' job_pk %}",
-                   { aois: JSON.stringify(boundaries), csrftoken:geoq.csrftoken},
-                   function(data, textStatus) {
-                       log.log("Batch creating service - Got response: " + textStatus);
-                       window.location.href = "{% url 'job-detail' job_pk %}";
-                   });
-            }
-        });
-
-        $("#prioritize-aois-day-button").on('click',function(){prioritizeCellsBy('daypop');});
-        $("#prioritize-aois-night-button").on('click',function(){prioritizeCellsBy('nightpop');});
-        $("#prioritize-aois-1-button").on('click',function(){setCellsTo(1);});
-        $("#prioritize-aois-2-button").on('click',function(){setCellsTo(2);});
-        $("#prioritize-aois-3-button").on('click',function(){setCellsTo(3);});
-        $("#prioritize-aois-4-button").on('click',function(){setCellsTo(4);});
-        $("#prioritize-aois-5-button").on('click',function(){setCellsTo(5);});
-        $("#prioritize-aois-clear-button").on('click',function(){removeAllFeatures();});
-
-        $("#reset-from-textarea-button").on('click',function(){
-            var $aois = $("#current-aois");
-            var data = $aois.val() || [];
-            data = '{"type":"FeatureCollection","features":'+data+'}';
-            try{
-                data=JSON.parse(data);
-                createWorkCellsFromService(data);
-                $aois.css('backgroundColor','lightgreen');
-                resetBoundaries();
-            } catch (ex) {
-                log.error("Couldn't parse text inside CurrentAOIs textarea")
-                $aois.css('backgroundColor','red');
-            }
-        });
-
-        $("#prioritize-aois-random-button").on('click',function(){
-            var boundaries = getBoundaries();
-            if (boundaries) {
-                $.post("{% url 'batch-prioritize-cells' method='random' %}",
-                   { aois: JSON.stringify(boundaries), csrftoken:geoq.csrftoken},
-                   function(data, textStatus) {
-                       log.log("Batch creating service Random - Got response: " + textStatus);
-                       resetBoundaries(data);
-                   });
-            }
-        });
-
-    });
-</script>
-        <script>
-            $(function() {
-                $("#geocomplete").geocomplete()
-                    .bind("geocode:result", function(event,result) {
-                        log.log("Geocode Result: " + result.formatted_address);
-                        if ( df._map ) {
-                            df._map.setView([result.geometry.location.lat(),result.geometry.location.lng()],13);
-                        }
-                    })
-                    .bind("geocode:error", function(event,status){
-                        log.error("Geocode: " + status);
-                    })
-                    .bind("geocode:multiple", function(event,results) {
-                        log.log("Geocode Multiple: " + results.length + " results found");
-                    });
-
-                $("#find").click(function() {
-                    $("#geocomplete").trigger("geocode");
-                });
-            });
-        </script>
+    </script>
 
     {% compress css %}
-    {% leaflet_css plugins="draw"%}
-{% endcompress %}
+        {% leaflet_css plugins="draw"%}
+    {% endcompress %}
 {% endblock %}
 
 
 {% block container %}
     <div class="row-fluid container-narrow">
-    <h2>Create new Work cells</h2>
-    <h3>Please zoom in to at least city level before drawing work cells</h3>
+    <h2>Draw new Work cells and assign priorities</h2>
+
+    <div class="btn-group" data-toggle="buttons-radio">
+        Draw using:
+        <button class="btn active" id="option_usng"> USNG Cells (US only)</button>
+        <button class="btn" id="option_mgrs"> MGRS Cells</button>
+        <button class="btn" id="option_polygon"> Any Sized Polygons</button>
+    </div>
+
+    <div style="display:none" id="poly_split_holder">
+        Split polygon into <input type="text" id="split_wide" value="1"/> by <input type="text" id="split_high" value="1"> cells
+    </div>
+
     <div id="map" class="thumbnail" style="height: 450px; width: 100%;">{% leaflet_map "map" %}</div>
         <br/>
     <div class="row">
-        <div class="col-md-3">
+        <div class="col-md-3" style="display: inline-block">
         <label>Name for this group of work cells: (<span id="num_workcells">0</span>)</label>
-        <input type="text" name="aoi-name" id="aoi-name" value="{{ object.name }}"/>
+        <input type="text" name="aoi-name" id="aoi-name" value="{{ object.name }}" style="width:300px;"/>
         </div>
-        <div class="cod-md-3">
+        <div class="cod-md-3" style="display: inline-block; margin-left: 100px">
             <label>Zoom above map to Location:</label>
             <input type="text" id="geocomplete" />
         </div>
+        <hr/>
     </div>
     <div class="row">
         Prioritize by: <btn id="prioritize-aois-day-button" class="btn btn-primary">Daytime Population</btn>
-        <btn id="prioritize-aois-night-button" class="btn btn-primary">Nighttime Population</btn>
-        <btn id="prioritize-aois-random-button" class="btn btn-info">Randomize</btn>
-    </div>
-    <div class="row">
-        Set all Cells to Priority: <btn id="prioritize-aois-1-button" class="btn btn-warning">1</btn>
+        <btn id="prioritize-aois-night-button" class="btn btn-primary">Night Population</btn>
+        <btn id="prioritize-aois-random-button" class="btn btn-info">Random</btn>
+
+        Set all cells to: <btn id="prioritize-aois-1-button" class="btn btn-warning">1 (Lowest)</btn>
         <btn id="prioritize-aois-2-button" class="btn btn-warning">2</btn>
         <btn id="prioritize-aois-3-button" class="btn btn-warning">3</btn>
         <btn id="prioritize-aois-4-button" class="btn btn-warning">4</btn>
-        <btn id="prioritize-aois-5-button" class="btn btn-warning">5</btn>
+        <btn id="prioritize-aois-5-button" class="btn btn-warning">5 (Highest)</btn>
         <btn id="prioritize-aois-clear-button" class="btn btn-danger">Delete All</btn>
         <hr/>
     </div>
