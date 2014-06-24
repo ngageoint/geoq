@@ -4,36 +4,49 @@
 
 <script>
     var layer_list = [];
+    var proxy_path = "{% url 'proxy' %}";
 
     function get_layers(server) {
 
+        var url = server.currentTarget.value;
+
+        if (!url || !_.str.startsWith(url,"http")) {
+            log.error("Tried to follow a url to lookup layers, but doesn't look valid: "+url);
+        }
+        url = proxy_path + "/" + url;
+
         $.ajax({
-            url: server.value,
+            url: url,
             type: 'GET',
             global: false,
             crossDomain: true,
-            dataType: 'jsonp',
+            dataType: 'json',
             xhrFields: {
                 withCredentials: true
             },
             error: function(xhr,status,error) {
-                alert('unable to contact server');
+                log.error('unable to contact server');
             },
             success: function(data) {
                 // remove everything from the current list
-                $('#layers tbody').empty();
+                var $tableBody = $('#layers tbody');
+                $tableBody.empty();
 
-                for ( i = 0; i < data.objects.length; i++ ) {
-                    // add rows
-                    $('#layers tbody').append("<tr><td><div class=\"checkbox\"><label>" +
-                            "<input type=\"checkbox\" id=\"" + i + "\" onclick=\"add_layer(this);\"></label></div></td>" +
-                            "<td>" + data.objects[i].name + "</td>" +
-                            "<td>" + data.objects[i].type + "</td>" +
-                            "<td>" + data.objects[i].url + "</td>" +
-                            "<td>" + data.objects[i].layer + "</td></tr>");
+                _.each(data.objects, function(layer,i){
 
-                    layer_list[i] = jQuery.extend({},data.objects[i]);
-                }
+                    var rowHtml = "<tr><td><div class=\"checkbox\"><label>" +
+                        "<input type=\"checkbox\" id=\"" + i + "\" onclick=\"add_layer(this);\"></label></div></td>" +
+                        "<td>" + layer.name + "</td>" +
+                        "<td>" + layer.type + "</td>" +
+                        "<td>" + layer.url + "</td>" +
+                        "<td>" + layer.layer + "</td></tr>"
+
+                        $tableBody.append(rowHtml);
+
+                    var layerInfo = jQuery.extend({},layer);
+                    layer_list[i] = layerInfo;
+                });
+
             }
         });
     }
@@ -49,6 +62,10 @@
             }).appendTo('#import_form');
         }
     }
+
+    $(document).ready(function(){
+        $('#servers').on('change',get_layers);
+    });
 </script>
 
 <div class="row-fluid container-narrow">
@@ -58,7 +75,7 @@
 
         <div class="span12">
             <span class="list-view-header">Import Layers</span>
-            <!-- span><a class="btn btn-small pull-right" href="{% url 'layer-create' %}">Add New</a></span -->
+            <span><a class="btn btn-small pull-right" href="{% url 'json-layers' %}">Download Current Layers</a></span>
         </div>
         <br><br>
         <div class="form-group">
@@ -66,7 +83,7 @@
                 <select id="servers" name="servers">
                     <option selected="true">Select a Server</option>
                     {% for source in geoevents_sources %}
-                    <option onclick="get_layers(this);" value="{{ source.url }}">{{ source.name }}</option>
+                    <option value="{{ source.url }}">{{ source.name }}</option>
                     {% endfor %}
                 </select>
         </div>

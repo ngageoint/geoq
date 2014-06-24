@@ -44,9 +44,12 @@
 
         <p class="body project-description">{{ object.description }}</p>
 
-        <p class="body muted timestamp">{{ object.created_at }}
+        <p class="body muted timestamp">{{ object.created_at }}</p>
 
-        </p>
+        {% if object_type == "job" %}
+            {{ object.features_table_html|safe }}
+        {%  endif %}
+
         </li>
     {% endwith %}
     {% endfor %}

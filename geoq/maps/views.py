@@ -212,11 +212,11 @@ class LayerImport(ListView):
                 # add the layer
                 new_layer = Layer()
                 for key, value in layer.iteritems():
-                    if key == 'layer_params':
-                        # TODO: need to pass json object here
-                        pass
-                    else:
-                        setattr(new_layer, key, value)
+                    # if key == 'layer_params':
+                    #     # TODO: need to pass json object here
+                    #     pass
+                    # else:
+                    setattr(new_layer, key, value)
 
                 new_layer.save()
 

@@ -18,7 +18,7 @@ from datetime import datetime
 from models import Project, Job, AOI, Comment
 from geoq.maps.models import *
 
-from geoq.mgrs.utils import Grid, GridException
+from geoq.mgrs.utils import Grid, GridException, GeoConvertException
 from geoq.core.utils import send_aoi_create_event
 from geoq.mgrs.exceptions import ProgramException
 from kml_view import *
@@ -57,7 +57,7 @@ class BatchCreateAOIS(TemplateView):
         response = AOI.objects.bulk_create([AOI(name=job.name,
                                             job=job,
                                             description=job.description,
-                                        properties=aoi.get('properties'),
+                                            properties=aoi.get('properties'),
                                             polygon=GEOSGeometry(json.dumps(aoi.get('geometry')))) for aoi in aois])
 
         return HttpResponse()
@@ -371,18 +371,30 @@ def mgrs(request):
         return HttpResponse()
 
     bb = bbox.split(',')
+    output = ""
 
-    try:
-        grid = Grid(bb[1], bb[0], bb[3], bb[2])
-        fc = grid.build_grid_fc()
-    except GridException:
-        error = dict(error=500, details="Can't create grids across longitudinal boundaries. Try creating a smaller bounding box",)
-        return HttpResponse(json.dumps(error), status=error.get('error'))
-    except ProgramException:
-        error = dict(error=500, details="Error executing external GeoConvert application. Make sure it is installed on the server",)
-        return HttpResponse(json.dumps(error), status=error.get('error'))
+    if not len(bb) == 4:
+        output = json.dumps(dict(error=500, message='Need 4 corners of a bounding box passed in using EPSG 4386 lat/long format', grid=str(bb)))
+    else:
+        try:
+            grid = Grid(bb[1], bb[0], bb[3], bb[2])
+            fc = grid.build_grid_fc()
+            output = json.dumps(fc)
+        except GridException:
+            error = dict(error=500, details="Can't create grids across longitudinal boundaries. Try creating a smaller bounding box",)
+            return HttpResponse(json.dumps(error), status=error.get('error'), mimetype="application/json")
+        except GeoConvertException, e:
+            error = dict(error=500, details="GeoConvert doesn't recognize those cooridnates", exception=str(e))
+            return HttpResponse(json.dumps(error), status=error.get('error'), mimetype="application/json")
+        except ProgramException, e:
+            error = dict(error=500, details="Error executing external GeoConvert application. Make sure it is installed on the server", exception=str(e))
+            return HttpResponse(json.dumps(error), status=error.get('error'), mimetype="application/json")
+        except Exception, e:
+            import traceback
+            output = json.dumps(dict(error=500, message='Generic Exception', details=traceback.format_exc(), exception=str(e), grid=str(bb)))
 
-    return HttpResponse(fc.__str__(), mimetype="application/json")
+    return HttpResponse(output, mimetype="application/json")
+
 
 def geocode(request):
     """
@@ -463,6 +475,33 @@ def update_feature_data(request, *args, **kwargs):
 
 
 @login_required
+def prioritize_cells(request, method, **kwargs):
+    aois_data = request.POST.get('aois')
+    method = method or "daytime"
+
+    try:
+        from random import randrange
+        aois = json.loads(aois_data)
+
+        if method == "random":
+            for aoi in aois:
+                if not 'properties' in aoi:
+                    aoi['properties'] = dict()
+
+                aoi['properties']['priority'] = randrange(1, 5)
+
+        output = aois
+    except Exception, ex:
+        import traceback
+        errorCode = 'Program Error: ' + traceback.format_exc()
+
+        log = dict(error='Could not prioritize Work Cells', message=str(ex), details=errorCode, method=method)
+        return HttpResponse(json.dumps(log), mimetype="application/json", status=500)
+
+    return HttpResponse(json.dumps(output), mimetype="application/json", status=200)
+
+
+@login_required
 def batch_create_aois(request, *args, **kwargs):
     aois = request.POST.get('aois')
     job = Job.objects.get(id=kwargs.get('job_pk'))
@@ -500,6 +539,36 @@ class LogJSON(ListView):
         log = aoi.logJSON()
 
         return HttpResponse(json.dumps(log), mimetype="application/json", status=200)
+
+
+class LayersJSON(ListView):
+    model = Layer
+
+    def get(self, request, *args, **kwargs):
+        Layers = Layer.objects.all()
+
+        objects = []
+        for layer in Layers:
+            layer_json = dict()
+            for field in layer._meta.get_all_field_names():
+                if not field in ['created_at', 'updated_at', 'extent', 'objects', 'map_layer_set', 'layer_params']:
+                    val = layer.__getattribute__(field)
+
+                    try:
+                        flat_val = str(val)
+                    except UnicodeEncodeError:
+                        flat_val = unicode(val).encode('unicode_escape')
+
+                    layer_json[field] = str(flat_val)
+
+                elif field == 'layer_params':
+                    layer_json[field] = layer.layer_params
+
+            objects.append(layer_json)
+
+        out_json = dict(objects=objects)
+
+        return HttpResponse(json.dumps(out_json), mimetype="application/json", status=200)
 
 
 class JobGeoJSON(ListView):
