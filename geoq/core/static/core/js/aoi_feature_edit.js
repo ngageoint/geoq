@@ -569,6 +569,9 @@ aoi_feature_edit.buildDrawingControl = function (drawnItems) {
         }
     });
 
+    L.drawLocal.draw.toolbar.actions.text = "Finish";
+    L.drawLocal.draw.toolbar.actions.title = "Finish Drawing Features";
+
     var drawControl = new L.Control.Draw({
         position: "topleft",
 

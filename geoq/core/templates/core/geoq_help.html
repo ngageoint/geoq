@@ -36,7 +36,7 @@
 {% block container %}
 <div class="container">
     <h1>
-        <a name="user-content-geoq" class="anchor" href="#geoq"><span class="octicon octicon-link"></span></a>GeoQ User Guide</h1>
+        <a name="user-content-geoq" class="anchor" href="/">GeoQ User Guide</a></h1>
     <hr>
     <div class="container">
         <div class="row">
@@ -195,6 +195,33 @@
                             </div>
                         </div>
                     </div>
+                    <div class="panel panel-default">
+                        <div class="panel-heading">
+                            <h4 class="panel-title">
+                                <a data-toggle="collapse" data-parent="#accordion" href="#collapseFour"><span class="glyphicon glyphicon-th"></span> APIs and Data Access</a>
+                            </h4>
+                        </div>
+                        <div id="collapseFour" class="panel-collapse collapse">
+                            <div class="panel-body">
+                                <table class="table">
+                                    <tbody><tr>
+                                        <td>
+                                            <a href="#maps">APIs</a>
+                                            <p> The following endpoints can be used to Access data remotely:</p>
+                                            <ul>
+                                                <li><a href="{% url 'json-layers' %}">http://server/geoq/api/layers.json</a></li>
+                                                <li><a href="{% url 'json-job' pk=1 %}">http://server/geoq/api/jobs/&lt;id&gt;.geojson</a></li>
+                                                <li><a href="{% url 'kml-job' pk=1 %}">http://server/geoq/api/jobs/&lt;id&gt;.kml</a></li>
+                                                <li><a href="{% url 'kml-networked-job' pk=1 %}">http://server/geoq/api/jobs/&lt;id&gt;.networked.kml</a></li>
+                                            </ul>
+
+                                        </td>
+                                    </tr>
+                                    </tbody></table>
+                            </div>
+                        </div>
+                    </div>
+
                 </div>
             </div>
             <div class="col-sm-9">

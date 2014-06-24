@@ -57,7 +57,7 @@ class BatchCreateAOIS(TemplateView):
         response = AOI.objects.bulk_create([AOI(name=job.name,
                                             job=job,
                                             description=job.description,
-                                        properties=aoi.get('properties'),
+                                            properties=aoi.get('properties'),
                                             polygon=GEOSGeometry(json.dumps(aoi.get('geometry')))) for aoi in aois])
 
         return HttpResponse()
@@ -475,6 +475,33 @@ def update_feature_data(request, *args, **kwargs):
 
 
 @login_required
+def prioritize_cells(request, method, **kwargs):
+    aois_data = request.POST.get('aois')
+    method = method or "daytime"
+
+    try:
+        from random import randrange
+        aois = json.loads(aois_data)
+
+        if method == "random":
+            for aoi in aois:
+                if not 'properties' in aoi:
+                    aoi['properties'] = dict()
+
+                aoi['properties']['priority'] = randrange(1, 5)
+
+        output = aois
+    except Exception, ex:
+        import traceback
+        errorCode = 'Program Error: ' + traceback.format_exc()
+
+        log = dict(error='Could not prioritize Work Cells', message=str(ex), details=errorCode, method=method)
+        return HttpResponse(json.dumps(log), mimetype="application/json", status=500)
+
+    return HttpResponse(json.dumps(output), mimetype="application/json", status=200)
+
+
+@login_required
 def batch_create_aois(request, *args, **kwargs):
     aois = request.POST.get('aois')
     job = Job.objects.get(id=kwargs.get('job_pk'))
@@ -512,6 +539,36 @@ class LogJSON(ListView):
         log = aoi.logJSON()
 
         return HttpResponse(json.dumps(log), mimetype="application/json", status=200)
+
+
+class LayersJSON(ListView):
+    model = Layer
+
+    def get(self, request, *args, **kwargs):
+        Layers = Layer.objects.all()
+
+        objects = []
+        for layer in Layers:
+            layer_json = dict()
+            for field in layer._meta.get_all_field_names():
+                if not field in ['created_at', 'updated_at', 'extent', 'objects', 'map_layer_set', 'layer_params']:
+                    val = layer.__getattribute__(field)
+
+                    try:
+                        flat_val = str(val)
+                    except UnicodeEncodeError:
+                        flat_val = unicode(val).encode('unicode_escape')
+
+                    layer_json[field] = str(flat_val)
+
+                elif field == 'layer_params':
+                    layer_json[field] = layer.layer_params
+
+            objects.append(layer_json)
+
+        out_json = dict(objects=objects)
+
+        return HttpResponse(json.dumps(out_json), mimetype="application/json", status=200)
 
 
 class JobGeoJSON(ListView):
