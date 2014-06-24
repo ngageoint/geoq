@@ -3,10 +3,11 @@
         <i class="icon-briefcase"></i>
         <a href="{{ object.job.project.get_absolute_url }}">{{ object.job.project.name }}</a>
     </li>
+    <br/>
     <li title="This AOI is {{ object.status }}">
         <i class="icon-th"></i>
         {% if object.status == 'In work' %}
-            {% if object.analyst == request.user %}You are{% else %}{{ object.analyst }} is{% endif %} on it.
+            {% if object.analyst == request.user %}You are{% else %}{{ object.analyst|capfirst }} is{% endif %} on it.
         {% else %}
         {{ object.status }}
         {% endif %}

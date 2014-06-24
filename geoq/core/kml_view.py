@@ -45,7 +45,6 @@ class JobKML(ListView):
         output += '  <Document>\n'
         output += '    <name>'+doc_name+'</name>\n'
         output += '    <description>'+description+'</description>\n'
-        output += '    <Folder>\n'
         output += '    <Style id="geoq_inwork">\n'
         output += '      <LineStyle>\n'
         output += '        <width>3</width>\n'
@@ -123,12 +122,18 @@ class JobKML(ListView):
             .order_by('maps_featuretype.name')
 
         last_template = ""
+        skip_the_first = True
+        template_has_started = False
         for loc in locations:
             template_name = str(loc.template.name)
             if template_name != last_template:
-                output += '   </Folder>\n'
+                if skip_the_first:
+                    skip_the_first = False
+                else:
+                    output += '   </Folder>\n'
                 output += '   <Folder><name>'+template_name+'</name>\n'
                 last_template = template_name
+                template_has_started = True
 
             analyst_name = str(loc.analyst.username)
             dtg = str(loc.created_at)
@@ -150,7 +155,8 @@ class JobKML(ListView):
             output += '      '+str(loc.the_geom.kml)+'\n'
             output += '    </Placemark>\n'
 
-        output += '   </Folder>\n'
+        if template_has_started:
+            output += '   </Folder>\n'
         output += '   <Folder><name>Work Cells</name>\n'
         aois = job.aois.order_by('status')
         for aoi in aois:
