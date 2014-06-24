@@ -483,13 +483,7 @@ def prioritize_cells(request, method, **kwargs):
         from random import randrange
         aois = json.loads(aois_data)
 
-        if method == "daytime":
-            for aoi in aois:
-                if not 'properties' in aoi:
-                    aoi['properties'] = dict()
-
-                aoi['properties']['priority'] = randrange(1, 5)
-        elif method == "nighttime":
+        if method == "random":
             for aoi in aois:
                 if not 'properties' in aoi:
                     aoi['properties'] = dict()
