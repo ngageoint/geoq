@@ -189,9 +189,7 @@ aoi_feature_edit.watch_layer = function(layer, watch) {
         layer.on("loading", function () {
             if(pending.indexOf(name) < 0) {
               pending[pending.length] = name;
-              $("#layer-status")
-                  .removeClass("icon-ok")
-                  .addClass("icon-refresh");
+              $("#layer-status").addClass("icon-refresh");
             }
         });
         layer.on("load", function() {
@@ -199,9 +197,7 @@ aoi_feature_edit.watch_layer = function(layer, watch) {
                 pending.splice(watched.indexOf(name),1);
              }
              if(pending.length == 0) {
-                  $("#layer-status")
-                      .removeClass("icon-refresh")
-                      .addClass("icon-ok");
+                  $("#layer-status").removeClass("icon-refresh");
              }
         });
         layer.on("tileerror", function(evt) {

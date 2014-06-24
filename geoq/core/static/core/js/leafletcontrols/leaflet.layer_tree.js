@@ -746,7 +746,7 @@ leaflet_layer_control.addLayerControl = function (map, options, $accordion) {
     //Hide the existing layer control
     $('.leaflet-control-layers.leaflet-control').css({display: 'none'});
 
-    var $layerButton = $('<a id="toggle-drawer" href="#" class="btn">Tools <i id="layer-status"> </i></a>');
+    var $layerButton = $('<a id="toggle-drawer" href="#" class="btn">Tools <i id="layer-status"> </i><i id="layer-error"> </i></a>');
     var layerButtonOptions = {
         'html': $layerButton,
         'onClick': leaflet_layer_control.toggleDrawer,  // callback function
