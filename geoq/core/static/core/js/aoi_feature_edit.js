@@ -318,6 +318,8 @@ aoi_feature_edit.map_init = function (map, bounds) {
         var featureType = aoi_feature_edit.feature_types[tnum];
 
         if (featureLayer && featureType) {
+            if (featureLayer)
+
             featureLayer.addData(featureCollection);
             featureLayer.eachLayer(function (layer) {
                 aoi_feature_edit.drawnItems.addLayer(layer);
@@ -842,6 +844,9 @@ aoi_feature_edit.createPointOptions = function (opts) {
     var style_obj = aoi_feature_edit.icon_style[id];
     var icon_obj = aoi_feature_edit.icons[id];
     if (style_obj && icon_obj) {
+        if (!style_obj.iconUrl) {
+            style_obj.iconUrl = "/static/leaflet/images/red-marker-icon.png";
+        }
         options.icon = new icon_obj(style_obj);
     }
 
