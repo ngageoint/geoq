@@ -163,6 +163,7 @@ MIDDLEWARE_CLASSES = (
     # Uncomment the next line for simple clickjacking protection:
     #'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'geoq.core.middleware.UserPermsMiddleware',             # works w/ guardian
+    'geoq.core.middleware.Http403Middleware',
 )
 
 # auth setup
@@ -262,8 +263,8 @@ LOGGING = {
 
 
 # Gamification variables
-#GAMIFICATION_SERVER = 'http://localhost:6111'
-#GAMIFICATION_PROJECT = 'django_geoq'
+GAMIFICATION_SERVER = 'http://localhost:6111'
+GAMIFICATION_PROJECT = 'geoq'
 
 #GeoServer
 GEOSERVER_WFS_JOB_LAYER = ''

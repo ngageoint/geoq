@@ -7,10 +7,10 @@ import requests
 
 from django.contrib.auth.decorators import login_required
 from django.contrib.gis.geos import GEOSGeometry
-from django.core.urlresolvers import reverse
+from django.core.urlresolvers import reverse, reverse_lazy
 from django.core.exceptions import ObjectDoesNotExist
 from django.forms.util import ValidationError
-from django.http import Http404, HttpResponse, HttpResponseRedirect
+from django.http import Http404, HttpResponse, HttpResponseRedirect, HttpResponseForbidden
 from django.shortcuts import get_object_or_404, redirect, render
 from django.views.generic import DetailView, ListView, TemplateView, View, DeleteView, CreateView, UpdateView
 from datetime import datetime
@@ -20,6 +20,7 @@ from geoq.maps.models import *
 
 from geoq.mgrs.utils import Grid, GridException, GeoConvertException
 from geoq.core.utils import send_aoi_create_event
+from geoq.core.middleware import Http403
 from geoq.mgrs.exceptions import ProgramException
 from kml_view import *
 
@@ -80,10 +81,60 @@ class DetailedListView(ListView):
         cv['object'] = get_object_or_404(self.model, pk=self.kwargs.get('pk'))
         return cv
 
+class UserAllowedMixin(object):
 
-class CreateFeaturesView(DetailView):
+    def check_user(self, user, pk):
+        return True
+
+    def user_check_failed(self, request, *args, **kwargs):
+        raise Http403
+
+    def dispatch(self, request, *args, **kwargs):
+        if not self.check_user(request.user, self.kwargs.get('pk')):
+            return self.user_check_failed(request, *args, **kwargs)
+        return super(UserAllowedMixin, self).dispatch(request, *args, **kwargs)
+
+
+class CreateFeaturesView(UserAllowedMixin, DetailView):
     template_name = 'core/edit.html'
     queryset = AOI.objects.all()
+    user_check_failure_path = ''
+
+    def check_user(self, user, pk):
+        try:
+            aoi = AOI.objects.get(id=pk)
+        except ObjectDoesNotExist:
+            return False
+
+        # logic for what we'll allow
+        if aoi.status == 'Unassigned':
+            aoi.analyst = self.request.user
+            aoi.status = 'In work'
+            aoi.save()
+            return True
+        elif aoi.status == 'In work':
+            if aoi.analyst != self.request.user:
+                return False
+            else:
+                return True
+        elif aoi.status == 'Awaiting review':
+            if self.request.user in aoi.job.reviewers.all():
+                aoi.status = 'In review'
+                aoi.reviewers.add(self.request.user)
+                aoi.save()
+                return True
+            else:
+                return False
+        elif aoi.status == 'In review':
+            # if this user previously reviewed this workcell, allow them in
+            if self.request.user in aoi.reviewers.all():
+                return True
+            else:
+                return False
+        else:
+            # Can't open a completed workcell
+            return False
+
 
     def get_context_data(self, **kwargs):
         cv = super(CreateFeaturesView, self).get_context_data(**kwargs)
@@ -91,9 +142,7 @@ class CreateFeaturesView(DetailView):
         cv['admin'] = self.request.user.is_superuser or self.request.user.groups.filter(name='admin_group').count() > 0
 
         cv['map'] = self.object.job.map
-        cv['aoi'].analyst = self.request.user
-        cv['aoi'].status = 'In work'
-        cv['aoi'].save()
+
         Comment(user=cv['aoi'].analyst,aoi=cv['aoi'],text="Workcell opened").save()
         return cv
 
