@@ -844,7 +844,7 @@ aoi_feature_edit.createPointOptions = function (opts) {
     var style_obj = aoi_feature_edit.icon_style[id];
     var icon_obj = aoi_feature_edit.icons[id];
     if (style_obj && icon_obj) {
-        if (!style_obj.iconUrl) {
+        if (!style_obj.iconUrl && icon_obj.type != 'maki') {
             style_obj.iconUrl = "/static/leaflet/images/red-marker-icon.png";
         }
         options.icon = new icon_obj(style_obj);
