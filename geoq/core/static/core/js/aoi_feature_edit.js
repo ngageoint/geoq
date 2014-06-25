@@ -653,7 +653,7 @@ aoi_feature_edit.addMapControlButtons = function (map) {
 //    var completeButton = new L.Control.Button(completeButtonOptions).addTo(map);
 
 
-    var title = "<h4 id='aoi-status-box'><a href='#'>" + aoi_feature_edit.job_name + "</a> > AOI #" + aoi_feature_edit.aoi_id + " > ";
+    var title = "<h4 id='aoi-status-box'><a href='" + aoi_feature_edit.job_absolute_url + "'>" + aoi_feature_edit.job_name + "</a> > AOI #" + aoi_feature_edit.aoi_id + " > ";
     if (aoi_feature_edit.aoi_properties && aoi_feature_edit.aoi_properties.usng) {
         title += " USNG: "+aoi_feature_edit.aoi_properties.usng + " > ";
     }
@@ -844,7 +844,7 @@ aoi_feature_edit.createPointOptions = function (opts) {
     var style_obj = aoi_feature_edit.icon_style[id];
     var icon_obj = aoi_feature_edit.icons[id];
     if (style_obj && icon_obj) {
-        if (!style_obj.iconUrl) {
+        if (!style_obj.iconUrl && icon_obj.type != 'maki') {
             style_obj.iconUrl = "/static/leaflet/images/red-marker-icon.png";
         }
         options.icon = new icon_obj(style_obj);
