@@ -251,6 +251,17 @@ create_aois.splitPolygonsIntoSections = function(layer,x,y){
     x = (x<1)?1:x;
     y = (y<1)?1:y;
 
+    var layer_poly = {type:'Polygon',coordinates:[[]]};
+    var cs = layer.getLatLngs();
+    _.each(cs,function(c){
+       layer_poly.coordinates[0].push([c.lng, c.lat]);
+    });
+
+    //When checking if cells are in a poly, check cells be subdividing by this amount
+    var tessalationCheckAmount = 3;
+    if (x>6 && y>6) tessalationCheckAmount = 2;
+    if (x>10 && y>10) tessalationCheckAmount = 1;
+
     var bounds = layer.getBounds();
     var left = bounds.getWest();
     var right = bounds.getEast();
@@ -267,17 +278,51 @@ create_aois.splitPolygonsIntoSections = function(layer,x,y){
         for (var y_num=0; y_num<y; y_num++ ){
             var id = id_root+"_"+x_num+"_"+y_num;
 
-            var feature = {"type":"Feature","id":id,
-                "geometry_name":"the_geom","properties":{priority:create_aois.priority_to_use},
-                "geometry":{"type":"MultiPolygon","coordinates":[[[
-                    [left+(x_slice*(x_num)),south+(y_slice*(y_num))],
-                    [left+(x_slice*(x_num)),south+(y_slice*(y_num+1))],
-                    [left+(x_slice*(x_num+1)),south+(y_slice*(y_num+1))],
-                    [left+(x_slice*(x_num+1)),south+(y_slice*(y_num))],
-                    [left+(x_slice*(x_num)),south+(y_slice*(y_num))]
-                ]]]}};
+            var l0 = left+(x_slice*(x_num));
+            var l1 = left+(x_slice*(x_num+1));
+            var t0 = south+(y_slice*(y_num));
+            var t1 = south+(y_slice*(y_num+1));
 
-            layers.push(feature);
+            //Build the square
+            var coords = [
+                [l0,t0],
+                [l0,t1],
+                [l1,t1],
+                [l1,t0]
+            ];
+
+            var isBoxInPoly=false;
+            if (x >4 && y >4) {
+                //If it's a lot of boxes, test each one
+
+                //Break each box into smaller points and check the corners as well as those points to see if it's in the poly
+                var coordsToCheck = _.clone(coords);
+                var l_slice = (l1-l0)/(tessalationCheckAmount+2);
+                var t_slice = (t1-t0)/(tessalationCheckAmount+2);
+
+                for (var l_step=1;l_step<(tessalationCheckAmount+1);l_step++){
+                    for (var t_step=1;t_step<(tessalationCheckAmount+1);t_step++){
+                        coordsToCheck.push([l0+(l_slice*l_step),t0+(t_slice*t_step)]);
+                    }
+                }
+
+                _.each(coordsToCheck,function(coord){
+                    if (!isBoxInPoly && gju.pointInPolygon({coordinates:coord},layer_poly)) {
+                        isBoxInPoly = true;
+                    }
+                });
+            } else {
+                isBoxInPoly = true;
+            }
+
+            //Add the closing first point as the last point
+            coords.push(coords[0]);
+            if (isBoxInPoly){
+                var feature = {"type":"Feature","id":id,
+                    "geometry_name":"the_geom","properties":{priority:create_aois.priority_to_use},
+                    "geometry":{"type":"MultiPolygon","coordinates":[[coords]]}};
+                layers.push(feature);
+            }
         }
     }
 
