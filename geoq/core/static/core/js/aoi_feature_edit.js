@@ -268,8 +268,8 @@ aoi_feature_edit.map_init = function (map, bounds) {
                 log.error("Tried to add a layer, but didn't work: "+layer_data.url)
             }
             if (built_layer) {
-                aoi_feature_edit.map.addLayer(built_layer);
                 aoi_feature_edit.watch_layer(built_layer, true);
+                aoi_feature_edit.map.addLayer(built_layer);
             }
         });
     }
