@@ -145,11 +145,7 @@ create_aois.mapInit = function(map) {
                     color: '#b00b00'
                 }
             },
-            circle: {
-                shapeOptions: {
-                    color: '#662d91'
-                }
-            },
+            circle: false,
             polyline: false
         },
         edit: {
@@ -169,23 +165,18 @@ create_aois.mapInit = function(map) {
 
         if (type === 'rectangle' || type === 'circle' || type === 'polygon-undefined' ) {
             if (create_aois.draw_method=="polygon") {
-                //Convert from single polygon to multipolygon format
-                var geoJSON = layer.toGeoJSON();
-                geoJSON.id = "handmade."+parseInt(Math.random()*1000000);
-                geoJSON.geometry_name = "the_geom";
-                geoJSON.properties = {priority:create_aois.priority_to_use};
-                geoJSON.geometry.type = "MultiPolygon";
-                geoJSON.geometry.coordinates = [geoJSON.geometry.coordinates];
-                layer.setStyle(create_aois.styleFromPriority(create_aois.priority_to_use));
-
+                //Using free-form polygon
                 var x = parseInt($("#split_wide").val());
                 var y = parseInt($("#split_high").val());
-                if (x>1 && y>1) {
-                    //TODO: Break cells into pieces
+
+                var geoJSON;
+                if (x>1 || y>1) {
+                    geoJSON = create_aois.splitPolygonsIntoSections(layer, x, y);
+                } else {
+                    geoJSON = [create_aois.turnPolygonIntoMulti(layer)];
                 }
 
-                var data = {"type":"FeatureCollection","features":[geoJSON]};
-
+                var data = {"type":"FeatureCollection","features":geoJSON};
                 create_aois.createWorkCellsFromService(data);
             } else {
                 //Using USNG or MGRS
@@ -254,6 +245,55 @@ create_aois.mapInit = function(map) {
         $btn.parent().css({backgroundColor:create_aois.colors[num]});
 
     });
+};
+
+create_aois.splitPolygonsIntoSections = function(layer,x,y){
+    x = (x<1)?1:x;
+    y = (y<1)?1:y;
+
+    var bounds = layer.getBounds();
+    var left = bounds.getWest();
+    var right = bounds.getEast();
+    var north = bounds.getNorth();
+    var south = bounds.getSouth();
+    var width = right-left;
+    var height = north-south;
+    var x_slice = width/x;
+    var y_slice = height/y;
+
+    var layers = [];
+    var id_root = "handmade."+parseInt(Math.random()*1000000);
+    for (var x_num=0; x_num<x; x_num++ ){
+        for (var y_num=0; y_num<y; y_num++ ){
+            var id = id_root+"_"+x_num+"_"+y_num;
+
+            var feature = {"type":"Feature","id":id,
+                "geometry_name":"the_geom","properties":{priority:create_aois.priority_to_use},
+                "geometry":{"type":"MultiPolygon","coordinates":[[[
+                    [left+(x_slice*(x_num)),south+(y_slice*(y_num))],
+                    [left+(x_slice*(x_num)),south+(y_slice*(y_num+1))],
+                    [left+(x_slice*(x_num+1)),south+(y_slice*(y_num+1))],
+                    [left+(x_slice*(x_num+1)),south+(y_slice*(y_num))],
+                    [left+(x_slice*(x_num)),south+(y_slice*(y_num))]
+                ]]]}};
+
+            layers.push(feature);
+        }
+    }
+
+    return layers;
+};
+
+create_aois.turnPolygonIntoMulti = function(layer){
+    //Convert from single polygon to multipolygon format
+    var geoJSON = layer.toGeoJSON();
+    geoJSON.id = "handmade."+parseInt(Math.random()*1000000);
+    geoJSON.geometry_name = "the_geom";
+    geoJSON.properties = {priority:create_aois.priority_to_use};
+    geoJSON.geometry.type = "MultiPolygon";
+    geoJSON.geometry.coordinates = [geoJSON.geometry.coordinates];
+    layer.setStyle(create_aois.styleFromPriority(create_aois.priority_to_use));
+    return geoJSON;
 };
 
 create_aois.disableToolbars = function(){
