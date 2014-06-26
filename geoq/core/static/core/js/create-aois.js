@@ -1,4 +1,5 @@
-//TODO: Popups are blocking cells, maybe show info differently
+//TODO: Popups are blocking cells, maybe show info differently - make side control
+//TODO: When loading polys, track all property fields and allow prioritization by numeric ones
 
 var create_aois = {};
 create_aois.colors = ['red','#003300','#006600','#009900','#00CC00','#00FF00'];
@@ -24,6 +25,7 @@ create_aois.init = function(){
         $('#poly_split_holder').hide();
         $('#file_uploader_holder').hide();
         $('a.leaflet-draw-draw-polygon').hide();
+        $('a.leaflet-draw-draw-rectangle').show();
         create_aois.disableToolbars();
 
     });
@@ -33,6 +35,7 @@ create_aois.init = function(){
         $('#poly_split_holder').hide();
         $('#file_uploader_holder').hide();
         $('a.leaflet-draw-draw-polygon').hide();
+        $('a.leaflet-draw-draw-rectangle').show();
         create_aois.disableToolbars();
     });
     $('#option_polygon').click(function () {
@@ -40,6 +43,7 @@ create_aois.init = function(){
         $('#poly_split_holder').css('display','inline-block');
         $('#file_uploader_holder').hide();
         $('a.leaflet-draw-draw-polygon').show();
+        $('a.leaflet-draw-draw-rectangle').show();
         create_aois.disableToolbars();
     });
 
@@ -47,6 +51,7 @@ create_aois.init = function(){
         create_aois.draw_method = 'polygon';
         $('#file_uploader_holder').css('display','inline-block');
         $('a.leaflet-draw-draw-polygon').hide();
+        $('a.leaflet-draw-draw-rectangle').hide();
         $('#poly_split_holder').hide();
         create_aois.disableToolbars();
     });
