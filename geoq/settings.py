@@ -263,7 +263,7 @@ LOGGING = {
 
 
 # Gamification variables
-GAMIFICATION_SERVER = 'http://localhost:6111'
+GAMIFICATION_SERVER = ''
 GAMIFICATION_PROJECT = 'geoq'
 
 #GeoServer

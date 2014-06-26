@@ -21,6 +21,7 @@ create_aois.init = function(){
         create_aois.draw_method = 'usng';
         create_aois.get_grids_url = '/geoq/api/geo/usng';
         $('#poly_split_holder').hide();
+        $('#file_uploader_holder').hide();
         $('a.leaflet-draw-draw-polygon').hide();
         create_aois.disableToolbars();
 
@@ -29,13 +30,23 @@ create_aois.init = function(){
         create_aois.draw_method = 'mgrs';
         create_aois.get_grids_url = '/geoq/api/geo/mgrs';
         $('#poly_split_holder').hide();
+        $('#file_uploader_holder').hide();
         $('a.leaflet-draw-draw-polygon').hide();
         create_aois.disableToolbars();
     });
     $('#option_polygon').click(function () {
         create_aois.draw_method = 'polygon';
         $('#poly_split_holder').css('display','inline-block');
+        $('#file_uploader_holder').hide();
         $('a.leaflet-draw-draw-polygon').show();
+        create_aois.disableToolbars();
+    });
+
+    $('#option_shapefile').click(function () {
+        create_aois.draw_method = 'polygon';
+        $('#file_uploader_holder').css('display','inline-block');
+        $('a.leaflet-draw-draw-polygon').hide();
+        $('#poly_split_holder').hide();
         create_aois.disableToolbars();
     });
 
@@ -70,6 +81,9 @@ create_aois.init = function(){
         var boundaries = create_aois.getBoundaries();
 
         if (boundaries) {
+            $("#save-aois-button")
+                .attr('disabled', true)
+                .text('Sending cells to server...');
             $.post(create_aois.save_url,
                { aois: JSON.stringify(boundaries), csrftoken:geoq.csrftoken},
                function(data, textStatus) {
@@ -116,6 +130,8 @@ create_aois.init = function(){
                });
         }
     });
+
+    create_aois.initializeFileUploads();
 };
 
 create_aois.mapInit = function(map) {
@@ -173,7 +189,7 @@ create_aois.mapInit = function(map) {
                 if (x>1 || y>1) {
                     geoJSON = create_aois.splitPolygonsIntoSections(layer, x, y);
                 } else {
-                    geoJSON = [create_aois.turnPolygonIntoMulti(layer)];
+                    geoJSON = create_aois.turnPolygonsIntoMultis(layer);
                 }
 
                 var data = {"type":"FeatureCollection","features":geoJSON};
@@ -329,16 +345,35 @@ create_aois.splitPolygonsIntoSections = function(layer,x,y){
     return layers;
 };
 
-create_aois.turnPolygonIntoMulti = function(layer){
+create_aois.turnPolygonsIntoMultis = function(layers){
     //Convert from single polygon to multipolygon format
-    var geoJSON = layer.toGeoJSON();
-    geoJSON.id = "handmade."+parseInt(Math.random()*1000000);
-    geoJSON.geometry_name = "the_geom";
-    geoJSON.properties = {priority:create_aois.priority_to_use};
-    geoJSON.geometry.type = "MultiPolygon";
-    geoJSON.geometry.coordinates = [geoJSON.geometry.coordinates];
-    layer.setStyle(create_aois.styleFromPriority(create_aois.priority_to_use));
-    return geoJSON;
+    if (!_.isArray(layers)) layers = [layers];
+    var geoJSONFeatures = [];
+    _.each(layers,function(layer){
+
+        var geoJSON;
+        if (layer.toGeoJSON) {
+            geoJSON = layer.toGeoJSON();
+        } else {
+            geoJSON = layer;
+        }
+        if (!geoJSON.id) geoJSON.id = "handmade."+parseInt(Math.random()*1000000);
+        geoJSON.geometry_name = "the_geom";
+        geoJSON.properties = geoJSON.properties || {};
+        geoJSON.properties = _.extend(geoJSON.properties,{priority:create_aois.priority_to_use});
+        if (geoJSON.geometry.type == "Polygon") {
+            geoJSON.geometry.type = "MultiPolygon";
+            geoJSON.geometry.coordinates = [geoJSON.geometry.coordinates];
+        }
+        geoJSONFeatures.push(geoJSON);
+
+        //Set the style properly while we're here
+        if (layer.setStyle){
+            layer.setStyle(create_aois.styleFromPriority(create_aois.priority_to_use));
+        }
+    });
+
+    return geoJSONFeatures;
 };
 
 create_aois.disableToolbars = function(){
@@ -399,6 +434,9 @@ create_aois.removeFeature = function(e) {
 };
 
 create_aois.createWorkCellsFromService = function(data){
+
+    data.features = create_aois.turnPolygonsIntoMultis(data.features);
+
     var features = L.geoJson(data, {
         style: function(feature) {
             //Test: If this isn't on each feature, do it onEachFeature below
@@ -410,7 +448,7 @@ create_aois.createWorkCellsFromService = function(data){
             } else {
                 feature.properties = {};
             }
-            feature.properties.priority = feature.properties.priority || create_aois.priority_to_use
+            feature.properties.priority = feature.properties.priority || create_aois.priority_to_use;
             for(var k in feature.properties){
                 popupContent += "<b>"+k+":</b> " + feature.properties[k]+"<br/>";
             }
@@ -471,7 +509,7 @@ create_aois.getBoundaries = function() {
            });
         });
     } else {
-        log.error("No Map object found");
+        log.error("No Map object found when trying to getBoundaries");
     }
     if (!boundaries.length) boundaries = false;
 
@@ -537,4 +575,33 @@ create_aois.setAllCellsTo = function (num){
         });
         create_aois.resetBoundaries();
     }
+};
+
+create_aois.initializeFileUploads = function(){
+    var holder = document.getElementById('file_holder');
+
+    if (typeof window.FileReader === 'undefined') {
+        $("#option_shapefile").css('display','none');
+    }
+
+    holder.ondragover = function () { this.className = 'hover'; return false; };
+    holder.ondragend = function () { this.className = ''; return false; };
+    holder.ondrop = function (e) {
+      this.className = '';
+      e.preventDefault();
+
+      var file = e.dataTransfer.files[0], reader = new FileReader();
+
+      reader.onload = function (event) {
+
+          shp(reader.result).then(function(geojson){
+              create_aois.createWorkCellsFromService(geojson);
+          },function(a){
+              log.log(a);
+          });
+      };
+      reader.readAsArrayBuffer(file);
+
+      return false;
+    };
 };

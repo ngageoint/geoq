@@ -25,12 +25,25 @@
             text-align: center;
             height: 14px;
         }
+        #file_holder {
+            border: 7px dashed #ccc;
+            width: 200px;
+            height: 12px;
+            font-size: 10px;
+            text-align: center;
+            font-weight: bold;
+            line-height: 1em;
+        }
+        #file_holder.hover { border: 7px dashed #333; }
+
     </style>
     <script src="http://maps.googleapis.com/maps/api/js?sensor=false&libraries=places"></script>
     <script src="{{ STATIC_URL }}core/js/jquery.geocomplete.js" type="text/javascript"></script>
     <script src="{{ STATIC_URL }}core/js/create-aois.js" type="text/javascript"></script>
 	<script src="{{ STATIC_URL }}core/js/geojson-js-utils/geojson-utils.js"></script>
     <script src="{{ STATIC_URL }}core/js/leafletcontrols/leaflet.simple_button.js" type="text/javascript"></script>
+    <script src="{{ STATIC_URL }}core/js/leaflet-shapefile/shp.js" type="text/javascript"></script>
+
     <script type="text/javascript">
         $(document).ready(function(){
             create_aois.get_grids_url = "{% DynamicUrl object.grid %}";
@@ -56,10 +69,14 @@
         <button class="btn active" id="option_usng"> USNG Cells (US only)</button>
         <button class="btn" id="option_mgrs"> MGRS Cells</button>
         <button class="btn" id="option_polygon"> Any Sized Polygons</button>
+        <button class="btn" id="option_shapefile"> Drag in a Shape File</button>
     </div>
 
     <div style="display:none" id="poly_split_holder">
         Split polygon into <input type="text" id="split_wide" value="5"/> by <input type="text" id="split_high" value="5"> cells
+    </div>
+    <div style="display:none" id="file_uploader_holder">
+          <div id="file_holder">Drag shapefile here</div>
     </div>
 
     <div id="map" class="thumbnail" style="height: 450px; width: 100%;">{% leaflet_map "map" %}</div>
