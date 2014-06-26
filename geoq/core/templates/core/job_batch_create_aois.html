@@ -50,6 +50,7 @@
             border: 2px solid black;
             border-radius: 4px;
             max-height: 400px;
+            padding: 2px;
         }
 
     </style>
@@ -110,11 +111,11 @@
         <hr/>
     </div>
     <div class="row">
-        Prioritize by: <btn id="prioritize-aois-day-button" class="btn btn-primary">Daytime Population</btn>
-        <btn id="prioritize-aois-night-button" class="btn btn-primary">Night Population</btn>
-        <btn id="prioritize-aois-random-button" class="btn btn-info">Random</btn>
-
-        Set all cells to: <btn id="prioritize-aois-1-button" class="btn btn-warning">1 (Lowest)</btn>
+        Prioritize by: <select id="prioritize-selector" style="margin-bottom:0px;">
+            <option>--select--</option>
+            <option>Random</option>
+        </select>
+        or set all cells to: <btn id="prioritize-aois-1-button" class="btn btn-warning">1 (Lowest)</btn>
         <btn id="prioritize-aois-2-button" class="btn btn-warning">2</btn>
         <btn id="prioritize-aois-3-button" class="btn btn-warning">3</btn>
         <btn id="prioritize-aois-4-button" class="btn btn-warning">4</btn>
