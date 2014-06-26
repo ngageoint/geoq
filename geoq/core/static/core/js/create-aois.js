@@ -10,6 +10,7 @@ create_aois.priority_to_use = 1;
 create_aois.draw_method = 'usng';
 create_aois.get_grids_url = '/geoq/api/geo/usng';
 create_aois.drawControl = null;
+create_aois.last_shapes = null;
 
 function mapInit(map) {
     //Auto-called after leaflet map is initialized
@@ -128,6 +129,12 @@ create_aois.init = function(){
                    log.log("Batch creating service Random - Got response: " + textStatus);
                    create_aois.resetBoundaries(data);
                });
+        }
+    });
+
+    $("#simplify_btn").click(function(){
+        if (create_aois.last_shapes){
+            create_aois.smoothWorkCells(create_aois.last_shapes);
         }
     });
 
@@ -433,7 +440,7 @@ create_aois.removeFeature = function(e) {
     create_aois.updateCellCount();
 };
 
-create_aois.createWorkCellsFromService = function(data){
+create_aois.createWorkCellsFromService = function(data,zoomAfter){
 
     data.features = create_aois.turnPolygonsIntoMultis(data.features);
 
@@ -466,6 +473,9 @@ create_aois.createWorkCellsFromService = function(data){
     if (features){
         create_aois.aois.addLayer(features);
         create_aois.map_object.addLayer(create_aois.aois);
+
+        create_aois.map_object.fitBounds(features.getBounds());
+        create_aois.last_shapes = features;
     }
     create_aois.updateCellCount();
 };
@@ -576,6 +586,20 @@ create_aois.setAllCellsTo = function (num){
         create_aois.resetBoundaries();
     }
 };
+create_aois.smoothWorkCells = function(shape_layers){
+    var smooth_num = parseFloat($('#simplify_polys').val());
+
+    _.each(shape_layers._layers,function(layer){
+        var latlngs = layer.getLatLngs()[0];
+        var points = [];
+        _.each(latlngs,function(ll){points.push({x:ll.lng,y:ll.lat})});
+        var smoothedPoints = L.LineUtil.simplify(points,smooth_num);
+        var newPointsLL = [];
+        _.each(smoothedPoints,function(ll){newPointsLL.push({lng:ll.x,lat:ll.y})});
+        layer.setLatLngs([newPointsLL]);
+    });
+
+};
 
 create_aois.initializeFileUploads = function(){
     var holder = document.getElementById('file_holder');
@@ -595,7 +619,7 @@ create_aois.initializeFileUploads = function(){
       reader.onload = function (event) {
 
           shp(reader.result).then(function(geojson){
-              create_aois.createWorkCellsFromService(geojson);
+              create_aois.createWorkCellsFromService(geojson,true);
           },function(a){
               log.log(a);
           });

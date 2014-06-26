@@ -25,16 +25,25 @@
             text-align: center;
             height: 14px;
         }
+        #file_uploader_holder input {
+            width:50px;
+            margin-bottom: 0;
+            text-align: center;
+            height: 14px;
+        }
         #file_holder {
             border: 7px dashed #ccc;
-            width: 200px;
+            width: 140px;
             height: 12px;
             font-size: 10px;
             text-align: center;
             font-weight: bold;
             line-height: 1em;
+            display: inline-block;
         }
-        #file_holder.hover { border: 7px dashed #333; }
+        #file_holder.hover {
+            border: 7px dashed #333;
+        }
 
     </style>
     <script src="http://maps.googleapis.com/maps/api/js?sensor=false&libraries=places"></script>
@@ -66,17 +75,18 @@
 
     <div class="btn-group" data-toggle="buttons-radio">
         Draw using:
-        <button class="btn active" id="option_usng"> USNG Cells (US only)</button>
-        <button class="btn" id="option_mgrs"> MGRS Cells</button>
-        <button class="btn" id="option_polygon"> Any Sized Polygons</button>
-        <button class="btn" id="option_shapefile"> Drag in a Shape File</button>
+        <button class="btn active" id="option_usng">USNG Cells (US only)</button>
+        <button class="btn" id="option_mgrs">MGRS Cells</button>
+        <button class="btn" id="option_polygon">Any Sized Polygons</button>
+        <button class="btn" id="option_shapefile">Drag in a Shape File</button>
     </div>
 
     <div style="display:none" id="poly_split_holder">
         Split polygon into <input type="text" id="split_wide" value="5"/> by <input type="text" id="split_high" value="5"> cells
     </div>
     <div style="display:none" id="file_uploader_holder">
-          <div id="file_holder">Drag shapefile here</div>
+        <div id="file_holder">Drag shapefile here</div>
+        <input type="text" id="simplify_polys" value="0.001"/><button id="simplify_btn" class="btn">Simplify</button>
     </div>
 
     <div id="map" class="thumbnail" style="height: 450px; width: 100%;">{% leaflet_map "map" %}</div>
