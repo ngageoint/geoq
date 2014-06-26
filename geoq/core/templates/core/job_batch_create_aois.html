@@ -40,6 +40,7 @@
             font-weight: bold;
             line-height: 1em;
             display: inline-block;
+            margin-left: 20px;
         }
         #file_holder.hover {
             border: 7px dashed #333;
@@ -86,7 +87,7 @@
     </div>
     <div style="display:none" id="file_uploader_holder">
         <div id="file_holder">Drag shapefile here</div>
-        <input type="text" id="simplify_polys" value="0.001"/><button id="simplify_btn" class="btn">Simplify</button>
+        <input type="text" id="simplify_polys" value="1000m"/><button id="simplify_btn" class="btn btn-success">Smooth Polys</button>
     </div>
 
     <div id="map" class="thumbnail" style="height: 450px; width: 100%;">{% leaflet_map "map" %}</div>

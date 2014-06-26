@@ -141,7 +141,12 @@ create_aois.init = function(){
         if (create_aois.last_shapes){
             create_aois.smoothWorkCells(create_aois.last_shapes);
         }
-    });
+    }).popover({
+        title:"Smooth points in a Polygon",
+        content:"If your polygon is very complex, it will be much faster for everyone if you smooth the points down. The smoothing amount is in meters, and will remove points that are within that distance of each other.",
+        placement:"bottom",
+        trigger:"hover"})
+    .attr('disabled',true);
 
     create_aois.initializeFileUploads();
 };
@@ -592,7 +597,12 @@ create_aois.setAllCellsTo = function (num){
     }
 };
 create_aois.smoothWorkCells = function(shape_layers){
-    var smooth_num = parseFloat($('#simplify_polys').val());
+    var smooth_num = parseInt($('#simplify_polys').val());
+    if (!smooth_num) smooth_num = 1000;
+
+    //Convert meters to Lat/Long smoothing ratio
+    //1 Longitude (at 48-Lat) ~= 75000m, 1 Latitude ~= 110000m, so using 80km as 1
+    smooth_num = smooth_num/80000;
 
     _.each(shape_layers._layers,function(layer){
         var latlngs = layer.getLatLngs()[0];
@@ -628,6 +638,7 @@ create_aois.initializeFileUploads = function(){
           },function(a){
               log.log(a);
           });
+          $("#simplify_btn").attr('disabled',false);
       };
       reader.readAsArrayBuffer(file);
 
