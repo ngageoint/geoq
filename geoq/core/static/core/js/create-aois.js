@@ -1,5 +1,6 @@
 //TODO: Popups are blocking cells, maybe show info differently - make side control
 //TODO: When loading polys, track all property fields and allow prioritization by numeric ones
+//TODO: Geosearching only works once
 
 var create_aois = {};
 create_aois.colors = ['red','#003300','#006600','#009900','#00CC00','#00FF00'];
@@ -12,6 +13,8 @@ create_aois.draw_method = 'usng';
 create_aois.get_grids_url = '/geoq/api/geo/usng';
 create_aois.drawControl = null;
 create_aois.last_shapes = null;
+create_aois.$feature_info = null;
+
 
 function mapInit(map) {
     //Auto-called after leaflet map is initialized
@@ -192,6 +195,23 @@ create_aois.mapInit = function(map) {
     $('div.leaflet-draw.leaflet-control').find('a').popover({trigger:"hover",placement:"right"});
     $('a.leaflet-draw-draw-polygon').hide();
 
+    map.on('zoomend', function(e){
+        var zoom = create_aois.map_object.getZoom();
+        var $usng = $("#option_usng");
+        var $mgrs = $("#option_mgrs");
+        var $poly = $("#option_polygon");
+        if (zoom > 10){
+            $usng.attr('disabled', false);
+            $mgrs.attr('disabled', false);
+        } else {
+            if ($usng.hasClass("active") || $mgrs.hasClass("active")){
+                $poly.click();
+            }
+            $usng.attr('disabled', true);
+            $mgrs.attr('disabled', true);
+        }
+    });
+
     map.on('draw:created', function (e) {
         var type = e.layerType,
             layer = e.layer;
@@ -258,7 +278,7 @@ create_aois.mapInit = function(map) {
                 title:'Set Priority',
                 content:'The next cells you draw will have the priority of level '+num+', which means '+helpText,
                 trigger:'hover',
-                placement:'left'
+                placement:'top'
             });
 
         var help_control = new L.Control.Button({
@@ -276,8 +296,21 @@ create_aois.mapInit = function(map) {
         $btn.css({backgroundColor:'inherit'});
         $btn.css({color:(num < 4)?'white':'black'});
         $btn.parent().css({backgroundColor:create_aois.colors[num]});
-
     });
+
+
+    create_aois.$feature_info = $('<div>')
+        .addClass('feature_info');
+
+    var status_control = new L.Control.Button({
+        html:create_aois.$feature_info,
+        hideText: false,
+        doToggle: false,
+        toggleStatus: false,
+        position: 'bottomright'
+    });
+    status_control.addTo(map);
+
 };
 
 create_aois.splitPolygonsIntoSections = function(layer,x,y){
@@ -369,10 +402,10 @@ create_aois.turnPolygonsIntoMultis = function(layers){
     _.each(layers,function(layer){
 
         var geoJSON;
-        if (layer.toGeoJSON) {
+        if (layer && layer.toGeoJSON) {
             geoJSON = layer.toGeoJSON();
         } else {
-            geoJSON = layer;
+            geoJSON = layer || {};
         }
         if (!geoJSON.id) geoJSON.id = "handmade."+parseInt(Math.random()*1000000);
         geoJSON.geometry_name = "the_geom";
@@ -428,7 +461,9 @@ create_aois.highlightFeature = function(e) {
         fillOpacity: 1,
         fillColor: create_aois.colors[0]
     });
-    this.openPopup();
+
+    create_aois.$feature_info.html(layer.popupContent);
+//    this.openPopup();
 };
 
 create_aois.resetHighlight = function(e) {
@@ -437,7 +472,9 @@ create_aois.resetHighlight = function(e) {
     var style = create_aois.styleFromPriority(layer.feature);
     layer.setStyle(style);
 
-    create_aois.map_object.closePopup();
+    create_aois.$feature_info.html("");
+
+//    create_aois.map_object.closePopup();
 };
 
 create_aois.removeFeature = function(e) {
@@ -452,7 +489,7 @@ create_aois.removeFeature = function(e) {
 
 create_aois.createWorkCellsFromService = function(data,zoomAfter){
 
-    data.features = create_aois.turnPolygonsIntoMultis(data.features);
+    data.features = create_aois.turnPolygonsIntoMultis(data.features || data);
 
     var features = L.geoJson(data, {
         style: function(feature) {
@@ -470,7 +507,7 @@ create_aois.createWorkCellsFromService = function(data,zoomAfter){
                 popupContent += "<b>"+k+":</b> " + feature.properties[k]+"<br/>";
             }
 
-            layer.bindPopup(popupContent);
+            layer.popupContent = popupContent;
 
             layer.on({
                 mouseover: create_aois.highlightFeature,
@@ -520,7 +557,7 @@ create_aois.removeAllFeatures = function () {
 create_aois.getBoundaries = function() {
     var boundaries = [];
 
-    var m = create_aois.aois._map;
+    var m = create_aois.map_object;
     if (m && (m._container.id == 'map') && (m.hasLayer(create_aois.aois))){
         _.each(create_aois.aois.getLayers(), function(l){
            _.each(l.getLayers(), function(f){
@@ -528,8 +565,8 @@ create_aois.getBoundaries = function() {
                boundaries.push(f.toGeoJSON());
            });
         });
-    } else {
-        log.error("No Map object found when trying to getBoundaries");
+//    } else {
+//        log.error("No Map object found when trying to getBoundaries");
     }
     if (!boundaries.length) boundaries = false;
 
@@ -549,7 +586,7 @@ create_aois.resetBoundaries = function(data) {
 create_aois.prioritizeCellsBy = function(numField){
     numField = numField || "daypop";
 
-    var m = create_aois.aois._map;
+    var m = create_aois.map_object;
     if (m && (m._container.id == 'map') && (m.hasLayer(create_aois.aois))){
         var maxPop = 0;
 
@@ -572,18 +609,20 @@ create_aois.prioritizeCellsBy = function(numField){
                 props = props || {};
 
                 if (props[numField]) {
-                    props.priority = parseInt((5 * props[numField]) / maxPop) || create_aois.priority_to_use;
+                    props.priority = Math.ceil(5 *(props[numField] / maxPop)) || create_aois.priority_to_use;
+                    if (featureHolder.setStyle){
+                        featureHolder.setStyle(create_aois.styleFromPriority(featureHolder.feature));
+                    }
                 }
             });
         });
-        create_aois.resetBoundaries();
     }
 };
 
 create_aois.setAllCellsTo = function (num){
     num = num || create_aois.priority_to_use;
 
-    var m = create_aois.aois._map;
+    var m = create_aois.map_object;
     if (m && (m._container.id == 'map') && (m.hasLayer(create_aois.aois))){
 
         _.each(create_aois.aois.getLayers(), function(l){
