@@ -33,7 +33,7 @@
         }
         #file_holder {
             border: 7px dashed #ccc;
-            width: 140px;
+            width: 130px;
             height: 12px;
             font-size: 10px;
             text-align: center;
@@ -94,10 +94,10 @@
     </div>
     <div style="display:none" id="file_uploader_holder">
         <div id="file_holder">Drag shapefile here</div>
-        <input type="text" id="simplify_polys" value="1000m"/><button id="simplify_btn" class="btn btn-success">Smooth Polys</button>
+        <input type="text" id="simplify_polys" value="500m"/><button id="simplify_btn" class="btn btn-success">Smooth Polys</button>
     </div>
 
-    <div id="map" class="thumbnail" style="height: 450px; width: 100%;">{% leaflet_map "map" %}</div>
+    <div id="map" class="thumbnail" style="height: 500px; width: 100%;">{% leaflet_map "map" %}</div>
         <br/>
     <div class="row">
         <div class="col-md-3" style="display: inline-block">
@@ -112,14 +112,14 @@
     </div>
     <div class="row">
         Prioritize by: <select id="prioritize-selector" style="margin-bottom:0px;">
-            <option>--select--</option>
-            <option>Random</option>
+            <option>--add cells first--</option>
         </select>
-        or set all cells to: <btn id="prioritize-aois-1-button" class="btn btn-warning">1 (Lowest)</btn>
-        <btn id="prioritize-aois-2-button" class="btn btn-warning">2</btn>
-        <btn id="prioritize-aois-3-button" class="btn btn-warning">3</btn>
+        <btn id="prioritize-reverse" class="btn btn-warning">Reverse</btn>
+        or set all cells to: <btn id="prioritize-aois-5-button" class="btn btn-warning">5 (Lowest)</btn>
         <btn id="prioritize-aois-4-button" class="btn btn-warning">4</btn>
-        <btn id="prioritize-aois-5-button" class="btn btn-warning">5 (Highest)</btn>
+        <btn id="prioritize-aois-3-button" class="btn btn-warning">3</btn>
+        <btn id="prioritize-aois-2-button" class="btn btn-warning">2</btn>
+        <btn id="prioritize-aois-1-button" class="btn btn-warning">1 (Highest)</btn>
         <btn id="prioritize-aois-clear-button" class="btn btn-danger">Delete All</btn>
         <hr/>
     </div>
@@ -131,7 +131,7 @@
     <div class="row">
         <hr/>
         Work Cell detailed data (copy and paste this to tweak or export):</br>
-        <textarea id="current-aois" class="cell-data">{}</textarea>
+        <textarea id="current-aois" class="cell-data">{"message":"No cells entered"}</textarea>
         <btn id="reset-from-textarea-button" class="btn btn-info">Reset all cells based on text above</btn>
     </div>
 

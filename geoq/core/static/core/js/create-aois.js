@@ -1,14 +1,19 @@
-//TODO: When loading polys, track all property fields and allow prioritization by numeric ones
+//TODO: Should prioritization colors/labels be pulled from a DB table?
+//TODO: What should be done with points/lines uploaded from a shapefile? Does this cause things to break?
+//TODO: How to assign users to a cell? Paintbrush?
+//TODO: Can there be a 'select/paintbrush' to remove large amounts of cells?
 
 var create_aois = {};
-create_aois.colors = ['red','#003300','#006600','#009900','#00CC00','#00FF00'];
-create_aois.helpText = ['unassigned','Lowest','Low','Medium','High','Highest'];
+create_aois.colors = ['red','#00FF00','#00BB00','#008800','#004400','#001100'];
+create_aois.helpText = ['unassigned','Highest','High','Medium','Low','Lowest'];
 create_aois.map_object = null;
 create_aois.df = null;
 create_aois.aois = new L.FeatureGroup();
 create_aois.priority_to_use = 1;
-create_aois.draw_method = 'usng';
-create_aois.get_grids_url = '/geoq/api/geo/usng';
+create_aois.draw_method = 'usng'; //This should be updated on page creation
+create_aois.get_grids_url = ''; //This should be updated on page creation
+create_aois.batch_redirect_url = '';
+//create_aois.batch_prioritize_rand = "";  //Included as an example
 create_aois.drawControl = null;
 create_aois.last_shapes = null;
 create_aois.$feature_info = null;
@@ -117,18 +122,21 @@ create_aois.init = function(){
     $("#prioritize-selector").on('change select',function(option){
         var field = option.target.value;
         if (field){
-            if (field=="Random"){
-                var boundaries = create_aois.getBoundaries();
-                if (boundaries) {
-                    create_aois.update_info("Sending Work Cells to the server to prioritize");
-                    $.post(create_aois.batch_prioritize_rand,
-                       {aois: JSON.stringify(boundaries), csrftoken:geoq.csrftoken},
-                       function(data, textStatus) {
-                           log.log("Batch creating service Random - Got response: " + textStatus);
-                           create_aois.resetBoundaries(data);
-                       });
-                }
-            } else if (field=="--select--") {
+//  This is how we can pass cells to a server function to prioritize, if needed in the future:
+
+//            if (field=="Random"){
+//                var boundaries = create_aois.getBoundaries();
+//                if (boundaries) {
+//                    create_aois.update_info("Sending Work Cells to the server to prioritize");
+//                    $.post(create_aois.batch_prioritize_rand,
+//                       {aois: JSON.stringify(boundaries), csrftoken:geoq.csrftoken},
+//                       function(data, textStatus) {
+//                           log.log("Batch creating service Random - Got response: " + textStatus);
+//                           create_aois.resetBoundaries(data);
+//                       });
+//                }
+//            } else
+            if (field=="--select--" || field=="add cells first") {
                 //Ignore choice
             } else {
                 //Verify the case is correct
@@ -147,7 +155,7 @@ create_aois.init = function(){
         $bottomBtn
             .on('click',function(){create_aois.setAllCellsTo(num);})
             .css({backgroundColor:create_aois.colors[num],backgroundImage:'none'});
-        $bottomBtn.css({color:(num < 4)?'white':'black'});
+        $bottomBtn.css({color:(num > 2)?'white':'black'});
     });
 
     $("#reset-from-textarea-button").on('click',function(){
@@ -175,6 +183,8 @@ create_aois.init = function(){
         placement:"bottom",
         trigger:"hover"})
     .attr('disabled',true);
+
+    $("#prioritize-reverse").click(create_aois.reversePriorities);
 
     create_aois.initializeFileUploads();
 };
@@ -298,12 +308,12 @@ create_aois.mapInit = function(map) {
     _.each([1,2,3,4,5],function(num){
         var helpText = create_aois.helpText[num];
         var $btn = $("<button>")
-            .text('Priority '+num+' : '+helpText)
+            .text('Priority '+num+' : '+helpText+' (0)')
             .attr({id:'priority-map-'+num})
-            .css('width','140px')
+            .css('width','150px')
             .popover({
                 title:'Set Priority',
-                content:'The next cells you draw will have the priority of level '+num+', which means '+helpText,
+                content:'The next cells you draw will have a priority of '+num+' ('+helpText+')',
                 trigger:'hover',
                 placement:'bottom'
             });
@@ -321,7 +331,7 @@ create_aois.mapInit = function(map) {
         help_control.addTo(map);
 
         $btn.css({backgroundColor:'inherit'});
-        $btn.css({color:(num < 4)?'white':'black'});
+        $btn.css({color:(num >2)?'white':'black'});
         $btn.parent().css({backgroundColor:create_aois.colors[num]});
     });
 
@@ -465,7 +475,7 @@ create_aois.styleFromPriority = function(feature){
     if (feature.properties && feature.properties.priority) {
         priority = feature.properties.priority;
     }
-    var color = create_aois.colors[1];
+    var color = create_aois.colors[5];
     if (priority > 0 && priority < create_aois.colors.length) {
         color = create_aois.colors[priority];
     }
@@ -579,26 +589,45 @@ create_aois.createWorkCellsFromService = function(data,zoomAfter){
         $('<option>')
             .text("Random")
             .appendTo($prioritizeSelector);
-
     }
 };
 
 create_aois.updateCellCount = function() {
     var aoi_count = 0;
+    var counts = [0,0,0,0,0,0];
+
     _.each(create_aois.aois._layers,function(layergroup){
         if (layergroup && layergroup._layers){
             aoi_count += _.toArray(layergroup._layers).length;
+
+            _.each(layergroup._layers,function(layer){
+                if (layer.feature && layer.feature.properties && layer.feature.properties.priority) {
+                    var pri = layer.feature.properties.priority;
+                    if (_.isNumber(pri) && pri>0 && pri<6) counts[pri]++;
+                }
+            });
         }
     });
     $('#num_workcells').text(aoi_count);
 
-    var boundaries = create_aois.getBoundaries();
+    //Update Priority on-map Buttons
+    _.each([1,2,3,4,5],function(num){
+        var $bottomBtn = $("#priority-map-"+num);
+        var helpText = create_aois.helpText[num];
+
+        var text = 'Priority '+num+' : '+helpText+' ('+counts[num]+')';
+        $bottomBtn.text(text);
+    });
+
+    //Fill in bottom text area with geojson
+    var boundaries = JSON.stringify(create_aois.getBoundaries());
+    if (boundaries=="false") boundaries = '{"message":"No cells entered"}';
     $('#current-aois')
-        .val(JSON.stringify(boundaries));
+        .val(boundaries);
 };
 
 create_aois.removeAllFeatures = function () {
-    var m = create_aois.aois._map;
+    var m = create_aois.map_object;
     if (m && (m._container.id == 'map') && (m.hasLayer(create_aois.aois))){
         _.each(m._layers, function(l){
             if (l._layers || l._path) {
@@ -644,6 +673,17 @@ create_aois.prioritizeCellsBy = function(numField){
     if (m && (m._container.id == 'map') && (m.hasLayer(create_aois.aois))){
         var maxPop = 0;
 
+        if (numField=="Random"){
+            _.each(create_aois.aois.getLayers(), function(l){
+                _.each(l.getLayers(), function(featureHolder){
+                    var props = featureHolder.feature.properties;
+                    props = props || {};
+                    props.priority = Math.ceil(Math.random()*5);
+                });
+            });
+            return;
+        }
+
         //Get the highest population count
         _.each(create_aois.aois.getLayers(), function(l){
             _.each(l.getLayers(), function(featureHolder){
@@ -663,7 +703,7 @@ create_aois.prioritizeCellsBy = function(numField){
                 props = props || {};
 
                 if (props[numField]) {
-                    props.priority = Math.ceil(5 *(props[numField] / maxPop)) || create_aois.priority_to_use;
+                    props.priority = 6 - Math.ceil(5 *(props[numField] / maxPop)) || create_aois.priority_to_use;
                     if (featureHolder.setStyle){
                         featureHolder.setStyle(create_aois.styleFromPriority(featureHolder.feature));
                     }
@@ -671,6 +711,27 @@ create_aois.prioritizeCellsBy = function(numField){
             });
         });
     }
+};
+create_aois.reversePriorities = function(){
+    var m = create_aois.map_object;
+    if (m && (m._container.id == 'map') && (m.hasLayer(create_aois.aois))){
+
+        _.each(create_aois.aois.getLayers(), function(l){
+            _.each(l.getLayers(), function(featureHolder){
+                var props = featureHolder.feature.properties;
+                props = props || {};
+
+                if (props.priority) {
+                    props.priority = 6 - props.priority;
+                }
+                if (featureHolder.setStyle){
+                    featureHolder.setStyle(create_aois.styleFromPriority(featureHolder.feature));
+                }
+            });
+        });
+    }
+    create_aois.updateCellCount();
+
 };
 
 create_aois.setAllCellsTo = function (num){
@@ -692,26 +753,42 @@ create_aois.setAllCellsTo = function (num){
 
 create_aois.smoothWorkCells = function(shape_layers){
     var smooth_num = parseInt($('#simplify_polys').val());
-    if (!smooth_num) smooth_num = 1000;
+    if (!smooth_num) smooth_num = 500;
 
     //Convert meters to Lat/Long smoothing ratio
     //1 Longitude (at 48-Lat) ~= 75000m, 1 Latitude ~= 110000m, so using 80km as 1
     smooth_num = smooth_num/80000;
 
     _.each(shape_layers._layers,function(layer){
-        var latlngs = layer.getLatLngs()[0];
-        var points = [];
-        _.each(latlngs,function(ll){points.push({x:ll.lng,y:ll.lat})});
-        var smoothedPoints = L.LineUtil.simplify(points,smooth_num);
-        var newPointsLL = [];
-        _.each(smoothedPoints,function(ll){newPointsLL.push({lng:ll.x,lat:ll.y})});
-        layer.setLatLngs([newPointsLL]);
-    });
+        var latlngs = layer.getLatLngs?layer.getLatLngs():null;
+        if (latlngs && latlngs.length){
+            latlngs = latlngs[0];
+            //Convert the points to a format the library expects
+            var points = [];
+            _.each(latlngs,function(ll){points.push({x:ll.lng,y:ll.lat})});
 
+            //Do the point smoothing
+            var smoothedPoints = L.LineUtil.simplify(points,smooth_num);
+
+            //Convert it back
+            var newPointsLL = [];
+            _.each(smoothedPoints,function(ll){newPointsLL.push({lng:ll.x,lat:ll.y})});
+
+            //Add the start point to close the poly
+            newPointsLL.push(newPointsLL[0]);
+            layer.setLatLngs([newPointsLL]);
+        }
+    });
 };
 
 create_aois.initializeFileUploads = function(){
     var holder = document.getElementById('file_holder');
+    var $holder = $(holder).popover({
+        title:"Drag zipped shapefile here",
+        content:"You can drag a .zip or .shp file here. All polygons/multipolygons within will be created as work cells. Please make files as small as possible.",
+        trigger: "hover",
+        placement: "Bottom"
+    });
 
     if (typeof window.FileReader === 'undefined') {
         $("#option_shapefile").css('display','none');
@@ -727,7 +804,8 @@ create_aois.initializeFileUploads = function(){
       var file = e.dataTransfer.files[0], reader = new FileReader();
 
       reader.onload = function (event) {
-          create_aois.update_info("Building Shapes");
+          $holder.css({backgroundColor:'green'});
+          create_aois.update_info("Importing Shapes");
 
           shp(reader.result).then(function(geojson){
               create_aois.createWorkCellsFromService(geojson,true);
