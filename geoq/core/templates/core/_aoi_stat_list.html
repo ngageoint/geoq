@@ -3,6 +3,7 @@
         <i class="icon-briefcase"></i>
         <a href="{{ object.job.project.get_absolute_url }}">{{ object.job.project.name }}</a>
     </li>
+    <br/>
     <li title="This Work Cell is {{ object.status }}">
         <i class="icon-th"></i>
         {% if object.status == 'In work' %}
