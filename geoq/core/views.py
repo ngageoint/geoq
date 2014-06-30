@@ -23,6 +23,7 @@ from geoq.core.utils import send_aoi_create_event
 from geoq.core.middleware import Http403
 from geoq.mgrs.exceptions import ProgramException
 from kml_view import *
+from shape_view import *
 
 
 class Dashboard(TemplateView):

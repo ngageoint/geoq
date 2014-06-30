@@ -1,0 +1,217 @@
+# -*- coding: utf-8 -*-
+
+import zipfile
+import tempfile
+import json
+from django.http import HttpResponse
+from django.utils.encoding import smart_str
+from django.views.generic import ListView
+
+from geoq.maps.models import AOI, Feature
+from models import Job
+from cStringIO import StringIO
+
+from django.contrib.gis.gdal.libgdal import lgdal
+from django.contrib.gis.gdal import Driver, OGRGeometry, OGRGeomType, SpatialReference, check_err
+
+
+class JobAsShape(ListView):
+    model = Job
+
+    def get(self, request, *args, **kwargs):
+        job_pk = self.kwargs.get('pk')
+
+        try:
+            shape_response = ShpResponder(job_pk=job_pk)
+            shape_out = shape_response()
+        except Exception, e:
+            import traceback
+
+            output = json.dumps(dict(message='Generic Exception', details=traceback.format_exc(), exception=str(e), last_data=shape_response.last_data))
+            shape_out = HttpResponse(output, mimetype="application/json", status=200)
+
+        return shape_out
+
+
+# Updated From Django Shapes 0.2.0
+class ShpResponder(object):
+    def __init__(self, readme=None, geo_field=None, proj_transform=None, mimetype='application/zip', job_pk=1):
+        self.readme = readme
+        self.geo_field = geo_field
+        self.proj_transform = proj_transform
+        self.mimetype = mimetype
+        self.file_name = smart_str('geoq_job_'+str(job_pk)+'_shapefile')
+        self.last_data = "Initialized"
+        self.job_pk = job_pk
+
+    def __call__(self, *args, **kwargs):
+        tmp = self.write_shapefile_to_tmp_file()
+        return self.zip_response(tmp, self.file_name, self.mimetype, self.readme)
+
+    def zip_response(self, shapefile_path, file_name, mimetype, readme=None):
+        buffer = StringIO()
+        zip = zipfile.ZipFile(buffer, 'w', zipfile.ZIP_DEFLATED)
+        files = ['shp', 'shx', 'prj', 'dbf']
+        for item in files:
+            filename = '%s.%s' % (shapefile_path.replace('.shp', ''), item)
+            zip.write(filename, arcname='%s.%s' % (file_name.replace('.shp', ''), item))
+        if readme:
+            zip.writestr('README.txt', readme)
+        zip.close()
+        buffer.flush()
+        zip_stream = buffer.getvalue()
+        buffer.close()
+
+        # Stick it all in a django HttpResponse
+        response = HttpResponse()
+        response['Content-Disposition'] = 'attachment; filename=%s.zip' % file_name.replace('.shp', '')
+        response['Content-length'] = str(len(zip_stream))
+        response['Content-Type'] = mimetype
+        response.write(zip_stream)
+        return response
+
+    def write_shapefile_to_tmp_file(self):
+        tmp = tempfile.NamedTemporaryFile(suffix='.shp', mode='w+b')
+        # we must close the file for GDAL to be able to open and write to it
+        tmp.close()
+        args = tmp.name, self.job_pk
+
+        self.write_geoq_shape(*args)
+
+        return tmp.name
+
+    def write_geoq_shape(self, tmp_name, job_pk):
+        job_object = Job.objects.get(id=job_pk)
+
+        # Get the shapefile driver
+        dr = Driver('ESRI Shapefile')
+
+        # Creating the datasource
+        ds = lgdal.OGR_Dr_CreateDataSource(dr._ptr, tmp_name, None)
+        if ds is None:
+            raise Exception('Could not create file!')
+
+        self.add_aois_to_shapefile(ds, job_object)
+        self.add_features_to_shapefile(ds, job_object)
+
+        # Cleaning up
+        lgdal.OGR_DS_Destroy(ds)
+        lgdal.OGRCleanupAll()
+
+    def add_aois_to_shapefile(self, ds, job_object):
+        aois = job_object.aois.all()
+        if len(aois) == 0:
+            return
+
+        geo_field = aois[0].polygon
+
+        # Get the right geometry type number for ogr
+        ogr_type = OGRGeomType(geo_field.geom_type).num
+
+        # Set up the native spatial reference of the geometry field using the srid
+        native_srs = SpatialReference(geo_field.srid)
+
+        # create the AOI layer
+        layer = lgdal.OGR_DS_CreateLayer(ds, 'Workcells', native_srs._ptr, ogr_type, None)
+
+        # Create the fields that each feature will have
+        fields = AOI._meta.fields
+        attributes = [fields[0], fields[1], fields[3], fields[10], fields[11]]
+        for field in attributes:
+            data_type = 4
+            if field.name == 'id':
+                data_type = 0
+            fld = lgdal.OGR_Fld_Create(str(field.name), data_type)
+            added = lgdal.OGR_L_CreateField(layer, fld, 0)
+            check_err(added)
+
+        # Getting the Layer feature definition.
+        feature_def = lgdal.OGR_L_GetLayerDefn(layer)
+
+        # Loop through queryset creating features
+        for item in aois:
+            feat = lgdal.OGR_F_Create(feature_def)
+
+            for idx, field in enumerate(attributes):
+                value = getattr(item, field.name)
+                string_value = str(value)
+                lgdal.OGR_F_SetFieldString(feat, idx, string_value)
+
+            # Transforming & setting the geometry
+            geom = item.polygon
+            ogr_geom = OGRGeometry(geom.wkt, native_srs)
+            check_err(lgdal.OGR_F_SetGeometry(feat, ogr_geom._ptr))
+
+            # create the feature in the layer.
+            check_err(lgdal.OGR_L_CreateFeature(layer, feat))
+
+        check_err(lgdal.OGR_L_SyncToDisk(layer))
+
+    def add_features_to_shapefile(self, ds, job_object):
+        features = job_object.feature_set.all()
+        if len(features) == 0:
+            return
+
+        features_points = []
+        features_polys = []
+
+        for f in features:
+            if f.the_geom.geom_type == 'Point':
+                features_points.append(f)
+            elif f.the_geom.geom_type == 'Polygon':
+                features_polys.append(f)
+
+        self.add_features_subset_to_shapefile(ds, features_polys, "Polygon Features")
+        self.add_features_subset_to_shapefile(ds, features_points, "Point Features")
+
+    def add_features_subset_to_shapefile(self, ds, features, layer_name):
+        if len(features) == 0:
+            return
+
+        geo_field = features[0].the_geom
+
+        # Get the right geometry type number for ogr
+        ogr_type = OGRGeomType(geo_field.geom_type).num
+
+        # Set up the native spatial reference of the geometry field using the srid
+        native_srs = SpatialReference(geo_field.srid)
+
+        # create the Feature layer
+        layer = lgdal.OGR_DS_CreateLayer(ds, layer_name, native_srs._ptr, ogr_type, None)
+
+
+        # Create the fields that each feature will have
+        fields = Feature._meta.fields
+        attributes = [fields[0], fields[4], fields[5], fields[2], fields[3]]
+        for field in attributes:
+            data_type = 4
+            if field.name == 'id':
+                data_type = 0
+
+            fld = lgdal.OGR_Fld_Create(str(field.name), data_type)
+            added = lgdal.OGR_L_CreateField(layer, fld, 0)
+            check_err(added)
+
+        # Getting the Layer feature definition.
+        feature_def = lgdal.OGR_L_GetLayerDefn(layer)
+
+        # Loop through queryset creating features
+        for item in features:
+            feat = lgdal.OGR_F_Create(feature_def)
+
+            for idx, field in enumerate(attributes):
+                value = getattr(item, field.name)
+                # if field.name == 'template':
+                #     value = value.name
+                string_value = str(value)
+                lgdal.OGR_F_SetFieldString(feat, idx, string_value)
+
+            # Transforming & setting the geometry
+            geom = item.the_geom
+            ogr_geom = OGRGeometry(geom.wkt, native_srs)
+            check_err(lgdal.OGR_F_SetGeometry(feat, ogr_geom._ptr))
+
+            # create the feature in the layer.
+            check_err(lgdal.OGR_L_CreateFeature(layer, feat))
+
+        check_err(lgdal.OGR_L_SyncToDisk(layer))
