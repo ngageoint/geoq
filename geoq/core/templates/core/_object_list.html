@@ -21,7 +21,7 @@
             {% include "core/_aoi_stat_list.html" %}
         {% endif %}
         <h3>
-            <i class="icon-{% if object_type == "project" %}briefcase{% elif object_type == "job"%}inbox{% elif object_type == "aoi"%}th{% endif %} icon-1x pull-left list-icon"></i>
+            <span class="icon-{% if object_type == "project" %}briefcase{% elif object_type == "job"%}inbox{% elif object_type == "aoi"%}th{% endif %} icon-1x pull-left list-icon"></span>
             <span class="title">
                 {% if object.status == 'In work' %}
                     {% if request.user == object.analyst %}
