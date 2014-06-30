@@ -67,7 +67,7 @@ class Http403Middleware(object):
 
             # Now use context and render template
             c = RequestContext(request, {
-                  'message': exception.message
+                  'message': exception.args[0]
              })
 
             return HttpResponseForbidden(t.render(c))
