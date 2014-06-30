@@ -47,7 +47,7 @@ class JobKML(ListView):
         output += '    <description>'+description+'</description>\n'
         output += '    <Style id="geoq_inwork">\n'
         output += '      <LineStyle>\n'
-        output += '        <width>3</width>\n'
+        output += '        <width>4</width>\n'
         output += '        <color>7f00ffff</color>\n'
         output += '      </LineStyle>\n'
         output += '      <PolyStyle>\n'
@@ -58,7 +58,7 @@ class JobKML(ListView):
 
         output += '    <Style id="geoq_complete">\n'
         output += '      <LineStyle>\n'
-        output += '        <width>2</width>\n'
+        output += '        <width>3</width>\n'
         output += '        <color>7f00ff00</color>\n'
         output += '      </LineStyle>\n'
         output += '      <PolyStyle>\n'
@@ -69,7 +69,7 @@ class JobKML(ListView):
 
         output += '    <Style id="geoq_unassigned">\n'
         output += '      <LineStyle>\n'
-        output += '        <width>1</width>\n'
+        output += '        <width>2</width>\n'
         output += '        <color>7f0000ff</color>\n'
         output += '      </LineStyle>\n'
         output += '      <PolyStyle>\n'
@@ -148,11 +148,17 @@ class JobKML(ListView):
 
             desc = 'Posted by '+analyst_name+' at '+date_time_desc+' Zulu (UTC) in Job #'+job_id
 
+            kml = str(loc.the_geom.kml)
+            if '<Polygon><outerBoundaryIs><LinearRing><coordinates>' in kml:
+                add_text = '<altitudeMode>clampToGround</altitudeMode>'
+                kmls = kml.split('<coordinates>')
+                kml = kmls[0] + add_text + '<coordinates>' + kmls[1]
+
             output += '    <Placemark><name>'+template_name+'</name>\n'
             output += '      <TimeStamp><when>'+date_time+'</when></TimeStamp>\n'
             output += '      <description>'+desc+'</description>\n'
-            output += '      <styleUrl>#geoq_'+str(loc.template.id)+'</styleUrl>\n'
-            output += '      '+str(loc.the_geom.kml)+'\n'
+            output += '      <styleUrl>#geoq_'+kml+'</styleUrl>\n'
+            output += '      '+str(kml)+'\n'
             output += '    </Placemark>\n'
 
         if template_has_started:
@@ -166,10 +172,18 @@ class JobKML(ListView):
             if aoi.status == 'Unassigned':
                 style = 'unassigned'
             aoi_name = "#"+str(aoi.id)+", "+str(aoi.status)+" - Priority:"+str(aoi.priority)
+
+            kml = str(aoi.polygon.kml)
+            if '<Polygon><outerBoundaryIs><LinearRing><coordinates>' in kml:
+                add_text = '<altitudeMode>clampToGround</altitudeMode>'
+                kmls = kml.split('<coordinates>')
+                kml = '<LinearRing>' + add_text + '<coordinates>' + kmls[1]
+                kml = kml.replace('</outerBoundaryIs></Polygon></MultiGeometry>', '')
+
             output += '    <Placemark>\n'
             output += '      <name>'+aoi_name+'</name>\n'
             output += '      <styleUrl>#geoq_'+style+'</styleUrl>\n'
-            output += '      '+str(aoi.polygon.kml)+'\n'
+            output += '      '+kml+'\n'
             output += '    </Placemark>\n'
 
         output += '   </Folder>\n'
@@ -218,9 +232,9 @@ class JobKMLNetworkLink(ListView):
         output += '      <flyToView>0</flyToView>\n'
         output += '      <Link>\n'
         output += '        <href>'+url+'</href>\n'
-        output += '        <refreshInterval>120</refreshInterval>\n'  # Refresh every 2 min
+        output += '        <refreshInterval>90</refreshInterval>\n'  # Refresh every 1.5 min
         output += '        <refreshMode>onInterval</refreshMode>\n'
-        output += '        <viewRefreshTime>10</viewRefreshTime>\n'   # Also refresh after viewscreen movement
+        output += '        <viewRefreshTime>5</viewRefreshTime>\n'   # Also refresh after viewscreen movement
         output += '        <viewRefreshMode>onStop</viewRefreshMode>\n'
         output += '      </Link>\n'
         output += '    </NetworkLink>\n'
