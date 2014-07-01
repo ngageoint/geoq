@@ -629,28 +629,29 @@ aoi_feature_edit.buildDrawingControl = function (drawnItems) {
 
 aoi_feature_edit.addMapControlButtons = function (map) {
 
-//    function complete_button_onClick() {
-//        $.ajax({
-//            type: "POST",
-//            url: aoi_feature_edit.finishUrl,
-//            dataType: "json",
-//            success: function (response) {
-//                //geoq.redirect(aoi_feature_edit.complete_redirect_url);
-//                finishAOI();
-//            }
-//        });
-//    }
-//
-//    var completeButtonOptions = {
-//        'html': '<a id="aoi-submit" href="#" class="btn">' + aoi_feature_edit.finishLabel+ '</a>',  // string
-//        'onClick': complete_button_onClick,  // callback function
-//        'hideText': false,  // bool
-//        position: 'bottomright',
-//        'maxWidth': 60,  // number
-//        'doToggle': false,  // bool
-//        'toggleStatus': false  // bool
-//    };
-//    var completeButton = new L.Control.Button(completeButtonOptions).addTo(map);
+    function complete_button_onClick() {
+        $.ajax({
+            type: "POST",
+            url: aoi_feature_edit.finishUrl,
+            dataType: "json",
+            success: function (response) {
+                //geoq.redirect(aoi_feature_edit.complete_redirect_url);
+                finishAOI();
+            }
+        });
+    }
+
+    var finishButton = aoi_feature_edit.buildDropdownMenu();
+
+    var completeButtonOptions = {
+        'onClick': complete_button_onClick,  // callback function
+        'hideText': false,  // bool
+        position: 'bottomright',
+        'maxWidth': 60,  // number
+        'doToggle': false,  // bool
+        'toggleStatus': false  // bool
+    };
+    var completeButton = new L.Control.JButton(finishButton, completeButtonOptions).addTo(map);
 
 
     var title = "<h4 id='aoi-status-box'><a href='" + aoi_feature_edit.job_absolute_url + "'>" + aoi_feature_edit.job_name + "</a> > AOI #" + aoi_feature_edit.aoi_id + " > ";
@@ -854,4 +855,41 @@ aoi_feature_edit.createPointOptions = function (opts) {
     options.id = opts.id;
 
     return options;
+};
+
+aoi_feature_edit.buildDropdownMenu = function() {
+    var div = document.createElement("div");
+    div.className="btn-group dropup";
+
+    var finishButton = document.createElement("button");
+    var caret = document.createElement("span");
+    caret.className = "caret";
+
+        var ull = $('<ul>')
+        .addClass("dropdown-menu")
+        .css({textAlign: "left"})
+            .css({left: -150})
+        .attr("role", "menu")
+        .appendTo(finishButton);
+
+    for (opt in leaflet_layer_control.finish_options) {
+        ull.append(leaflet_layer_control.finish_options[opt]);
+    }
+
+    finishButton.className = "btn btn-primary dropdown-toggle";
+    finishButton.setAttribute("data-toggle", "dropdown");
+    finishButton.setAttribute("type", "button");
+    finishButton.id = 'finish-button-dropdown';
+    finishButton.onclick =
+        function(ev) {
+            ull.dropdown('toggle');
+            return false;
+        };
+    finishButton.appendChild(document.createTextNode("Finish"));
+    finishButton.appendChild(caret);
+    div.appendChild(finishButton);
+
+    $('#finish-button-dropdown').dropdown();
+
+    return div;
 };

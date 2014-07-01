@@ -223,25 +223,6 @@ leaflet_layer_control.addWorkCellInfo = function($accordion) {
     var $submitDiv = $('<div id="finish-workcell">')
         .appendTo($content);
 
-    var $subButton = $('<button>Finish<span class="caret"></span></button>')
-        .addClass("btn btn-primary dropdown-toggle")
-        .attr("data-toggle", "dropdown")
-        .attr("type", "button")
-        .appendTo($submitDiv);
-
-    var $ull = $('<ul>')
-        .addClass("dropdown-menu")
-        .css({textAlign: "left"})
-        .attr("role", "menu")
-        .appendTo($subButton);
-
-    $subButton
-        .click(function(ev) {
-            $ull.dropdown("toggle");
-            return false;
-        });
-
-
     var $exportButton = $('<button>Export<span class="caret"></span></button>')
         .addClass("btn btn-warning dropdown-toggle")
         .css({marginLeft:"20px"})
@@ -313,11 +294,6 @@ leaflet_layer_control.addWorkCellInfo = function($accordion) {
             return false;
         })
         .appendTo($li24);
-
-
-    for (opt in leaflet_layer_control.finish_options) {
-        $ull.append(leaflet_layer_control.finish_options[opt]);
-    }
 
 };
 leaflet_layer_control.show_feature_info = function (feature) {

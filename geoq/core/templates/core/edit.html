@@ -10,11 +10,12 @@
     <script src="{{ STATIC_URL }}core/js/leaflet_helper.js"></script>
     <script src="{{ STATIC_URL }}core/js/leaflet_helper.parsers.js"></script>
     <script src="{{ STATIC_URL }}core/js/KML.js"></script>
-    <script src="{{ STATIC_URL }}core/js/KMZ.js"></script>
+    <!-- script src="{{ STATIC_URL }}core/js/KMZ.js"></script -->
     <script src="{{ STATIC_URL }}core/js/aoi_feature_edit.js"></script>
-    <script src="{{ STATIC_URL }}core/js/js-unzip.js"></script>
-    <script src="{{ STATIC_URL }}core/js/js-inflate.js"></script>
+    <!-- script src="{{ STATIC_URL }}core/js/js-unzip.js"></script -->
+    <!-- script src="{{ STATIC_URL }}core/js/js-inflate.js"></script -->
     <script src="{{ STATIC_URL }}core/js/leafletcontrols/leaflet.simple_button.js"></script>
+    <script src="{{ STATIC_URL }}leaflet/L.Control.Button.js"></script>
 	<script src="{{ STATIC_URL }}core/js/leaflet.OSMGeocoder/Control.OSMGeocoder.js"></script>
 	<script src="{{ STATIC_URL }}core/js/leafletcontrols/leaflet.layer_tree.js"></script>
     <script src="{{ STATIC_URL }}core/js/leafletcontrols/leaflet.filter_bar.js"></script>
@@ -48,11 +49,14 @@
         var unassigned_status_url = "{% url 'aoi-update-status' object.id 'Unassigned' %}";
         var completed_status_url = "{% url 'aoi-update-status' object.id 'Completed' %}";
 
-        leaflet_layer_control.finish_options.push('<li><a href="#" onclick="complete_button_onClick(awaitingreview_status_url);">Submit for Review</a></li>');
+        leaflet_layer_control.finish_options.push('<li><a href="#" onclick="complete_button_onClick(\'' +
+                awaitingreview_status_url + '\');">Submit for Review</a></li>');
 
         {% if request.user in reviewers %}
-            leaflet_layer_control.finish_options.push('<li><a href="#" onclick="complete_button_onClick(unassigned_status_url);">Return for further analysis</a></li>');
-            leaflet_layer_control.finish_options.push('<li><a href="#" onclick="complete_button_onClick(completed_status_url);">Certify as complete</a></li>')
+            leaflet_layer_control.finish_options.push('<li><a href="#" onclick="complete_button_onClick(\'' +
+                    unassigned_status_url + '\');">Return for further analysis</a></li>');
+            leaflet_layer_control.finish_options.push('<li><a href="#" onclick="complete_button_onClick(\'' +
+                    completed_status_url + '\');">Certify as complete</a></li>')
         {% endif %}
 
         aoi_feature_edit.job_absolute_url = "{{ object.job.get_absolute_url }}";
