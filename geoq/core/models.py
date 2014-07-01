@@ -144,15 +144,12 @@ class Job(GeoQBase):
         return self.analysts.count()
 
     def features_table_html(self):
-
         count = defaultdict(int)
         showtable = False
         # style = defaultdict(int)
         for feature in self.feature_set.all():
             count[feature.template.name] += 1
             showtable = True
-            # if count[feature.template.id] == 1:
-            #     style[feature.template.id] = feature.template.to_json()
 
         if showtable:
             rows = '</tr><tr>\n'.join("<td><b>%s</b>:</td><td>%r</td>" % (key,val) for (key,val) in count.iteritems())
