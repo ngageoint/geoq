@@ -87,10 +87,11 @@ class UserAllowedMixin(object):
         return True
 
     def user_check_failed(self, request, *args, **kwargs):
-        raise Http403
+        message = kwargs['error'] if 'error' in kwargs else "We're sorry, but you are not authorized to access that particular workcell"
+        raise Http403(message)
 
     def dispatch(self, request, *args, **kwargs):
-        if not self.check_user(request.user, self.kwargs.get('pk')):
+        if not self.check_user(request.user, **kwargs):
             return self.user_check_failed(request, *args, **kwargs)
         return super(UserAllowedMixin, self).dispatch(request, *args, **kwargs)
 
@@ -100,9 +101,9 @@ class CreateFeaturesView(UserAllowedMixin, DetailView):
     queryset = AOI.objects.all()
     user_check_failure_path = ''
 
-    def check_user(self, user, pk):
+    def check_user(self, user, **kwargs):
         try:
-            aoi = AOI.objects.get(id=pk)
+            aoi = AOI.objects.get(id=kwargs.get('pk'))
         except ObjectDoesNotExist:
             return False
 
@@ -369,7 +370,6 @@ class PrioritizeWorkcells(TemplateView):
 
     def post(self, request, **kwargs):
         job = get_object_or_404(Job, id=self.kwargs.get('job_pk'))
-        import pdb; pdb.set_trace()
         idvals = iter(request.POST.getlist('id'))
         prvals = iter(request.POST.getlist('priority'))
         workcells = AOI.objects.filter(job=job)
