@@ -641,17 +641,16 @@ aoi_feature_edit.addMapControlButtons = function (map) {
         });
     }
 
-    var finishButton = aoi_feature_edit.buildDropdownMenu();
-
+    var $finishButton = aoi_feature_edit.buildDropdownMenu();
     var completeButtonOptions = {
-        'onClick': complete_button_onClick,  // callback function
-        'hideText': false,  // bool
+        html: $finishButton,  // callback function
+        hideText: false,  // bool
         position: 'bottomright',
-        'maxWidth': 60,  // number
-        'doToggle': false,  // bool
-        'toggleStatus': false  // bool
+        maxWidth: 60,  // number
+        doToggle: false,  // bool
+        toggleStatus: false  // bool
     };
-    var completeButton = new L.Control.JButton(finishButton, completeButtonOptions).addTo(map);
+    var completeButton = new L.Control.Button(completeButtonOptions).addTo(map);
 
 
     var title = "<h4 id='aoi-status-box'><a href='" + aoi_feature_edit.job_absolute_url + "'>" + aoi_feature_edit.job_name + "</a> > AOI #" + aoi_feature_edit.aoi_id + " > ";
@@ -858,38 +857,33 @@ aoi_feature_edit.createPointOptions = function (opts) {
 };
 
 aoi_feature_edit.buildDropdownMenu = function() {
-    var div = document.createElement("div");
-    div.className="btn-group dropup";
+    var $div = $("<div>")
+        .addClass("dropup");
 
-    var finishButton = document.createElement("button");
-    var caret = document.createElement("span");
-    caret.className = "caret";
+    var $ull = $('<ul>')
 
-        var ull = $('<ul>')
+    var $finishButton = $("<a>")
+        .addClass("btn dropdown-toggle")
+        .attr({id:'finish-button-dropdown', 'data-toggle':"dropdown", type:"button", href:'#'})
+        .click(function(){
+            $ull.dropdown('toggle');
+            return false;
+        })
+        .append($('<span>Finish</span>'))
+        .append($('<b class="caret"></b>'))
+        .appendTo($div);
+
+    $ull
         .addClass("dropdown-menu")
-        .css({textAlign: "left"})
-            .css({left: -150})
+        .css({textAlign: "left", left: -150})
         .attr("role", "menu")
-        .appendTo(finishButton);
+        .appendTo($div);
 
     for (opt in leaflet_layer_control.finish_options) {
-        ull.append(leaflet_layer_control.finish_options[opt]);
+        $ull.append(leaflet_layer_control.finish_options[opt]);
     }
 
-    finishButton.className = "btn btn-primary dropdown-toggle";
-    finishButton.setAttribute("data-toggle", "dropdown");
-    finishButton.setAttribute("type", "button");
-    finishButton.id = 'finish-button-dropdown';
-    finishButton.onclick =
-        function(ev) {
-            ull.dropdown('toggle');
-            return false;
-        };
-    finishButton.appendChild(document.createTextNode("Finish"));
-    finishButton.appendChild(caret);
-    div.appendChild(finishButton);
+    $div.dropdown();
 
-    $('#finish-button-dropdown').dropdown();
-
-    return div;
+    return $div;
 };
