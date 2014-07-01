@@ -860,7 +860,7 @@ aoi_feature_edit.buildDropdownMenu = function() {
     var $div = $("<div>")
         .addClass("dropup");
 
-    var $ull = $('<ul>')
+    var $ull = $('<ul>');
 
     var $finishButton = $("<a>")
         .addClass("btn dropdown-toggle")

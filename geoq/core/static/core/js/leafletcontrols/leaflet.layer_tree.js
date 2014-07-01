@@ -220,28 +220,29 @@ leaflet_layer_control.addWorkCellInfo = function($accordion) {
         .editable(editableUrl);
 
     // add function buttons
-    var $submitDiv = $('<div id="finish-workcell">')
+    var $submitDiv = $('<div>')
+        .addClass("dropdown")
         .appendTo($content);
 
-    var $exportButton = $('<button>Export<span class="caret"></span></button>')
-        .addClass("btn btn-warning dropdown-toggle")
-        .css({marginLeft:"20px"})
-        .attr("data-toggle", "dropdown")
-        .attr("type", "button")
+    var $ul2 = $('<ul>');
+
+    var $exportButton = $("<a>")
+        .addClass("btn dropdown-toggle")
+        .attr({id:'export-button-dropdown', 'data-toggle':"dropdown", type:"button", href:'#'})
+        .css({textAlign: "left"})
+        .click(function(){
+            $ul2.dropdown('toggle');
+            return false;
+        })
+        .append($('<span>Export</span>'))
+        .append($('<b class="caret"></b>'))
         .appendTo($submitDiv);
 
-    var $ul2 = $('<ul>')
+    $ul2
         .addClass("dropdown-menu")
+        .css({textAlign: "left", left: '30px'})
         .attr("role", "menu")
-        .css({textAlign: "left"})
-        .appendTo($exportButton);
-
-    $exportButton
-        .click(function(ev) {
-            $ul2.dropdown("toggle");
-            return false;
-        });
-
+        .appendTo($submitDiv);
 
     var $li21 = $('<li>')
         .attr({role:"presentation"})
