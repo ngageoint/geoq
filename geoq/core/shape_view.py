@@ -116,7 +116,11 @@ class ShpResponder(object):
 
         # Create the fields that each feature will have
         fields = AOI._meta.fields
-        attributes = [fields[0], fields[1], fields[3], fields[10], fields[11]]
+        attributes = []
+        for field in fields:
+            if field.name in 'id, active, name, created_at, updated_at, analyst, priority, status, properties':
+                attributes.append(field)
+
         for field in attributes:
             data_type = 4
             if field.name == 'id':
@@ -133,8 +137,11 @@ class ShpResponder(object):
             feat = lgdal.OGR_F_Create(feature_def)
 
             for idx, field in enumerate(attributes):
-                value = getattr(item, field.name)
-                string_value = str(value)
+                if field.name == 'properties':
+                    value = json.dumps(item.properties)
+                else:
+                    value = getattr(item, field.name)
+                string_value = str(value)[:80]
                 lgdal.OGR_F_SetFieldString(feat, idx, string_value)
 
             # Transforming & setting the geometry
@@ -179,15 +186,17 @@ class ShpResponder(object):
         # create the Feature layer
         layer = lgdal.OGR_DS_CreateLayer(ds, layer_name, native_srs._ptr, ogr_type, None)
 
-
         # Create the fields that each feature will have
         fields = Feature._meta.fields
-        attributes = [fields[0], fields[4], fields[5], fields[2], fields[3]]
+        attributes = []
+        for field in fields:
+            if field.name in 'id, analyst, template, created_at, updated_at, job, project':
+                attributes.append(field)
+
         for field in attributes:
             data_type = 4
             if field.name == 'id':
                 data_type = 0
-
             fld = lgdal.OGR_Fld_Create(str(field.name), data_type)
             added = lgdal.OGR_L_CreateField(layer, fld, 0)
             check_err(added)

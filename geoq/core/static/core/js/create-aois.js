@@ -539,7 +539,14 @@ create_aois.createWorkCellsFromService = function(data,zoomAfter){
             if (!feature.properties) {
                 feature.properties = {};
             }
-            feature.properties.priority = feature.properties.priority || create_aois.priority_to_use;
+            if (_.isString(feature.properties.properties)){
+                try {
+                    var newProps = JSON.parse(feature.properties.properties);
+                    feature.properties = $.extend(feature.properties, newProps);
+                    delete(feature.properties.properties);
+                } catch (ex) {}
+            }
+            feature.priority = feature.properties.priority = parseInt(feature.properties.priority) || create_aois.priority_to_use;
             for(var k in feature.properties){
                 if (key!="priority"){
                     popupContent += "<b>"+k+":</b> " + feature.properties[k]+"<br/>";
@@ -573,6 +580,7 @@ create_aois.createWorkCellsFromService = function(data,zoomAfter){
         create_aois.last_shapes = features;
     }
     create_aois.updateCellCount();
+    create_aois.redrawStyles();
 
     var $prioritizeSelector = $('#prioritize-selector').empty();
     if (create_aois.data_fields_obj){
@@ -637,6 +645,19 @@ create_aois.removeAllFeatures = function () {
         create_aois.aois = new L.FeatureGroup();
     }
     create_aois.updateCellCount();
+};
+
+create_aois.redrawStyles = function(){
+    var m = create_aois.map_object;
+    if (m && (m._container.id == 'map') && (m.hasLayer(create_aois.aois))){
+        _.each(create_aois.aois.getLayers(), function(l){
+           _.each(l.getLayers(), function(f){
+               if (f.setStyle && f.feature ){
+                   f.setStyle(create_aois.styleFromPriority(f.feature));
+               }
+           });
+        });
+    }
 };
 
 create_aois.getBoundaries = function() {
@@ -810,6 +831,7 @@ create_aois.initializeFileUploads = function(){
 
           shp(reader.result).then(function(geojson){
               create_aois.createWorkCellsFromService(geojson,true);
+
               create_aois.update_info("Shapes Imported");
           },function(a){
               log.log(a);
