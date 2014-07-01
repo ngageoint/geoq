@@ -236,14 +236,14 @@ create_aois.mapInit = function(map) {
         var $mgrs = $("#option_mgrs");
         var $poly = $("#option_polygon");
         if (zoom > 9){
-            $usng.attr('disabled', false);
-            $mgrs.attr('disabled', false);
+            $usng.attr('disabled', false).text('USNG Cells (US only)');
+            $mgrs.attr('disabled', false).text('MGRS Cells');
         } else {
             if ($usng.hasClass("active") || $mgrs.hasClass("active")){
                 $poly.click();
             }
-            $usng.attr('disabled', true);
-            $mgrs.attr('disabled', true);
+            $usng.attr('disabled', true).text('Zoom within US to use USNG/MGRS');
+            $mgrs.attr('disabled', true).text('Zoom');
         }
     });
 
