@@ -20,9 +20,9 @@
         {% elif object_type == "aoi" %}
             {% include "core/_aoi_stat_list.html" %}
         {% endif %}
-        <h3>
-            <span class="icon-{% if object_type == "project" %}briefcase{% elif object_type == "job"%}inbox{% elif object_type == "aoi"%}th{% endif %} icon-1x pull-left list-icon"></span>
-            <span class="title">
+        <h3 style="display: inline-block; margin:0px">
+            <i class="icon-{% if object_type == "project" %}briefcase{% elif object_type == "job"%}inbox{% elif object_type == "aoi"%}th{% endif %} icon-1x pull-left list-icon"></i>
+            <span class="title pull-left">
                 {% if object.status == 'In work' %}
                     {% if request.user == object.analyst %}
                     <a href="{{ object.get_absolute_url|default:'#' }}">

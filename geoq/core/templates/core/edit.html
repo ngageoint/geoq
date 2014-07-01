@@ -68,6 +68,7 @@
         aoi_feature_edit.aoi_map_json = {{ map.to_json|safe|default:"{}" }};
         aoi_feature_edit.aoi_extents_geojson = {{ object.polygon.json|safe }};
         aoi_feature_edit.aoi_properties = {{ object.properties_json|safe }};
+        aoi_feature_edit.priority = {{ object.priority|default:5 }}
 
         aoi_feature_edit.api_url_job_kml = "{% url 'kml-job' object.job.id %}";
         aoi_feature_edit.api_url_job_kml_networked = "{% url 'kml-networked-job' object.job.id %}";
@@ -111,7 +112,7 @@
                         geoq.redirect(aoi_feature_edit.job_absolute_url);
                     }
                 }, {
-                    label: 'Work on another AOI',
+                    label: 'Work on another Work Cell',
                     action: function(dialog) {
                         geoq.redirect(aoi_feature_edit.next_aoi_url);
                     }

@@ -57,6 +57,7 @@ SERVICE_TYPES = (
                 ('Bing', 'Bing'),
                 ('Google Maps', 'Google Maps'),
                 ('Yandex', 'Yandex'),
+                ('Leaflet Tile Layer', 'Leaflet Tile Layer')
                 #('MapBox', 'MapBox'),
                 #('TileServer','TileServer'),
                 #('GetCapabilities', 'GetCapabilities'),
@@ -73,7 +74,7 @@ class Layer(models.Model):
 
     name = models.CharField(max_length=200, help_text='Name that will be displayed within GeoQ')
     type = models.CharField(choices=SERVICE_TYPES, max_length=75)
-    url = models.URLField(help_text='URL of service. If WMS or ESRI, can be any valid URL. Otherwise, the URL will require a local proxy', max_length=500)
+    url = models.CharField(help_text='URL of service. If WMS or ESRI, can be any valid URL. Otherwise, the URL will require a local proxy', max_length=500)
     layer = models.CharField(max_length=800, null=True, blank=True, help_text='Layer names can sometimes be comma-separated, and are not needed for data layers (KML, GeoRSS, GeoJSON...)')
     image_format = models.CharField(null=True, blank=True, choices=IMAGE_FORMATS, max_length=75, help_text='The MIME type of the image format to use for tiles on WMS layers (image/png, image/jpeg image/gif...). Double check that the server exposes this exactly - some servers push png instead of image/png.')
     styles = models.CharField(null=True, blank=True, max_length=200, help_text='The name of a style to use for this layer (only useful for WMS layers if the server exposes it.)')

@@ -191,7 +191,7 @@ leaflet_layer_control.addWorkCellInfo = function($accordion) {
                 .addClass('status_block')
                 .html('<b>Priority</b>: ')
                 .appendTo($content);
-            $('<span class="editable tight" id="priority" style="display: inline">'+_.str.capitalize(value)+'</span>')
+            $('<span class="editable tight" id="priority" style="display: inline">'+_.str.capitalize(aoi_feature_edit.priority)+'</span>')
                 .appendTo($status)
                 .editable(editableUrl, {
                     data   : " {'1':'1','2':'2','3':'3','4':'4','5':'5'}",

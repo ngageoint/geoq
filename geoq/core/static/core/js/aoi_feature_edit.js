@@ -609,7 +609,7 @@ aoi_feature_edit.buildDrawingControl = function (drawnItems) {
 
             if (ftype.style.type=="maki"){
                 $icon
-                    .addClass('maki-icon '+bg_image)
+                    .addClass('maki-icon '+ftype.style.icon)
                     .css('backgroundImage', "url(/static/images/maki/images/maki-sprite.png)");
 
             } else {

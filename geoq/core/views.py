@@ -23,6 +23,7 @@ from geoq.core.utils import send_aoi_create_event
 from geoq.core.middleware import Http403
 from geoq.mgrs.exceptions import ProgramException
 from kml_view import *
+from shape_view import *
 
 
 class Dashboard(TemplateView):
@@ -476,9 +477,9 @@ def update_job_data(request, *args, **kwargs):
     if attribute and value:
         aoi = get_object_or_404(AOI, pk=aoi_pk)
 
-        if value == 'status':
+        if attribute == 'status':
             aoi.status = value
-        elif value == 'priority':
+        elif attribute == 'priority':
             aoi.priority = int(value)
         else:
             properties_main = aoi.properties or {}
@@ -512,6 +513,9 @@ def update_feature_data(request, *args, **kwargs):
             link_info['user'] = str(request.user)
             properties_main_links.append(link_info)
             properties_main['linked_items'] = properties_main_links
+        elif attribute == 'priority':
+            feature.priority = int(value)
+            properties_main[attribute] = value
         else:
             properties_main[attribute] = value
 

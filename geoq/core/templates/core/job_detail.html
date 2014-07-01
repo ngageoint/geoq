@@ -136,7 +136,7 @@
                 <div class="span4 thumbnail" id="map" style="height:225px; vertical-alignment:middle;">
                 {% leaflet_map "map" creatediv=False%}
                 </div>
-                <div class="span6" id="attribute-table">
+                <div class="span6" id="attribute-table" style="float:left">
                     <table>
                         <tr>
                             <th style="min-width: 100px"></th>
@@ -221,6 +221,10 @@
                             <td><a href="{% url 'json-job' object.id %}">Link</a> ||
                                 <a href="{% url 'json-job-grid' object.id %}">Job Grid</a>
                             </td>
+                        </tr>
+                        <tr>
+                            <td><b>Shapefile:</b></td>
+                            <td><a href="{% url 'shape-job' object.id %}">Link</a></td>
                         </tr>
                     </table>
                 </div>

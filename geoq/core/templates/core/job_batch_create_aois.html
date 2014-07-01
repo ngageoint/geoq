@@ -25,12 +25,42 @@
             text-align: center;
             height: 14px;
         }
+        #file_uploader_holder input {
+            width:50px;
+            margin-bottom: 0;
+            text-align: center;
+            height: 14px;
+        }
+        #file_holder {
+            border: 7px dashed #ccc;
+            width: 130px;
+            height: 12px;
+            font-size: 10px;
+            text-align: center;
+            font-weight: bold;
+            line-height: 1em;
+            display: inline-block;
+            margin-left: 20px;
+        }
+        #file_holder.hover {
+            border: 7px dashed #333;
+        }
+        .feature_info {
+            background-color: white;
+            border: 2px solid black;
+            border-radius: 4px;
+            max-height: 400px;
+            padding: 2px;
+        }
+
     </style>
     <script src="http://maps.googleapis.com/maps/api/js?sensor=false&libraries=places"></script>
     <script src="{{ STATIC_URL }}core/js/jquery.geocomplete.js" type="text/javascript"></script>
     <script src="{{ STATIC_URL }}core/js/create-aois.js" type="text/javascript"></script>
 	<script src="{{ STATIC_URL }}core/js/geojson-js-utils/geojson-utils.js"></script>
     <script src="{{ STATIC_URL }}core/js/leafletcontrols/leaflet.simple_button.js" type="text/javascript"></script>
+    <script src="{{ STATIC_URL }}core/js/leaflet-shapefile/shp.js" type="text/javascript"></script>
+
     <script type="text/javascript">
         $(document).ready(function(){
             create_aois.get_grids_url = "{% DynamicUrl object.grid %}";
@@ -53,16 +83,21 @@
 
     <div class="btn-group" data-toggle="buttons-radio">
         Draw using:
-        <button class="btn active" id="option_usng"> USNG Cells (US only)</button>
-        <button class="btn" id="option_mgrs"> MGRS Cells</button>
-        <button class="btn" id="option_polygon"> Any Sized Polygons</button>
+        <button class="btn active" id="option_usng">USNG Cells (US only)</button>
+        <button class="btn" id="option_mgrs">MGRS Cells</button>
+        <button class="btn" id="option_polygon">Any Sized Polygons</button>
+        <button class="btn" id="option_shapefile">Drag in a Shape File</button>
     </div>
 
     <div style="display:none" id="poly_split_holder">
         Split polygon into <input type="text" id="split_wide" value="5"/> by <input type="text" id="split_high" value="5"> cells
     </div>
+    <div style="display:none" id="file_uploader_holder">
+        <div id="file_holder">Drag shapefile here</div>
+        <input type="text" id="simplify_polys" value="500m"/><button id="simplify_btn" class="btn btn-success">Smooth Polys</button>
+    </div>
 
-    <div id="map" class="thumbnail" style="height: 450px; width: 100%;">{% leaflet_map "map" %}</div>
+    <div id="map" class="thumbnail" style="height: 500px; width: 100%;">{% leaflet_map "map" %}</div>
         <br/>
     <div class="row">
         <div class="col-md-3" style="display: inline-block">
@@ -76,15 +111,15 @@
         <hr/>
     </div>
     <div class="row">
-        Prioritize by: <btn id="prioritize-aois-day-button" class="btn btn-primary">Daytime Population</btn>
-        <btn id="prioritize-aois-night-button" class="btn btn-primary">Night Population</btn>
-        <btn id="prioritize-aois-random-button" class="btn btn-info">Random</btn>
-
-        Set all cells to: <btn id="prioritize-aois-1-button" class="btn btn-warning">1 (Lowest)</btn>
-        <btn id="prioritize-aois-2-button" class="btn btn-warning">2</btn>
-        <btn id="prioritize-aois-3-button" class="btn btn-warning">3</btn>
+        Prioritize by: <select id="prioritize-selector" style="margin-bottom:0px;">
+            <option>--add cells first--</option>
+        </select>
+        <btn id="prioritize-reverse" class="btn btn-warning">Reverse</btn>
+        or set all cells to: <btn id="prioritize-aois-5-button" class="btn btn-warning">5 (Lowest)</btn>
         <btn id="prioritize-aois-4-button" class="btn btn-warning">4</btn>
-        <btn id="prioritize-aois-5-button" class="btn btn-warning">5 (Highest)</btn>
+        <btn id="prioritize-aois-3-button" class="btn btn-warning">3</btn>
+        <btn id="prioritize-aois-2-button" class="btn btn-warning">2</btn>
+        <btn id="prioritize-aois-1-button" class="btn btn-warning">1 (Highest)</btn>
         <btn id="prioritize-aois-clear-button" class="btn btn-danger">Delete All</btn>
         <hr/>
     </div>
@@ -96,7 +131,7 @@
     <div class="row">
         <hr/>
         Work Cell detailed data (copy and paste this to tweak or export):</br>
-        <textarea id="current-aois" class="cell-data">{}</textarea>
+        <textarea id="current-aois" class="cell-data">{"message":"No cells entered"}</textarea>
         <btn id="reset-from-textarea-button" class="btn btn-info">Reset all cells based on text above</btn>
     </div>
 

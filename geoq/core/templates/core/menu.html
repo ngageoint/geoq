@@ -34,13 +34,13 @@
                     badge_container.hide();
                 }
             });
+        } else {
+            badge_container.hide();
         }
     }
 
     $(document).ready(function() {
-        if ("{% gamification_value 'GAMIFICATION_SERVER' %}".length > 0) {
-            getbadges();
-        }
+        getbadges();
     });
 </script>
 
