@@ -269,6 +269,14 @@ GAMIFICATION_PROJECT = 'geoq'
 #GeoServer
 GEOSERVER_WFS_JOB_LAYER = ''
 
+# Bootstrap variables to work with django-bootstrap-toolkit
+# Comment these out to use cdnjs.cloudflare.com versions of Bootstrap
+BOOTSTRAP_BASE_URL = STATIC_URL
+BOOTSTRAP_JS_BASE_URL = BOOTSTRAP_BASE_URL + 'js/'
+BOOTSTRAP_JS_URL =  BOOTSTRAP_JS_BASE_URL + 'bootstrap.min.js'
+BOOTSTRAP_CSS_BASE_URL = BOOTSTRAP_BASE_URL + 'css/'
+BOOTSTRAP_CSS_URL = BOOTSTRAP_CSS_BASE_URL + 'bootstrap.css'
+
 # Override production settings with local settings if they exist
 try:
     from local_settings import *
