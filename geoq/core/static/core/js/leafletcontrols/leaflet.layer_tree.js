@@ -844,7 +844,9 @@ leaflet_layer_control.drawEachLayer=function(data,map){
                     }
                 }
             }
-            //TODO: Highlight
+            if (layersClicked.length==1){
+                layer_obj.setActive();
+            }
 
         } else if (layer_obj.children && layer_obj.children.length) {
             //A category was clicked
