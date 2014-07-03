@@ -19,6 +19,7 @@ create_aois.last_shapes = null;
 create_aois.$feature_info = null;
 create_aois.data_fields_obj = {};
 create_aois.data_fields = [];
+create_aois.highlightMode = 'delete';
 
 
 function mapInit(map) {
@@ -532,15 +533,25 @@ create_aois.styleFromPriority = function(feature){
 
 create_aois.highlightFeature = function(e) {
     var layer = e.target;
-    layer.setStyle({
-        color: create_aois.colors[0],
-        weight: 3,
-        opacity: 1,
-        fillOpacity: 1,
-        fillColor: create_aois.colors[0]
-    });
-
-    create_aois.update_info(layer.popupContent);
+    if (create_aois.highlightMode == 'delete'){
+        if (layer.setStyle){
+            layer.setStyle({
+                color: create_aois.colors[0],
+                weight: 3,
+                opacity: 1,
+                fillOpacity: 1,
+                fillColor: create_aois.colors[0]
+            });
+        } else {
+            if (layer._icon){
+                layer.oldIcon = layer._icon.getAttribute('src');
+                layer.setIcon(L.icon({iconUrl: "/static/leaflet/images/red-marker-icon.png"}));
+            }
+        }
+    }
+    if (layer.popupContent){
+        create_aois.update_info(layer.popupContent);
+    }
 };
 
 create_aois.update_info=function(html){
@@ -552,10 +563,16 @@ create_aois.update_info=function(html){
 create_aois.resetHighlight = function(e) {
     var layer = e.target;
 
-    var style = create_aois.styleFromPriority(layer.feature);
-    layer.setStyle(style);
+    if (layer.setStyle){
+        var style = create_aois.styleFromPriority(layer.feature);
+        layer.setStyle(style);
+    } else {
+        if (layer.oldIcon){
+            layer.setIcon(L.icon({iconUrl: layer.oldIcon}));
+        }
+    }
 
-    create_aois.$feature_info.html("");
+    create_aois.update_info("");
 };
 
 create_aois.removeFeature = function(e) {
@@ -869,8 +886,22 @@ create_aois.initializeFileUploads = function(){
       var file = e.dataTransfer.files[0], reader = new FileReader();
 
       reader.onload = function (event) {
+          var size = "";
+          if (event.loaded){
+              var kb = event.loaded/1024;
+              if (kb>1000) {
+                  kb = kb/1024;
+                  kb = parseInt(kb*10)/10;
+                  size = kb + " mb";
+              } else {
+                  kb = parseInt(kb*10)/10;
+                  size = kb + " kb";
+              }
+              $holder.text(size + " file loaded");
+          }
+
           $holder.css({backgroundColor:''});
-          create_aois.update_info("Importing Shapes");
+          create_aois.update_info("Importing Shapes: "+size);
 
           shp(reader.result).then(function(geojson){
               create_aois.createWorkCellsFromService(geojson,true);
