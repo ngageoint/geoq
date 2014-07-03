@@ -2,8 +2,7 @@
 
 #### Geographic Work Queueing and Tasking System ####
 
-The aim of this project is to create an open source geographic tasking system that allows teams to collect geographic data across a large area, but manage the work in smaller geographic regions. Large areas can be quickly broken up into small 1km squares and assigned to a team. System transparency informs all groups about workflow to avoid duplication of effort. 
-
+GeoQ's is an open source (MIT License) geographic tasking system that allows teams to collect geographic structured observations across a large area, but manage the work in smaller geographic regions. Large areas can be quickly broken up into small 1km squares and assigned to a team. System transparency informs all groups about workflow to avoid duplication of effort.
 
 The GeoQ software was developed at the National Geospatial-Intelligence Agency (NGA) in collaboration with [The MITRE Corporation] (http://www.mitre.org).  The government has "unlimited rights" and is releasing this software to increase the impact of government investments by providing developers with the opportunity to take things in new directions. The software use, modification, and distribution rights are stipulated within the [MIT] (http://choosealicense.com/licenses/mit/) license.  
 
@@ -16,16 +15,26 @@ Software source code previously released under an open source license and then m
 NGA Director Letitia Long talks about NGA's GitHub initiative and our first offering, GeoQ, at the GEOINT Symposium.  Her comments start at 40 minutes and 40 seconds in the [video clip] (http://geointv.com/archive/geoint-2013-keynote-letitia-a-long/).  
 
 ### Screenshots
-![GeoQ Main page](https://cloud.githubusercontent.com/assets/147580/2639311/bf4dc520-bec3-11e3-9382-735249740fbc.png)
+![GeoQ Main page](https://cloud.githubusercontent.com/assets/147580/3464387/e58da414-024b-11e4-9a02-f9074f26047e.png)
 
-![GeoQ creating AOIs](https://cloud.githubusercontent.com/assets/147580/2639313/bf51efce-bec3-11e3-9ae0-3bbfb56c8ad1.png)
+![List of active jobs](https://cloud.githubusercontent.com/assets/147580/3464388/e593310e-024b-11e4-86b1-4c613551f984.png)
 
-![GeoQ Areas of Interest within a job](https://cloud.githubusercontent.com/assets/147580/2639312/bf519362-bec3-11e3-8906-134b29f7ddc9.png)
+![Details of a job](https://cloud.githubusercontent.com/assets/147580/3464389/e59763dc-024b-11e4-86ea-90e2f6969eb6.png)
 
-![Drawing a flooding polygon](https://cloud.githubusercontent.com/assets/147580/2639314/bf533bcc-bec3-11e3-8a90-2dcc1cd10956.png)
+![Importing a complex shapefile as work cells](https://cloud.githubusercontent.com/assets/147580/3464390/e598cd76-024b-11e4-9cfa-a25da96490b0.png)
+
+![Work cell status](https://cloud.githubusercontent.com/assets/147580/3464391/e5991754-024b-11e4-8c0e-48027aefc4d6.png)
+
+![Drawing observations within a work cell](https://cloud.githubusercontent.com/assets/147580/3464392/e59b852a-024b-11e4-987f-b5ff749aa18e.png)
+
+![Creating observations and socially tagging them](https://cloud.githubusercontent.com/assets/147580/3464393/e59bd46c-024b-11e4-826c-9db901af4d9d.png)
+
+![Viewing work cells and observations in Google Earth](https://cloud.githubusercontent.com/assets/147580/3464394/e59d1cb4-024b-11e4-92b1-43a10fecf9f0.png)
+
+![Work cells in Google Earth](https://cloud.githubusercontent.com/assets/147580/3464395/e5a0e4ca-024b-11e4-9500-ee468e66085e.png)
 
 
-###This project realies heavily on open source packages and uses:###
+###This project relies heavily on open source packages, particularly:###
 Django under [BSD] (https://github.com/django/django/blob/master/LICENSE)
 
 Leaflet under [BSD] (https://github.com/Leaflet/Leaflet/blob/master/LICENSE)
@@ -44,7 +53,7 @@ The ``geoq/settings.py`` file contains installation-specific settings. The Datab
 
 Cloud Installation::
 
-1. You can optionally deploy geoq with all dependencies to a Virtual Machine or a cloud VM (such as an Amazon Web Services EC2 box) by using the chef installer at [https://github.com/ngageoint/geoq-chef-installer](https://github.com/ngageoint/geoq-chef-installer)
+1. You can optionally deploy GeoQ with all dependencies to a Virtual Machine or a cloud VM (such as an Amazon Web Services EC2 box) by using the chef installer at [https://github.com/ngageoint/geoq-chef-installer](https://github.com/ngageoint/geoq-chef-installer)
 
 2. Chef scripts are our preferred method of automating cloud builds
 
