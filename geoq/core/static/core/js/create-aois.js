@@ -259,12 +259,11 @@ create_aois.mapInit = function(map) {
         if (type === 'rectangle' || type === 'circle' || type === 'polygon-undefined' ) {
             if (create_aois.draw_method=="polygon") {
                 //Using free-form polygon
-                var x = parseInt($("#split_wide").val());
-                var y = parseInt($("#split_high").val());
+                var num = parseInt($("#split_number").val());
 
                 var geoJSON;
-                if (x>1 || y>1) {
-                    geoJSON = create_aois.splitPolygonsIntoSections(layer, x, y);
+                if (num>1) {
+                    geoJSON = create_aois.splitPolygonsIntoSections(layer, num);
                 } else {
                     geoJSON = create_aois.turnPolygonsIntoMultis(layer);
                 }
@@ -354,21 +353,7 @@ create_aois.mapInit = function(map) {
 
 };
 
-create_aois.splitPolygonsIntoSections = function(layer,x,y){
-    x = (x<1)?1:x;
-    y = (y<1)?1:y;
-
-    var layer_poly = {type:'Polygon',coordinates:[[]]};
-    var cs = layer.getLatLngs();
-    _.each(cs,function(c){
-       layer_poly.coordinates[0].push([c.lng, c.lat]);
-    });
-
-    //When checking if cells are in a poly, check cells be subdividing by this amount
-    var tessalationCheckAmount = 3;
-    if (x>6 && y>6) tessalationCheckAmount = 2;
-    if (x>10 && y>10) tessalationCheckAmount = 1;
-
+create_aois.splitPolygonsIntoSections = function(layer,num){
     var bounds = layer.getBounds();
     var left = bounds.getWest();
     var right = bounds.getEast();
@@ -376,9 +361,52 @@ create_aois.splitPolygonsIntoSections = function(layer,x,y){
     var south = bounds.getSouth();
     var width = right-left;
     var height = north-south;
+    var slope = width/height;
+
+    //Build an object that will be used for interior checking of points
+    var layer_poly = {type:'Polygon',coordinates:[[]]};
+    var cs = layer.getLatLngs();
+    _.each(cs,function(c){
+       layer_poly.coordinates[0].push([c.lng, c.lat]);
+    });
+
+    //Determine what percentage of the poly is filled
+    var fillPercentage;
+    coordsToCheck = [];
+    var slices=22;
+    for (var x_num=1; x_num<(slices-1); x_num++ ){
+        for (var y_num=1; y_num<(slices-1); y_num++ ){
+            var l0 = left+((width/slices)*x_num);
+            var t0 = south+((height/slices)*y_num);
+            coordsToCheck.push([l0,t0]);
+        }
+    }
+    var fillNum = 0;
+    for(var c=0;c<coordsToCheck.length;c++){
+        var coord = coordsToCheck[c];
+        if (gju.pointInPolygon({coordinates:coord},layer_poly)) fillNum++;
+    }
+    fillPercentage = fillNum/((slices-2)*(slices-2)) + .05;  //Adding 5% because empty vs full polys are used here
+    fillPercentage=fillPercentage<.2?.2:fillPercentage>.1?1:fillPercentage;
+
+    //Use the fillPercentage to determine how much of the target numbers should be grown
+    num = num / fillPercentage;
+
+    //Figure out how many x and y rows should be tried
+    var x = parseInt(Math.sqrt(num*slope));
+    var y = Math.round(num/x);
+    x = (x<1)?1:x;
+    y = (y<1)?1:y;
+
+    //When checking if cells are in a poly, check cells be subdividing by this amount
+    var tessalationCheckAmount = 3;
+    if (x>6 && y>6) tessalationCheckAmount = 2;
+    if (x>10 && y>10) tessalationCheckAmount = 1;
+
     var x_slice = width/x;
     var y_slice = height/y;
 
+    //Build the cells and remove ones that aren't in the original polygon
     var layers = [];
     var id_root = "handmade."+parseInt(Math.random()*1000000);
     for (var x_num=0; x_num<x; x_num++ ){
@@ -413,11 +441,16 @@ create_aois.splitPolygonsIntoSections = function(layer,x,y){
                     }
                 }
 
-                _.each(coordsToCheck,function(coord){
-                    if (!isBoxInPoly && gju.pointInPolygon({coordinates:coord},layer_poly)) {
+                for(var c=0;c<coordsToCheck.length;c++){
+                    var coord = coordsToCheck[c];
+                    if (gju.pointInPolygon({coordinates:coord},layer_poly)) {
                         isBoxInPoly = true;
+                        break;
                     }
-                });
+                }
+
+
+
             } else {
                 isBoxInPoly = true;
             }
