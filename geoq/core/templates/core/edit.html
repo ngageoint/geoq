@@ -74,6 +74,7 @@
         aoi_feature_edit.api_url_job_kml_networked = "{% url 'kml-networked-job' object.job.id %}";
         aoi_feature_edit.api_url_job_georss = "{% url 'json-job' object.job.id %}";
         aoi_feature_edit.api_url_aoi_georss = "{% url 'json-workcell' object.id %}";
+        aoi_feature_edit.api_url_log = "{% url 'workcell_log' object.id %}";
 
         aoi_feature_edit.job_features_geojson = {{ object.job.features_geoJSON|safe }};
         aoi_feature_edit.feature_types = feature_types;

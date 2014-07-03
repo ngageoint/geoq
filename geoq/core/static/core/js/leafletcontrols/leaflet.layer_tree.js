@@ -108,12 +108,13 @@ leaflet_layer_control.refreshLogInfo = function() {
     }
 
     $.ajax({
-        url: document.URL + "/log",
-        dataType: "json"
-    })
+            url: aoi_feature_edit.api_url_log,
+            dataType: "json"
+        })
         .done(function(entries) {
+            body.empty();
             _.each(entries, function(entry) {
-                var $details = $("<tr><td>" + entry.timestamp + "</td><td>" +
+                $("<tr><td>" + entry.timestamp + "</td><td>" +
                     entry.user + "</td><td>" + entry.text + "</td></tr>")
                     .appendTo(body);
             })

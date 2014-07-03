@@ -79,6 +79,9 @@ aoi_feature_edit.init = function () {
         aoi_feature_edit.available_icons.push(aoi_feature_edit.static_root + "/leaflet/images/"+icon+"-marker-icon.png");
     });
 
+    //Close Alert field if shown
+    setTimeout(function(){$('div.alert').css({display:'none'});},3000);
+
 };
 
 aoi_feature_edit.featureLayer_pointToLayer = function (feature, latlng) {

@@ -186,6 +186,11 @@ create_aois.init = function(){
 
     $("#prioritize-reverse").click(create_aois.reversePriorities);
 
+    $("#show-geojson-textarea").click(function(){
+        $("#geojson-textarea").show();
+        $("#show-geojson-textarea").hide();
+    });
+
     create_aois.initializeFileUploads();
 };
 
@@ -235,15 +240,15 @@ create_aois.mapInit = function(map) {
         var $usng = $("#option_usng");
         var $mgrs = $("#option_mgrs");
         var $poly = $("#option_polygon");
-        if (zoom > 9){
+        if (zoom > 8){
             $usng.attr('disabled', false).text('USNG Cells (US only)');
             $mgrs.attr('disabled', false).text('MGRS Cells');
         } else {
             if ($usng.hasClass("active") || $mgrs.hasClass("active")){
                 $poly.click();
             }
-            $usng.attr('disabled', true).text('Zoom within US to use USNG/MGRS');
-            $mgrs.attr('disabled', true).text('Zoom');
+            $usng.attr('disabled', true).text('Zoom in to use USNG/MGRS');
+            $mgrs.attr('disabled', true).text('>');
         }
     });
 
@@ -308,14 +313,14 @@ create_aois.mapInit = function(map) {
     _.each([1,2,3,4,5],function(num){
         var helpText = create_aois.helpText[num];
         var $btn = $("<button>")
-            .text('Priority '+num+' : '+helpText+' (0)')
+            .text('Pri '+num+' : '+helpText+' (0)')
             .attr({id:'priority-map-'+num})
-            .css('width','150px')
+            .css('width','155px')
             .popover({
                 title:'Set Priority',
                 content:'The next cells you draw will have a priority of '+num+' ('+helpText+')',
                 trigger:'hover',
-                placement:'bottom'
+                placement:'left'
             });
 
         var help_control = new L.Control.Button({
@@ -804,11 +809,11 @@ create_aois.smoothWorkCells = function(shape_layers){
 
 create_aois.initializeFileUploads = function(){
     var holder = document.getElementById('file_holder');
-    var $holder = $(holder).popover({
+    var $holder = $('#file_holder').popover({
         title:"Drag zipped shapefile here",
-        content:"You can drag a .zip or .shp file here. All polygons/multipolygons within will be created as work cells. Please make files as small as possible.",
+        content:"You can drag a .zip or .shp file here. All polygons/multipolygons within will be created as work cells. Please make files as small as possible (<5mb).",
         trigger: "hover",
-        placement: "Bottom"
+        placement: "bottom"
     });
 
     if (typeof window.FileReader === 'undefined') {
