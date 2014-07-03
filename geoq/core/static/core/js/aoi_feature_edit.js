@@ -293,6 +293,7 @@ aoi_feature_edit.map_init = function (map, bounds) {
         return aoi_extents.getBounds();
     }
     (new L.Control.ResetView(locateBounds)).addTo(aoi_feature_edit.map);
+    aoi_feature_edit.map.fitBounds(aoi_extents.getBounds());
 
 
     // For each feature template, add features to map and layer control
@@ -335,13 +336,6 @@ aoi_feature_edit.map_init = function (map, bounds) {
     });
 
     aoi_feature_edit.layers.features = aoi_feature_edit.featureLayers;
-
-    setTimeout(function () {
-        if (aoi_extents.getBounds) {
-            aoi_feature_edit.map.fitBounds(aoi_extents.getBounds());
-        }
-    }, 1);
-
 
     leaflet_helper.addLocatorControl(map);
     aoi_feature_edit.buildDrawingControl(aoi_feature_edit.drawnItems);
@@ -657,9 +651,9 @@ aoi_feature_edit.addMapControlButtons = function (map) {
 
 
     var title = "<h4 id='aoi-status-box'><a href='" + aoi_feature_edit.job_absolute_url + "'>" + aoi_feature_edit.job_name + "</a> > AOI #" + aoi_feature_edit.aoi_id + " > ";
-    if (aoi_feature_edit.aoi_properties && aoi_feature_edit.aoi_properties.usng) {
-        title += " USNG: "+aoi_feature_edit.aoi_properties.usng + " > ";
-    }
+//    if (aoi_feature_edit.aoi_properties && aoi_feature_edit.aoi_properties.usng) {
+//        title += " USNG: "+aoi_feature_edit.aoi_properties.usng + " > ";
+//    }
     title += "<span class='aoi-status muted'>" + aoi_feature_edit.percent_complete + "% Complete > " + aoi_feature_edit.description + "</span></h4>";
     var $title = $(title)
         .on('click',function(){

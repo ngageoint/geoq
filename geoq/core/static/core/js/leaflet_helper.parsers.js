@@ -177,6 +177,9 @@ leaflet_helper.constructors.geojson_success = function (data, proxiedURL, map, o
     if (outputLayer) {
         leaflet_helper.update_tree_title(outputLayer);
     }
+    if (outputLayer && !outputLayer.options) {
+        outputLayer.options = {opacity:1};
+    }
 
     return outputLayer;
 };
