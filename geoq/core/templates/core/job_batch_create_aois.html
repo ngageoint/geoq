@@ -16,7 +16,7 @@
             margin-left: 0;
         }
         #poly_split_holder {
-            margin-left: 40px;
+            margin-left: 20px;
         }
 
         #poly_split_holder input {
@@ -51,6 +51,11 @@
             border-radius: 4px;
             max-height: 400px;
             padding: 2px;
+        }
+        #poly_split_holder input#split_sized {
+            width: 50px;
+            text-align: right;
+            padding: 7px 2px;
         }
 
     </style>
@@ -90,7 +95,13 @@
     </div>
 
     <div style="display:none" id="poly_split_holder">
-        Split polygon into approx <input type="text" id="split_number" value="100" /> cells
+        <select id="poly_split_holder_select" style="width: inherit; margin-bottom: 0px;">
+            <option value="n_cells">Split polygon into</option>
+            <option value="n_sized_cells">Split polygon by</option>
+        </select>
+        <span id="poly_split_n_cells">approx <input type="text" id="split_number" value="100" /> cells</span>
+        <span id="poly_split_n_sized_cells" style="display: none;"><input type="text" id="split_sized" value="1000" />-sq-meter cells</span>
+        <button id="poly_split_button" class="btn btn-success">Split</button>
     </div>
     <div style="display:none" id="file_uploader_holder">
         <div id="file_holder">Drag shapefile here</div>

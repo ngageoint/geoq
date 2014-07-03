@@ -76,6 +76,7 @@ create_aois.init = function(){
         create_aois.disableToolbars();
     });
 
+    //This isn't really needed anymore as they start zoomed out
     if (create_aois.get_grids_url.indexOf('mgrs')>0){
         $mgrs.button("toggle");
         create_aois.draw_method = 'mgrs';
@@ -84,6 +85,40 @@ create_aois.init = function(){
         create_aois.draw_method = 'usng';
     }
 
+    $("#poly_split_holder_select").on('change',function(ev){
+        var $n = $("#poly_split_n_cells");
+        var $n_sized = $("#poly_split_n_sized_cells");
+        if (ev.target.value=='n_cells'){
+            $n.show();
+            $n_sized.hide();
+        } else if (ev.target.value=='n_sized_cells'){
+            $n.hide();
+            $n_sized.show();
+        }
+    });
+
+    $("#poly_split_button").click(function(){
+        var $n = $("#poly_split_n_cells");
+        var $n_sized = $("#poly_split_n_sized_cells");
+        var num = 1;
+        var splitIntoSized = false;
+        if ($n.css('display')!='none'){
+            num = parseInt($("#split_number").val());
+            splitIntoSized=false;
+        } else if ($n_sized.css('display')!='none'){
+            num = parseInt($("#split_sized").val());
+            splitIntoSized=true;
+        }
+
+        if (num>0) {
+            create_aois.map_object.removeLayer(create_aois.last_polygon_workcells);
+            var geoJSON = create_aois.splitPolygonsIntoSections(create_aois.last_polygon_drawn, num, splitIntoSized);
+
+            var data = {"type":"FeatureCollection","features":geoJSON};
+            create_aois.last_polygon_workcells = create_aois.createWorkCellsFromService(data);
+        }
+
+    });
 
     $("#geocomplete").geocomplete()
         .bind("geocode:result", function(event,result) {
@@ -263,17 +298,11 @@ create_aois.mapInit = function(map) {
         if (type === 'rectangle' || type === 'circle' || type === 'polygon-undefined' ) {
             if (create_aois.draw_method=="polygon") {
                 //Using free-form polygon
-                var num = parseInt($("#split_number").val());
-
-                var geoJSON;
-                if (num>1) {
-                    geoJSON = create_aois.splitPolygonsIntoSections(layer, num);
-                } else {
-                    geoJSON = create_aois.turnPolygonsIntoMultis(layer);
-                }
+                var geoJSON = create_aois.turnPolygonsIntoMultis(layer);
+                create_aois.last_polygon_drawn = layer;
 
                 var data = {"type":"FeatureCollection","features":geoJSON};
-                create_aois.createWorkCellsFromService(data);
+                create_aois.last_polygon_workcells = create_aois.createWorkCellsFromService(data);
             } else {
                 //Using USNG or MGRS
                 create_aois.update_info("Requesting Grid Information from the server");
@@ -358,7 +387,7 @@ create_aois.mapInit = function(map) {
 
 };
 
-create_aois.splitPolygonsIntoSections = function(layer,num){
+create_aois.splitPolygonsIntoSections = function(layer, num, splitIntoSized){
     var bounds = layer.getBounds();
     var left = bounds.getWest();
     var right = bounds.getEast();
@@ -375,33 +404,26 @@ create_aois.splitPolygonsIntoSections = function(layer,num){
        layer_poly.coordinates[0].push([c.lng, c.lat]);
     });
 
-    //Determine what percentage of the poly is filled
-    var fillPercentage;
-    coordsToCheck = [];
-    var slices=22;
-    for (var x_num=1; x_num<(slices-1); x_num++ ){
-        for (var y_num=1; y_num<(slices-1); y_num++ ){
-            var l0 = left+((width/slices)*x_num);
-            var t0 = south+((height/slices)*y_num);
-            coordsToCheck.push([l0,t0]);
-        }
-    }
-    var fillNum = 0;
-    for(var c=0;c<coordsToCheck.length;c++){
-        var coord = coordsToCheck[c];
-        if (gju.pointInPolygon({coordinates:coord},layer_poly)) fillNum++;
-    }
-    fillPercentage = fillNum/((slices-2)*(slices-2)) + .05;  //Adding 5% because empty vs full polys are used here
-    fillPercentage=fillPercentage<.2?.2:fillPercentage>.1?1:fillPercentage;
+    var x = 1;
+    var y = 1;
 
-    //Use the fillPercentage to determine how much of the target numbers should be grown
-    num = num / fillPercentage;
+    if (splitIntoSized){
+        //Divide by size of earth/meters
+        x = parseInt(width * 111111.111 / num);
+        y = parseInt(height * 111111.111 / num); //TODO: use COS to
+    } else {
+        //Determine what percentage of the poly is filled
+        var fillPercentage=create_aois.determine_poly_fill_percentage(layer_poly, left, south, width, height);
 
-    //Figure out how many x and y rows should be tried
-    var x = parseInt(Math.sqrt(num*slope));
-    var y = Math.round(num/x);
-    x = (x<1)?1:x;
-    y = (y<1)?1:y;
+        //Use the fillPercentage to determine how much of the target numbers should be grown
+        num = num / fillPercentage;
+
+        //Figure out how many x and y rows should be tried
+        x = parseInt(Math.sqrt(num*slope));
+        y = Math.round(num/x);
+        x = (x<1)?1:x;
+        y = (y<1)?1:y;
+    }
 
     //When checking if cells are in a poly, check cells be subdividing by this amount
     var tessalationCheckAmount = 3;
@@ -413,7 +435,7 @@ create_aois.splitPolygonsIntoSections = function(layer,num){
 
     //Build the cells and remove ones that aren't in the original polygon
     var layers = [];
-    var id_root = "handmade."+parseInt(Math.random()*1000000);
+    var id_root = "handmade."+parseInt(Math.random()*100000000);
     for (var x_num=0; x_num<x; x_num++ ){
         for (var y_num=0; y_num<y; y_num++ ){
             var id = id_root+"_"+x_num+"_"+y_num;
@@ -454,8 +476,6 @@ create_aois.splitPolygonsIntoSections = function(layer,num){
                     }
                 }
 
-
-
             } else {
                 isBoxInPoly = true;
             }
@@ -472,6 +492,28 @@ create_aois.splitPolygonsIntoSections = function(layer,num){
     }
 
     return layers;
+};
+create_aois.determine_poly_fill_percentage = function(layer_poly, left, south, width, height){
+    //Determine what percentage of the poly is filled
+    var fillPercentage;
+    var coordsToCheck = [];
+    var slices=22;
+    for (var x_num=1; x_num<(slices-1); x_num++ ){
+        for (var y_num=1; y_num<(slices-1); y_num++ ){
+            var l = left+((width/slices)*x_num);
+            var t = south+((height/slices)*y_num);
+            coordsToCheck.push([l,t]);
+        }
+    }
+    var fillNum = 0;
+    for(var c=0;c<coordsToCheck.length;c++){
+        var coord = coordsToCheck[c];
+        if (gju.pointInPolygon({coordinates:coord},layer_poly)) fillNum++;
+    }
+    fillPercentage = fillNum/((slices-2)*(slices-2)) + .05;  //Adding 5% because empty vs full polys are used here
+    fillPercentage = fillPercentage<.2?.2:fillPercentage>.1?1:fillPercentage;
+
+    return fillPercentage;
 };
 
 create_aois.turnPolygonsIntoMultis = function(layers){
@@ -584,7 +626,7 @@ create_aois.removeFeature = function(e) {
     create_aois.updateCellCount();
 };
 
-create_aois.createWorkCellsFromService = function(data,zoomAfter){
+create_aois.createWorkCellsFromService = function(data,zoomAfter,saveLayerTo){
 
     data.features = create_aois.turnPolygonsIntoMultis(data.features || data);
 
@@ -619,6 +661,32 @@ create_aois.createWorkCellsFromService = function(data,zoomAfter){
                 }
             }
 
+            var bounds = layer.getBounds();
+            var left = bounds.getWest();
+            var right = bounds.getEast();
+            var north = bounds.getNorth();
+            var south = bounds.getSouth();
+            var width = right-left;
+            var height = north-south;
+            bounds._northWest = new L.LatLng(bounds._northEast.lat,bounds._southWest.lng);
+//            bounds._southEast = new L.LatLng(bounds._southWest.lat,bounds._northEast.lng);
+            var width_m = bounds._northEast.distanceTo(bounds._northWest);
+            var height_m = bounds._southWest.distanceTo(bounds._northWest);
+
+//            popupContent += "<b>Width:</b>: "+(width.toPrecision(2))+" lng<br/>";
+//            popupContent += "<b>Width1:</b>: "+L.GeometryUtil.readableDistance((width*111111.11), true)+"<br/>";
+            popupContent += "<b>Width:</b>: "+L.GeometryUtil.readableDistance(width_m, true)+"<br/>";
+//            popupContent += "<b>Height:</b>: "+(height.toPrecision(2))+" lat<br/>";
+//            popupContent += "<b>Height1:</b>: "+L.GeometryUtil.readableDistance((height*111111.11), true)+"<br/>";
+            popupContent += "<b>Height:</b>: "+L.GeometryUtil.readableDistance(height_m, true)+"<br/>";
+            try{
+                var area = L.GeometryUtil.geodesicArea(layer.getLatLngs()[0]);
+                if (area>990){
+                    area = area/1000;
+                }
+                popupContent += "<b>Area:</b>: "+L.GeometryUtil.readableDistance(area, true)+" sq<br/>";
+
+            } catch (ex){}
             layer.popupContent = popupContent;
 
             layer.on({
@@ -657,6 +725,7 @@ create_aois.createWorkCellsFromService = function(data,zoomAfter){
             .text("Random")
             .appendTo($prioritizeSelector);
     }
+    return features;
 };
 
 create_aois.updateCellCount = function() {
