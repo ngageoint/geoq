@@ -39,7 +39,8 @@ create_aois.init = function(){
         title:"Zoom in",
         content:"Zoom in to City level or below in the US to create USNG cells",
         trigger:"hover",
-        placement:"bottom"
+        placement:"bottom",
+        container: 'body'
     });
     var $mgrs = $('#option_mgrs').click(function () {
         create_aois.draw_method = 'mgrs';
@@ -53,7 +54,8 @@ create_aois.init = function(){
         title:"Zoom in",
         content:"Zoom in to City level or below",
         trigger:"hover",
-        placement:"bottom"
+        placement:"bottom",
+        container: 'body'
     });
     $('#option_polygon').click(function () {
         create_aois.draw_method = 'polygon';
@@ -181,8 +183,9 @@ create_aois.init = function(){
         title:"Smooth points in a Polygon",
         content:"If your polygon is very complex, it will be much faster for everyone if you smooth the points down. The smoothing amount is in meters, and will remove points that are within that distance of each other.",
         placement:"bottom",
-        trigger:"hover"})
-    .attr('disabled',true);
+        trigger:"hover",
+        container: 'body'
+    }).attr('disabled',true);
 
     $("#prioritize-reverse").click(create_aois.reversePriorities);
 
@@ -319,7 +322,8 @@ create_aois.mapInit = function(map) {
                 title:'Set Priority',
                 content:'The next cells you draw will have a priority of '+num+' ('+helpText+')',
                 trigger:'hover',
-                placement:'left'
+                placement:'left',
+                container: 'body'
             });
 
         var help_control = new L.Control.Button({
@@ -846,7 +850,8 @@ create_aois.initializeFileUploads = function(){
         title:"Drag zipped shapefile here",
         content:"You can drag a .zip or .shp file here. All polygons/multipolygons within will be created as work cells. Please make files as small as possible (<5mb).",
         trigger: "hover",
-        placement: "bottom"
+        placement: "bottom",
+        container: 'body'
     });
 
     if (typeof window.FileReader === 'undefined') {
