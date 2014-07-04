@@ -445,14 +445,16 @@ create_aois.splitPolygonsIntoSections = function(layer, num, splitIntoSized){
         //Figure out how many x and y rows should be tried
         x = parseInt(Math.sqrt(num*slope));
         y = Math.round(num/x);
-        x = (x<1)?1:x;
-        y = (y<1)?1:y;
     }
+
+    //Clamp to be between 1 and 40k work cells
+    x = (x<1)?1:x>200?200:x;
+    y = (y<1)?1:y>200?200:y;
 
     //When checking if cells are in a poly, check cells be subdividing by this amount
     var tessalationCheckAmount = 3;
-    if (x>6 && y>6) tessalationCheckAmount = 2;
-    if (x>10 && y>10) tessalationCheckAmount = 1;
+    if ((x*y)>50) tessalationCheckAmount = 2;
+    if ((x*y)>150) tessalationCheckAmount = 1;
 
     var x_slice = width/x;
     var y_slice = height/y;
@@ -477,9 +479,10 @@ create_aois.splitPolygonsIntoSections = function(layer, num, splitIntoSized){
                 [l1,t0]
             ];
 
-            var isBoxInPoly=false;
-            if (x >4 && y >4) {
+            var isBoxInPoly=true;
+            if ((fillPercentage<1) || (x >3 && y >3)) {
                 //If it's a lot of boxes, test each one
+                isBoxInPoly=false;
 
                 //Break each box into smaller points and check the corners as well as those points to see if it's in the poly
                 var coordsToCheck = _.clone(coords);
