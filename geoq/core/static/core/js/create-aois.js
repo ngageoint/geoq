@@ -140,7 +140,7 @@ create_aois.init = function(){
                 create_aois.smoothWorkCells(create_aois.last_shapes);
             }
         } else if ($n2.css('display')!='none'){
-            var num_point_size = pointInt($('#holder_points_polys_num').val()) || 100;
+            var num_point_size = parseInt($('#holder_points_polys_num').val()) || 100;
             var geoJSON = create_aois.turnPointsToPolys(num_point_size);
             create_aois.createWorkCellsFromService(geoJSON);
         }
@@ -727,6 +727,11 @@ create_aois.createWorkCellsFromService = function(data,zoomAfter,saveLayerTo){
     create_aois.updateCellCount();
     create_aois.redrawStyles();
 
+    create_aois.buildFilterDropdown();
+
+    return features;
+};
+create_aois.buildFilterDropdown = function(){
     var $prioritizeSelector = $('#prioritize-selector').empty();
     if (create_aois.data_fields_obj){
         $('<option>')
@@ -743,9 +748,7 @@ create_aois.createWorkCellsFromService = function(data,zoomAfter,saveLayerTo){
             .text("Random")
             .appendTo($prioritizeSelector);
     }
-    return features;
 };
-
 create_aois.turnPointsToPolys = function(sizeWidth) {
     var geoJSONFeatures = [];
 
@@ -822,6 +825,8 @@ create_aois.updateCellCount = function() {
 };
 
 create_aois.removeAllFeatures = function () {
+    create_aois.data_fields_obj = {};
+    create_aois.buildFilterDropdown();
     var m = create_aois.map_object;
     if (m && (m._container.id == 'map') && (m.hasLayer(create_aois.aois))){
         _.each(m._layers, function(l){
