@@ -16,7 +16,11 @@
             margin-left: 0;
         }
         #poly_split_holder {
-            margin-left: 20px;
+            font-size: 10px;
+            margin-left: 15px;
+        }
+        #file_uploader_holder {
+            font-size: 10px;
         }
 
         #poly_split_holder input {
@@ -33,9 +37,9 @@
         }
         #file_holder {
             border: 7px dashed #ccc;
-            width: 120px;
+            width: 100px;
             height: 12px;
-            font-size: 10px;
+            font-size: 9px;
             text-align: center;
             font-weight: bold;
             line-height: 1em;
@@ -54,6 +58,17 @@
         }
         #poly_split_holder input#split_sized {
             width: 50px;
+            text-align: right;
+            padding: 7px 2px;
+        }
+        #holder_smooth_polys input#holder_smooth_num {
+            width: 30px;
+            text-align: right;
+            padding: 7px 2px;
+        }
+
+        #holder_points_polys input#holder_points_polys_num {
+            width: 30px;
             text-align: right;
             padding: 7px 2px;
         }
@@ -90,8 +105,8 @@
         Draw using:
         <button class="btn active" id="option_usng">USNG Cells (US only)</button>
         <button class="btn" id="option_mgrs">MGRS Cells</button>
-        <button class="btn" id="option_polygon">Any Sized Polygons</button>
-        <button class="btn" id="option_shapefile">Drag in a Shape File</button>
+        <button class="btn" id="option_polygon">Draw cells</button>
+        <button class="btn" id="option_shapefile">Drag in Shape File</button>
     </div>
 
     <div style="display:none" id="poly_split_holder">
@@ -101,11 +116,17 @@
         </select>
         <span id="poly_split_n_cells">approx <input type="text" id="split_number" value="100" /> cells</span>
         <span id="poly_split_n_sized_cells" style="display: none;"><input type="text" id="split_sized" value="1000" />-sq-meter cells</span>
-        <button id="poly_split_button" class="btn btn-success">Split</button>
+        <button id="poly_split_button" class="btn btn-success" disabled="true">Split</button>
     </div>
     <div style="display:none" id="file_uploader_holder">
         <div id="file_holder">Drag shapefile here</div>
-        <input type="text" id="simplify_polys" value="500m"/><button id="simplify_btn" class="btn btn-success">Smooth Polys</button>
+        <select id="file_holder_select" style="width: inherit; margin-bottom: 0px;">
+            <option value="holder_smooth">Smooth polygons</option>
+            <option value="holder_points">Turn points into</option>
+        </select>
+        <span id="holder_smooth_polys"> every <input type="text" id="holder_smooth_num" value="500"/>m </span>
+        <span id="holder_points_polys" style="display: none;"><input type="text" id="holder_points_polys_num" value="100"/>-sq-m cells</span>
+        <button id="file_holder_edit_btn" class="btn btn-success" disabled="true">Update</button>
     </div>
 
     <div id="map" class="thumbnail" style="height: 500px; width: 100%;">{% leaflet_map "map" %}</div>

@@ -111,13 +111,47 @@ create_aois.init = function(){
         }
 
         if (num>0) {
-            create_aois.map_object.removeLayer(create_aois.last_polygon_workcells);
+            create_aois.removeAllFeatures();
             var geoJSON = create_aois.splitPolygonsIntoSections(create_aois.last_polygon_drawn, num, splitIntoSized);
 
             var data = {"type":"FeatureCollection","features":geoJSON};
             create_aois.last_polygon_workcells = create_aois.createWorkCellsFromService(data);
         }
 
+    });
+
+    $("#file_holder_select").on('change',function(ev){
+        var $n = $("#holder_smooth_polys");
+        var $n2 = $("#holder_points_polys");
+        if (ev.target.value=='holder_smooth'){
+            $n.show();
+            $n2.hide();
+        } else if (ev.target.value=='holder_points'){
+            $n.hide();
+            $n2.show();
+        }
+    });
+
+    $("#file_holder_edit_btn").click(function(){
+        var $n = $("#holder_smooth_polys");
+        var $n2 = $("#file_holder_edit_btn");
+        if ($n.css('display')!='none'){
+            if (create_aois.last_shapes){
+                create_aois.smoothWorkCells(create_aois.last_shapes);
+            }
+        } else if ($n2.css('display')!='none'){
+            var num_point_size = $('#holder_points_polys_num').val();
+            log.log(num_point_size);
+
+        }
+    });
+
+    $("#holder_smooth_polys").popover({
+        title:"Smooth points in a Polygon",
+        content:"If your polygon is very complex, it will be much faster for everyone if you smooth the points down. The smoothing amount is in meters, and will remove points that are within that distance of each other.",
+        placement:"bottom",
+        trigger:"hover",
+        container: 'body'
     });
 
     $("#geocomplete").geocomplete()
@@ -211,18 +245,6 @@ create_aois.init = function(){
         }
     });
 
-    $("#simplify_btn").click(function(){
-        if (create_aois.last_shapes){
-            create_aois.smoothWorkCells(create_aois.last_shapes);
-        }
-    }).popover({
-        title:"Smooth points in a Polygon",
-        content:"If your polygon is very complex, it will be much faster for everyone if you smooth the points down. The smoothing amount is in meters, and will remove points that are within that distance of each other.",
-        placement:"bottom",
-        trigger:"hover",
-        container: 'body'
-    }).attr('disabled',true);
-
     $("#prioritize-reverse").click(create_aois.reversePriorities);
 
     $("#show-geojson-textarea").click(function(){
@@ -303,6 +325,8 @@ create_aois.mapInit = function(map) {
 
                 var data = {"type":"FeatureCollection","features":geoJSON};
                 create_aois.last_polygon_workcells = create_aois.createWorkCellsFromService(data);
+
+                $('#poly_split_button').attr('disabled',false);
             } else {
                 //Using USNG or MGRS
                 create_aois.update_info("Requesting Grid Information from the server");
@@ -510,8 +534,9 @@ create_aois.determine_poly_fill_percentage = function(layer_poly, left, south, w
         var coord = coordsToCheck[c];
         if (gju.pointInPolygon({coordinates:coord},layer_poly)) fillNum++;
     }
-    fillPercentage = fillNum/((slices-2)*(slices-2)) + .05;  //Adding 5% because empty vs full polys are used here
-    fillPercentage = fillPercentage<.2?.2:fillPercentage>.1?1:fillPercentage;
+    fillPercentage = fillNum/((slices-2)*(slices-2));
+    log.log((fillPercentage*100)+"% filled polygon drawn");
+    fillPercentage = fillPercentage<.2?.2:fillPercentage>.97?1:fillPercentage;
 
     return fillPercentage;
 };
@@ -661,23 +686,12 @@ create_aois.createWorkCellsFromService = function(data,zoomAfter,saveLayerTo){
                 }
             }
 
+            //Add Size information
             var bounds = layer.getBounds();
-            var left = bounds.getWest();
-            var right = bounds.getEast();
-            var north = bounds.getNorth();
-            var south = bounds.getSouth();
-            var width = right-left;
-            var height = north-south;
             bounds._northWest = new L.LatLng(bounds._northEast.lat,bounds._southWest.lng);
-//            bounds._southEast = new L.LatLng(bounds._southWest.lat,bounds._northEast.lng);
             var width_m = bounds._northEast.distanceTo(bounds._northWest);
             var height_m = bounds._southWest.distanceTo(bounds._northWest);
-
-//            popupContent += "<b>Width:</b>: "+(width.toPrecision(2))+" lng<br/>";
-//            popupContent += "<b>Width1:</b>: "+L.GeometryUtil.readableDistance((width*111111.11), true)+"<br/>";
             popupContent += "<b>Width:</b>: "+L.GeometryUtil.readableDistance(width_m, true)+"<br/>";
-//            popupContent += "<b>Height:</b>: "+(height.toPrecision(2))+" lat<br/>";
-//            popupContent += "<b>Height1:</b>: "+L.GeometryUtil.readableDistance((height*111111.11), true)+"<br/>";
             popupContent += "<b>Height:</b>: "+L.GeometryUtil.readableDistance(height_m, true)+"<br/>";
             try{
                 var area = L.GeometryUtil.geodesicArea(layer.getLatLngs()[0]);
@@ -687,6 +701,7 @@ create_aois.createWorkCellsFromService = function(data,zoomAfter,saveLayerTo){
                 popupContent += "<b>Area:</b>: "+L.GeometryUtil.readableDistance(area, true)+" sq<br/>";
 
             } catch (ex){}
+
             layer.popupContent = popupContent;
 
             layer.on({
@@ -901,11 +916,11 @@ create_aois.setAllCellsTo = function (num){
 };
 
 create_aois.smoothWorkCells = function(shape_layers){
-    var smooth_num = parseInt($('#simplify_polys').val());
+    var smooth_num = parseInt($('#holder_smooth_num').val());
     if (!smooth_num) smooth_num = 500;
 
     //Convert meters to Lat/Long smoothing ratio
-    //1 Longitude (at 48-Lat) ~= 75000m, 1 Latitude ~= 110000m, so using 80km as 1
+    //1 Longitude (at 48-Lat) ~= 75000m, 1 Latitude ~= 111111m, so using 80km as 1
     smooth_num = smooth_num/80000;
 
     _.each(shape_layers._layers,function(layer){
@@ -979,7 +994,8 @@ create_aois.initializeFileUploads = function(){
           },function(a){
               log.log(a);
           });
-          $("#simplify_btn").attr('disabled',false);
+          $('#file_holder_edit_btn').attr('disabled',false);
+
       };
       reader.readAsArrayBuffer(file);
 
