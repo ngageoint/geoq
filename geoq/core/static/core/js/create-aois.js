@@ -140,9 +140,9 @@ create_aois.init = function(){
                 create_aois.smoothWorkCells(create_aois.last_shapes);
             }
         } else if ($n2.css('display')!='none'){
-            var num_point_size = $('#holder_points_polys_num').val();
-            log.log(num_point_size);
-
+            var num_point_size = pointInt($('#holder_points_polys_num').val()) || 100;
+            var geoJSON = create_aois.turnPointsToPolys(num_point_size);
+            create_aois.createWorkCellsFromService(geoJSON);
         }
     });
 
@@ -537,7 +537,7 @@ create_aois.determine_poly_fill_percentage = function(layer_poly, left, south, w
         var coord = coordsToCheck[c];
         if (gju.pointInPolygon({coordinates:coord},layer_poly)) fillNum++;
     }
-    fillPercentage = fillNum/((slices-2)*(slices-2));
+    fillPercentage = fillNum/((slices-2)*(slices-2))-.02;
     log.log((fillPercentage*100)+"% filled polygon drawn");
     fillPercentage = fillPercentage<.2?.2:fillPercentage>.97?1:fillPercentage;
 
@@ -677,7 +677,7 @@ create_aois.createWorkCellsFromService = function(data,zoomAfter,saveLayerTo){
             }
             feature.priority = feature.properties.priority = parseInt(feature.properties.priority) || create_aois.priority_to_use;
             for(var k in feature.properties){
-                if (key!="priority"){
+                if (k!="priority"){
                     popupContent += "<b>"+k+":</b> " + feature.properties[k]+"<br/>";
 
                     //Add fields to search if they are numeric
@@ -690,21 +690,21 @@ create_aois.createWorkCellsFromService = function(data,zoomAfter,saveLayerTo){
             }
 
             //Add Size information
-            var bounds = layer.getBounds();
-            bounds._northWest = new L.LatLng(bounds._northEast.lat,bounds._southWest.lng);
-            var width_m = bounds._northEast.distanceTo(bounds._northWest);
-            var height_m = bounds._southWest.distanceTo(bounds._northWest);
-            popupContent += "<b>Width:</b>: "+L.GeometryUtil.readableDistance(width_m, true)+"<br/>";
-            popupContent += "<b>Height:</b>: "+L.GeometryUtil.readableDistance(height_m, true)+"<br/>";
-            try{
-                var area = L.GeometryUtil.geodesicArea(layer.getLatLngs()[0]);
-                if (area>990){
-                    area = area/1000;
-                }
-                popupContent += "<b>Area:</b>: "+L.GeometryUtil.readableDistance(area, true)+" sq<br/>";
-
-            } catch (ex){}
-
+            if (layer.getBounds){
+                var bounds = layer.getBounds();
+                bounds._northWest = new L.LatLng(bounds._northEast.lat,bounds._southWest.lng);
+                var width_m = bounds._northEast.distanceTo(bounds._northWest);
+                var height_m = bounds._southWest.distanceTo(bounds._northWest);
+                popupContent += "<b>Width:</b>: "+L.GeometryUtil.readableDistance(width_m, true)+"<br/>";
+                popupContent += "<b>Height:</b>: "+L.GeometryUtil.readableDistance(height_m, true)+"<br/>";
+                try{
+                    var area = L.GeometryUtil.geodesicArea(layer.getLatLngs()[0]);
+                    if (area>990){
+                        area = area/1000;
+                        popupContent += "<b>Area:</b>: "+L.GeometryUtil.readableDistance(area, true)+" sq<br/>";
+                    }
+                } catch (ex){}
+            }
             layer.popupContent = popupContent;
 
             layer.on({
@@ -746,9 +746,50 @@ create_aois.createWorkCellsFromService = function(data,zoomAfter,saveLayerTo){
     return features;
 };
 
+create_aois.turnPointsToPolys = function(sizeWidth) {
+    var geoJSONFeatures = [];
+
+    var m = create_aois.map_object;
+    if (m && (m._container.id == 'map') && (m.hasLayer(create_aois.aois))){
+        var sizer = sizeWidth/111111.11 / 2;
+
+        _.each(m._layers, function(layer){
+            var feature = layer.feature;
+            if (feature && feature.geometry && feature.geometry.type == "Point"){
+
+                var geoJSON;
+                if (layer && layer.toGeoJSON) {
+                    geoJSON = layer.toGeoJSON();
+                } else {
+                    geoJSON = layer || {};
+                }
+                if (!geoJSON.id) geoJSON.id = "handmade."+parseInt(Math.random()*1000000);
+                geoJSON.geometry_name = "the_geom";
+                geoJSON.properties = geoJSON.properties || {};
+                geoJSON.properties = _.extend(geoJSON.properties,{priority:create_aois.priority_to_use});
+                if (geoJSON.geometry.type == "Point") {
+                    geoJSON.geometry.type = "MultiPolygon";
+                    var pointCoords = geoJSON.geometry.coordinates;
+                    var square = [[pointCoords[0]-sizer,pointCoords[1]-sizer],
+                                  [pointCoords[0]-sizer,pointCoords[1]+sizer],
+                                  [pointCoords[0]+sizer,pointCoords[1]+sizer],
+                                  [pointCoords[0]+sizer,pointCoords[1]-sizer],
+                                  [pointCoords[0]-sizer,pointCoords[1]-sizer]];
+                    geoJSON.geometry.coordinates = [[square]];
+                }
+                geoJSONFeatures.push(geoJSON);
+
+                m.removeLayer(layer);
+            }
+        })
+    }
+    return geoJSONFeatures;
+};
+
 create_aois.updateCellCount = function() {
     var aoi_count = 0;
     var counts = [0,0,0,0,0,0];
+    //TODO: Have a count for points?
 
     _.each(create_aois.aois._layers,function(layergroup){
         if (layergroup && layergroup._layers){
