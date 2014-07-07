@@ -95,12 +95,40 @@ leaflet_layer_control.addLogInfo = function($accordion) {
         .appendTo($content);
     $("<button>Submit a Comment</button>")
         .addClass("btn btn-primary")
-        .attr('onclick', 'submitComment()')
-        .appendTo($buttonRow)
+        .click(leaflet_layer_control.submitComment)
+        .appendTo($buttonRow);
 
     leaflet_layer_control.refreshLogInfo();
 };
-
+leaflet_layer_control.submitComment = function() {
+    BootstrapDialog.show({
+        title: 'Submit Comment',
+        message: "Comment: <input type='text' maxlength='200'>",
+        buttons: [{
+            label: 'Submit',
+            action: function(dialog) {
+                var text = dialog.getModalBody().find('input').val();
+                $.ajax({
+                    url: document.URL + "/comment",
+                    type: 'POST',
+                    data: {
+                        comment : text,
+                        csrfmiddlewaretoken: aoi_feature_edit.csrf
+                    }
+                })
+                .done( function (msg) {
+                    leaflet_layer_control.refreshLogInfo();
+                    dialog.close();
+                });
+            }
+        }, {
+            label: 'Cancel',
+            action: function(dialog) {
+                dialog.close();
+            }
+        }]
+    });
+};
 leaflet_layer_control.refreshLogInfo = function() {
     var body = $('#messages');
     if ($('#messages tr').length > 0) {
