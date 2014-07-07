@@ -29,8 +29,6 @@ DATABASES = {
     }
 }
 
-AUTH_PROFILE_MODULE = 'accounts.UserProfile'
-
 # Use this to change the base bootstrap library
 BOOTSTRAP_BASE_URL = '/static/bootstrap/'
 
@@ -176,12 +174,14 @@ AUTHENTICATION_BACKENDS = (
 ANONYMOUS_USER_ID = -1
 AUTH_PROFILE_MODULE = 'accounts.UserProfile'
 
-LOGIN_REDIRECT_URL = '/geoq/'   #'/accounts/%(username)s/'
+LOGIN_REDIRECT_URL = '/accounts/%(username)s/' #'/geoq/'   #
 LOGIN_URL = '/accounts/signin/'
 LOGOUT_URL = '/geoq'
 EMAIL_BACKEND = 'django.core.mail.backends.dummy.EmailBackend'
 USERENA_ACTIVATION_DAYS = 3
-# /auth setup
+USERENA_MUGSHOT_DEFAULT = 'identicon'
+USERENA_HIDE_EMAIL = True
+USERENA_HTML_EMAIL = False
 
 ROOT_URLCONF = 'geoq.urls'
 
@@ -222,7 +222,7 @@ INSTALLED_APPS = (
     'jsonfield',
     'crispy_forms',
 
-    'geoq.accounts', # TODO:Accounts -- Figure out what we are doing
+    'geoq.accounts',
     'geoq.core',
     'geoq.maps',
     'geoq.mgrs',
