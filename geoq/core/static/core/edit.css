@@ -8,6 +8,14 @@ h4 {
     margin-left: 0px;
     cursor: crosshair;
 }
+div.alert {
+  position: absolute;
+  top: 100px;
+  width: 300px;
+  left: 50px;
+  z-index: 1000;
+}
+
 .aoi-status {
     font-size: 18px;
 }

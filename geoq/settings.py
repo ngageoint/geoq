@@ -32,7 +32,7 @@ DATABASES = {
 AUTH_PROFILE_MODULE = 'accounts.UserProfile'
 
 # Use this to change the base bootstrap library
-#BOOTSTRAP_BASE_URL = None
+BOOTSTRAP_BASE_URL = '/static/bootstrap/'
 
 # Hosts/domain names that are valid for this site; required if DEBUG is False
 # See https://docs.djangoproject.com/en/1.5/ref/settings/#allowed-hosts
