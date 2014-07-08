@@ -224,7 +224,9 @@
                         </tr>
                         <tr>
                             <td><b>Shapefile:</b></td>
-                            <td><a href="{% url 'shape-job' object.id %}">Link</a></td>
+                            <td><a href="{% url 'shape-job' object.id %}">Work Cells</a> ||
+                                <a href="{% url 'shape-job-type' object.id 'points' %}">Points</a> ||
+                                <a href="{% url 'shape-job-type' object.id 'polygons' %}">Polygons</a></td>
                         </tr>
                     </table>
                 </div>

@@ -209,11 +209,13 @@
                                             <a href="#maps">APIs</a>
                                             <p> The following endpoints can be used to Access data remotely:</p>
                                             <ul>
-                                                <li><a href="{% url 'json-layers' %}">http://server/geoq/api/layers.json</a></li>
-                                                <li><a href="{% url 'json-job' pk=1 %}">http://server/geoq/api/jobs/&lt;id&gt;.geojson</a></li>
-                                                <li><a href="{% url 'kml-job' pk=1 %}">http://server/geoq/api/jobs/&lt;id&gt;.kml</a></li>
-                                                <li><a href="{% url 'kml-networked-job' pk=1 %}">http://server/geoq/api/jobs/&lt;id&gt;.networked.kml</a></li>
-                                                <li><a href="{% url 'shape-job' pk=1 %}">http://server/geoq/api/jobs/&lt;id&gt;.shp.zip</a></li>
+                                                <li><a href="{% url 'json-layers' %}">http://server/geoq/<b>api/layers.json</b></a></li>
+                                                <li><a href="{% url 'json-job' pk=1 %}">http://server/geoq/<b>api/jobs/&lt;id&gt;.geojson</b></a></li>
+                                                <li><a href="{% url 'kml-job' pk=1 %}">http://server/geoq/<b>api/jobs/&lt;id&gt;.kml</b></a></li>
+                                                <li><a href="{% url 'kml-networked-job' pk=1 %}">http://server/geoq/<b>api/jobs/&lt;id&gt;.networked.kml</b></a></li>
+                                                <li><a href="{% url 'shape-job' pk=1 %}">http://server/geoq/<b>api/jobs/&lt;id&gt;.shp.zip</b></a></li>
+                                                <li><a href="{% url 'shape-job-type' pk=1 type='points' %}">http://server/geoq/<b>api/jobs/&lt;id&gt;.points.shp.zip</b></a></li>
+                                                <li><a href="{% url 'shape-job-type' pk=1 type='polygons' %}">http://server/geoq/<b>api/jobs/&lt;id&gt;.polygons.shp.zip</b></a></li>
                                             </ul>
 
                                         </td>
