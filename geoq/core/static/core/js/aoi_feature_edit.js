@@ -478,9 +478,9 @@ aoi_feature_edit.map_init = function (map, bounds) {
 
             if (feature_to_link) {
                 var feature_from_link = aoi_feature_edit.draggingFeature;
-                var feature_id_from = feature_from_link.feature.properties.id;
+                var feature_id_from = feature_from_link.feature.properties.source + ' #' +_.str.truncate(feature_from_link.feature.properties.id, 6);
                 $text3
-                    .text('Link item #'+feature_id_from+' here')
+                    .text('Link: '+feature_id_from)
                     .on('click',function(){
 
                         $holder3.empty();
@@ -498,8 +498,16 @@ aoi_feature_edit.map_init = function (map, bounds) {
                             data: { id: 'add_link',
                                 value: json
                             },
-                            success: function(){console.log("Success")},
-                            error: function(){console.log("Error")},
+                            success: function(result){
+                                log.log("Success in linking image");
+                                var feature = feature_to_link.feature;
+                                feature.properties = feature.properties || {};
+                                feature.properties.linked_items = feature.properties.linked_items || [];
+                                feature.properties.linked_items.push(result);
+
+                                leaflet_layer_control.show_feature_info(feature);
+                            },
+                            error: function(){log.log("Error in linking image")},
                             dataType: "json"
                         });
 

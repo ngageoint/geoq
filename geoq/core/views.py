@@ -513,6 +513,7 @@ def update_feature_data(request, *args, **kwargs):
             link_info['user'] = str(request.user)
             properties_main_links.append(link_info)
             properties_main['linked_items'] = properties_main_links
+            value = json.dumps(link_info)
         elif attribute == 'priority':
             feature.priority = int(value)
             properties_main[attribute] = value

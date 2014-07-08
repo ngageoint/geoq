@@ -362,13 +362,17 @@ leaflet_layer_control.show_feature_info = function (feature) {
                         html += "Posted by "+linked_item.user+"</br>";
                     }
                     if (linked_item.created_at) {
-                        html += "Linked on "+linked_item.created_at+"</br>";
+                        if (moment(linked_item.created_at).isValid()){
+                            html += "Linked "+moment(linked_item.created_at).calendar()+"</br>";
+                        } else {
+                            html += "Linked "+linked_item.created_at+"</br>";
+                        }
                     }
                     if (properties && properties.source) {
-                        html += "Posted from "+properties.source+"</br>";
+                        html += "From "+properties.source+"</br>";
                     }
                     if (properties && properties.id) {
-                        html += "Source ID: "+properties.id+"</br>";
+                        html += "Source ID: "+ _.str.truncate(properties.id,9)+"</br>";
                     }
                     if (properties && properties.thumbnail) {
                         html += "<img src='"+properties.thumbnail+"' width='100'><br/>";
@@ -379,9 +383,9 @@ leaflet_layer_control.show_feature_info = function (feature) {
                     var img = $('<div>')
                         .addClass('linked-item status_block')
                         .popover({
-                            title:'Linked Item',
+                            title:'Linked ' + properties.source + ' Item',
                             content:JSON.stringify(properties)||"No properties",
-                            trigger:'hover',
+                            trigger:'click',
                             placement:'right'
                         })
                         .html(html)
