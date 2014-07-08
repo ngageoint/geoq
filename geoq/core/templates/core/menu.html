@@ -68,13 +68,11 @@
                                 <li><a href="{% url 'admin:index' %}" target="_new">Admin Site</a></li>
                                 <li class="divider"></li>
                             {% endif %}
+                                <li><a href="{% url 'userena_profile_edit' %}">Edit Profile</a></li>
                                 <li><a href="{% url 'userena_signout' %}">Sign Out</a></li>
                         {% else %}
                                 <li><a href="{% url 'userena_signin' %}?next={{ request.path }}">Sign In</a></li>
-                            {% comment %}
-                                <! -- TODO:Accounts : Bring this section back -->
                                 <li><a href="{% url 'userena_signup' %}?next={{ request.path }}">Sign Up</a></li>
-                            {% endcomment %}
                         {% endif%}
                         <li><a href="#">{% version_date %}</a></li>
 

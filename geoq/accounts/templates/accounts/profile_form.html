@@ -8,18 +8,55 @@
 
 {% block content %}
 
+<style>
+    label {display: inline-block; font-weight: bold;}
+    input[type="file"] {line-height: 1em;}
+</style>
+
 <form action="" enctype="multipart/form-data" method="post">
   <ul id="box-nav">
     <li class="first"><a href="{% url 'userena_profile_detail' user.username %}"><span>{% trans 'View profile' %}</span></a></li>
     <li class="selected"><a href="{% url 'userena_profile_edit' user.username %}">{% trans "Edit profile" %}</a></li>
     <li><a href="{% url 'userena_password_change' user.username %}">{% trans "Change password" %}</a></li>
-    <li class="last"><a href="{% url 'userena_email_change' user.username %}">{% trans "Change email" %}</a></li>
   </ul>
   {% csrf_token %}
   <fieldset>
     <legend>{% trans "Edit Profile" %}</legend>
-    {{ form.as_p }}
+
+    {{ form.non_field_errors }}
+    <div class="fieldWrapper">
+        {{ form.first_name.errors }}
+        <label for="id_first_name">First Name:</label>
+        {{ form.first_name }}
+    </div>
+    <div class="fieldWrapper">
+        {{ form.last_name.errors }}
+        <label for="id_last_name">Last Name:</label>
+        {{ form.last_name }}
+    </div>
+    <div class="fieldWrapper">
+        {{ form.email.errors }}
+        <label for="id_email">Your email:</label>
+        {{ form.email }}
+    </div>
+{#    <div class="fieldWrapper">#}
+{#        <label for="id_organization_myself">Organization:</label>#}
+{#        {{ form.organization.value }}#}
+{#    </div>#}
+    <div class="fieldWrapper">
+        <label for="id_points_myself">Points:</label>
+        {{ form.score.value }}
+    </div>
+
+    <div class="fieldWrapper">
+        <label for="id_mugshot">Your Picture:</label><br/>
+        {% if user.get_profile.get_mugshot_url %}
+        <img src='{{ user.get_profile.get_mugshot_url }}' /><br/>
+        {% endif %}
+        <input id="id_mugshot" name="mugshot" type="file"/>
+    </div>
   </fieldset>
-  <input type="submit" value="{% trans "Save changes" %}" />
+
+  <input type="submit" value="{% trans "Update your user data" %}" />
 </form>
 {% endblock %}

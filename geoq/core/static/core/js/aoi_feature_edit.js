@@ -79,6 +79,9 @@ aoi_feature_edit.init = function () {
         aoi_feature_edit.available_icons.push(aoi_feature_edit.static_root + "/leaflet/images/"+icon+"-marker-icon.png");
     });
 
+    //Close Alert field if shown
+    setTimeout(function(){$('div.alert').css({display:'none'});},3000);
+
 };
 
 aoi_feature_edit.featureLayer_pointToLayer = function (feature, latlng) {
@@ -290,6 +293,7 @@ aoi_feature_edit.map_init = function (map, bounds) {
         return aoi_extents.getBounds();
     }
     (new L.Control.ResetView(locateBounds)).addTo(aoi_feature_edit.map);
+    aoi_feature_edit.map.fitBounds(aoi_extents.getBounds());
 
 
     // For each feature template, add features to map and layer control
@@ -332,13 +336,6 @@ aoi_feature_edit.map_init = function (map, bounds) {
     });
 
     aoi_feature_edit.layers.features = aoi_feature_edit.featureLayers;
-
-    setTimeout(function () {
-        if (aoi_extents.getBounds) {
-            aoi_feature_edit.map.fitBounds(aoi_extents.getBounds());
-        }
-    }, 1);
-
 
     leaflet_helper.addLocatorControl(map);
     aoi_feature_edit.buildDrawingControl(aoi_feature_edit.drawnItems);
@@ -629,18 +626,6 @@ aoi_feature_edit.buildDrawingControl = function (drawnItems) {
 
 aoi_feature_edit.addMapControlButtons = function (map) {
 
-    function complete_button_onClick() {
-        $.ajax({
-            type: "POST",
-            url: aoi_feature_edit.finishUrl,
-            dataType: "json",
-            success: function (response) {
-                //geoq.redirect(aoi_feature_edit.complete_redirect_url);
-                finishAOI();
-            }
-        });
-    }
-
     var $finishButton = aoi_feature_edit.buildDropdownMenu();
     var completeButtonOptions = {
         html: $finishButton,  // callback function
@@ -654,9 +639,9 @@ aoi_feature_edit.addMapControlButtons = function (map) {
 
 
     var title = "<h4 id='aoi-status-box'><a href='" + aoi_feature_edit.job_absolute_url + "'>" + aoi_feature_edit.job_name + "</a> > AOI #" + aoi_feature_edit.aoi_id + " > ";
-    if (aoi_feature_edit.aoi_properties && aoi_feature_edit.aoi_properties.usng) {
-        title += " USNG: "+aoi_feature_edit.aoi_properties.usng + " > ";
-    }
+//    if (aoi_feature_edit.aoi_properties && aoi_feature_edit.aoi_properties.usng) {
+//        title += " USNG: "+aoi_feature_edit.aoi_properties.usng + " > ";
+//    }
     title += "<span class='aoi-status muted'>" + aoi_feature_edit.percent_complete + "% Complete > " + aoi_feature_edit.description + "</span></h4>";
     var $title = $(title)
         .on('click',function(){
@@ -879,11 +864,58 @@ aoi_feature_edit.buildDropdownMenu = function() {
         .attr("role", "menu")
         .appendTo($div);
 
-    for (opt in leaflet_layer_control.finish_options) {
-        $ull.append(leaflet_layer_control.finish_options[opt]);
-    }
+    for (var i=0; i<leaflet_layer_control.finish_options.length; i++) {
+        var opt = leaflet_layer_control.finish_options[i];
+        var title = "";
+        var url = "";
 
+        if (opt=='awaitingreview'){
+            title = "Submit for Review";
+            url = aoi_feature_edit.awaitingreview_status_url;
+        } else if (opt=='unassigned'){
+            title = "Return for further analysis";
+            url = aoi_feature_edit.unassigned_status_url;
+        } else if (opt=='completed'){
+            title = "Certify as complete";
+            url = aoi_feature_edit.completed_status_url;
+        } else {
+            //Unrecognized input
+            continue;
+        }
+        var $li = $("<li>")
+            .appendTo($ull);
+        $("<a>")
+            .appendTo($li)
+            .text(title)
+            .click(function(){
+                aoi_feature_edit.complete_button_onClick(url);
+            });
+    }
     $div.dropdown();
 
     return $div;
+};
+aoi_feature_edit.complete_button_onClick = function(url) {
+    $.ajax({
+        type: "POST",
+        url: url || aoi_feature_edit.finishUrl,
+        dataType: "json",
+        success: function (response) {
+            BootstrapDialog.show({
+                title: 'Submitted',
+                message: 'Your work has been uploaded. Would you like to:',
+                buttons: [{
+                    label: 'Go back to the Job page',
+                    action: function(dialog) {
+                        geoq.redirect(aoi_feature_edit.job_absolute_url);
+                    }
+                }, {
+                    label: 'Work on another Work Cell',
+                    action: function(dialog) {
+                        geoq.redirect(aoi_feature_edit.next_aoi_url);
+                    }
+                }]
+            });
+        }
+    });
 };

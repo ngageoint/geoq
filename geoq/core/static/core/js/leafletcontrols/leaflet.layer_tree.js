@@ -95,12 +95,40 @@ leaflet_layer_control.addLogInfo = function($accordion) {
         .appendTo($content);
     $("<button>Submit a Comment</button>")
         .addClass("btn btn-primary")
-        .attr('onclick', 'submitComment()')
-        .appendTo($buttonRow)
+        .click(leaflet_layer_control.submitComment)
+        .appendTo($buttonRow);
 
     leaflet_layer_control.refreshLogInfo();
 };
-
+leaflet_layer_control.submitComment = function() {
+    BootstrapDialog.show({
+        title: 'Submit Comment',
+        message: "Comment: <input type='text' maxlength='200'>",
+        buttons: [{
+            label: 'Submit',
+            action: function(dialog) {
+                var text = dialog.getModalBody().find('input').val();
+                $.ajax({
+                    url: document.URL + "/comment",
+                    type: 'POST',
+                    data: {
+                        comment : text,
+                        csrfmiddlewaretoken: aoi_feature_edit.csrf
+                    }
+                })
+                .done( function (msg) {
+                    leaflet_layer_control.refreshLogInfo();
+                    dialog.close();
+                });
+            }
+        }, {
+            label: 'Cancel',
+            action: function(dialog) {
+                dialog.close();
+            }
+        }]
+    });
+};
 leaflet_layer_control.refreshLogInfo = function() {
     var body = $('#messages');
     if ($('#messages tr').length > 0) {
@@ -108,12 +136,13 @@ leaflet_layer_control.refreshLogInfo = function() {
     }
 
     $.ajax({
-        url: document.URL + "/log",
-        dataType: "json"
-    })
+            url: aoi_feature_edit.api_url_log,
+            dataType: "json"
+        })
         .done(function(entries) {
+            body.empty();
             _.each(entries, function(entry) {
-                var $details = $("<tr><td>" + entry.timestamp + "</td><td>" +
+                $("<tr><td>" + entry.timestamp + "</td><td>" +
                     entry.user + "</td><td>" + entry.text + "</td></tr>")
                     .appendTo(body);
             })
@@ -639,13 +668,11 @@ leaflet_layer_control.removeDuplicateLayers = function(layerList, layer){
                         layerLookingAt.skipThis = true;
                     }
                 }
-
             } else {
                 if (layer_orig == layer) layerSearchStart = true;
             }
         });
     });
-
 };
 
 
@@ -654,6 +681,10 @@ leaflet_layer_control.setLayerOpacity = function (layer, amount){
 
     if (!layer.options) layer.options={};
     layer.options.opacity = amount;
+
+    if (amount > 0) {
+        layer.options.oldOpacity = amount;
+    }
 
     if (layer.setStyle){
         layer.setStyle({opacity:amount, fillOpacity:amount});
@@ -669,9 +700,7 @@ leaflet_layer_control.setLayerOpacity = function (layer, amount){
                     $(f._shadow).hide();
                 }
             });
-
         }
-
         if (layer.getContainer) {
             var $lc = $(layer.getContainer());
             $lc.zIndex(1);
@@ -679,7 +708,6 @@ leaflet_layer_control.setLayerOpacity = function (layer, amount){
         } else if (layer._container) {
             $(layer._container).css('opacity',amount);
         }
-
     } else {
         if (layer._layers) {
             _.each(layer._layers,function(f){
@@ -687,10 +715,8 @@ leaflet_layer_control.setLayerOpacity = function (layer, amount){
                 if (f._shadow){
                     $(f._shadow).show().css({opacity:amount});
                 }
-
             });
         }
-
         if (layer.getContainer) {
             var $lc = $(layer.getContainer());
             leaflet_layer_control.zIndexesOfHighest++;
@@ -704,6 +730,7 @@ leaflet_layer_control.setLayerOpacity = function (layer, amount){
         }
     }
 };
+
 leaflet_layer_control.addLayerControlInfoPanel = function($content){
     var $drawer_inner = $("<div>")
         .addClass("inner-padding")
@@ -715,7 +742,6 @@ leaflet_layer_control.addLayerControlInfoPanel = function($content){
 
     leaflet_layer_control.$drawer_tray = $drawer_tray;
     $drawer_tray.html("Click a layer above to see more information.");
-
 };
 
 leaflet_layer_control.addLayerControl = function (map, options, $accordion) {
@@ -754,32 +780,18 @@ leaflet_layer_control.addLayerControl = function (map, options, $accordion) {
                 leaflet_layer_control.show_info(node.data, node);
             }
         },
-        deactivate: function (event, data) {
-        },
+        deactivate: function (event, data) {},
         select: function (event, data) {
             // A checkbox has been checked or unchecked
-
-            //TODO: Loop through sub-folder objects, too
-
-            var all_layers = _.flatten(aoi_feature_edit.layers);
-            var all_active_layers = _.filter(all_layers,function(l){return (l._initHooksCalled && l._map)});
-
-            //TODO: Find the checkbox that changed, and only modify that one
-            _.each(all_active_layers,function(l){
-                leaflet_layer_control.setLayerOpacity(l,0);
-            });
-
             leaflet_layer_control.drawEachLayer(data,map);
+            leaflet_layer_control.lastSelectedNodes = data.tree.getSelectedNodes();
         },
-
-        focus: function (event, data) {
-        },
-        blur: function (event, data) {
-        }
-
+        focus: function (event, data) {},
+        blur: function (event, data) {}
     });
 
     leaflet_layer_control.$tree = $tree;
+    leaflet_layer_control.lastSelectedNodes = $tree.fancytree("getTree").getSelectedNodes();
 
     var $content = leaflet_layer_control.buildAccordionPanel($accordion,"Geo Layers for Map");
 
@@ -794,13 +806,29 @@ leaflet_layer_control.addLayerControl = function (map, options, $accordion) {
 leaflet_layer_control.drawEachLayer=function(data,map){
 
     var selectedLayers = data.tree.getSelectedNodes();
-    _.each(selectedLayers,function(layer_obj, layerOrder){
-        if (layer_obj && layer_obj.data) {
+    var layersUnClicked = _.difference(leaflet_layer_control.lastSelectedNodes, selectedLayers);
+    var layersClicked = _.difference(selectedLayers, leaflet_layer_control.lastSelectedNodes);
+
+    _.each(layersUnClicked,function(layer_obj){
+        if (layer_obj && layer_obj.data && _.toArray(layer_obj.data).length) {
+            var layer = layer_obj.data;
+            leaflet_layer_control.setLayerOpacity(layer,0);
+        } else if (layer_obj.children && layer_obj.children.length) {
+            //A category was clicked
+            _.each(layer_obj.children, function(layer_obj_item){
+                layer_obj_item.setSelected(false);
+            });
+        }
+    });
+
+    _.each(layersClicked,function(layer_obj){
+        if (layer_obj && layer_obj.data && _.toArray(layer_obj.data).length) {
             var layer = layer_obj.data;
 
             if (layer._map && layer._initHooksCalled) {
                 //It's a layer that's been already built
-                leaflet_layer_control.setLayerOpacity(layer,1);
+                var oldOpacity = layer.options? layer.options.opacity||layer.options.oldOpacity||1 : 1;
+                leaflet_layer_control.setLayerOpacity(layer,oldOpacity);
 
                 if (leaflet_layer_control.likelyHasFeatures(layer)) {
                     leaflet_helper.constructors.geojson(layer.config, map);
@@ -844,7 +872,15 @@ leaflet_layer_control.drawEachLayer=function(data,map){
                     }
                 }
             }
+            if (layersClicked.length==1){
+                layer_obj.setActive();
+            }
 
+        } else if (layer_obj.children && layer_obj.children.length) {
+            //A category was clicked
+            _.each(layer_obj.children, function(layer_obj_item){
+                layer_obj_item.setSelected(true);
+            });
         } else {
             log.error("A layer with no data was clicked");
         }

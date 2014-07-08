@@ -48,8 +48,7 @@ class UserAuthorizationAdmin(ObjectAdmin):
     def Email(self, obj):
         return '%s' % (obj.user.email)
 
-# TODO:Accounts -- bring this back
-#admin.site.register(EmailDomain, EmailDomainAdmin)
-#admin.site.register(Organization, OrganizationAdmin)
-#admin.site.register(UserProfile, UserProfileAdmin)
-#admin.site.register(UserAuthorization, UserAuthorizationAdmin)
+admin.site.register(EmailDomain, EmailDomainAdmin)
+admin.site.register(Organization, OrganizationAdmin)
+admin.site.register(UserProfile, UserProfileAdmin)
+admin.site.register(UserAuthorization, UserAuthorizationAdmin)

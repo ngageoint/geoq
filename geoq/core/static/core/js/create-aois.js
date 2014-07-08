@@ -19,6 +19,7 @@ create_aois.last_shapes = null;
 create_aois.$feature_info = null;
 create_aois.data_fields_obj = {};
 create_aois.data_fields = [];
+create_aois.highlightMode = 'delete';
 
 
 function mapInit(map) {
@@ -39,7 +40,8 @@ create_aois.init = function(){
         title:"Zoom in",
         content:"Zoom in to City level or below in the US to create USNG cells",
         trigger:"hover",
-        placement:"bottom"
+        placement:"bottom",
+        container: 'body'
     });
     var $mgrs = $('#option_mgrs').click(function () {
         create_aois.draw_method = 'mgrs';
@@ -53,7 +55,8 @@ create_aois.init = function(){
         title:"Zoom in",
         content:"Zoom in to City level or below",
         trigger:"hover",
-        placement:"bottom"
+        placement:"bottom",
+        container: 'body'
     });
     $('#option_polygon').click(function () {
         create_aois.draw_method = 'polygon';
@@ -73,6 +76,7 @@ create_aois.init = function(){
         create_aois.disableToolbars();
     });
 
+    //This isn't really needed anymore as they start zoomed out
     if (create_aois.get_grids_url.indexOf('mgrs')>0){
         $mgrs.button("toggle");
         create_aois.draw_method = 'mgrs';
@@ -81,6 +85,74 @@ create_aois.init = function(){
         create_aois.draw_method = 'usng';
     }
 
+    $("#poly_split_holder_select").on('change',function(ev){
+        var $n = $("#poly_split_n_cells");
+        var $n_sized = $("#poly_split_n_sized_cells");
+        if (ev.target.value=='n_cells'){
+            $n.show();
+            $n_sized.hide();
+        } else if (ev.target.value=='n_sized_cells'){
+            $n.hide();
+            $n_sized.show();
+        }
+    });
+
+    $("#poly_split_button").click(function(){
+        var $n = $("#poly_split_n_cells");
+        var $n_sized = $("#poly_split_n_sized_cells");
+        var num = 1;
+        var splitIntoSized = false;
+        if ($n.css('display')!='none'){
+            num = parseInt($("#split_number").val());
+            splitIntoSized=false;
+        } else if ($n_sized.css('display')!='none'){
+            num = parseInt($("#split_sized").val());
+            splitIntoSized=true;
+        }
+
+        if (num>0) {
+            create_aois.removeAllFeatures();
+            var geoJSON = create_aois.splitPolygonsIntoSections(create_aois.last_polygon_drawn, num, splitIntoSized);
+
+            var data = {"type":"FeatureCollection","features":geoJSON};
+            create_aois.last_polygon_workcells = create_aois.createWorkCellsFromService(data);
+        }
+
+    });
+
+    $("#file_holder_select").on('change',function(ev){
+        var $n = $("#holder_smooth_polys");
+        var $n2 = $("#holder_points_polys");
+        if (ev.target.value=='holder_smooth'){
+            $n.show();
+            $n2.hide();
+        } else if (ev.target.value=='holder_points'){
+            $n.hide();
+            $n2.show();
+        }
+    });
+
+    $("#file_holder_edit_btn").click(function(){
+        var $n = $("#holder_smooth_polys");
+        var $n2 = $("#file_holder_edit_btn");
+        if ($n.css('display')!='none'){
+            if (create_aois.last_shapes){
+                create_aois.smoothWorkCells(create_aois.last_shapes);
+            }
+        } else if ($n2.css('display')!='none'){
+            var num_point_size = parseInt($('#holder_points_polys_num').val()) || 100;
+            var geoJSON = create_aois.turnPointsToPolys(num_point_size);
+            create_aois.createWorkCellsFromService(geoJSON);
+        }
+    });
+
+    $("#holder_smooth_polys").popover({
+        title:"Smooth points in a Polygon",
+        content:"If your polygon is very complex, it will be much faster for everyone if you smooth the points down. The smoothing amount is in meters, and will remove points that are within that distance of each other.",
+        placement:"bottom",
+        trigger:"hover",
+        container: 'body'
+    });
 
     $("#geocomplete").geocomplete()
         .bind("geocode:result", function(event,result) {
@@ -173,18 +245,12 @@ create_aois.init = function(){
         }
     });
 
-    $("#simplify_btn").click(function(){
-        if (create_aois.last_shapes){
-            create_aois.smoothWorkCells(create_aois.last_shapes);
-        }
-    }).popover({
-        title:"Smooth points in a Polygon",
-        content:"If your polygon is very complex, it will be much faster for everyone if you smooth the points down. The smoothing amount is in meters, and will remove points that are within that distance of each other.",
-        placement:"bottom",
-        trigger:"hover"})
-    .attr('disabled',true);
-
     $("#prioritize-reverse").click(create_aois.reversePriorities);
+
+    $("#show-geojson-textarea").click(function(){
+        $("#geojson-textarea").show();
+        $("#show-geojson-textarea").hide();
+    });
 
     create_aois.initializeFileUploads();
 };
@@ -235,15 +301,15 @@ create_aois.mapInit = function(map) {
         var $usng = $("#option_usng");
         var $mgrs = $("#option_mgrs");
         var $poly = $("#option_polygon");
-        if (zoom > 9){
+        if (zoom > 8){
             $usng.attr('disabled', false).text('USNG Cells (US only)');
             $mgrs.attr('disabled', false).text('MGRS Cells');
         } else {
             if ($usng.hasClass("active") || $mgrs.hasClass("active")){
                 $poly.click();
             }
-            $usng.attr('disabled', true).text('Zoom within US to use USNG/MGRS');
-            $mgrs.attr('disabled', true).text('Zoom');
+            $usng.attr('disabled', true).text('Zoom in to use USNG/MGRS');
+            $mgrs.attr('disabled', true).text('>');
         }
     });
 
@@ -254,18 +320,13 @@ create_aois.mapInit = function(map) {
         if (type === 'rectangle' || type === 'circle' || type === 'polygon-undefined' ) {
             if (create_aois.draw_method=="polygon") {
                 //Using free-form polygon
-                var x = parseInt($("#split_wide").val());
-                var y = parseInt($("#split_high").val());
-
-                var geoJSON;
-                if (x>1 || y>1) {
-                    geoJSON = create_aois.splitPolygonsIntoSections(layer, x, y);
-                } else {
-                    geoJSON = create_aois.turnPolygonsIntoMultis(layer);
-                }
+                var geoJSON = create_aois.turnPolygonsIntoMultis(layer);
+                create_aois.last_polygon_drawn = layer;
 
                 var data = {"type":"FeatureCollection","features":geoJSON};
-                create_aois.createWorkCellsFromService(data);
+                create_aois.last_polygon_workcells = create_aois.createWorkCellsFromService(data);
+
+                $('#poly_split_button').attr('disabled',false);
             } else {
                 //Using USNG or MGRS
                 create_aois.update_info("Requesting Grid Information from the server");
@@ -308,14 +369,15 @@ create_aois.mapInit = function(map) {
     _.each([1,2,3,4,5],function(num){
         var helpText = create_aois.helpText[num];
         var $btn = $("<button>")
-            .text('Priority '+num+' : '+helpText+' (0)')
+            .text('Pri '+num+' : '+helpText+' (0)')
             .attr({id:'priority-map-'+num})
-            .css('width','150px')
+            .css('width','155px')
             .popover({
                 title:'Set Priority',
                 content:'The next cells you draw will have a priority of '+num+' ('+helpText+')',
                 trigger:'hover',
-                placement:'bottom'
+                placement:'left',
+                container: 'body'
             });
 
         var help_control = new L.Control.Button({
@@ -349,21 +411,7 @@ create_aois.mapInit = function(map) {
 
 };
 
-create_aois.splitPolygonsIntoSections = function(layer,x,y){
-    x = (x<1)?1:x;
-    y = (y<1)?1:y;
-
-    var layer_poly = {type:'Polygon',coordinates:[[]]};
-    var cs = layer.getLatLngs();
-    _.each(cs,function(c){
-       layer_poly.coordinates[0].push([c.lng, c.lat]);
-    });
-
-    //When checking if cells are in a poly, check cells be subdividing by this amount
-    var tessalationCheckAmount = 3;
-    if (x>6 && y>6) tessalationCheckAmount = 2;
-    if (x>10 && y>10) tessalationCheckAmount = 1;
-
+create_aois.splitPolygonsIntoSections = function(layer, num, splitIntoSized){
     var bounds = layer.getBounds();
     var left = bounds.getWest();
     var right = bounds.getEast();
@@ -371,11 +419,49 @@ create_aois.splitPolygonsIntoSections = function(layer,x,y){
     var south = bounds.getSouth();
     var width = right-left;
     var height = north-south;
+    var slope = width/height;
+
+    //Build an object that will be used for interior checking of points
+    var layer_poly = {type:'Polygon',coordinates:[[]]};
+    var cs = layer.getLatLngs();
+    _.each(cs,function(c){
+       layer_poly.coordinates[0].push([c.lng, c.lat]);
+    });
+
+    var x = 1;
+    var y = 1;
+
+    if (splitIntoSized){
+        //Divide by size of earth/meters
+        x = parseInt(width * 111111.111 / num);
+        y = parseInt(height * 111111.111 / num); //TODO: use COS to
+    } else {
+        //Determine what percentage of the poly is filled
+        var fillPercentage=create_aois.determine_poly_fill_percentage(layer_poly, left, south, width, height);
+
+        //Use the fillPercentage to determine how much of the target numbers should be grown
+        num = num / fillPercentage;
+
+        //Figure out how many x and y rows should be tried
+        x = parseInt(Math.sqrt(num*slope));
+        y = Math.round(num/x);
+    }
+
+    //Clamp to be between 1 and 40k work cells
+    x = (x<1)?1:x>200?200:x;
+    y = (y<1)?1:y>200?200:y;
+
+    //When checking if cells are in a poly, check cells be subdividing by this amount
+    var tessalationCheckAmount = 3;
+    if ((x*y)>50) tessalationCheckAmount = 2;
+    if ((x*y)>150) tessalationCheckAmount = 1;
+
     var x_slice = width/x;
     var y_slice = height/y;
 
+    //Build the cells and remove ones that aren't in the original polygon
     var layers = [];
-    var id_root = "handmade."+parseInt(Math.random()*1000000);
+    var id_root = "handmade."+parseInt(Math.random()*100000000);
     for (var x_num=0; x_num<x; x_num++ ){
         for (var y_num=0; y_num<y; y_num++ ){
             var id = id_root+"_"+x_num+"_"+y_num;
@@ -393,9 +479,10 @@ create_aois.splitPolygonsIntoSections = function(layer,x,y){
                 [l1,t0]
             ];
 
-            var isBoxInPoly=false;
-            if (x >4 && y >4) {
+            var isBoxInPoly=true;
+            if ((fillPercentage<1) || (x >3 && y >3)) {
                 //If it's a lot of boxes, test each one
+                isBoxInPoly=false;
 
                 //Break each box into smaller points and check the corners as well as those points to see if it's in the poly
                 var coordsToCheck = _.clone(coords);
@@ -408,11 +495,14 @@ create_aois.splitPolygonsIntoSections = function(layer,x,y){
                     }
                 }
 
-                _.each(coordsToCheck,function(coord){
-                    if (!isBoxInPoly && gju.pointInPolygon({coordinates:coord},layer_poly)) {
+                for(var c=0;c<coordsToCheck.length;c++){
+                    var coord = coordsToCheck[c];
+                    if (gju.pointInPolygon({coordinates:coord},layer_poly)) {
                         isBoxInPoly = true;
+                        break;
                     }
-                });
+                }
+
             } else {
                 isBoxInPoly = true;
             }
@@ -429,6 +519,29 @@ create_aois.splitPolygonsIntoSections = function(layer,x,y){
     }
 
     return layers;
+};
+create_aois.determine_poly_fill_percentage = function(layer_poly, left, south, width, height){
+    //Determine what percentage of the poly is filled
+    var fillPercentage;
+    var coordsToCheck = [];
+    var slices=22;
+    for (var x_num=1; x_num<(slices-1); x_num++ ){
+        for (var y_num=1; y_num<(slices-1); y_num++ ){
+            var l = left+((width/slices)*x_num);
+            var t = south+((height/slices)*y_num);
+            coordsToCheck.push([l,t]);
+        }
+    }
+    var fillNum = 0;
+    for(var c=0;c<coordsToCheck.length;c++){
+        var coord = coordsToCheck[c];
+        if (gju.pointInPolygon({coordinates:coord},layer_poly)) fillNum++;
+    }
+    fillPercentage = fillNum/((slices-2)*(slices-2))-.02;
+    log.log((fillPercentage*100)+"% filled polygon drawn");
+    fillPercentage = fillPercentage<.2?.2:fillPercentage>.97?1:fillPercentage;
+
+    return fillPercentage;
 };
 
 create_aois.turnPolygonsIntoMultis = function(layers){
@@ -490,15 +603,25 @@ create_aois.styleFromPriority = function(feature){
 
 create_aois.highlightFeature = function(e) {
     var layer = e.target;
-    layer.setStyle({
-        color: create_aois.colors[0],
-        weight: 3,
-        opacity: 1,
-        fillOpacity: 1,
-        fillColor: create_aois.colors[0]
-    });
-
-    create_aois.update_info(layer.popupContent);
+    if (create_aois.highlightMode == 'delete'){
+        if (layer.setStyle){
+            layer.setStyle({
+                color: create_aois.colors[0],
+                weight: 3,
+                opacity: 1,
+                fillOpacity: 1,
+                fillColor: create_aois.colors[0]
+            });
+        } else {
+            if (layer._icon){
+                layer.oldIcon = layer._icon.getAttribute('src');
+                layer.setIcon(L.icon({iconUrl: "/static/leaflet/images/red-marker-icon.png"}));
+            }
+        }
+    }
+    if (layer.popupContent){
+        create_aois.update_info(layer.popupContent);
+    }
 };
 
 create_aois.update_info=function(html){
@@ -510,10 +633,16 @@ create_aois.update_info=function(html){
 create_aois.resetHighlight = function(e) {
     var layer = e.target;
 
-    var style = create_aois.styleFromPriority(layer.feature);
-    layer.setStyle(style);
+    if (layer.setStyle){
+        var style = create_aois.styleFromPriority(layer.feature);
+        layer.setStyle(style);
+    } else {
+        if (layer.oldIcon){
+            layer.setIcon(L.icon({iconUrl: layer.oldIcon}));
+        }
+    }
 
-    create_aois.$feature_info.html("");
+    create_aois.update_info("");
 };
 
 create_aois.removeFeature = function(e) {
@@ -525,7 +654,7 @@ create_aois.removeFeature = function(e) {
     create_aois.updateCellCount();
 };
 
-create_aois.createWorkCellsFromService = function(data,zoomAfter){
+create_aois.createWorkCellsFromService = function(data,zoomAfter,saveLayerTo){
 
     data.features = create_aois.turnPolygonsIntoMultis(data.features || data);
 
@@ -548,7 +677,7 @@ create_aois.createWorkCellsFromService = function(data,zoomAfter){
             }
             feature.priority = feature.properties.priority = parseInt(feature.properties.priority) || create_aois.priority_to_use;
             for(var k in feature.properties){
-                if (key!="priority"){
+                if (k!="priority"){
                     popupContent += "<b>"+k+":</b> " + feature.properties[k]+"<br/>";
 
                     //Add fields to search if they are numeric
@@ -560,6 +689,22 @@ create_aois.createWorkCellsFromService = function(data,zoomAfter){
                 }
             }
 
+            //Add Size information
+            if (layer.getBounds){
+                var bounds = layer.getBounds();
+                bounds._northWest = new L.LatLng(bounds._northEast.lat,bounds._southWest.lng);
+                var width_m = bounds._northEast.distanceTo(bounds._northWest);
+                var height_m = bounds._southWest.distanceTo(bounds._northWest);
+                popupContent += "<b>Width:</b>: "+L.GeometryUtil.readableDistance(width_m, true)+"<br/>";
+                popupContent += "<b>Height:</b>: "+L.GeometryUtil.readableDistance(height_m, true)+"<br/>";
+                try{
+                    var area = L.GeometryUtil.geodesicArea(layer.getLatLngs()[0]);
+                    if (area>990){
+                        area = area/1000;
+                        popupContent += "<b>Area:</b>: "+L.GeometryUtil.readableDistance(area, true)+" sq<br/>";
+                    }
+                } catch (ex){}
+            }
             layer.popupContent = popupContent;
 
             layer.on({
@@ -582,6 +727,11 @@ create_aois.createWorkCellsFromService = function(data,zoomAfter){
     create_aois.updateCellCount();
     create_aois.redrawStyles();
 
+    create_aois.buildFilterDropdown();
+
+    return features;
+};
+create_aois.buildFilterDropdown = function(){
     var $prioritizeSelector = $('#prioritize-selector').empty();
     if (create_aois.data_fields_obj){
         $('<option>')
@@ -599,10 +749,50 @@ create_aois.createWorkCellsFromService = function(data,zoomAfter){
             .appendTo($prioritizeSelector);
     }
 };
+create_aois.turnPointsToPolys = function(sizeWidth) {
+    var geoJSONFeatures = [];
+
+    var m = create_aois.map_object;
+    if (m && (m._container.id == 'map') && (m.hasLayer(create_aois.aois))){
+        var sizer = sizeWidth/111111.11 / 2;
+
+        _.each(m._layers, function(layer){
+            var feature = layer.feature;
+            if (feature && feature.geometry && feature.geometry.type == "Point"){
+
+                var geoJSON;
+                if (layer && layer.toGeoJSON) {
+                    geoJSON = layer.toGeoJSON();
+                } else {
+                    geoJSON = layer || {};
+                }
+                if (!geoJSON.id) geoJSON.id = "handmade."+parseInt(Math.random()*1000000);
+                geoJSON.geometry_name = "the_geom";
+                geoJSON.properties = geoJSON.properties || {};
+                geoJSON.properties = _.extend(geoJSON.properties,{priority:create_aois.priority_to_use});
+                if (geoJSON.geometry.type == "Point") {
+                    geoJSON.geometry.type = "MultiPolygon";
+                    var pointCoords = geoJSON.geometry.coordinates;
+                    var square = [[pointCoords[0]-sizer,pointCoords[1]-sizer],
+                                  [pointCoords[0]-sizer,pointCoords[1]+sizer],
+                                  [pointCoords[0]+sizer,pointCoords[1]+sizer],
+                                  [pointCoords[0]+sizer,pointCoords[1]-sizer],
+                                  [pointCoords[0]-sizer,pointCoords[1]-sizer]];
+                    geoJSON.geometry.coordinates = [[square]];
+                }
+                geoJSONFeatures.push(geoJSON);
+
+                m.removeLayer(layer);
+            }
+        })
+    }
+    return geoJSONFeatures;
+};
 
 create_aois.updateCellCount = function() {
     var aoi_count = 0;
     var counts = [0,0,0,0,0,0];
+    //TODO: Have a count for points?
 
     _.each(create_aois.aois._layers,function(layergroup){
         if (layergroup && layergroup._layers){
@@ -635,6 +825,8 @@ create_aois.updateCellCount = function() {
 };
 
 create_aois.removeAllFeatures = function () {
+    create_aois.data_fields_obj = {};
+    create_aois.buildFilterDropdown();
     var m = create_aois.map_object;
     if (m && (m._container.id == 'map') && (m.hasLayer(create_aois.aois))){
         _.each(m._layers, function(l){
@@ -773,11 +965,11 @@ create_aois.setAllCellsTo = function (num){
 };
 
 create_aois.smoothWorkCells = function(shape_layers){
-    var smooth_num = parseInt($('#simplify_polys').val());
+    var smooth_num = parseInt($('#holder_smooth_num').val());
     if (!smooth_num) smooth_num = 500;
 
     //Convert meters to Lat/Long smoothing ratio
-    //1 Longitude (at 48-Lat) ~= 75000m, 1 Latitude ~= 110000m, so using 80km as 1
+    //1 Longitude (at 48-Lat) ~= 75000m, 1 Latitude ~= 111111m, so using 80km as 1
     smooth_num = smooth_num/80000;
 
     _.each(shape_layers._layers,function(layer){
@@ -804,11 +996,12 @@ create_aois.smoothWorkCells = function(shape_layers){
 
 create_aois.initializeFileUploads = function(){
     var holder = document.getElementById('file_holder');
-    var $holder = $(holder).popover({
+    var $holder = $('#file_holder').popover({
         title:"Drag zipped shapefile here",
-        content:"You can drag a .zip or .shp file here. All polygons/multipolygons within will be created as work cells. Please make files as small as possible.",
+        content:"You can drag a .zip or .shp file here. All polygons/multipolygons within will be created as work cells. Please make files as small as possible (<5mb).",
         trigger: "hover",
-        placement: "Bottom"
+        placement: "bottom",
+        container: 'body'
     });
 
     if (typeof window.FileReader === 'undefined') {
@@ -826,8 +1019,22 @@ create_aois.initializeFileUploads = function(){
       var file = e.dataTransfer.files[0], reader = new FileReader();
 
       reader.onload = function (event) {
+          var size = "";
+          if (event.loaded){
+              var kb = event.loaded/1024;
+              if (kb>1000) {
+                  kb = kb/1024;
+                  kb = parseInt(kb*10)/10;
+                  size = kb + " mb";
+              } else {
+                  kb = parseInt(kb*10)/10;
+                  size = kb + " kb";
+              }
+              $holder.text(size + " file loaded");
+          }
+
           $holder.css({backgroundColor:''});
-          create_aois.update_info("Importing Shapes");
+          create_aois.update_info("Importing Shapes: "+size);
 
           shp(reader.result).then(function(geojson){
               create_aois.createWorkCellsFromService(geojson,true);
@@ -836,7 +1043,8 @@ create_aois.initializeFileUploads = function(){
           },function(a){
               log.log(a);
           });
-          $("#simplify_btn").attr('disabled',false);
+          $('#file_holder_edit_btn').attr('disabled',false);
+
       };
       reader.readAsArrayBuffer(file);
 

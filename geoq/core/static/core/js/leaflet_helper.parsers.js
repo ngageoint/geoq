@@ -130,6 +130,11 @@ leaflet_helper.constructors.geojson = function(layerConfig, map, useLayerInstead
         outputLayer.geojson_layer_count = layerConfig.geojson_layer_count;
     }
 
+    if (outputLayer && !outputLayer.options) {
+        outputLayer.options = {};
+    }
+    outputLayer.options.opacity = 1;
+
     var url = leaflet_helper.constructors.urlTemplater(layerConfig.url, map, layerConfig.layerParams);
     var proxiedURL = leaflet_helper.proxify(url);
 
@@ -177,6 +182,10 @@ leaflet_helper.constructors.geojson_success = function (data, proxiedURL, map, o
     if (outputLayer) {
         leaflet_helper.update_tree_title(outputLayer);
     }
+    if (outputLayer && !outputLayer.options) {
+        outputLayer.options = {};
+    }
+    outputLayer.options.opacity = 1;
 
     return outputLayer;
 };

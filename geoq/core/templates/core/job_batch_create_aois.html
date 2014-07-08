@@ -16,11 +16,15 @@
             margin-left: 0;
         }
         #poly_split_holder {
-            margin-left: 40px;
+            font-size: 10px;
+            margin-left: 15px;
+        }
+        #file_uploader_holder {
+            font-size: 10px;
         }
 
         #poly_split_holder input {
-            width:20px;
+            width:34px;
             margin-bottom: 0;
             text-align: center;
             height: 14px;
@@ -33,16 +37,16 @@
         }
         #file_holder {
             border: 7px dashed #ccc;
-            width: 130px;
+            width: 100px;
             height: 12px;
-            font-size: 10px;
+            font-size: 9px;
             text-align: center;
             font-weight: bold;
             line-height: 1em;
             display: inline-block;
-            margin-left: 20px;
+            margin-left: 15px;
         }
-        #file_holder.hover {
+        #file_holder:hover {
             border: 7px dashed #333;
         }
         .feature_info {
@@ -51,6 +55,22 @@
             border-radius: 4px;
             max-height: 400px;
             padding: 2px;
+        }
+        #poly_split_holder input#split_sized {
+            width: 50px;
+            text-align: right;
+            padding: 7px 2px;
+        }
+        #holder_smooth_polys input#holder_smooth_num {
+            width: 30px;
+            text-align: right;
+            padding: 7px 2px;
+        }
+
+        #holder_points_polys input#holder_points_polys_num {
+            width: 30px;
+            text-align: right;
+            padding: 7px 2px;
         }
 
     </style>
@@ -85,16 +105,28 @@
         Draw using:
         <button class="btn active" id="option_usng">USNG Cells (US only)</button>
         <button class="btn" id="option_mgrs">MGRS Cells</button>
-        <button class="btn" id="option_polygon">Any Sized Polygons</button>
-        <button class="btn" id="option_shapefile">Drag in a Shape File</button>
+        <button class="btn" id="option_polygon">Draw cells</button>
+        <button class="btn" id="option_shapefile">Drag in Shape File</button>
     </div>
 
     <div style="display:none" id="poly_split_holder">
-        Split polygon into <input type="text" id="split_wide" value="5"/> by <input type="text" id="split_high" value="5"> cells
+        <select id="poly_split_holder_select" style="width: inherit; margin-bottom: 0px;">
+            <option value="n_cells">Split polygon into</option>
+            <option value="n_sized_cells">Split polygon by</option>
+        </select>
+        <span id="poly_split_n_cells">approx <input type="text" id="split_number" value="100" /> cells</span>
+        <span id="poly_split_n_sized_cells" style="display: none;"><input type="text" id="split_sized" value="1000" />-sq-meter cells</span>
+        <button id="poly_split_button" class="btn btn-success" disabled="true">Split</button>
     </div>
     <div style="display:none" id="file_uploader_holder">
         <div id="file_holder">Drag shapefile here</div>
-        <input type="text" id="simplify_polys" value="500m"/><button id="simplify_btn" class="btn btn-success">Smooth Polys</button>
+        <select id="file_holder_select" style="width: inherit; margin-bottom: 0px;">
+            <option value="holder_smooth">Smooth polygons</option>
+            <option value="holder_points">Turn points into</option>
+        </select>
+        <span id="holder_smooth_polys"> every <input type="text" id="holder_smooth_num" value="500"/>m </span>
+        <span id="holder_points_polys" style="display: none;"><input type="text" id="holder_points_polys_num" value="100"/>-sq-m cells</span>
+        <button id="file_holder_edit_btn" class="btn btn-success" disabled="true">Update</button>
     </div>
 
     <div id="map" class="thumbnail" style="height: 500px; width: 100%;">{% leaflet_map "map" %}</div>
@@ -130,9 +162,13 @@
 
     <div class="row">
         <hr/>
-        Work Cell detailed data (copy and paste this to tweak or export):</br>
-        <textarea id="current-aois" class="cell-data">{"message":"No cells entered"}</textarea>
-        <btn id="reset-from-textarea-button" class="btn btn-info">Reset all cells based on text above</btn>
+        <btn id="show-geojson-textarea" class="btn">Click to show detailed geojson of work cells</btn>
+        <div id="geojson-textarea" style="display: none">
+            Work Cells (copy and paste the geojson text below to tweak or export cell details):<br/>
+            <textarea id="current-aois" class="cell-data">{"message":"No cells entered"}</textarea>
+            <btn id="reset-from-textarea-button" class="btn btn-info">Reset all cells based on text above</btn>
+        </div>
+
     </div>
 
     </div>

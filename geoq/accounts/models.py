@@ -78,30 +78,30 @@ class UserProfile(UserenaBaseProfile):
         if self.email != self.user.email:
             self.email = self.user.email
 
-        domain = self.email.split('@')[1]
-        if self.organization:
-            accepted_domains = [x['email_domain'] for x in self.organization.emaildomain_set.values('email_domain')]
-            if domain and domain not in accepted_domains:
-                    raise ValidationError('User email domain must be in \
-                        Organization domain options. Please add to the \
-                        Organization record OR add a new Organization. Changes \
-                        to this record were not saved. ')
-        else:
-            # If the user doesn't have an org, but they have an email
-            # assign them an organization.
-            try:
-                email_domain = EmailDomain.objects.get(email_domain=domain)
-                org = email_domain.org
-
-                if org:
-                    if self.organization != org:
-                        self.organization = org
-
-            except EmailDomain.DoesNotExist:
-                raise ValidationError('There is no organization in the database \
-                    with the email domain of %s. Please add one before continuing \
-                    . Changes to this record were not saved.'
-                    % domain)
+        # domain = self.email.split('@')[1]
+        # if self.organization:
+        #     accepted_domains = [x['email_domain'] for x in self.organization.emaildomain_set.values('email_domain')]
+        #     if domain and domain not in accepted_domains:
+        #             raise ValidationError('User email domain must be in \
+        #                 Organization domain options. Please add to the \
+        #                 Organization record OR add a new Organization. Changes \
+        #                 to this record were not saved. ')
+        # else:
+        #     # If the user doesn't have an org, but they have an email
+        #     # assign them an organization.
+        #     try:
+        #         email_domain = EmailDomain.objects.get(email_domain=domain)
+        #         org = email_domain.org
+        #
+        #         if org:
+        #             if self.organization != org:
+        #                 self.organization = org
+        #
+        #     except EmailDomain.DoesNotExist:
+        #         raise ValidationError('There is no organization in the database \
+        #             with the email domain of %s. Please add one before continuing \
+        #             . Changes to this record were not saved.'
+        #             % domain)
 
 
 class UserAuthorization(models.Model):
