@@ -22,6 +22,12 @@ def menu(active=None, request_path=None, request_user=None):
     if(request_user.groups.filter(name='admin_group') or request_user.is_superuser):
         help_dropdown['View Feedback'] = {'index':3, 'url': reverse_lazy('feedback-list'), 'active': False}
 
+    users_dropdown = {
+        'Users': {'index': 1, 'url': reverse_lazy('userena_profile_list'), 'active': False},
+        'Messages': {'index': 2, 'url': '/messages/', 'active': False},
+    }
+    menu_users = {'Users': {'index': 5, 'url': '#', 'active': False, 'dropdown' : order_dict(users_dropdown, sort_key)}}
+
     maps_dropdown = {
         'Maps': {'index': 1, 'url': reverse_lazy('map-list'), 'active': False},
         'Layers': {'index': 2, 'url': reverse_lazy('layer-list'), 'active': False},
@@ -37,6 +43,7 @@ def menu(active=None, request_path=None, request_user=None):
     if(request_user.groups.filter(name='admin_group') or request_user.is_superuser):
         menu_items.update(menu_maps)
 
+    menu_items.update(menu_users)
     menu_items.update(menu_help)
 
     if request_path:

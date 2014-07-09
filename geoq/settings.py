@@ -216,6 +216,7 @@ INSTALLED_APPS = (
     'guardian',
     'easy_thumbnails',
     'userena',
+    'userena.contrib.umessages',
     'bootstrap_toolkit',
     'django_select2',
     'leaflet',
