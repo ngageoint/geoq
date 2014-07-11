@@ -196,9 +196,9 @@ class ShpResponder(object):
 
         # This builds the array twice. It's duplicative, but works
         if content_type == 'points':
-            self.add_features_subset_to_shapefile(ds, features_polys, "Polygon Features")
-        else:
             self.add_features_subset_to_shapefile(ds, features_points, "Point Features")
+        else:
+            self.add_features_subset_to_shapefile(ds, features_polys, "Polygon Features")
 
     def add_features_subset_to_shapefile(self, ds, features, layer_name):
         if len(features) == 0:
