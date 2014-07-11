@@ -336,7 +336,8 @@ leaflet_layer_control.show_feature_info = function (feature) {
 
     var editableUrl = '/geoq/api/feature/update/'+feature.properties.id;
 
-    var feature_note = "Click here to add a note to this feature";
+    var feature_note_original = "Click here to add a note to this feature";
+    var feature_note = feature_note_original;
     $.each(feature.properties, function(index, value) {
 
         var skipIt = false;
@@ -408,7 +409,7 @@ leaflet_layer_control.show_feature_info = function (feature) {
         .attr('id','feature_note')
         .html(feature_note)
         .appendTo($content)
-        .editable(editableUrl);
+        .editable(editableUrl, {select : true});
 
 };
 leaflet_layer_control.show_info = function (objToShow, node) {
@@ -937,3 +938,21 @@ leaflet_layer_control.toggleDrawer = function() {
     }
     setTimeout(aoi_feature_edit.mapResize, 400);
 };
+
+function selectText(element) {
+    var doc = document
+        , text = doc.getElementById(element)
+        , range, selection
+    ;
+    if (doc.body.createTextRange) { //ms
+        range = doc.body.createTextRange();
+        range.moveToElementText(text);
+        range.select();
+    } else if (window.getSelection) { //all others
+        selection = window.getSelection();
+        range = doc.createRange();
+        range.selectNodeContents(text);
+        selection.removeAllRanges();
+        selection.addRange(range);
+    }
+}
