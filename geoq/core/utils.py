@@ -24,4 +24,8 @@ def send_aoi_create_event(user, aoi_id, aoi_feature_count):
         }}
         headers = {'Content-type': 'application/json'}
 
-        r = requests.post(url, data=json.dumps(payload), headers=headers, timeout=5)
+        try:
+            r = requests.post(url, data=json.dumps(payload), headers=headers, timeout=5)
+        except requests.exceptions.ConnectionError as e:    # This is the correct syntax
+            r = "No response"
+

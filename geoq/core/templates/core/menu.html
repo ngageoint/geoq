@@ -12,9 +12,13 @@
         var badge_container = $("#badge-container");
         if ( user != undefined && user.length > 0 && host && project) {
             var badgeUrl = host + '/users/' + user + '/projects/' + project + '/badges';
+
+            var proxiedURL = "/geoq/proxy/" + encodeURI(badgeUrl);
+            proxiedURL = proxiedURL.replace(/%253D/g,'%3D');
+
             $.ajax({
                 type: 'GET',
-                url: badgeUrl,
+                url: proxiedURL,
                 dataType: 'json',
                 timeout: 3000,
                 success: function (badges, textstatus, jqXHR) {

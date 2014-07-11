@@ -874,30 +874,38 @@ aoi_feature_edit.buildDropdownMenu = function() {
 
     for (var i=0; i<leaflet_layer_control.finish_options.length; i++) {
         var opt = leaflet_layer_control.finish_options[i];
-        var title = "";
-        var url = "";
+        var $li;
 
         if (opt=='awaitingreview'){
-            title = "Submit for Review";
-            url = aoi_feature_edit.awaitingreview_status_url;
+            $li = $("<li>")
+                .appendTo($ull);
+            $("<a>")
+                .appendTo($li)
+                .text("Submit for Review")
+                .click(function(){
+                    aoi_feature_edit.complete_button_onClick(aoi_feature_edit.awaitingreview_status_url);
+                });
         } else if (opt=='unassigned'){
-            title = "Return for further analysis";
-            url = aoi_feature_edit.unassigned_status_url;
+            $li = $("<li>")
+                .appendTo($ull);
+            $("<a>")
+                .appendTo($li)
+                .text("Return for further analysis")
+                .click(function(){
+                    aoi_feature_edit.complete_button_onClick(aoi_feature_edit.unassigned_status_url);
+                });
         } else if (opt=='completed'){
-            title = "Certify as complete";
-            url = aoi_feature_edit.completed_status_url;
+            $li = $("<li>")
+                .appendTo($ull);
+            $("<a>")
+                .appendTo($li)
+                .text("Certify as complete")
+                .click(function(){
+                    aoi_feature_edit.complete_button_onClick(aoi_feature_edit.completed_status_url);
+                });
         } else {
             //Unrecognized input
-            continue;
         }
-        var $li = $("<li>")
-            .appendTo($ull);
-        $("<a>")
-            .appendTo($li)
-            .text(title)
-            .click(function(){
-                aoi_feature_edit.complete_button_onClick(url);
-            });
     }
     $div.dropdown();
 
@@ -906,7 +914,7 @@ aoi_feature_edit.buildDropdownMenu = function() {
 aoi_feature_edit.complete_button_onClick = function(url) {
     $.ajax({
         type: "POST",
-        url: url || aoi_feature_edit.finishUrl,
+        url: url || aoi_feature_edit.awaitingreview_status_url,
         dataType: "json",
         success: function (response) {
             BootstrapDialog.show({
@@ -924,6 +932,16 @@ aoi_feature_edit.complete_button_onClick = function(url) {
                     }
                 }]
             });
+        },
+        error: function (response) {
+            log.error(response);
+            if (response.status==500){
+                geoq.redirect(aoi_feature_edit.job_absolute_url);
+            }else {
+                $("#finish-button-dropdown")
+                    .css({color:'red'})
+                    .text("Server Error");
+            }
         }
     });
 };
