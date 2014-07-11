@@ -246,7 +246,7 @@ leaflet_layer_control.addWorkCellInfo = function($accordion) {
         .attr('id','workcell_note')
         .html(workcell_note)
         .appendTo($content)
-        .editable(editableUrl);
+        .editable(editableUrl, {select:true});
 
     // add function buttons
     var $submitDiv = $('<div>')
