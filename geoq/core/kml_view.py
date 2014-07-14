@@ -177,7 +177,7 @@ class JobKML(ListView):
             if '<Polygon><outerBoundaryIs><LinearRing><coordinates>' in kml:
                 add_text = '<altitudeMode>clampToGround</altitudeMode>'
                 kmls = kml.split('<coordinates>')
-                kml = '<LinearRing>' + add_text + '<coordinates>' + kmls[1]
+                kml = '<LinearRing><tessellate>1</tessellate>' + add_text + '<coordinates>' + kmls[1]
                 kml = kml.replace('</outerBoundaryIs></Polygon></MultiGeometry>', '')
 
             output += '    <Placemark>\n'
@@ -229,7 +229,7 @@ class JobKMLNetworkLink(ListView):
         output += '      <open>1</open>\n'
         output += '      <description>'+description+'</description>\n'
         output += '      <refreshVisibility>0</refreshVisibility>\n'
-        output += '      <flyToView>0</flyToView>\n'
+        output += '      <flyToView>1</flyToView>\n'
         output += '      <Link>\n'
         output += '        <href>'+url+'</href>\n'
         output += '        <refreshInterval>90</refreshInterval>\n'  # Refresh every 1.5 min
