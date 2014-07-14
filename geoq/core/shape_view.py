@@ -138,7 +138,7 @@ class ShpResponder(object):
         native_srs = SpatialReference(geo_field.srid)
 
         # create the AOI layer
-        layer = lgdal.OGR_DS_CreateLayer(ds, 'Workcells', native_srs._ptr, ogr_type, None)
+        layer = lgdal.OGR_DS_CreateLayer(ds, 'lyr', native_srs._ptr, ogr_type, None)
 
         # Create the fields that each feature will have
         fields = AOI._meta.fields
@@ -196,9 +196,9 @@ class ShpResponder(object):
 
         # This builds the array twice. It's duplicative, but works
         if content_type == 'points':
-            self.add_features_subset_to_shapefile(ds, features_points, "Point Features")
+            self.add_features_subset_to_shapefile(ds, features_points, "lyr")
         else:
-            self.add_features_subset_to_shapefile(ds, features_polys, "Polygon Features")
+            self.add_features_subset_to_shapefile(ds, features_polys, "lyr")
 
     def add_features_subset_to_shapefile(self, ds, features, layer_name):
         if len(features) == 0:
