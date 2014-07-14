@@ -246,7 +246,7 @@ leaflet_layer_control.addWorkCellInfo = function($accordion) {
         .attr('id','workcell_note')
         .html(workcell_note)
         .appendTo($content)
-        .editable(editableUrl);
+        .editable(editableUrl, {select:true});
 
     // add function buttons
     var $submitDiv = $('<div>')
@@ -336,7 +336,8 @@ leaflet_layer_control.show_feature_info = function (feature) {
 
     var editableUrl = '/geoq/api/feature/update/'+feature.properties.id;
 
-    var feature_note = "Click here to add a note to this feature";
+    var feature_note_original = "Click here to add a note to this feature";
+    var feature_note = feature_note_original;
     $.each(feature.properties, function(index, value) {
 
         var skipIt = false;
@@ -362,13 +363,17 @@ leaflet_layer_control.show_feature_info = function (feature) {
                         html += "Posted by "+linked_item.user+"</br>";
                     }
                     if (linked_item.created_at) {
-                        html += "Linked on "+linked_item.created_at+"</br>";
+                        if (moment(linked_item.created_at).isValid()){
+                            html += "Linked "+moment(linked_item.created_at).calendar()+"</br>";
+                        } else {
+                            html += "Linked "+linked_item.created_at+"</br>";
+                        }
                     }
                     if (properties && properties.source) {
-                        html += "Posted from "+properties.source+"</br>";
+                        html += "From "+properties.source+"</br>";
                     }
                     if (properties && properties.id) {
-                        html += "Source ID: "+properties.id+"</br>";
+                        html += "Source ID: "+ _.str.truncate(properties.id,9)+"</br>";
                     }
                     if (properties && properties.thumbnail) {
                         html += "<img src='"+properties.thumbnail+"' width='100'><br/>";
@@ -379,9 +384,9 @@ leaflet_layer_control.show_feature_info = function (feature) {
                     var img = $('<div>')
                         .addClass('linked-item status_block')
                         .popover({
-                            title:'Linked Item',
+                            title:'Linked ' + properties.source + ' Item',
                             content:JSON.stringify(properties)||"No properties",
-                            trigger:'hover',
+                            trigger:'click',
                             placement:'right'
                         })
                         .html(html)
@@ -404,7 +409,7 @@ leaflet_layer_control.show_feature_info = function (feature) {
         .attr('id','feature_note')
         .html(feature_note)
         .appendTo($content)
-        .editable(editableUrl);
+        .editable(editableUrl, {select : true});
 
 };
 leaflet_layer_control.show_info = function (objToShow, node) {

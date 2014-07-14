@@ -12,9 +12,13 @@
         var badge_container = $("#badge-container");
         if ( user != undefined && user.length > 0 && host && project) {
             var badgeUrl = host + '/users/' + user + '/projects/' + project + '/badges';
+
+            var proxiedURL = "/geoq/proxy/" + encodeURI(badgeUrl);
+            proxiedURL = proxiedURL.replace(/%253D/g,'%3D');
+
             $.ajax({
                 type: 'GET',
-                url: badgeUrl,
+                url: proxiedURL,
                 dataType: 'json',
                 timeout: 3000,
                 success: function (badges, textstatus, jqXHR) {
@@ -68,7 +72,7 @@
                                 <li><a href="{% url 'admin:index' %}" target="_new">Admin Site</a></li>
                                 <li class="divider"></li>
                             {% endif %}
-                                <li><a href="{% url 'userena_profile_edit' %}">Edit Profile</a></li>
+                                <li><a href="{% url 'userena_profile_edit' request.user.username %}">Edit Profile</a></li>
                                 <li><a href="{% url 'userena_signout' %}">Sign Out</a></li>
                         {% else %}
                                 <li><a href="{% url 'userena_signin' %}?next={{ request.path }}">Sign In</a></li>

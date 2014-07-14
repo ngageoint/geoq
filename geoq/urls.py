@@ -19,4 +19,7 @@ urlpatterns = patterns('',
     # url(r'^badges/', include('geoq.badges.urls')),
     url(r'^accounts/', include('geoq.accounts.urls')),
 #    url(r'^accounts/', include('userena.urls')),
+
+    url(r'^messages/', include('userena.contrib.umessages.urls'), name='userena_messages'),
+
 ) + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

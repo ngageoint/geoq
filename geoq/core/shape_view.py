@@ -20,14 +20,23 @@ class JobAsShape(ListView):
 
     def get(self, request, *args, **kwargs):
         job_pk = self.kwargs.get('pk')
+        content_type = self.kwargs.get('type')
 
         try:
             shape_response = ShpResponder(job_pk=job_pk)
-            shape_out = shape_response()
+
+            if content_type == 'points':
+                shape_out = shape_response.points()
+            elif content_type == 'polygons':
+                shape_out = shape_response.polygons()
+            else:
+                shape_out = shape_response.work_cells()
+
         except Exception, e:
             import traceback
 
-            output = json.dumps(dict(message='Generic Exception', details=traceback.format_exc(), exception=str(e), last_data=shape_response.last_data))
+            output = json.dumps(dict(message='Generic Exception', details=traceback.format_exc(), exception=str(e),
+                                     last_data=shape_response.last_data))
             shape_out = HttpResponse(output, mimetype="application/json", status=200)
 
         return shape_out
@@ -40,13 +49,28 @@ class ShpResponder(object):
         self.geo_field = geo_field
         self.proj_transform = proj_transform
         self.mimetype = mimetype
-        self.file_name = smart_str('geoq_job_'+str(job_pk)+'_shapefile')
+        self.file_name = smart_str('geoq_job_' + str(job_pk) + '_shapefile')
         self.last_data = "Initialized"
         self.job_pk = job_pk
 
     def __call__(self, *args, **kwargs):
         tmp = self.write_shapefile_to_tmp_file()
         return self.zip_response(tmp, self.file_name, self.mimetype, self.readme)
+
+    def work_cells(self, *args, **kwargs):
+        tmp = self.write_shapefile_to_tmp_file('workcells')
+        file_name = smart_str('geoq_workcells_' + str(self.job_pk) + '_shapefile')
+        return self.zip_response(tmp, file_name, self.mimetype, self.readme)
+
+    def points(self, *args, **kwargs):
+        tmp = self.write_shapefile_to_tmp_file('points')
+        file_name = smart_str('geoq_points_' + str(self.job_pk) + '_shapefile')
+        return self.zip_response(tmp, file_name, self.mimetype, self.readme)
+
+    def polygons(self, *args, **kwargs):
+        tmp = self.write_shapefile_to_tmp_file('polygons')
+        file_name = smart_str('geoq_polygons_' + str(self.job_pk) + '_shapefile')
+        return self.zip_response(tmp, file_name, self.mimetype, self.readme)
 
     def zip_response(self, shapefile_path, file_name, mimetype, readme=None):
         buffer = StringIO()
@@ -70,17 +94,17 @@ class ShpResponder(object):
         response.write(zip_stream)
         return response
 
-    def write_shapefile_to_tmp_file(self):
+    def write_shapefile_to_tmp_file(self, content_type='workcells'):
         tmp = tempfile.NamedTemporaryFile(suffix='.shp', mode='w+b')
         # we must close the file for GDAL to be able to open and write to it
         tmp.close()
-        args = tmp.name, self.job_pk
+        args = tmp.name, self.job_pk, content_type
 
         self.write_geoq_shape(*args)
 
         return tmp.name
 
-    def write_geoq_shape(self, tmp_name, job_pk):
+    def write_geoq_shape(self, tmp_name, job_pk, content_type='workcells'):
         job_object = Job.objects.get(id=job_pk)
 
         # Get the shapefile driver
@@ -91,8 +115,10 @@ class ShpResponder(object):
         if ds is None:
             raise Exception('Could not create file!')
 
-        self.add_aois_to_shapefile(ds, job_object)
-        self.add_features_to_shapefile(ds, job_object)
+        if content_type == 'workcells':
+            self.add_aois_to_shapefile(ds, job_object)
+        else:
+            self.add_features_to_shapefile(ds, job_object, content_type)
 
         # Cleaning up
         lgdal.OGR_DS_Destroy(ds)
@@ -112,7 +138,7 @@ class ShpResponder(object):
         native_srs = SpatialReference(geo_field.srid)
 
         # create the AOI layer
-        layer = lgdal.OGR_DS_CreateLayer(ds, 'Workcells', native_srs._ptr, ogr_type, None)
+        layer = lgdal.OGR_DS_CreateLayer(ds, 'lyr', native_srs._ptr, ogr_type, None)
 
         # Create the fields that each feature will have
         fields = AOI._meta.fields
@@ -154,7 +180,7 @@ class ShpResponder(object):
 
         check_err(lgdal.OGR_L_SyncToDisk(layer))
 
-    def add_features_to_shapefile(self, ds, job_object):
+    def add_features_to_shapefile(self, ds, job_object, content_type):
         features = job_object.feature_set.all()
         if len(features) == 0:
             return
@@ -168,8 +194,11 @@ class ShpResponder(object):
             elif f.the_geom.geom_type == 'Polygon':
                 features_polys.append(f)
 
-        self.add_features_subset_to_shapefile(ds, features_polys, "Polygon Features")
-        self.add_features_subset_to_shapefile(ds, features_points, "Point Features")
+        # This builds the array twice. It's duplicative, but works
+        if content_type == 'points':
+            self.add_features_subset_to_shapefile(ds, features_points, "lyr")
+        else:
+            self.add_features_subset_to_shapefile(ds, features_polys, "lyr")
 
     def add_features_subset_to_shapefile(self, ds, features, layer_name):
         if len(features) == 0:

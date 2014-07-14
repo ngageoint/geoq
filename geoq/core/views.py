@@ -335,11 +335,7 @@ class ChangeAOIStatus(View):
             aoi = self._update_aoi(request, aoi, status)
             Comment(aoi=aoi,user=request.user,text='changed status to %s' % status).save()
 
-        try:
-            url = request.META['HTTP_REFERER']
-            return redirect(url)
-        except KeyError:
-            return redirect('/geoq/jobs/%s/' % aoi.job.id)
+        return HttpResponseRedirect('/geoq/jobs/%s/' % aoi.job.id)
 
     def post(self, request, **kwargs):
 
@@ -513,6 +509,7 @@ def update_feature_data(request, *args, **kwargs):
             link_info['user'] = str(request.user)
             properties_main_links.append(link_info)
             properties_main['linked_items'] = properties_main_links
+            value = json.dumps(link_info)
         elif attribute == 'priority':
             feature.priority = int(value)
             properties_main[attribute] = value

@@ -1014,7 +1014,7 @@ create_aois.initializeFileUploads = function(){
       this.className = '';
       e.preventDefault();
       create_aois.update_info("Loading File...");
-          $holder.css({backgroundColor:'lightgreen'});
+      $holder.css({backgroundColor:'lightgreen'});
 
       var file = e.dataTransfer.files[0], reader = new FileReader();
 

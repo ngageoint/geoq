@@ -66,8 +66,10 @@ Mac OSX Development Build Instructions::
 2. (Optional) Install a Geoserver (we recommend the OGC Geoserver at [https://github.com/geoserver](https://github.com/geoserver))
 
 3. Make sure Python, Virtualenv, and Git are installed
+
         % Note that some distros (Debian) might need additional libraries:
         % sudo apt-get build-dep python-psycopg2
+        % (optional) sudo apt-get install sendmail
 
 4. Install and setup geoq:
 
@@ -76,7 +78,7 @@ Mac OSX Development Build Instructions::
         % source ~/pyenv/geoq/bin/activate
         % git clone https://github.com/ngageoint/geoq
 
-5. Create the database and sync dependencies and data
+5. Create the database and sync dependencies and data:
 
         % cd geoq
         % pip install paver
@@ -84,6 +86,22 @@ Mac OSX Development Build Instructions::
         % paver createdb
         % paver create_db_user
         % paver sync
+
+6. Modify local settings (modify entries below based on your system settings):
+
+        % cd geoq
+        % cat > local_settings.py
+        
+          EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+          EMAIL_PORT = 25
+          EMAIL_HOST = "localhost"
+          DEFAULT_FROM_EMAIL = "geoq-alerts@server.com"
+          MEDIA_ROOT = '/opt/src/pyenv/geoq/geoq-django'
+          STATIC_URL_FOLDER = ''
+          STATIC_ROOT = '{0}{1}'.format('/usr/src/static/', STATIC_URL_FOLDER)
+          GAMIFICATION_SERVER = ''
+          GAMIFICATION_PROJECT = ''
+          GEOSERVER_WFS_JOB_LAYER = ''
 
 6. (Optional) Load development fixtures:
 
@@ -96,7 +114,7 @@ Mac OSX Development Build Instructions::
 8. Install less and add its folder ("type -p less") to your bash profile:
 
         % npm install -g less
-	    % python manage.py collectstatic
+        % python manage.py collectstatic
 
 9. Start it up!
 

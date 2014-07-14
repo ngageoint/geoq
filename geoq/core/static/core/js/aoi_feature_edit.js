@@ -478,9 +478,9 @@ aoi_feature_edit.map_init = function (map, bounds) {
 
             if (feature_to_link) {
                 var feature_from_link = aoi_feature_edit.draggingFeature;
-                var feature_id_from = feature_from_link.feature.properties.id;
+                var feature_id_from = feature_from_link.feature.properties.source + ' #' +_.str.truncate(feature_from_link.feature.properties.id, 6);
                 $text3
-                    .text('Link item #'+feature_id_from+' here')
+                    .text('Link: '+feature_id_from)
                     .on('click',function(){
 
                         $holder3.empty();
@@ -498,8 +498,16 @@ aoi_feature_edit.map_init = function (map, bounds) {
                             data: { id: 'add_link',
                                 value: json
                             },
-                            success: function(){console.log("Success")},
-                            error: function(){console.log("Error")},
+                            success: function(result){
+                                log.log("Success in linking image");
+                                var feature = feature_to_link.feature;
+                                feature.properties = feature.properties || {};
+                                feature.properties.linked_items = feature.properties.linked_items || [];
+                                feature.properties.linked_items.push(result);
+
+                                leaflet_layer_control.show_feature_info(feature);
+                            },
+                            error: function(){log.log("Error in linking image")},
                             dataType: "json"
                         });
 
@@ -866,30 +874,38 @@ aoi_feature_edit.buildDropdownMenu = function() {
 
     for (var i=0; i<leaflet_layer_control.finish_options.length; i++) {
         var opt = leaflet_layer_control.finish_options[i];
-        var title = "";
-        var url = "";
+        var $li;
 
         if (opt=='awaitingreview'){
-            title = "Submit for Review";
-            url = aoi_feature_edit.awaitingreview_status_url;
+            $li = $("<li>")
+                .appendTo($ull);
+            $("<a>")
+                .appendTo($li)
+                .text("Submit for Review")
+                .click(function(){
+                    aoi_feature_edit.complete_button_onClick(aoi_feature_edit.awaitingreview_status_url);
+                });
         } else if (opt=='unassigned'){
-            title = "Return for further analysis";
-            url = aoi_feature_edit.unassigned_status_url;
+            $li = $("<li>")
+                .appendTo($ull);
+            $("<a>")
+                .appendTo($li)
+                .text("Return for further analysis")
+                .click(function(){
+                    aoi_feature_edit.complete_button_onClick(aoi_feature_edit.unassigned_status_url);
+                });
         } else if (opt=='completed'){
-            title = "Certify as complete";
-            url = aoi_feature_edit.completed_status_url;
+            $li = $("<li>")
+                .appendTo($ull);
+            $("<a>")
+                .appendTo($li)
+                .text("Certify as complete")
+                .click(function(){
+                    aoi_feature_edit.complete_button_onClick(aoi_feature_edit.completed_status_url);
+                });
         } else {
             //Unrecognized input
-            continue;
         }
-        var $li = $("<li>")
-            .appendTo($ull);
-        $("<a>")
-            .appendTo($li)
-            .text(title)
-            .click(function(){
-                aoi_feature_edit.complete_button_onClick(url);
-            });
     }
     $div.dropdown();
 
@@ -898,7 +914,7 @@ aoi_feature_edit.buildDropdownMenu = function() {
 aoi_feature_edit.complete_button_onClick = function(url) {
     $.ajax({
         type: "POST",
-        url: url || aoi_feature_edit.finishUrl,
+        url: url || aoi_feature_edit.awaitingreview_status_url,
         dataType: "json",
         success: function (response) {
             BootstrapDialog.show({
@@ -916,6 +932,16 @@ aoi_feature_edit.complete_button_onClick = function(url) {
                     }
                 }]
             });
+        },
+        error: function (response) {
+            log.error(response);
+            if (response.status==500){
+                geoq.redirect(aoi_feature_edit.job_absolute_url);
+            }else {
+                $("#finish-button-dropdown")
+                    .css({color:'red'})
+                    .text("Server Error");
+            }
         }
     });
 };
