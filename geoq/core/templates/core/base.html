@@ -8,6 +8,8 @@
 <head>
     <meta charset="utf-8">
     <title>{% block title %}GeoQ{% endblock %}</title>
+
+    <script src="{{ STATIC_URL }}core/js/sjcl.js"></script>
     <style type="text/css">
         body {
             padding-top: 60px;
@@ -28,22 +30,9 @@
     <!--[if lt IE 9]>
     <script src="{{ STATIC_URL }}core/js/html5.js"></script>
     <![endif]-->
+
     {% compress js %}
-        <script src="{{ STATIC_URL }}core/js/sjcl.js"></script>
-        <script type="text/javascript">
-            window.browserRandom = Math.random();
-            var randomReplace = function() {
-                // generate two cryptographically secure words (32 bits)
-                // bitwise them together, scale them down to 0-1 inclusive
-                // Can be used to monkey patch Math.random
-                var rsrc = sjcl.random.randomWords(2);
-                var high =rsrc[0];
-                var low = rsrc[1];
-                var hpl = ((high & 0x1fffff) * 0x100000000) + low;
-                return hpl / 0x20000000000000;
-            }
-            Math.random = randomReplace;
-        </script>
+
         <script src="{{ STATIC_URL }}core/js/jquery.min.js"></script>
         <script src="{{ STATIC_URL }}core/js/jquery-ui.custom.js"></script>
         <script src="{{ STATIC_URL }}core/js/underscore-min.js"></script>
