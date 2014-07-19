@@ -23,7 +23,9 @@
                 timeout: 3000,
                 success: function (badge_info, textstatus, jqXHR) {
                     if ($badge_container && badge_info.profile && badge_info.profile.length ) {
-                        for (var i = 0; i < badge_info.profile.length; i++ ) {
+                        var maxBadgesToShow = 6;
+                        if (badge_info.profile.length < maxBadgesToShow) maxBadgesToShow = badge_info.profile.length;
+                        for (var i = 0; i < maxBadgesToShow; i++ ) {
                             var badge = badge_info.profile[i];
                             var $span = $('<span>')
                                     .attr('id','badge_header_'+ _.str.dasherize(badge.projectbadge__name))
@@ -43,6 +45,12 @@
                                     .text(badge.count)
                                     .appendTo($span);
                         }
+                        $badge_container
+                            .click(function(){
+                                window.open(host+'/projects/'+project+'/','_blank');
+                            })
+                            .css({cursor:'pointer'});
+
                         $badge_container.show();
                     } else {
                         $badge_container.append("None yet");
