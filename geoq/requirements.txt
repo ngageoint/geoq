@@ -21,3 +21,4 @@ requests==2.3.0
 six==1.4.1
 geojson==1.0.7
 pytz==2014.4
+webcolors==1.4

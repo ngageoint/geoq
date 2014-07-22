@@ -9,9 +9,9 @@
         var project = "{% gamification_value 'GAMIFICATION_PROJECT' %}";
         var user = "{{ request.user.username }}";
 
-        var badge_container = $("#badge-container");
+        var $badge_container = $("#badge-container");
         if ( user != undefined && user.length > 0 && host && project) {
-            var badgeUrl = host + '/users/' + user + '/projects/' + project + '/badges';
+            var badgeUrl = host + '/users/' + user + '/projects/' + project + '/badges?format=json';
 
             var proxiedURL = "/geoq/proxy/" + encodeURI(badgeUrl);
             proxiedURL = proxiedURL.replace(/%253D/g,'%3D');
@@ -21,25 +21,47 @@
                 url: proxiedURL,
                 dataType: 'json',
                 timeout: 3000,
-                success: function (badges, textstatus, jqXHR) {
-                    if (badge_container && badges.length > 0 ) {
-                        for (var i = 0; i < badges.length; i++ ) {
-                            badge_container.append("<img id='" + badges[i].name + "' src='" +
-                                    badges[i].url + "'></i>&nbsp;" + badges[i].awarded + " &nbsp;");
-                            //badge_container.append("<span style='background-image: url(" + badges[i].url + ")' class='badge-count' id='" + badges[i].name + "-count'><b>" +
-                            //        badges[i].awarded + "</b></span>");
+                success: function (badge_info, textstatus, jqXHR) {
+                    if ($badge_container && badge_info.profile && badge_info.profile.length ) {
+                        var maxBadgesToShow = 6;
+                        if (badge_info.profile.length < maxBadgesToShow) maxBadgesToShow = badge_info.profile.length;
+                        for (var i = 0; i < maxBadgesToShow; i++ ) {
+                            var badge = badge_info.profile[i];
+                            var $span = $('<span>')
+                                    .attr('id','badge_header_'+ _.str.dasherize(badge.projectbadge__name))
+                                    .attr('title',badge.projectbadge__name)
+                                    .popover({
+                                        title:badge.projectbadge__name + " ("+badge.count+")",
+                                        content:badge.projectbadge__description,
+                                        trigger:'hover',
+                                        placement:'bottom'
+                                    })
+                                    .addClass('badge_holder')
+                                    .appendTo($badge_container);
+                            $('<img>')
+                                    .attr('src',badge.projectbadge__badge__icon)
+                                    .appendTo($span);
+                            $('<span>')
+                                    .text(badge.count)
+                                    .appendTo($span);
                         }
-                        badge_container.show();
+                        $badge_container
+                            .click(function(){
+                                window.open(host+'/projects/'+project+'/','_blank');
+                            })
+                            .css({cursor:'pointer'});
+
+                        $badge_container.show();
                     } else {
-                        badge_container.hide();
+                        $badge_container.append("None yet");
                     }
                 },
-                error: function(){
-                    badge_container.hide();
+                error: function(xhr, err){
+                    $badge_container.hide();
                 }
             });
         } else {
-            badge_container.hide();
+            $badge_container.hide();
         }
     }
 

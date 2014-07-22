@@ -6,6 +6,7 @@ from geoq.maps.models import FeatureType
 from django.shortcuts import get_object_or_404
 from datetime import datetime
 from pytz import timezone
+from webcolors import name_to_hex, normalize_hex
 
 
 class JobKML(ListView):
@@ -87,17 +88,18 @@ class JobKML(ListView):
 
             if feature.style.has_key('color'):
                 color = feature.style['color']
-                #TODO: Maybe use webcolors and name_to_hex to convert color names to hex colors
-                if color == 'orange':
-                    color = '7f0066ff' # NOTE: 7f means Using 50% transparency, and switch hex colors around - ttbbggrr
-                if color == 'red':
-                    color = '7f0000ff'
-                if color == 'green':
-                    color = '7f00ff00'
-                if color == 'blue':
-                    color = '7fff000000'
+
+                #convert to a kml-recognized color
+                if color[0:1] == '#' and len(color) == 4:
+                    color = normalize_hex(color)
+                try:
+                    c = name_to_hex(color)
+                    out_color = '7f' + c[5:7] + c[3:5] + c[1:3]
+                except Exception:
+                    out_color = '7f0066ff'
+
                 output += '      <PolyStyle>\n'
-                output += '        <color>'+color+'</color>\n'
+                output += '        <color>'+out_color+'</color>\n'
                 output += '        <colorMode>normal</colorMode>\n'
                 output += '        <fill>1</fill>\n'
                 output += '        <outline>1</outline>\n'
@@ -157,7 +159,7 @@ class JobKML(ListView):
             output += '    <Placemark><name>'+template_name+'</name>\n'
             output += '      <TimeStamp><when>'+date_time+'</when></TimeStamp>\n'
             output += '      <description>'+desc+'</description>\n'
-            output += '      <styleUrl>#geoq_'+kml+'</styleUrl>\n'
+            output += '      <styleUrl>#geoq_'+str(loc.template.id)+'</styleUrl>\n'
             output += '      '+str(kml)+'\n'
             output += '    </Placemark>\n'
 
@@ -177,7 +179,7 @@ class JobKML(ListView):
             if '<Polygon><outerBoundaryIs><LinearRing><coordinates>' in kml:
                 add_text = '<altitudeMode>clampToGround</altitudeMode>'
                 kmls = kml.split('<coordinates>')
-                kml = '<LinearRing>' + add_text + '<coordinates>' + kmls[1]
+                kml = '<LinearRing><tessellate>1</tessellate>' + add_text + '<coordinates>' + kmls[1]
                 kml = kml.replace('</outerBoundaryIs></Polygon></MultiGeometry>', '')
 
             output += '    <Placemark>\n'
@@ -229,7 +231,7 @@ class JobKMLNetworkLink(ListView):
         output += '      <open>1</open>\n'
         output += '      <description>'+description+'</description>\n'
         output += '      <refreshVisibility>0</refreshVisibility>\n'
-        output += '      <flyToView>0</flyToView>\n'
+        output += '      <flyToView>1</flyToView>\n'
         output += '      <Link>\n'
         output += '        <href>'+url+'</href>\n'
         output += '        <refreshInterval>90</refreshInterval>\n'  # Refresh every 1.5 min
