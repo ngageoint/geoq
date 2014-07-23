@@ -17,7 +17,7 @@ urlpatterns = patterns('',
 
     # PROJECTS
     url(r'^projects/?$',
-        ListView.as_view(queryset=Project.objects.all()),
+        ListView.as_view(queryset=Project.objects.filter(active=True)),
         name='project-list'),
 
     url(r'^projects/(?P<pk>\d+)/?$',
