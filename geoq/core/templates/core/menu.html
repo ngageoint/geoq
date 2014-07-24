@@ -38,8 +38,12 @@
                                     })
                                     .addClass('badge_holder')
                                     .appendTo($badge_container);
+
+                            var proxiedURL = "/geoq/proxy/" + encodeURI(badge.projectbadge__badge__icon);
+                            proxiedURL = proxiedURL.replace(/%253D/g,'%3D');
+
                             $('<img>')
-                                    .attr('src',badge.projectbadge__badge__icon)
+                                    .attr('src',proxiedURL)
                                     .appendTo($span);
                             $('<span>')
                                     .text(badge.count)
