@@ -32,8 +32,8 @@ class Dashboard(TemplateView):
 
     def get_context_data(self, **kwargs):
         cv = super(Dashboard, self).get_context_data(**kwargs)
-        all_projects = Project.objects.all()
 
+        all_projects = Project.objects.all()
         cv['projects'] = []
         cv['projects_archived'] = []
         cv['projects_exercise'] = []
