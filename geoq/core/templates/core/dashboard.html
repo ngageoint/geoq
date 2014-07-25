@@ -46,11 +46,44 @@
         <div class="span8">
             <ul class="nav nav-tabs">
                 <li class="active">
-                    <a href="#">Active Projects</a>
+                    <a href="#projects_active" data-toggle="tab">Active Projects</a>
                 </li>
-            </ul>
+                {% if projects_archived %}
+                <li>
+                    <a href="#projects_archived" data-toggle="tab">Archived Projects</a>
+                </li>
+                {% endif %}
+                {% if projects_exercise %}
+                <li>
+                    <a href="#projects_exercise" data-toggle="tab">Exercises</a>
+                </li>
+                {% endif %}
+                {% if projects_private %}
+                <li>
+                    <a href="#projects_private" data-toggle="tab">Private Projects</a>
+                </li>
+                {% endif %}
 
+            </ul>
+            <div class="tab-content">
+                <div id="projects_active" class="tab-pane active">
             {% include "core/_object_list.html" with object_list=projects %}
+                </div>
+
+                <div id="projects_exercise" class="tab-pane">
+            {% include "core/_object_list.html" with object_list=projects_exercise %}
+                </div>
+
+                <div id="projects_archived" class="tab-pane">
+            {% include "core/_object_list.html" with object_list=projects_archived %}
+                </div>
+
+                <div id="projects_private" class="tab-pane">
+            {% include "core/_object_list.html" with object_list=projects_private %}
+                </div>
+
+            </div>
+
 
         </div>
     </div>
