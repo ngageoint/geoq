@@ -135,6 +135,9 @@ def create_update_map(request, pk=None):
     else:
         form = MapForm(prefix='map', instance=map_obj)
         maplayers_formset = MapInlineFormset(prefix='layers', instance=map_obj)
+
+    # form = [f for f in form if f.name not in ['zoom', 'projection', 'center_x', 'center_y']]
+
     return render_to_response('core/generic_form.html', {
         'form': form,
         'layer_formset': maplayers_formset,

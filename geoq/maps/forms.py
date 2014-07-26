@@ -2,6 +2,7 @@
 # This technical data was produced for the U. S. Government under Contract No. W15P7T-13-C-F600, and
 # is subject to the Rights in Technical Data-Noncommercial Items clause at DFARS 252.227-7013 (FEB 2012)
 
+from django import forms
 from geoq.core.forms import StyledModelForm
 from django.forms.models import inlineformset_factory
 from models import Feature, FeatureType, Map, Layer, MapLayer
@@ -24,6 +25,10 @@ class FeatureTypeForm(StyledModelForm):
 class MapForm(StyledModelForm):
     class Meta:
         model = Map
+        widgets = {"zoom": forms.HiddenInput(),
+                   "projection": forms.HiddenInput(),
+                   "center_x": forms.HiddenInput(),
+                   "center_y": forms.HiddenInput()}
 
 
 class LayerForm(StyledModelForm):
@@ -68,4 +73,4 @@ class MapLayerForm(StyledModelForm):
     class Meta:
         model = MapLayer
 
-MapInlineFormset = inlineformset_factory(Map, MapLayer, extra=3)
+MapInlineFormset = inlineformset_factory(Map, MapLayer, extra=3, exclude=['display_in_layer_switcher'])
