@@ -23,6 +23,12 @@
             var $first_column = $('#first_column');
             var $second_column = $('#second_column');
 
+            //Select the newest map by default
+            var $map = $('[name="map"]');
+            if ($map.length) {
+                $map.children().last().attr('selected',true);
+            }
+
             if ($sels.length) {
                 $sels.css('height','170px');
                 $sels
@@ -47,6 +53,11 @@
             }
 
         });
+
+    function getParameterByName(name) {
+       var match = RegExp('[?&]' + name + '=([^&]*)').exec(window.location.search);
+        return match && decodeURIComponent(match[1].replace(/\+/g, ' '));
+    }
 
     </script>
 

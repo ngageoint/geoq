@@ -4,7 +4,7 @@
     {% if not object_list %}
         <div class="row body">
         {% if 'accounts.add_job' in request.base_perms %}
-            <span><b>Next step: </b> <a class="btn btn-large btn-success" href="{% url 'job-create' %}?project={{ object.id }}">Create jobs with workcells</a></span>
+            <span><b>Next step: </b> <a class="btn btn-large btn-success" href="{% url 'job-create-aois' job_pk=object.id %}">Create workcells</a></span>
         {% else %}
             <span><b>This project doesn't have any jobs yet, please ask a supervisor to create one</b></span>
         {% endif %}
