@@ -166,16 +166,16 @@
                                 {{ object.project.project_type }}
                             </td>
                         </tr>
+{#                        <tr>#}
+{#                            <td>#}
+{#                                <b>Private:</b>#}
+{#                            </td>#}
+{#                            <td>#}
+{#                                {{ object.project.private }}#}
+{#                            </td>#}
+{#                        </tr>#}
                         <tr>
-                            <td>
-                                <b>Private:</b>
-                            </td>
-                            <td>
-                                {{ object.project.private }}
-                            </td>
-                        </tr>
-                        <tr>
-                            <td>
+                            <td style="vertical-align: top;">
                                 <b>Description:</b>
                             </td>
                             <td>
@@ -192,7 +192,7 @@
                                          aria-valuenow="{{ completed }}"
                                          aria-valuemin="0"
                                          aria-valuemax="100"
-                                         style="width:{{ completed }}%;">
+                                         style="width:{{ completed }}%;color: #000;text-shadow: 0 -1px 0 rgba(255, 255, 255, 0.75);">
                                         {{ completed }}%
                                     </div>
                                 </div>
