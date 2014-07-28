@@ -7,7 +7,6 @@ var leaflet_layer_control = {};
 //TODO: Have a control to add new layers
 //TODO: Be able to drag and drop layers onto the page
 //TODO: Integrate with GeoNode to auto-build layers in GeoServer
-//TODO: When adding ?request=GetCapabilities links to layers, do it smartly
 
 //TODO: When changing order of Google Maps, always put below Features layers
 
@@ -44,43 +43,38 @@ leaflet_layer_control.initDrawer = function(){
     //Build an accordion row to view workcell log
     leaflet_layer_control.addLogInfo($accordion);
 
-    //The Layer Controls should also be built and added later, such as
+    //The Layer Controls should also be built and added later in another script, something like:
     // var options = aoi_feature_edit.buildTreeLayers();
     // leaflet_layer_control.addLayerControl(map, options, $accordion);
 
-    // by default, open work cell details
-    $('#collapse-work-cell-details').collapse('toggle');
-
     return $accordion;
 };
-//leaflet_layer_control.drawAccordion = function($accordion){
-//    $accordion.collapse();
-//    _.each(leaflet_layer_control.accordion_sections,function(section,i){
-//        if (i==0){
-//            $(section).collapse('show');
-//        } else {
-//            $(section).collapse('hide');
-//        }
-//    });
-//    $accordion.css('height','inherit');
-//};
+
+leaflet_layer_control.addPreferenceListener = function($accordion){
+    var lastOpened = $.cookie('leaflet_layer_control.layer_accordion');
+    if (lastOpened) {
+        $('#'+lastOpened).collapse('toggle');
+    } else {
+        // by default, open work cell details
+        $('#collapse-work-cell-details').collapse('toggle');
+    }
+
+    //Use a cookie to remember last accordion window opened
+    $accordion.on("shown",function(event){
+        $.cookie('leaflet_layer_control.layer_accordion',event.target.id);
+    });
+};
 
 leaflet_layer_control.addFeatureInfo = function($accordion){
-    //TODO: Fill this in
-
     var $content = leaflet_layer_control.buildAccordionPanel($accordion,"Feature Details");
     leaflet_layer_control.$feature_info = $("<div>")
         .html("Click a feature on the map to see an information associated with it")
         .appendTo($content);
-
 };
 
 leaflet_layer_control.addLogInfo = function($accordion) {
 
     var $content = leaflet_layer_control.buildAccordionPanel($accordion, "Workcell Log");
-    //leaflet_layer_control.$feature_info = $("<div>")
-    //    .html("View work log for this cell")
-    //    .appendTo($content);
     var $messageScroll = $("<div id='message_scroll'>")
         .addClass("message-panel")
         .appendTo($content);
@@ -159,9 +153,6 @@ leaflet_layer_control.buildAccordionPanel = function($accordion,title){
     var $drawerInner = $("<div>")
         .addClass("accordion-heading gray-header")
         .appendTo($drawerHolder);
-//    var $header = $('<h4>')
-//        .addClass("panel-title")
-//        .appendTo($drawerInner);
     $('<a class="accordion-collapse" data-toggle="collapse" data-parent="#layer-control-accordion" href="#collapse'+sectionName+'">')
         .text(title)
         .appendTo($drawerInner);
@@ -839,7 +830,12 @@ leaflet_layer_control.addLayerControl = function (map, options, $accordion) {
     $('<a id="add_layer_button" href="/maps/layers/create" target="_new" class="btn">Add A Layer</a>')
         .appendTo($content);
 
-    leaflet_layer_control.addLayerControlInfoPanel($content)
+    leaflet_layer_control.addLayerControlInfoPanel($content);
+
+    //If it was open last time, open it again
+    if ($.cookie('leaflet_layer_control.drawer')) {
+        leaflet_layer_control.toggleDrawer();
+    }
 };
 leaflet_layer_control.drawEachLayer=function(data,map){
 
@@ -949,17 +945,20 @@ leaflet_layer_control.likelyHasFeatures = function(layer){
             (layer.config && layer.config.format && layer.config.format=="json"));
 };
 
-//TODO: Abstract these
+//--------------------------------------------
+// Drawer open and closing controls
 leaflet_layer_control.drawerIsOpen = false;
 leaflet_layer_control.openDrawer = function() {
     leaflet_layer_control.$map.animate({marginLeft: "300px"}, 300);
     leaflet_layer_control.$map.css("overflow", "hidden");
     leaflet_layer_control.$drawer.animate({marginLeft: "0px"}, 300);
+    $.cookie('leaflet_layer_control.drawer', 'open');
 };
 leaflet_layer_control.closeDrawer = function() {
     leaflet_layer_control.$map.animate({marginLeft: "0px"}, 300);
     leaflet_layer_control.$map.css("overflow", "auto");
     leaflet_layer_control.$drawer.animate({marginLeft: "-300px"}, 300);
+    $.cookie('leaflet_layer_control.drawer', '');
 };
 leaflet_layer_control.toggleDrawer = function() {
     if(leaflet_layer_control.drawerIsOpen) {

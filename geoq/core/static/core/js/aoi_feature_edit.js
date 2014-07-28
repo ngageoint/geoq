@@ -347,6 +347,7 @@ aoi_feature_edit.map_init = function (map, bounds) {
     var $accordion = leaflet_layer_control.init();
     var options = aoi_feature_edit.buildTreeLayers();
     leaflet_layer_control.addLayerControl(map, options, $accordion);
+    leaflet_layer_control.addPreferenceListener($accordion);
 
     function help_onclick() {
         window.open(aoi_feature_edit.help_url);
