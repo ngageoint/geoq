@@ -1,0 +1,123 @@
+
+<form method="post" action="">
+    {% csrf_token %}
+    {% load object_class %}
+
+    <div class="span6" style="margin-left: 0;" id="first_column">
+    {% for field in form %}
+        <dl class="form">
+            {%  if field.field.widget|object_class == "CheckboxInput" %}
+
+                {% if field.errors %}
+                    <div class="control-group error">
+                        <div class="controls">
+                            <dt><label><b>{{ field.label }}</b></label>  {{ field }}</dt>
+
+                            <span class="help-inline">{{ field.errors }}</span>
+                        </div>
+                    </div>
+                {% else %}
+                    <dt>
+                        <label>{{ field.label }}  {{ field }}</label>
+                    </dt>
+                    <dd>
+                          <span class="help-block muted">
+                              <small>{{ field.help_text }}</small>
+                          </span>
+                    </dd>
+                {% endif %}
+
+            {% else %}
+
+
+                <dt>
+                    <label>{{ field.label }}</label>
+                </dt>
+                <dd>
+                    {% if field.errors %}
+                        <div class="control-group error">
+                            <div class="controls">
+                                {{ field }}
+                                <span class="help-inline">{{ field.errors }}</span>
+                            </div>
+                        </div>
+                    {% else %}
+                        {{ field }}<span class="help-block muted"><small>{{ field.help_text }}</small></span>
+                    {% endif %}
+                </dd>
+            {% endif %}
+        </dl>
+    {% endfor %}
+    </div>
+
+
+    <div class="span6" style="margin-left: 0;" id="second_column">
+    </div>
+
+
+    <input class="btn btn-success" type="submit" value="Save" data-role="button" />
+    {% block extra_buttons%}{% endblock %}
+</form>
+
+<script>
+    $(document).ready(function(){
+        //Move Select boxes into the second column and make them bigger
+        var $sels=$('select[multiple="multiple"]');
+        var $first_column = $('#first_column');
+        var $second_column = $('#second_column');
+
+        //Select the newest map by default
+        var $map = $('[name="map"]');
+        if ($map.length) {
+            $map.children().last().attr('selected',true);
+        }
+
+        $('input, select, textarea').css('width','80%');
+
+        //If select boxes are here, make them bigger and order them alphabetically
+        if ($sels.length) {
+            $sels.css('height','170px');
+            $sels.parent().parent().appendTo($second_column);
+
+            _.each($sels,function($sel){
+                var optionList = $($sel).find('option');
+
+                //Get a list of all that were already selected
+                var selectedItems = [];
+                _.each(optionList,function(opt){
+                    if ($(opt).attr('selected')){
+                        selectedItems.push(opt);
+                    }
+                });
+
+                //Sort them alphabetically
+                optionList.sort(function(a,b){
+                    var at = $(a).text().toLowerCase(), bt = $(b).text().toLowerCase();
+                    return (at > bt)?1:((at < bt)?-1:0);
+                });
+                $($sel).html(optionList);
+
+                //Reset all that were selected
+                optionList = $($sel).find('option');
+                _.each(optionList,function(opt){
+                    _.each(selectedItems,function(selOpt){
+                        if ($(opt).val() == $(selOpt).val()){
+                            $(opt).attr('selected','selected');
+                        }
+                    });
+                });
+
+
+            });
+
+        } else {
+            $second_column.remove();
+            $first_column.removeClass('span6').addClass('span12');
+        }
+    });
+
+    function getParameterByName(name) {
+       var match = RegExp('[?&]' + name + '=([^&]*)').exec(window.location.search);
+       return match && decodeURIComponent(match[1].replace(/\+/g, ' '));
+    }
+</script>
