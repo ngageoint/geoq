@@ -621,6 +621,13 @@ leaflet_layer_control.layerDataList = function (options) {
         var folderName = "folder."+ groupNum;
         treeData.push({title: layerName, folder: true, key: folderName, children: [], expanded:true });
 
+
+        var inUSBounds = true;
+        if (typeof maptools != "undefined" && aoi_feature_edit.map && aoi_feature_edit.map.getCenter) {
+            var center = aoi_feature_edit.map.getCenter();
+            inUSBounds = maptools.inUSBounds(center.lat, center.lng);
+        }
+
         //For each layer
         _.each(layerGroup, function (layer, i) {
             var name = layer.name || layer.options.name;
@@ -631,19 +638,31 @@ leaflet_layer_control.layerDataList = function (options) {
                 leaflet_layer_control.removeDuplicateLayers(layerGroups,layer);
 
                 //Figure out if it is visible and should be "checked"
-                if (layer.getLayers && layer.getLayers() && layer.getLayers()[0]) {
-                    var layerItem = layer.getLayers()[0];
-                    var options = layerItem._options || layerItem.options;
-                    if (options && options.style) {
-                        if (options.style.opacity == 1 || options.style.fillOpacity == 1){
+                var showEvenIfNotInUS = true;
+                if (layer.options && layer.options.us_only && !inUSBounds) {
+                    showEvenIfNotInUS = false;
+                }
+
+                if (showEvenIfNotInUS) {
+                    if (layer.getLayers && layer.getLayers() && layer.getLayers()[0]) {
+                        var layerItem = layer.getLayers()[0];
+                        var options = layerItem._options || layerItem.options;
+                        if (options && options.style) {
+                            if (options.style.opacity == 1 || options.style.fillOpacity == 1){
+                                layer_obj.selected = true;
+                            }
+                        }
+                        if (options && options.opacity && options.opacity == 1) {
                             layer_obj.selected = true;
                         }
-                    }
-                    if (options && options.opacity && options.opacity == 1) {
+                    } else if (layer.options && layer.options.opacity){
+                        layer_obj.selected = true;
+                    } else if (layer.options && layer.options.is_geoq_feature) {
                         layer_obj.selected = true;
                     }
-                } else if (layer.options && layer.options.opacity){
-                    layer_obj.selected = true;
+                }
+                if (!layer_obj.selected) {
+                    leaflet_layer_control.setLayerOpacity(layer,0);
                 }
 
                 //Add this to the json to build the treeview

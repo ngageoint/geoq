@@ -313,7 +313,6 @@ aoi_feature_edit.map_init = function (map, bounds) {
 
         _.each(aoi_feature_edit.job_features_geojson.features, function (feature) {
             if (feature.properties.template == tnum && feature.geometry.type == featuretype) {
-                //TODO: Change icon here depending on feature type, Issue #27
                 featureCollection.features.push(feature);
             }
         });
@@ -322,13 +321,12 @@ aoi_feature_edit.map_init = function (map, bounds) {
         var featureType = aoi_feature_edit.feature_types[tnum];
 
         if (featureLayer && featureType) {
-            if (featureLayer)
-
             featureLayer.addData(featureCollection);
             featureLayer.eachLayer(function (layer) {
                 aoi_feature_edit.drawnItems.addLayer(layer);
             });
             featureLayer.addTo(aoi_feature_edit.map);
+            featureLayer.options.is_geoq_feature = true;
             aoi_feature_edit.layers.features.push(featureLayer);
         } else {
             log.error("A FeatureLayer was supposed to be drawn, but didn't seem to exist.")

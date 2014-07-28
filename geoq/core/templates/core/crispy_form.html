@@ -6,20 +6,17 @@
     <div class="row-fluid container-narrow">
 
         <h3> {% if object %}Edit{% else %}Create New {% endif %}{{ form.Meta.model|object_class|title }}</h3>
-        <div class="span6">
+        <div class="span12">
              {% crispy form %}
-        </div>
-        <div class="span6" id="second_column">
-
         </div>
     </div>
 
     <script>
         $(document).ready(function(){
             $('select[multiple="multiple"]').parent().parent()
-                .css('height','200px')
-                .appendTo($('#second_column'));
+                .css('height','200px');
         });
+        $('input, select, textarea').css('width','80%');
 
     </script>
 {% endblock %}
