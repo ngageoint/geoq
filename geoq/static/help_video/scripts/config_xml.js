@@ -2,15 +2,23 @@ var TSC = TSC || {};
 
 TSC.embedded_config_xml = '<x:xmpmeta xmlns:x="adobe:ns:meta/">\
    <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns:xmp="http://ns.adobe.com/xap/1.0/" xmlns:xmpDM="http://ns.adobe.com/xmp/1.0/DynamicMedia/" xmlns:xmpG="http://ns.adobe.com/xap/1.0/g/" xmlns:tsc="http://www.techsmith.com/xmp/tsc/" xmlns:xmpMM="http://ns.adobe.com/xap/1.0/mm/" xmlns:tscDM="http://www.techsmith.com/xmp/tscDM/" xmlns:tscIQ="http://www.techsmith.com/xmp/tscIQ/" xmlns:tscHS="http://www.techsmith.com/xmp/tscHS/" xmlns:stDim="http://ns.adobe.com/xap/1.0/sType/Dimensions#" xmlns:stFnt="http://ns.adobe.com/xap/1.0/sType/Font#" xmlns:exif="http://ns.adobe.com/exif/1.0" xmlns:dc="http://purl.org/dc/elements/1.1/">\
-      <rdf:Description tsc:version="2.0.1" dc:date="2014-07-25 11:15:50 AM" dc:source="Camtasia Studio,8.4.2,enu" dc:title="UserHelpVideo" tscDM:firstFrame="UserHelpVideo_First_Frame.png" tscDM:originId="F5A5563F-EC70-402D-AE90-770272B331E2" tscDM:project="UserHelpVideo">\
-         <xmpDM:duration xmpDM:scale="1/1000" xmpDM:value="298966"/>\
-         <xmpDM:videoFrameSize stDim:unit="pixel" stDim:h="480" stDim:w="768"/>\
+      <rdf:Description tsc:version="2.0.1" dc:date="2014-06-05 03:26:02 PM" dc:source="Camtasia Studio,8.4.0,enu" dc:title="User Help Video v1" tscDM:firstFrame="User_Help_Video_v1_First_Frame.png" tscDM:originId="7172F107-383F-4C12-A522-42EFF6765283" tscDM:project="User Help Video v1">\
+         <xmpDM:duration xmpDM:scale="1/1000" xmpDM:value="275200"/>\
+         <xmpDM:videoFrameSize stDim:unit="pixel" stDim:h="442" stDim:w="854"/>\
          <tsc:langName>\
             <rdf:Bag>\
                <rdf:li xml:lang="en-US">English</rdf:li></rdf:Bag>\
          </tsc:langName>\
          <xmpDM:Tracks>\
             <rdf:Bag>\
+               <rdf:li>\
+                  <rdf:Description xmpDM:trackType="Hotspot" xmpDM:frameRate="f1000" xmpDM:trackName="Hotspots">\
+                     <xmpDM:markers>\
+                        <rdf:Seq>\
+                           <rdf:li><rdf:Description xmp:label="1" xmpDM:startTime="175070" xmpDM:duration="5200" tscDM:boundingPoly="519,301;732,301;732,411;519,411;" tscDM:rotate="0.000000" tscHS:pause="1"/></rdf:li></rdf:Seq>\
+                     </xmpDM:markers>\
+                  </rdf:Description>\
+               </rdf:li>\
             </rdf:Bag>\
          </xmpDM:Tracks>\
          <tscDM:controller>\
@@ -29,7 +37,7 @@ TSC.embedded_config_xml = '<x:xmpmeta xmlns:x="adobe:ns:meta/">\
             <rdf:Description>\
                <tscDM:files>\
                   <rdf:Seq>\
-                     <rdf:li xmpDM:name="0" xmpDM:value="UserHelpVideo.mp4"/><rdf:li xmpDM:name="1" xmpDM:value="UserHelpVideo_First_Frame.png"/><rdf:li xmpDM:name="2" xmpDM:value="UserHelpVideo_Thumbnails.png"/></rdf:Seq>\
+                     <rdf:li xmpDM:name="0" xmpDM:value="User Help Video v1.mp4"/><rdf:li xmpDM:name="1" xmpDM:value="User_Help_Video_v1_First_Frame.png"/><rdf:li xmpDM:name="2" xmpDM:value="User_Help_Video_v1_Thumbnails.png"/></rdf:Seq>\
                </tscDM:files>\
             </rdf:Description>\
          </tscDM:contentList>\
