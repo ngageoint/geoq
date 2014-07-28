@@ -227,8 +227,9 @@ class JobDetailedListView(ListView):
         cv['object'] = get_object_or_404(self.model, pk=self.kwargs.get('pk'))
         cv['statuses'] = AOI.STATUS_VALUES
         cv['active_status'] = self.status
+        cv['workcell_count'] = cv['object'].aoi_count()
         if cv['object'].aoi_count() > 0:
-            cv['completed'] = (cv['object'].complete().count() * 100) / cv['object'].aoi_count()
+            cv['completed'] = (cv['object'].complete().count() * 100) / cv['workcell_count']
         else:
             cv['completed'] = 0
         return cv
