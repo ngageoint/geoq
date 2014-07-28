@@ -461,8 +461,11 @@ leaflet_layer_control.parsers.infoFromLayer = function (obj){
     var html = "";
     obj = obj || {};
 
-    html+=leaflet_layer_control.parsers.textIfExists({name: obj.name, title:"Layer", header:true});
-    html+=leaflet_layer_control.parsers.textIfExists({name: obj._url, title:"URL", linkify:true, linkSuffix:"?request=GetCapabilities", style_class:'scroll-link'});
+    var capabilitiesLink = "";
+    if (obj.type == "WMS" || obj.type == "WMTS") {
+        capabilitiesLink = "?request=GetCapabilities";
+    }
+    html+=leaflet_layer_control.parsers.textIfExists({name: obj.name, title:"Layer", header:true, linkit:obj._url, linkSuffix:capabilitiesLink});
 
     if (obj._layers) {
         var features = obj.getLayers();
@@ -493,9 +496,8 @@ leaflet_layer_control.parsers.infoFromInfoObj = function (obj){
     var html = "";
     obj = obj || {};
 
-    html+=leaflet_layer_control.parsers.textIfExists({name: obj.name, title:"Layer", header:true});
+    html+=leaflet_layer_control.parsers.textIfExists({name: obj.name, title:"Layer", header:true, linkit:obj.url, linkSuffix:"?request=GetCapabilities"});
     html+=leaflet_layer_control.parsers.textIfExists({name: obj.type, title:"Type"});
-    html+=leaflet_layer_control.parsers.textIfExists({name: obj.url, title:"URL", linkify:true, linkSuffix:"?request=GetCapabilities", style_class:'scroll-link'});
     html+=leaflet_layer_control.parsers.textIfExists({name: obj.layer, title:"Layers"});
 //    html+=leaflet_layer_control.parsers.textIfExists({name: obj.description, style_class:'scroll-link'});
     return html;
@@ -527,6 +529,7 @@ leaflet_layer_control.parsers.textIfExists = function(options) {
     var noBreak = options.noBreak;
     var header = options.header;
     if (header) noBreak = true;
+    var linkit = options.linkit;
     var linkify = options.linkify;
     var linkSuffix = options.linkSuffix;
     var style = options.style;
@@ -546,8 +549,8 @@ leaflet_layer_control.parsers.textIfExists = function(options) {
         }
         if (obj.toString) {
             var text = obj.toString();
-            if (linkify) {
-                html += "<a target='_new' href='"+text;
+            if (linkify || linkit) {
+                html += "<a target='_new' href='"+ (linkit || text);
                 if (linkSuffix){
                     html += linkSuffix;
                 }
@@ -557,7 +560,7 @@ leaflet_layer_control.parsers.textIfExists = function(options) {
             }
         } else {
             log.error("Something was sent to a layer info area that wasn't valid text");
-            html += obj; //TODO: Think through this... .toString should always be true
+            html += obj || "";
         }
         if (header) {
             html+="</h5>";
@@ -671,6 +674,17 @@ leaflet_layer_control.layerDataList = function (options) {
         },layerGroups);
 
     },layerGroups);
+
+    //Mark the parent groups as selected or not if all children are
+    _.each(treeData,function(treeGroup){
+        var anyLayerUnselected = false;
+        _.each(treeGroup.children, function (treeItem) {
+            if (!treeItem.selected) anyLayerUnselected = true;
+        });
+        treeGroup.selected = !anyLayerUnselected;
+    });
+
+
     return treeData;
 };
 leaflet_layer_control.removeDuplicateLayers = function(layerList, layer){

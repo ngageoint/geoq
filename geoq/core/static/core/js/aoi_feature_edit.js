@@ -618,8 +618,7 @@ aoi_feature_edit.buildDrawingControl = function (drawnItems) {
             } else {
                 if (bg_image) {
                     bg_image = 'url("'+bg_image+'")';
-                    $icon.css({background:bg_image, backgroundSize:'contain', backgroundRepeat:'no-repeat'});
-
+                    $icon.css({background:bg_image, backgroundSize:'contain', backgroundRepeat:'no-repeat',backgroundPosition:'5px'});
                 }
             }
             if (bg_color) {
@@ -643,12 +642,8 @@ aoi_feature_edit.addMapControlButtons = function (map) {
     };
     var completeButton = new L.Control.Button(completeButtonOptions).addTo(map);
 
-
-    var title = "<h4 id='aoi-status-box'><a href='" + aoi_feature_edit.job_absolute_url + "'>" + aoi_feature_edit.job_name + "</a> > AOI #" + aoi_feature_edit.aoi_id + " > ";
-//    if (aoi_feature_edit.aoi_properties && aoi_feature_edit.aoi_properties.usng) {
-//        title += " USNG: "+aoi_feature_edit.aoi_properties.usng + " > ";
-//    }
-    title += "<span class='aoi-status muted'>" + aoi_feature_edit.percent_complete + "% Complete > " + aoi_feature_edit.description + "</span></h4>";
+    var title = "<h4 id='aoi-status-box'><a href='" + aoi_feature_edit.job_absolute_url + "'>" + aoi_feature_edit.job_name + " (" + aoi_feature_edit.percent_complete + "% Complete)</a> >";
+    title += "<span class='aoi-status muted'> AOI #" + aoi_feature_edit.aoi_id + " > " +aoi_feature_edit.description + "</span></h4>";
     var $title = $(title)
         .on('click',function(){
            window.open(aoi_feature_edit.job_absolute_url);
