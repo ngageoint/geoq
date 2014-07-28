@@ -336,7 +336,12 @@ create_aois.mapInit = function(map) {
                     url: create_aois.get_grids_url,
                     data: { bbox: bboxStr},
                     contentType: "application/json",
-                    success: create_aois.createWorkCellsFromService,
+                    success: function(data){
+                        create_aois.createWorkCellsFromService(data);
+                        if (create_aois.data_fields_obj && create_aois.data_fields_obj.daypop) {
+                            $("#prioritize-selector").val('Daypop').change();
+                        }
+                    },
                     beforeSend: function() {
                         $("#map").css({
                            'cursor': 'wait'
@@ -923,6 +928,7 @@ create_aois.prioritizeCellsBy = function(numField){
                 }
             });
         });
+        create_aois.updateCellCount();
     }
 };
 create_aois.reversePriorities = function(){

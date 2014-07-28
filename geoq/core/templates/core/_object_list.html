@@ -1,6 +1,17 @@
 {% load object_class %}
 <ul class="projectlist">
 
+    {% if not object_list %}
+        <div class="row body">
+        {% if 'accounts.add_job' in request.base_perms %}
+            <span><b>Next step: </b> <a class="btn btn-large btn-success" href="{% url 'job-create-aois' job_pk=object.id %}">Create workcells</a></span>
+        {% else %}
+            <span><b>This project doesn't have any jobs yet, please ask a supervisor to create one</b></span>
+        {% endif %}
+        </div>
+    {% endif %}
+
+
     {# Currently only for job detail, 'in work' tab. #}
     {% with object_list|first as first_object %}
         {% if first_object.status == 'In work'%}
@@ -54,6 +65,8 @@
     {% endwith %}
     {% endfor %}
 
+    {% if object_list %}
     {% include 'core/_pagination.html' with page=page_obj alignment='centered' %}
+    {% endif %}
 
 </ul>

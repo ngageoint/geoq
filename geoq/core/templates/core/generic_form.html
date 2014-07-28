@@ -2,11 +2,63 @@
 {% load object_class %}
 {% block container %}
 
-    <div class="row-fluid container-narrow">
+    <div class="container-fluid">
+        <div class="row-fluid">
 
-        <div class="span12">
-            <h3> {% if object %}Edit{% else %}Create New {% endif %} {{ form.Meta.model|object_class|title }}</h3>
-            {% include custom_form|default:"core/_generic_form.html" %}
+            <div class="span12">
+                <h3> {% if object %}Edit{% else %}Create New {% endif %}{{ form.Meta.model|object_class|title }}</h3>
+            </div>
+            <div class="span6" style="margin-left: 0;" id="first_column">
+                 {% include custom_form|default:"core/_generic_form.html" %}
+            </div>
+            <div class="span6" style="margin-left: 0;" id="second_column">
+
+            </div>
         </div>
     </div>
+
+    <script>
+        $(document).ready(function(){
+            var $sels=$('select[multiple="multiple"]');
+            var $first_column = $('#first_column');
+            var $second_column = $('#second_column');
+
+            //Select the newest map by default
+            var $map = $('[name="map"]');
+            if ($map.length) {
+                $map.children().last().attr('selected',true);
+            }
+
+            if ($sels.length) {
+                $sels.css('height','170px');
+                $sels
+                    .parent().parent()
+                    .appendTo($second_column);
+
+                $('input, select, textarea').css('width','80%');
+
+                _.each($sels,function($sel){
+                    var selectList = $($sel).find('option');
+
+                    selectList.sort(function(a,b){
+                        var at = $(a).text().toLowerCase(), bt = $(b).text().toLowerCase();
+                        return (at > bt)?1:((at < bt)?-1:0);
+                    });
+
+                    $($sel).html(selectList);
+                });
+            } else {
+                $second_column.remove();
+                $first_column.removeClass('span6').addClass('span12');
+            }
+
+        });
+
+    function getParameterByName(name) {
+       var match = RegExp('[?&]' + name + '=([^&]*)').exec(window.location.search);
+        return match && decodeURIComponent(match[1].replace(/\+/g, ' '));
+    }
+
+    </script>
+
 {% endblock %}

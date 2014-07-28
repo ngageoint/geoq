@@ -32,7 +32,25 @@ class Dashboard(TemplateView):
 
     def get_context_data(self, **kwargs):
         cv = super(Dashboard, self).get_context_data(**kwargs)
-        cv['projects'] = Project.objects.all()
+
+        all_projects = Project.objects.all()
+        cv['projects'] = []
+        cv['projects_archived'] = []
+        cv['projects_exercise'] = []
+        cv['projects_private'] = []
+
+        for project in all_projects:
+            if project.private:
+                if (self.request.user in project.project_admins.all()) or (self.request.user in project.contributors.all()):
+                    cv['projects_private'].append(project)
+
+            elif not project.active:
+                cv['projects_archived'].append(project)
+            elif project.project_type == 'Exercise':
+                cv['projects_exercise'].append(project)
+            else:
+                cv['projects'].append(project)
+
         return cv
 
 

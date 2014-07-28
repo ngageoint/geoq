@@ -5,9 +5,21 @@
 
     <div class="row-fluid container-narrow">
 
-        <div class="span12">
-            <h3> {% if object %}Edit{% else %}Create New {% endif %} {{ form.Meta.model|object_class|title }}</h3>
+        <h3> {% if object %}Edit{% else %}Create New {% endif %}{{ form.Meta.model|object_class|title }}</h3>
+        <div class="span6">
              {% crispy form %}
         </div>
+        <div class="span6" id="second_column">
+
+        </div>
     </div>
+
+    <script>
+        $(document).ready(function(){
+            $('select[multiple="multiple"]').parent().parent()
+                .css('height','200px')
+                .appendTo($('#second_column'));
+        });
+
+    </script>
 {% endblock %}

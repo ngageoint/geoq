@@ -260,8 +260,8 @@ class MapLayer(models.Model):
     layer = models.ForeignKey(Layer, related_name='map_layer_set')
     shown = models.BooleanField(default=True)
     stack_order = models.IntegerField()
-    opacity = models.FloatField(default=.80)
-    is_base_layer = models.BooleanField(help_text="Base Layers are mutually exclusive layers, meaning only one can be enabled at any given time. The currently active base layer determines the available projection (coordinate system) and zoom levels available on the map.")
+    opacity = models.FloatField(default=0.80)
+    is_base_layer = models.BooleanField(help_text="Only one Base Layer can be enabled at any given time.")
     display_in_layer_switcher = models.BooleanField()
 
     class Meta:
