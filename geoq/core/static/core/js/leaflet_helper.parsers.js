@@ -93,6 +93,30 @@ leaflet_helper.constructors.urlTemplater =function(url, map, layer_json){
     return new_url || url;
 };
 
+// MIT-licensed code by Benjamin Becquet
+// https://github.com/bbecquet/Leaflet.PolylineDecorator
+L.RotatedMarker = L.Marker.extend({
+  options: { angle: 0 },
+  _setPos: function(pos) {
+    L.Marker.prototype._setPos.call(this, pos);
+    if (L.DomUtil.TRANSFORM) {
+      // use the CSS transform rule if available
+      this._icon.style[L.DomUtil.TRANSFORM] += ' rotate(' + this.options.angle + 'deg)';
+    } else if (L.Browser.ie) {
+      // fallback for IE6, IE7, IE8
+      var rad = this.options.angle * L.LatLng.DEG_TO_RAD,
+      costheta = Math.cos(rad),
+      sintheta = Math.sin(rad);
+      this._icon.style.filter += ' progid:DXImageTransform.Microsoft.Matrix(sizingMethod=\'auto expand\', M11=' +
+        costheta + ', M12=' + (-sintheta) + ', M21=' + sintheta + ', M22=' + costheta + ')';
+    }
+  }
+});
+L.rotatedMarker = function(pos, options) {
+    return new L.RotatedMarker(pos, options);
+};
+
+
 leaflet_helper.constructors.geojson_layer_count = 0;
 leaflet_helper.constructors.geojson = function(layerConfig, map, useLayerInstead) {
 
@@ -193,7 +217,7 @@ leaflet_helper.constructors.geojson = function(layerConfig, map, useLayerInstead
         var icon = new MapMarker(iconData);
 
         //Construct the final Icon
-        return L.marker(latlng, {icon: icon});
+        return L.rotatedMarker(latlng, {icon: icon});
     }
 
     function polygonStyleCallBack (feature) {
@@ -290,6 +314,10 @@ leaflet_helper.parsers.standard_onEachFeature = function (feature, layer) {
     if (feature.properties && feature.properties.popupContent) {
         layer.bindPopup(feature.properties.popupContent);
     }
+    if (feature.properties.heading && parseInt(feature.properties.heading) && layer.options){
+        layer.options.angle = parseInt(feature.properties.heading);
+    }
+
 };
 leaflet_helper.addLinksToPopup = function (layerName,id,useMove,useHide,useDrop) {
 
@@ -339,8 +367,8 @@ leaflet_helper.parsers.addNOAADamageAssessmentToolkit = function (result, map, o
             var damage_txt = attributes.damage_txt;
             var dod_txt = attributes.dod_txt;
             var windspeed = attributes.windspeed;
-            var injuries = attributes.injuries;
-            var deaths = attributes.deaths;
+            var injuries = parseInt(attributes.injuries);
+            var deaths = parseInt(attributes.deaths);
             var comments = attributes.comments;
             var image = attributes.image;
 
