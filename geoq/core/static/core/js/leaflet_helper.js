@@ -4,14 +4,14 @@
 var leaflet_helper = {};
 
 leaflet_helper.styles = {
-    extentStyle: {"weight": 2, "color": "red", "opacity": 1, "fillColor": "red", "fillOpacity":.2 },
-    completed: {"weight": 2, "color": "green", "fillColor": "green", "fillOpacity": .9, "opacity": 1},
-    in_work: {"weight": 2, "color": "yellow", "fillColor": "orange", "fillOpacity": .9, "opacity": 1},
-    assigned: {"weight": 2, "color": "black", "fillColor": "gray", "fillOpacity": .9, "opacity": 1}, //TODO: Are we still using 'Assigned'?
-    awaiting_review: {"weight": 2, "color": "black", "fillColor": "blue", "fillOpacity": .9, "opacity": 1},
-    in_review: {"weight": 2, "color": "blue", "fillColor": "lightblue", "fillOpacity": .9, "opacity": 1},
-    extentStyle_hollow: {"weight": 2, "color": "red", "opacity": 1, "fillOpacity":0 }
+    extentStyle:     {"weight": 2, "color": "red",   "fillColor": "red",     "fillOpacity": .2, "opacity": 1},
+    in_work:         {"weight": 2, "color": "red",   "fillColor": "#bf3f00", "fillOpacity": .3, "opacity": 1},
+    awaiting_review: {"weight": 2, "color": "red",   "fillColor": "#cf6201", "fillOpacity": .5, "opacity": 1},
+    in_review:       {"weight": 2, "color": "green", "fillColor": "#3fbf00", "fillOpacity": .7, "opacity": 1},
+    completed:       {"weight": 2, "color": "green", "fillColor": "green",   "fillOpacity": .9, "opacity": 1},
 
+    assigned: {"weight": 2, "color": "black", "fillColor": "gray", "fillOpacity": .9, "opacity": 1}, //TODO: Are we still using 'Assigned'?
+    extentStyle_hollow: {"weight": 2, "color": "red", "opacity": 1, "fillOpacity":0 }
 };
 leaflet_helper.proxy_path = "/geoq/proxy/";
 
