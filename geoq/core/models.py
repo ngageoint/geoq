@@ -52,7 +52,8 @@ class Project(GeoQBase):
         ("Volcano", "Volcano"),
         ("Pandemic", "Pandemic"),
         ("Exercise", "Exercise"),
-        ("Special Event", "Special Event")
+        ("Special Event", "Special Event"),
+        ("Training", "Training"),
         ]
 
     project_type = models.CharField(max_length=50, choices=PROJECT_TYPES)
@@ -137,7 +138,7 @@ class Job(GeoQBase):
         for cell in AOI.objects.filter(job__id=self.id):
             count[cell.status] += 1
 
-        return str(', '.join("%s:<b>%r</b>" % (key,val) for (key,val) in count.iteritems()))
+        return str(', '.join("%s: <b>%r</b>" % (key,val) for (key,val) in count.iteritems()))
 
     @property
     def user_count(self):

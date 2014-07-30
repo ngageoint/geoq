@@ -525,6 +525,8 @@ leaflet_layer_control.parsers.textIfExists = function(options) {
     var linkSuffix = options.linkSuffix;
     var style = options.style;
     var style_class = options.style_class;
+    var datify = options.datify;
+    var suffix = options.suffix;
 
     var html = "";
     if (typeof obj != "undefined" && obj !== "") {
@@ -540,6 +542,19 @@ leaflet_layer_control.parsers.textIfExists = function(options) {
         }
         if (obj.toString) {
             var text = obj.toString();
+            if (datify && typeof moment != "undefined") {
+                var tempDate = moment(text);
+                if (tempDate.isValid()) {
+                    if (datify == "calendar") {
+                        text = tempDate.calendar();
+                    } else if (datify == "calendar, fromnow"){
+                        text = tempDate.calendar() + " - " + tempDate.fromNow();
+                    } else {
+                        text = tempDate.fromNow();
+                    }
+                }
+            }
+            if (suffix) text+=suffix;
             if (linkify || linkit) {
                 html += "<a target='_new' href='"+ (linkit || text);
                 if (linkSuffix){
@@ -941,7 +956,7 @@ leaflet_layer_control.toggleZooming=function($control){
 };
 leaflet_layer_control.likelyHasFeatures = function(layer){
     return ((layer.config && layer.config.type &&
-            (layer.config.type=="GeoJSON" || layer.config.type=="Social Networking Link")) ||
+            (layer.config.type=="GeoJSON" || layer.config.type=="Social Networking Link" || layer.config.type=="ESRI Identifiable MapServer")) ||
             (layer.config && layer.config.format && layer.config.format=="json"));
 };
 

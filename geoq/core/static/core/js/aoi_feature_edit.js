@@ -250,12 +250,35 @@ aoi_feature_edit.map_init = function (map, bounds) {
     aoi_feature_edit.layers.base = [];
     aoi_feature_edit.layers.overlays = [];
 
+    //Add the Base OSM Layer
     var baselayer = _.toArray(aoi_feature_edit.map._layers);
     if (baselayer && baselayer[0]) {
         baselayer[0].name="OpenStreetMap";
         aoi_feature_edit.layers.base.push(baselayer[0]);
     }
 
+    //Add Editing Buttons
+    aoi_feature_edit.addMapControlButtons(aoi_feature_edit.map);
+
+    //Build a red box surrounding the AOI and zoom to that
+    var aoi_extents = L.geoJson(aoi_feature_edit.aoi_extents_geojson,
+        {
+            style: leaflet_helper.styles.extentStyle_hollow,
+            zIndex: 1000,
+            name: "Bounds of this AOI"
+        });
+    aoi_extents.addTo(aoi_feature_edit.map);
+    aoi_feature_edit.layers.features.push(aoi_extents);
+    //Build a reset button that zooms to the extents of the AOI
+    function locateBounds() {
+        return aoi_extents.getBounds();
+    }
+    (new L.Control.ResetView(locateBounds)).addTo(aoi_feature_edit.map);
+    aoi_feature_edit.map.fitBounds(aoi_extents.getBounds());
+
+
+
+    //Build layers, parse them, and add them to the map and to memory
     if (custom_map.hasOwnProperty("layers")) {
         _.each(custom_map.layers, function (layer_data) {
             var built_layer = leaflet_helper.layer_conversion(layer_data, map);
@@ -276,25 +299,6 @@ aoi_feature_edit.map_init = function (map, bounds) {
             }
         });
     }
-
-    aoi_feature_edit.addMapControlButtons(aoi_feature_edit.map);
-
-    //Build a red box surrounding the AOI and zoom to that
-    var aoi_extents = L.geoJson(aoi_feature_edit.aoi_extents_geojson,
-        {
-            style: leaflet_helper.styles.extentStyle_hollow,
-            zIndex: 1000,
-            name: "Bounds of this AOI"
-        });
-    aoi_extents.addTo(aoi_feature_edit.map);
-    aoi_feature_edit.layers.features.push(aoi_extents);
-    //Build a reset button that zooms to the extents of the AOI
-    function locateBounds() {
-        return aoi_extents.getBounds();
-    }
-    (new L.Control.ResetView(locateBounds)).addTo(aoi_feature_edit.map);
-    aoi_feature_edit.map.fitBounds(aoi_extents.getBounds());
-
 
     // For each feature template, add features to map and layer control
     _.each(aoi_feature_edit.feature_types, function (ftype) {
@@ -335,6 +339,7 @@ aoi_feature_edit.map_init = function (map, bounds) {
 
     aoi_feature_edit.layers.features = aoi_feature_edit.featureLayers;
 
+    //Add other controls
     leaflet_helper.addLocatorControl(map);
     aoi_feature_edit.buildDrawingControl(aoi_feature_edit.drawnItems);
     leaflet_helper.addGeocoderControl(map);

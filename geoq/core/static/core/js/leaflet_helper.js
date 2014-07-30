@@ -7,8 +7,9 @@ leaflet_helper.styles = {
     extentStyle: {"weight": 2, "color": "red", "opacity": 1, "fillColor": "red", "fillOpacity":.2 },
     completed: {"weight": 2, "color": "green", "fillColor": "green", "fillOpacity": .9, "opacity": 1},
     in_work: {"weight": 2, "color": "yellow", "fillColor": "orange", "fillOpacity": .9, "opacity": 1},
-    assigned: {"weight": 2, "color": "orange", "fillColor": "orange", "fillOpacity": .9, "opacity": 1},
+    assigned: {"weight": 2, "color": "black", "fillColor": "gray", "fillOpacity": .9, "opacity": 1}, //TODO: Are we still using 'Assigned'?
     awaiting_review: {"weight": 2, "color": "black", "fillColor": "blue", "fillOpacity": .9, "opacity": 1},
+    in_review: {"weight": 2, "color": "blue", "fillColor": "lightblue", "fillOpacity": .9, "opacity": 1},
     extentStyle_hollow: {"weight": 2, "color": "red", "opacity": 1, "fillOpacity":0 }
 
 };
@@ -102,6 +103,8 @@ leaflet_helper.layer_conversion = function (lyr, map) {
         }
     } else if (lyr.type == 'Leaflet Tile Layer') {
         outputLayer = L.tileLayer(lyr.url, lyr.layerParams);
+    } else if (lyr.type == 'ESRI Identifiable MapServer') {
+        outputLayer = leaflet_helper.constructors.geojson(lyr, map);
     }
 
     //Make sure the name is set for showing up in the layer menu

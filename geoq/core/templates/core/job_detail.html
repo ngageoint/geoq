@@ -2,24 +2,30 @@
 {% load compress %}
 {% load leaflet_tags %}
 {% load geoserver_job_link %}
+{% block title %}GeoQ Job: {{ object.name }}{% endblock %}
 {% block static_libraries %}
     {% leaflet_js %}
     <script src="{{ STATIC_URL }}core/js/leaflet_helper.js"></script>
     <script src="{{ STATIC_URL }}core/js/bootstrap-dialog.js"></script>
+    <script src="{{ STATIC_URL }}core/js/maths.js"></script>
     <script type="text/javascript">
+
+        var status_colors = [
+            {name:'Assigned', color: leaflet_helper.styles.assigned, slug:'assigned'},  //TODO: Are we still using 'Assigned'?
+            {name:'Completed', color: leaflet_helper.styles.completed, slug:'completed'},
+            {name:'In work', color: leaflet_helper.styles.in_work, slug:'in-work'},
+            {name:'In review', color: leaflet_helper.styles.in_review, slug:'in-review'},
+            {name:'Awaiting review', color: leaflet_helper.styles.awaiting_review, slug:'awaiting-review'},
+            {name:'Unassigned', color: leaflet_helper.styles.extentStyle, slug:'unassigned'}
+        ];
 
         var aoi_extents;
         function mapInit(map, bounds) {
 
             aoi_extents = L.geoJson({{ object.geoJSON|default:'[]'|safe }}, {
                 style: function(feature) {
-                    switch (feature.properties.status){
-                        case 'Assigned': return leaflet_helper.styles.assigned;
-                        case 'Completed': return leaflet_helper.styles.completed;
-                        case 'In work' : return leaflet_helper.styles.in_work;
-                        case 'Awaiting review' : return leaflet_helper.styles.awaiting_review;
-                        case 'Unassigned' : return leaflet_helper.styles.extentStyle;
-                    }
+                    var status = _.find(status_colors,function(stat){return stat.name==feature.properties.status});
+                    return (status && status.color) ? status.color : '#ffffff';
                 },
                 onEachFeature: function(feature, layer) {
 
@@ -49,6 +55,7 @@
             var drawnItems = new L.FeatureGroup();
     		map.addLayer(drawnItems);
 
+            configurePageUI();
         }
 
         function highlightFeature(e) {
@@ -76,12 +83,27 @@
                                 success: function(data) {
                                     window.location.reload();
                                 },
-                                failure: function() { console.log('failed');}
+                                failure: function() { log.error('failed');}
                             })
                         }
                     }
             );
         }
+
+        function configurePageUI () {
+            //Color tabs with same colors as features
+            _.each(status_colors, function(stat){
+                var tab_name = '#tab_'+stat.slug;
+                var $tab = $(tab_name);
+                var bg_color = (stat.color) ? stat.color.fillColor : '';
+                bg_color = bg_color || '#ffffff';
+                var color = maths.idealTextColor(bg_color);
+
+                if ($tab.length && bg_color) {
+                    $tab.css({backgroundColor:bg_color, color:color});
+                }
+            });
+        };
 
     </script>
 
@@ -235,10 +257,10 @@
 
             <div class="row body">
                 <ul class="nav nav-tabs" style="float:left; width:100%;">
-                    {% for status in statuses%}
+                    {% for status in statuses %}
                         {% with status=status|lower %}
                     <li class="{% if status == active_status %}active{% endif %}">
-                        <a href="{{ object.get_absolute_url }}{{ status }}">{{ status|title }}</a>
+                        <a id="tab_{{ status|slugify }}" href="{{ object.get_absolute_url }}{{ status }}">{{ status|title }}</a>
                     </li>
                         {% endwith %}
                     {% endfor %}
