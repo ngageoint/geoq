@@ -102,6 +102,8 @@ leaflet_helper.layer_conversion = function (lyr, map) {
         }
     } else if (lyr.type == 'Leaflet Tile Layer') {
         outputLayer = L.tileLayer(lyr.url, lyr.layerParams);
+    } else if (lyr.type == 'ESRI Identifiable MapServer') {
+        outputLayer = leaflet_helper.constructors.geojson(lyr, map);
     }
 
     //Make sure the name is set for showing up in the layer menu

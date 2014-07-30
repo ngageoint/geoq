@@ -44,6 +44,7 @@ SERVICE_TYPES = (
                 ('WMS', 'WMS'),
                 ('KML', 'KML'),
                 ('GeoRSS', 'GeoRSS'),
+                ('ESRI Identifiable MapServer', 'ESRI Identifiable MapServer'),
                 ('ESRI Tiled Map Service', 'ESRI Tiled Map Service'),
                 ('ESRI Dynamic Map Layer', 'ESRI Dynamic Map Layer'),
                 ('ESRI Feature Layer', 'ESRI Feature Layer'),

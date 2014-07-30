@@ -52,7 +52,8 @@ class Project(GeoQBase):
         ("Volcano", "Volcano"),
         ("Pandemic", "Pandemic"),
         ("Exercise", "Exercise"),
-        ("Special Event", "Special Event")
+        ("Special Event", "Special Event"),
+        ("Training", "Training"),
         ]
 
     project_type = models.CharField(max_length=50, choices=PROJECT_TYPES)

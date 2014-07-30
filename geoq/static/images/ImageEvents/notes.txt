@@ -1,0 +1,10 @@
+These images are extracted from:
+http://dev.femadata.com/arcgis/rest/services/ImageEvents/ImageEvents/MapServer/layers?f=pjson
+
+With each image being something like:
+
+http://dev.femadata.com/arcgis/rest/services/ImageEvents/ImageEvents/MapServer/2/images/f92b227dfe6c1fbdc122eeeef2904381
+or
+http://dev.femadata.com/arcgis/rest/services/ImageEvents/ImageEvents/MapServer/7/images/8e4c73a221dda8debdcf2658969c3670
+
+These are now hard-downloaded, but could be dynamic in the future

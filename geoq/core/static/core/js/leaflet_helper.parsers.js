@@ -4,25 +4,41 @@ leaflet_helper.constructors.identifyParser = function(result){
     //Use GeoJSON as the standard to try if no matches are found
     var parser = L.GeoJSON;
     var parserName = "Leaflet GeoJSON";
+    result = result || {};
 
-    if (result &&
-        result.geometryType && result.geometryType == "esriGeometryPoint" &&
-        result.features && result.features.length &&
-        result.features[0] && result.features[0].attributes) {
+    if (result.results && result.results.length &&
+        result.results[0].layerName && result.results && result.results[0].attributes &&
+        result.results[0].attributes.Latitude && result.results[0].attributes.ImageMissionId && result.results[0].attributes.ImageURL &&
+        result.results[0].attributes.ThumbnailURL && result.results[0].attributes.Heading && result.results[0].geometryType) {
+
+        //Parser is CAP imagery Format
+        parser = leaflet_helper.parsers.addFEMAImageEventsData;
+        parserName = "FEMA ImageEvents";
+
+    } else if (result.results && result.results.length &&
+               result.results[0].layerName && result.results && result.results[0].attributes &&
+               result.results[0].attributes.dod_txt && result.results[0].attributes.event_id &&
+               result.results[0].attributes.comments && result.results[0].attributes.OBJECTID &&
+               result.results[0].geometryType) {
+
+        parser = leaflet_helper.parsers.addNOAADamageAssessmentToolkit;
+        parserName = "NOAA Damage Toolkit";
+
+    } else if (result.geometryType && result.geometryType == "esriGeometryPoint" &&
+               result.features && result.features.length &&
+               result.features[0] && result.features[0].attributes) {
 
         //Parser is CAP imagery Format
         parser = leaflet_helper.parsers.addDynamicCapimageData;
         parserName = "CAP GeoJSON";
 
-    } else if (result &&
-        result.stat == "ok" && result.photos && result.photos.page &&
-        result.photos.photo && result.photos.perpage) {
+    } else if (result.stat == "ok" && result.photos && result.photos.page &&
+               result.photos.photo && result.photos.perpage) {
 
         parser = leaflet_helper.parsers.flickrImages;
         parserName = "Flickr Photo Search";
-    } else if (result &&
-        result.meta && result.meta.code && result.meta.code==200 &&
-        result.data && _.isArray(result.data)) {
+    } else if (result.meta && result.meta.code && result.meta.code==200 &&
+               result.data && _.isArray(result.data)) {
 
         parser = leaflet_helper.parsers.instagramImages;
         parserName = "Instagram Search";
@@ -45,7 +61,7 @@ leaflet_helper.constructors.urlTemplater =function(url, map, layer_json){
     var _url_template = _.template(url);
 
     //Get map info that will be added into the url if needed
-    var mapExtent=map.getBounds();
+    var mapExtent = map.getBounds();
     var center = map.getCenter();
     var size = map.getSize();
     var mapState={
@@ -57,10 +73,11 @@ leaflet_helper.constructors.urlTemplater =function(url, map, layer_json){
         s:mapExtent._southWest.lat,
         e:mapExtent._northEast.lng,
         w:mapExtent._southWest.lng,
-        width:size.x,
-        height:size.y,
+        width:parseInt(size.x),
+        height:parseInt(size.y),
         radius:2
     };
+    mapState.bbox = mapState.w+","+mapState.n+","+mapState.e+","+mapState.s;
 
     //Feed the generated variables into the template, and return the result
     layer_json = $.extend(layer_json,mapState);
@@ -78,6 +95,15 @@ leaflet_helper.constructors.urlTemplater =function(url, map, layer_json){
 
 leaflet_helper.constructors.geojson_layer_count = 0;
 leaflet_helper.constructors.geojson = function(layerConfig, map, useLayerInstead) {
+
+    var url = layerConfig.url;
+    if (layerConfig.type == 'ESRI Identifiable MapServer'){
+        if (_.str.endsWith(url,'?')) url = url.substr(0,url.length-1);
+        if (_.str.endsWith(url,'/')) url = url.substr(0,url.length-1);
+        if (_.str.endsWith(url,'/export')) url = url.substr(0,url.length-7) + '/identity';
+        url += '?geometryType=esriGeometryEnvelope&geometry={{bbox}}&mapExtent={{bbox}}';
+        url += '&imageDisplay={{width}},{{height}},96&tolerance={{width}}&f=json&layers=visible:'+(layerConfig.layer||"all");
+    }
 
     //Set up base icon
     var MapMarker = L.Icon.extend({
@@ -103,8 +129,50 @@ leaflet_helper.constructors.geojson = function(layerConfig, map, useLayerInstead
         var iconUrl = "";
         var iconX = 15;
         var iconY = 24;
+        var iconAnchor = null;
 
-        if (layerConfig && layerConfig.layerParams && (layerConfig.layerParams.icon || layerConfig.layerParams.iconUrl)) {
+        //TODO: Move these to a special iconParser?
+        if (feature && feature.properties && feature.properties.icon_type=="ImageEvents" &&  feature.properties.layer_type) {
+
+            iconX = 14;
+            iconY = 14;
+            iconAnchor = new L.Point(7, 7);
+
+            if (feature.properties.layer_type == "Aerial Oblique") {
+                if (feature.properties.heading) {
+                    //TODO: Rotate properly
+                    iconUrl = "/static/images/ImageEvents/c5739cf19fe5e7635c04ae6eb2e7572f.png";
+                } else {
+                    iconUrl = "/static/images/ImageEvents/32d612809f495aa6e5491efbe6ebc8fd.png";
+                }
+            } else if (feature.properties.layer_type == "Aerial Oblique Target") {
+                iconUrl = "/static/images/ImageEvents/f92b227dfe6c1fbdc122eeeef2904381.png";
+            } else if (feature.properties.layer_type == "Aerial Oblique Line") {
+                //Should only be lines and set in polygonStyleCallBack, keeping this as a backup
+                iconUrl = "/static/images/ImageEvents/f92b227dfe6c1fbdc122eeeef2904381.png";
+
+            } else if (feature.properties.layer_type == "Aerial Nadir") {
+                iconUrl = "/static/images/ImageEvents/a2790e3ba9dcb053c40320e539a7ad59.png";
+
+
+            } else if (feature.properties.layer_type == "Ground Images") {
+                if (feature.properties.heading) {
+                    //TODO: Rotate properly
+                    iconUrl = "/static/images/ImageEvents/3353b7bc2d8b9fa6085b08ba446dfc8a.png";
+                } else {
+                    iconUrl = "/static/images/ImageEvents/5e65279a5d62555c05d2bc421e7ddc62.png";
+                }
+            } else if (feature.properties.layer_type == "Ground Targets") {
+                iconUrl = "/static/images/ImageEvents/8e4c73a221dda8debdcf2658969c3670.png";
+            } else if (feature.properties.layer_type == "Ground Lines") {
+                //Should only be lines and set in polygonStyleCallBack, keeping this as a backup
+                iconUrl = "/static/images/ImageEvents/8e4c73a221dda8debdcf2658969c3670.png";
+            } else {
+                var layerNum = layerConfig.geojson_layer_count % aoi_feature_edit.available_icons.length;
+                iconUrl = aoi_feature_edit.available_icons[layerNum];
+            }
+
+        } else if (layerConfig && layerConfig.layerParams && (layerConfig.layerParams.icon || layerConfig.layerParams.iconUrl)) {
             iconUrl = layerConfig.layerParams.icon || layerConfig.layerParams.iconUrl;
             if (layerConfig.layerParams.iconX && layerConfig.layerParams.iconY) {
                 iconX = layerConfig.layerParams.iconX;
@@ -114,16 +182,40 @@ leaflet_helper.constructors.geojson = function(layerConfig, map, useLayerInstead
             var layerNum = layerConfig.geojson_layer_count % aoi_feature_edit.available_icons.length;
             iconUrl = aoi_feature_edit.available_icons[layerNum];
         }
-        var icon = new MapMarker({
+
+        //Build the icon injects
+        var iconData = {
             iconUrl: iconUrl,
             iconSize: new L.Point(iconX, iconY),
             text: layerConfig.name
-        });
+        };
+        if (iconAnchor) iconData.iconAnchor = iconAnchor;
+        var icon = new MapMarker(iconData);
+
+        //Construct the final Icon
         return L.marker(latlng, {icon: icon});
+    }
+
+    function polygonStyleCallBack (feature) {
+        var style = {
+                weight: 2,
+                opacity: 1,
+                color: 'white',
+                fillOpacity: 0.1,
+                fillColor: '#ff0000'};
+        if (feature.properties.layer_type == "Aerial Oblique Line") {
+            style.color = 'green';
+            style.dashArray = '3';
+        } else if (feature.properties.layer_type == "Ground Lines") {
+            style.color = 'orange';
+            style.dashArray = '3';
+        }
+        return style;
     }
 
     var outputLayer = useLayerInstead || new L.geoJson(undefined,{
         onEachFeature: leaflet_helper.parsers.standard_onEachFeature,
+        style: polygonStyleCallBack,
         pointToLayer: iconCallback
     });
     if (outputLayer.geojson_layer_count == undefined) {
@@ -136,7 +228,7 @@ leaflet_helper.constructors.geojson = function(layerConfig, map, useLayerInstead
     outputLayer.options.opacity = 1;
     outputLayer.options = $.extend(outputLayer.options, layerConfig.layerParams);
 
-    var url = leaflet_helper.constructors.urlTemplater(layerConfig.url, map, layerConfig.layerParams);
+    url = leaflet_helper.constructors.urlTemplater(url, map, layerConfig.layerParams);
     var proxiedURL = leaflet_helper.proxify(url);
 
     $.ajax({
@@ -176,7 +268,7 @@ leaflet_helper.constructors.geojson_success = function (data, proxiedURL, map, o
 
             var features = "NONE";
             if (result && result.features && result.features.length) features = result.features.length;
-            log.info("JSON layer was created from : "+ proxiedURL+ " - features:"+ features+ " - parser type: ", parserInfo.parserName);
+            log.info("JSON loaded from : "+ proxiedURL+ " - features: "+ features+ " - parser type: " + parserInfo.parserName);
         }
     }
 
@@ -217,37 +309,242 @@ leaflet_helper.addLinksToPopup = function (layerName,id,useMove,useHide,useDrop)
     return output;
 
 };
+leaflet_helper.parsers.addNOAADamageAssessmentToolkit = function (result, map, outputLayer) {
+
+    if (!outputLayer.options) outputLayer.options = {};
+    if (!outputLayer.options.items) outputLayer.options.items = [];
+
+    var jsonObjects = [];
+    $(result.results).each(function () {
+        var feature = $(this)[0];
+        var id = feature.attributes.OBJECTID;
+
+        var itemFound = false;
+        _.each(outputLayer.options.items,function(item){
+           if (item.id == id) itemFound = true;
+        });
+        if (!itemFound) {
+            outputLayer.options.items.push(feature);
+
+            feature.attributes = feature.attributes || {};
+            var attributes = feature.attributes;
+
+            var lat = feature.geometry.y || attributes.lat || 0;
+            var lng = feature.geometry.x || attributes.lon || 0;
+            lat = parseFloat(lat);
+            lng = parseFloat(lng);
+
+            var survey_date = attributes.surveydate;
+            var storm_date = attributes.stormdate;
+            var damage_txt = attributes.damage_txt;
+            var dod_txt = attributes.dod_txt;
+            var windspeed = attributes.windspeed;
+            var injuries = attributes.injuries;
+            var deaths = attributes.deaths;
+            var comments = attributes.comments;
+            var image = attributes.image;
+
+            var display = "";
+            if (feature.layerName) {
+                display = feature.layerName + ': ' + id;
+            } else {
+                display = "NOAA Damage Assessment";
+            }
+
+            var popupContent = leaflet_layer_control.parsers.textIfExists({name: display, title:"", header:true, linkit:image});
+            popupContent += leaflet_layer_control.parsers.textIfExists({name: survey_date, title:"Survey Date", datify:"calendar"});
+            popupContent += leaflet_layer_control.parsers.textIfExists({name: storm_date, title:"Storm Date", datify:"calendar"});
+            popupContent += leaflet_layer_control.parsers.textIfExists({name: damage_txt, title:"Damage"});
+            popupContent += leaflet_layer_control.parsers.textIfExists({name: dod_txt, title:"Dod Text"});
+            popupContent += leaflet_layer_control.parsers.textIfExists({name: windspeed, title:"Windspeed"});
+            popupContent += leaflet_layer_control.parsers.textIfExists({name: injuries, title:"Injuries"});
+            popupContent += leaflet_layer_control.parsers.textIfExists({name: deaths, title:"Deaths"});
+            popupContent += leaflet_layer_control.parsers.textIfExists({name: comments, title:"Comments"});
+
+            popupContent += leaflet_helper.addLinksToPopup(outputLayer.name, id, true, false);
+
+            var json = {
+                type: "Feature",
+                properties: {
+                    id: id,
+                    source: 'FEMA Damage Assessment',
+                    name: display,
+                    image: image,
+                    thumbnail: image,
+                    popupContent: popupContent
+                },
+                geometry: {
+                    type: "Point",
+                    coordinates: [lng, lat]
+                }
+
+            };
+            jsonObjects.push(json);
+        }
+    });
+    outputLayer.addData(jsonObjects);
+    if (result.features && result.features.length) {
+        log.info("A NOAA Damage Assessment Toolkit layer was updated adding "+ jsonObjects.length+ " features");
+    } else {
+        log.info("A NOAA Damage Assessment Toolkit request was returned, but no features were found");
+    }
+
+    return outputLayer;
+
+
+};
+leaflet_helper.parsers.addFEMAImageEventsData = function (result, map, outputLayer) {
+
+    if (!outputLayer.options) outputLayer.options = {};
+    if (!outputLayer.options.items) outputLayer.options.items = [];
+
+    var jsonObjects = [];
+    $(result.results).each(function () {
+        var feature = $(this)[0];
+        var id = feature.attributes.Id;
+
+        var itemFound = false;
+        _.each(outputLayer.options.items,function(item){
+           if (item.id == id) itemFound = true;
+        });
+        if (!itemFound) {
+            outputLayer.options.items.push(feature);
+
+            feature.attributes = feature.attributes || {};
+            var attributes = feature.attributes;
+
+            var lat = feature.geometry.y || attributes.Latitutde || 0;
+            var lng = feature.geometry.x || attributes.Longitude || 0;
+            lat = parseFloat(lat);
+            lng = parseFloat(lng);
+
+            var photo_date = attributes.EXIFPhotoDate;
+            var altitude = attributes.Altitude;
+            var team_name = attributes.TeamName;
+            var event_name = attributes.EventName;
+
+            var display = "";
+            if (feature.displayFieldName) {
+                display = attributes[feature.displayFieldName];
+            } else if (feature.value) {
+                display = feature.value;
+            } else if (event_name && team_name) {
+                display = event_name+": "+team_name;
+            } else {
+                display = "Uploaded Photo";
+            }
+
+            var image_type = "";
+            if (feature.attributes.ImageTypeId == 1) {
+                image_type = "Aerial Oblique";
+            } else if (feature.attributes.ImageTypeId == 2) {
+                image_type = "Aerial Nadir";
+            } else if (feature.attributes.ImageTypeId == 3) {
+                image_type = "Ground";
+            }
+
+            var popupContent = leaflet_layer_control.parsers.textIfExists({name: display, title:"Image", header:true, linkit:attributes.ThumbnailURL});
+            popupContent += leaflet_layer_control.parsers.textIfExists({name: photo_date, title:"Photo Date", datify:"calendar, fromnow"});
+            popupContent += "<a href='" + attributes.ImageURL + "' target='_new'><img style='width:150px' src='" + attributes.ThumbnailURL + "' /></a><br/>";
+            popupContent += leaflet_layer_control.parsers.textIfExists({name: altitude, title:"Altitude", suffix:" ft"});
+            popupContent += leaflet_layer_control.parsers.textIfExists({name: image_type, title:"Collection Type"});
+            popupContent += leaflet_helper.addLinksToPopup(outputLayer.name, id, true, false);
+
+            //TODO: Not using color yet
+            var color = "blue";
+            if (feature.layerName == "Track Points") {
+                color = "purple";
+            } else if (feature.layerName == "Ground Images") {
+                color = "orange";
+            } else if (feature.layerName == "Ground Targets") {
+                color = "green";
+            } else if (feature.layerName == "Ground Lines") {
+                color = "yellow";
+            }
+            var heading = feature.attributes.CalculatedHeading || feature.attributes.Heading || 0;
+
+            var geometry = {};
+            if (feature.geometry && feature.geometry.paths) {
+                geometry = { type: "MultiLineString",
+                    coordinates: feature.geometry.paths //[ [100.0, 0.0], [101.0, 1.0] ]
+                }
+            } else {
+                geometry = {
+                    type: "Point",
+                    coordinates: [lng, lat]
+                }
+            }
+
+            var json = {
+                type: "Feature",
+                properties: {
+                    id: id,
+                    source: 'CAP ImageEvents',
+                    name: display,
+                    image: feature.attributes.ImageURL,
+                    thumbnail: feature.attributes.ThumbnailURL,
+                    popupContent: popupContent,
+                    icon_type: "ImageEvents",
+                    layer_type: feature.layerName,
+                    heading: heading,
+                    color: color
+                },
+                geometry: geometry
+            };
+            jsonObjects.push(json);
+        }
+    });
+    outputLayer.addData(jsonObjects);
+    if (result.features && result.features.length) {
+        log.info("A FEMA ImageEvents layer was updated adding "+ jsonObjects.length+ " features");
+    } else {
+        log.info("A FEMA ImageEvents request was returned, but no features were found");
+    }
+
+    return outputLayer;
+};
 leaflet_helper.parsers.addDynamicCapimageData = function (result, map, outputLayer) {
     //TODO: Handle de-dupes of all features returned
+
+    if (!outputLayer.options) outputLayer.options = {};
+    if (!outputLayer.options.items) outputLayer.options.items = [];
 
     var jsonObjects = [];
     $(result.features).each(function () {
         var feature = $(this)[0];
         var id = feature.attributes.ID;
 
-        var popupContent = "<h5>CAP Item #"+id+"</h5><a href='" + feature.attributes.ImageURL + "' target='_new'><img style='width:256px' src='" + feature.attributes.ThumbnailURL + "' /></a>";
-        popupContent += leaflet_helper.addLinksToPopup(outputLayer.name, id, true, false);
+        var itemFound = false;
+        _.each(outputLayer.options.items,function(item){
+           if (item.id == id) itemFound = true;
+        });
+        if (!itemFound) {
+            outputLayer.options.items.push(feature);
 
-        var json = {
-            type: "Feature",
-            properties: {
-                id: id,
-                source: 'CAP Imagery',
-                name: id + " - " + feature.attributes.DaysOld + " days old",
-                image: feature.attributes.ImageURL,
-                thumbnail: feature.attributes.ThumbnailURL,
-                popupContent: popupContent
-            },
-            geometry: {
-                type: "Point",
-                coordinates: [feature.geometry.x, feature.geometry.y]
-            }
-        };
-        jsonObjects.push(json);
+            var popupContent = "<h5>CAP Item #"+id+"</h5><a href='" + feature.attributes.ImageURL + "' target='_new'><img style='width:256px' src='" + feature.attributes.ThumbnailURL + "' /></a>";
+            popupContent += leaflet_helper.addLinksToPopup(outputLayer.name, id, true, false);
+
+            var json = {
+                type: "Feature",
+                properties: {
+                    id: id,
+                    source: 'CAP Imagery',
+                    name: id + " - " + feature.attributes.DaysOld + " days old",
+                    image: feature.attributes.ImageURL,
+                    thumbnail: feature.attributes.ThumbnailURL,
+                    popupContent: popupContent
+                },
+                geometry: {
+                    type: "Point",
+                    coordinates: [feature.geometry.x, feature.geometry.y]
+                }
+            };
+            jsonObjects.push(json);
+        }
     });
     outputLayer.addData(jsonObjects);
     if (result.features && result.features.length) {
-        log.info("A FEMA CAP layer was updated adding "+ result.features.length+ " features");
+        log.info("A FEMA CAP layer was updated adding "+ jsonObjects.length+ " features");
     } else {
         log.info("A FEMA CAP request was returned, but no features were found");
     }
@@ -258,8 +555,8 @@ leaflet_helper.parsers.instagramImages = function (result, map, outputLayer) {
     var jsonObjects = [];
     var photos = result.data;
 
-    if (!outputLayer.options) { outputLayer.options = {}}
-    if (!outputLayer.options.items) { outputLayer.options.items = []}
+    if (!outputLayer.options) outputLayer.options = {};
+    if (!outputLayer.options.items) outputLayer.options.items = [];
 
     _.each(photos,function(image){
         var itemFound = false;
