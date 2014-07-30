@@ -25,10 +25,6 @@ class FeatureTypeForm(StyledModelForm):
 class MapForm(StyledModelForm):
     class Meta:
         model = Map
-        widgets = {"zoom": forms.HiddenInput(),
-                   "projection": forms.HiddenInput(),
-                   "center_x": forms.HiddenInput(),
-                   "center_y": forms.HiddenInput()}
 
 
 class LayerForm(StyledModelForm):
