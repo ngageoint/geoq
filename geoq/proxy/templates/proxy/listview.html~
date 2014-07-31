@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}Proxy{% endblock %}
+{% block content %}
+<duv>
+<h1>Current Proxies</h1>
+<ul>
+{% for proxy in object_list %}
+<li><a href="{{proxy.get_absolute_url}{">{{proxy.Name}}</a></li>
+{% endfor %}
+</ul>
+</div>
+<div>
+<a href="{% url "admin:index" %}">Admin stuff</a>
+<br>
+<a href="{% url "proxy:register" %}">Register new proxied file</a>
+</div>
+{% endblock %}

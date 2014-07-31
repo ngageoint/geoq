@@ -18,4 +18,5 @@ urlpatterns = patterns('',
     url(r'^feedback/', include('geoq.feedback.urls')),
     # url(r'^badges/', include('geoq.badges.urls')),
     url(r'^accounts/', include('geoq.accounts.urls')),
+    url(r'^proxy/', include('proxy.urls',namespace="proxy")),
 ) + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
