@@ -65,6 +65,11 @@ class Project(GeoQBase):
         User, blank=True, null=True,
         related_name="contributors", help_text='User that will be able to take on jobs.')
 
+    class Meta:
+        permissions = (
+            ('open_project','Open Project'),('close_project','Close Project'),('archive_project','Archive Project'),
+        )
+
     @property
     def jobs(self):
         return Job.objects.filter(project=self)
@@ -113,6 +118,11 @@ class Job(GeoQBase):
 
     map = models.ForeignKey('maps.Map', blank=True, null=True)
     feature_types = models.ManyToManyField('maps.FeatureType', blank=True, null=True)
+
+    class Meta:
+        permissions = (
+            ('assign_job','Assign Job'),
+        )
 
     def get_absolute_url(self):
         return reverse('job-detail', args=[self.id])
@@ -234,6 +244,11 @@ class AOI(GeoQBase):
     polygon = models.MultiPolygonField()
     priority = models.SmallIntegerField(choices=PRIORITIES, max_length=1, default=5)
     status = models.CharField(max_length=15, choices=STATUS_CHOICES, default='Unassigned')
+
+    class Meta:
+        permissions = (
+            ('assign_aoi','Assign AOI'),('certify_aoi','Certify AOI'),
+        )
 
     def __unicode__(self):
         aoi_obj = '%s - AOI %s' % (self.name, self.id)
