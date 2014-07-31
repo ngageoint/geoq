@@ -7,7 +7,7 @@ from django.contrib.gis import admin
 from django.shortcuts import render
 from django.http import HttpResponseRedirect
 from django import forms
-from models import Project, Job, AOI
+from models import Project, Job, AOI, Setting
 from guardian.admin import GuardedModelAdmin
 
 
@@ -23,7 +23,7 @@ class AOIAdmin(ObjectAdmin):
 
     class NameInputForm(forms.Form):
         _selected_action = forms.CharField(widget=forms.MultipleHiddenInput)
-        name_field = forms.CharField(max_length=200, required=True, label="AOI Name")
+        name_field = forms.CharField(max_length=200, required=True, label="Workcell Name")
 
     def rename_aois(self, request, queryset):
         form = None
@@ -35,14 +35,14 @@ class AOIAdmin(ObjectAdmin):
                 namestring = form.cleaned_data['name_field']
                 queryset.update(name=namestring)
 
-                self.message_user(request, "Succesfully renamed selected AOIs")
+                self.message_user(request, "Succesfully renamed selected Workcells")
                 return HttpResponseRedirect(request.get_full_path())
 
         if not form:
             form = self.NameInputForm(initial={'_selected_action': request.POST.getlist('_selected_action')})
 
         return render(request, 'core/name_input.html', {'name_form': form})
-    rename_aois.short_description = "Rename AOIs"
+    rename_aois.short_description = "Rename Workcells"
 
 
 class JobAdmin(GuardedModelAdmin, ObjectAdmin):
@@ -50,6 +50,11 @@ class JobAdmin(GuardedModelAdmin, ObjectAdmin):
     save_on_top = True
 
 
+class SettingAdmin(admin.ModelAdmin):
+    list_display = ['name', 'value']
+
+
+admin.site.register(Setting, SettingAdmin)
 admin.site.register(Project, ObjectAdmin)
 admin.site.register(Job, JobAdmin)
 admin.site.register(AOI, AOIAdmin)
