@@ -13,7 +13,10 @@
 
         <h3>
             <i class="icon-{% if object_type == "map" %}map-marker{% else %}edit{% endif %} icon-1x pull-left list-icon"></i>
-            <span class="title"><a href="{{ object.get_absolute_url|default:"#" }}">{% if object_type == "map" %}{{ object.title }}
+            <span class="title"><a href="{{ object.get_absolute_url|default:"#" }}">
+                {% if object_type == "featuretype" %}
+                    {% autoescape off %}{{ object.iconized|safe }}{% endautoescape %} {{ object.name }}
+                {% elif object_type == "map" %}{{ object.title }}
                 {% else %}{{ object.name }}{% endif %}</a></span>
         </h3>
 

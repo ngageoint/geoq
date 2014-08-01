@@ -404,6 +404,31 @@ class FeatureType(models.Model):
 
         return local_style
 
+    def iconized(self, height=24):
+        style_html = "height:"+str(height)+"px; "
+        src = "/static/leaflet/images/gray-marker-icon.png"
+        bgColor = ""
+
+        style = self.style or {}
+        if style.has_key('iconUrl'):
+            src = str(style['iconUrl'])
+        if style.has_key('weight'):
+            style_html = style_html + "border-width:"+str(style['weight'])+"px; "
+        if style.has_key('color'):
+            color = str(style['color'])
+            style_html = style_html + "border-color:"+color+"; "
+            bgColor = color
+        if style.has_key('fill'):
+            bgColor = str(style['fill'])
+
+        if self.type == "Point":
+            html = "<img src='"+src+"' style='"+style_html+"vertical-align:initial;' />"
+        else:
+            style_html = style_html + "background-color:"+bgColor+"; "
+            html = "<span style='"+style_html+"border-radius:4px; display:inline-block; width:"+str(height)+"px;'> &nbsp; </span>"
+
+        return html
+
     def featuretypes(self):
         return FeatureType.objects.all()
 
