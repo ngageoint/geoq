@@ -33,6 +33,7 @@ aoi_feature_edit.init = function () {
         }
     });
 
+    //Start building feature icons
     _.each(aoi_feature_edit.feature_types, function (ftype) {
         // if this is a point, create icon for it first
         if (ftype.type == 'Point' && ftype.style) {
@@ -48,7 +49,6 @@ aoi_feature_edit.init = function () {
                 aoi_feature_edit.icons[ftype.id].title = ftype.name;
                 aoi_feature_edit.icons[ftype.id].text = ftype.name;
             }
-
         }
 
         var featureLayer = L.geoJson(null, {
@@ -61,7 +61,9 @@ aoi_feature_edit.init = function () {
             onEachFeature: function(feature, layer) {
                 aoi_feature_edit.featureLayer_onEachFeature(feature, layer, featureLayer);
             },
-            pointToLayer: aoi_feature_edit.featureLayer_pointToLayer
+            pointToLayer: function(feature, latlng) {
+                return aoi_feature_edit.featureLayer_pointToLayer(feature, latlng, featureLayer, ftype);
+            }
         });
         featureLayer.on('click', function(e){
             if (typeof leaflet_layer_control!="undefined"){
@@ -84,8 +86,29 @@ aoi_feature_edit.init = function () {
 
 };
 
-aoi_feature_edit.featureLayer_pointToLayer = function (feature, latlng) {
-    var icon = new aoi_feature_edit.icons[feature.properties.template](aoi_feature_edit.icon_style[feature.properties.template]);
+aoi_feature_edit.featureLayer_pointToLayer = function (feature, latlng, featureLayer, featureType) {
+    var featureTypeID = feature.properties.template; //TODO: Can we pull from featureType?
+    var iconTemplate = aoi_feature_edit.icon_style[featureTypeID];
+    var style_obj = featureType.style;
+    var iconW,iconH,iconAnchorW,iconAnchorH;
+
+    if (style_obj.iconSize) {
+        iconW = iconH = style_obj.iconSize;
+    }
+    if (style_obj.iconWidth) iconW = parseInt(style_obj.iconWidth);
+    if (style_obj.iconHeight) iconH = parseInt(style_obj.iconHeight);
+
+    if (iconW || iconH){
+        if (!iconW) iconW = iconH;
+        if (!iconH) iconH = iconW;
+        if (!iconAnchorW) iconAnchorW = Math.ceil(iconW/2);
+        if (!iconAnchorH) iconAnchorH = Math.ceil(iconH/2);
+
+        iconTemplate.iconAnchor = new L.Point(iconAnchorW, iconAnchorH);
+        iconTemplate.iconSize = new L.Point(iconW, iconH);
+    }
+
+    var icon = new aoi_feature_edit.icons[featureTypeID](iconTemplate);
     var marker = new L.Marker(latlng, {
         icon: icon
     });
@@ -236,6 +259,8 @@ aoi_feature_edit.map_init = function (map, bounds) {
         aoi_feature_edit.watch_layer(e.layer, false);
     });
 
+    map.options.maxZoom = 19;
+
     var custom_map = aoi_feature_edit.aoi_map_json;
     aoi_feature_edit.map = map;
 
@@ -301,7 +326,7 @@ aoi_feature_edit.map_init = function (map, bounds) {
     }
 
     // For each feature template, add features to map and layer control
-    _.each(aoi_feature_edit.feature_types, function (ftype) {
+    _.each(_.sortBy(aoi_feature_edit.feature_types,'order'), function (ftype) {
 
         if (ftype.type == 'Polygon') {
             aoi_feature_edit.all_polygons.push(aoi_feature_edit.createPolygonOptions(ftype));
@@ -331,6 +356,7 @@ aoi_feature_edit.map_init = function (map, bounds) {
             });
             featureLayer.addTo(aoi_feature_edit.map);
             featureLayer.options.is_geoq_feature = true;
+            if (_.isNumber(ftype.order)) featureLayer.options.order = ftype.order;
             aoi_feature_edit.layers.features.push(featureLayer);
         } else {
             log.error("A FeatureLayer was supposed to be drawn, but didn't seem to exist.")
@@ -413,7 +439,7 @@ aoi_feature_edit.map_init = function (map, bounds) {
 
         var map_item_type = parseInt(id);
         if (isNaN(map_item_type)){
-            var features = _.toArray(aoi_feature_edit.feature_types);
+            var features = _.sortBy(_.toArray(aoi_feature_edit.feature_types),'order');
             if (features && features[0] && features[0].id) {
                 map_item_type = features[0].id;
             } else {
@@ -623,8 +649,15 @@ aoi_feature_edit.buildDrawingControl = function (drawnItems) {
 
             } else {
                 if (bg_image) {
+                    var widthOffset = 5;
+                    var width = ftype.style.iconWidth || ftype.style.iconSize;
+                    if (width){
+                        widthOffset = parseInt((17 - width)/2);
+                        if (widthOffset<1) widthOffset=0;
+                    }
+
                     bg_image = 'url("'+bg_image+'")';
-                    $icon.css({background:bg_image, backgroundSize:'contain', backgroundRepeat:'no-repeat',backgroundPosition:'5px'});
+                    $icon.css({background:bg_image, backgroundSize:'contain', backgroundRepeat:'no-repeat',backgroundPosition:widthOffset+'px'});
                 }
             }
             if (bg_color) {

@@ -13,12 +13,16 @@
 
         <h3>
             <i class="icon-{% if object_type == "map" %}map-marker{% else %}edit{% endif %} icon-1x pull-left list-icon"></i>
-            <span class="title"><a href="{{ object.get_absolute_url|default:"#" }}">{% if object_type == "map" %}{{ object.title }}
+            <span class="title"><a href="{{ object.get_absolute_url|default:"#" }}">
+                {% if object_type == "featuretype" %}
+                    {% autoescape off %}{{ object.iconized|safe }}{% endautoescape %} {{ object.name }}
+                {% elif object_type == "map" %}{{ object.title }}
                 {% else %}{{ object.name }}{% endif %}</a></span>
         </h3>
 
         <p class="body project-description">{% if object_type == "map"%}{{ object.description }}
-            {% else %}{{ object.type }}{% endif %}</p>
+            {% else %}{{ object.type }}{% endif %}
+            {% if object_type == "featuretype" and object.category %}, Category: <b>{{ object.category }}</b>{% endif %}</p>
 
         <p class="body muted timestamp">{{ object.created_at }}</p>
         </li>

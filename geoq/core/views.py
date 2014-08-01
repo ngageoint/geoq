@@ -159,15 +159,15 @@ class CreateFeaturesView(UserAllowedMixin, DetailView):
             kwargs['error'] = "Sorry, this workcell has been completed and can no longer be edited"
             return False
 
-
     def get_context_data(self, **kwargs):
         cv = super(CreateFeaturesView, self).get_context_data(**kwargs)
         cv['reviewers'] = kwargs['object'].job.reviewers.all()
         cv['admin'] = self.request.user.is_superuser or self.request.user.groups.filter(name='admin_group').count() > 0
 
         cv['map'] = self.object.job.map
+        cv['feature_types'] = self.object.job.feature_types.all() #.order_by('name').order_by('order').order_by('-category')
 
-        Comment(user=cv['aoi'].analyst,aoi=cv['aoi'],text="Workcell opened").save()
+        Comment(user=cv['aoi'].analyst, aoi=cv['aoi'], text="Workcell opened").save()
         return cv
 
 

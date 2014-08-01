@@ -1,6 +1,5 @@
 var leaflet_layer_control = {};
 
-//TODO: Pull ordering from map object
 //TODO: Allow drag-and-drop sorting that controls layer
 //TODO: have an info control that modifies things like IA tools/icons
 //TODO: Save info about layer configuration, then have a way to load that back in or save as settings for a Job
@@ -637,7 +636,10 @@ leaflet_layer_control.layerDataList = function (options) {
             inUSBounds = maptools.inUSBounds(center.lat, center.lng);
         }
 
-        //For each layer
+        //If there are names, sort by them
+//        layerGroup = _.sortBy(layerGroup,'name');
+
+        //For each layer, build tree nodes
         _.each(layerGroup, function (layer, i) {
             var name = layer.name || layer.options.name;
             var layer_obj = {title: name, key: folderName+"."+i, data:layer};
@@ -678,6 +680,14 @@ leaflet_layer_control.layerDataList = function (options) {
                 treeData[groupNum].children.push(layer_obj);
             }
         },layerGroups);
+
+        //Sort by order_by if it exists, otherwise sort by name or folder#
+        var nodes = treeData[groupNum].children;
+        if (nodes && nodes[0] && nodes[0].data && nodes[0].data.options && _.isNumber(nodes[0].data.options.order)) {
+            treeData[groupNum].children = _.sortBy(nodes, function(obj){ return +obj.data.options.order });
+        } else {
+            treeData[groupNum].children = _.sortBy(nodes, function(obj){ return (obj.data && obj.data.name) ? obj.data.name : obj.key;});
+        }
 
     },layerGroups);
 

@@ -38,9 +38,10 @@
 
         leaflet_helper.proxy_path = "{% url 'proxy' %}" + "/"; //TODO: Standardize expression of proxy locations
 
+        //TODO: Pulling out each feature type as an object is a bit cumbersome, this should be streamlined
         var feature_types = {};
         var geometry_types = [];
-        {% for feature_type in  object.job.feature_types.all %}
+        {% for feature_type in feature_types %}
                 feature_types[{{ feature_type.id }}] = {{ feature_type.to_json|safe }};
                 geometry_types.push("{{ feature_type.type }}");
         {% endfor %}

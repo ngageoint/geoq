@@ -3,7 +3,7 @@
 # is subject to the Rights in Technical Data-Noncommercial Items clause at DFARS 252.227-7013 (FEB 2012)
 
 import json
-from geoq.core.models import AOI, Job, Project
+from geoq.core.models import AOI, Job, Project, Setting
 from django.contrib.auth.models import User
 from django.contrib.gis.db import models
 from django.core.exceptions import ValidationError
@@ -11,6 +11,18 @@ from django.utils.datastructures import SortedDict
 from django.core.urlresolvers import reverse
 from jsonfield import JSONField
 from datetime import datetime
+
+#Set up Server URL setting
+SERVER_URL = '/'
+try:
+    main_server = Setting.objects.filter(name="main_server")
+    if len(main_server) > 0:
+        main_server = main_server[0].value
+        if main_server.__contains__('name'):
+            SERVER_URL = str(main_server['name'])
+except:
+    SERVER_URL = '/'
+
 
 IMAGE_FORMATS = (
                 ('image/png', 'image/png'),
@@ -166,10 +178,10 @@ class Map(models.Model):
 
     title = models.CharField(max_length=75, unique=True)
     description = models.TextField(max_length=800, blank=True, null=True)
-    zoom = models.IntegerField(help_text='Sets the default zoom level of the map.', default=5)
+    zoom = models.IntegerField(help_text='Sets the default zoom level of the map.', default=5, blank=True, null=True)
     projection = models.CharField(max_length=32, blank=True, null=True, default="EPSG:4326", help_text='Set the default projection for layers added to this map. Note that the projection of the map is usually determined by that of the current baseLayer')
-    center_x = models.FloatField(default=0.0, help_text='Sets the center x coordinate of the map.  Maps on event pages default to the location of the event.')
-    center_y = models.FloatField(default=0.0, help_text='Sets the center y coordinate of the map.  Maps on event pages default to the location of the event.')
+    center_x = models.FloatField(default=0.0, help_text='Sets the center x coordinate of the map.  Maps on event pages default to the location of the event.', blank=True, null=True)
+    center_y = models.FloatField(default=0.0, help_text='Sets the center y coordinate of the map.  Maps on event pages default to the location of the event.', blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now_add=True)
 
@@ -240,9 +252,9 @@ class Map(models.Model):
 
     def to_json(self):
         return json.dumps({
-            "center_x": self.center_x,
-            "center_y": self.center_y,
-            "zoom": self.zoom,
+            "center_x": self.center_x or 0,
+            "center_y": self.center_y or 0,
+            "zoom": self.zoom or 15,
             "projection": self.projection or "EPSG:4326",
             "layers": self.map_layers_json(),
             "all_layers": self.all_map_layers_json()
@@ -359,12 +371,16 @@ class FeatureType(models.Model):
 
     name = models.CharField(max_length=200)
     type = models.CharField(choices=FEATURE_TYPES, max_length=25)
+    category = models.CharField(max_length=25, default="", blank=True, null=True)
+    order = models.IntegerField(default=0, null=True, blank=True, help_text='Optionally specify the order features should appear on the edit menu. Lower numbers appear sooner.')
     properties = JSONField(load_kwargs={}, blank=True, null=True)
     style = JSONField(load_kwargs={}, blank=True, null=True)
 
     def to_json(self):
         return json.dumps(dict(id=self.id,
                                properties=self.properties,
+                               category=self.category,
+                               order=self.order,
                                name=self.name,
                                type=self.type,
                                style=self.style))
@@ -383,10 +399,35 @@ class FeatureType(models.Model):
             local_style['fill-opacity'] = local_style['fill']
             local_style.pop('fill', None)
         if local_style and local_style.has_key('iconUrl'):
-            local_style['external-graphic'] = 'http://geo-q.com' + local_style['iconUrl']
+            local_style['external-graphic'] = SERVER_URL + local_style['iconUrl']
             local_style.pop('iconUrl', None)
 
         return local_style
+
+    def iconized(self, height=24):
+        style_html = "height:"+str(height)+"px; "
+        src = "/static/leaflet/images/gray-marker-icon.png"
+        bgColor = ""
+
+        style = self.style or {}
+        if style.has_key('iconUrl'):
+            src = str(style['iconUrl'])
+        if style.has_key('weight'):
+            style_html = style_html + "border-width:"+str(style['weight'])+"px; "
+        if style.has_key('color'):
+            color = str(style['color'])
+            style_html = style_html + "border-color:"+color+"; "
+            bgColor = color
+        if style.has_key('fill'):
+            bgColor = str(style['fill'])
+
+        if self.type == "Point":
+            html = "<img src='"+src+"' style='"+style_html+"vertical-align:initial;' />"
+        else:
+            style_html = style_html + "background-color:"+bgColor+"; "
+            html = "<span style='"+style_html+"border-radius:4px; display:inline-block; width:"+str(height)+"px;'> &nbsp; </span>"
+
+        return html
 
     def featuretypes(self):
         return FeatureType.objects.all()
@@ -396,6 +437,9 @@ class FeatureType(models.Model):
 
     def __unicode__(self):
         return self.name
+
+    class Meta:
+        ordering = ['-category', 'order', 'name', 'id']
 
 
 class GeoeventsSource(models.Model):
