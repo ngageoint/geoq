@@ -66,8 +66,10 @@ urlpatterns = patterns('',
 
     # AOIS
     url(r'^aois/(?P<status>[a-zA-Z_ ]+)?/?$', AOIDetailedListView.as_view(template_name='core/aoi_list.html'), name='aoi-list'),
-    url(r'^aois/work/(?P<pk>\d+)/?$',
-        login_required(CreateFeaturesView.as_view()), name='aoi-work'),
+
+    url(r'^aois/work/(?P<pk>\d+)/?$',login_required(CreateFeaturesView.as_view())),
+    url(r'^workcells/work/(?P<pk>\d+)/?$',login_required(CreateFeaturesView.as_view()), name='aoi-work'),
+
     url(r'^aois/work/(?P<pk>\d+)/comment/?$',
         add_workcell_comment, name='add-workcell-comment'),
     url(r'^aois/work/(?P<pk>\d+)/log/?$',

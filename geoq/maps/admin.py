@@ -53,11 +53,13 @@ class FeatureAdmin(reversion.VersionAdmin, admin.OSMGeoAdmin):
 
 
 class FeatureTypeAdmin(reversion.VersionAdmin, admin.ModelAdmin):
+    list_display = ['name', 'category', 'type', 'order']
+    ordering = ('-category', 'order', 'name', 'id')
     save_as = True
 
 class GeoeventsSourceAdmin(admin.ModelAdmin):
     model = GeoeventsSource
-    list_display = ['name','url']
+    list_display = ['name', 'url']
 
 #admin.site.register(Point, FeatureAdmin)
 #admin.site.register(Polygon, FeatureAdmin)

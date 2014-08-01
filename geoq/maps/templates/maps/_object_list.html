@@ -18,7 +18,8 @@
         </h3>
 
         <p class="body project-description">{% if object_type == "map"%}{{ object.description }}
-            {% else %}{{ object.type }}{% endif %}</p>
+            {% else %}{{ object.type }}{% endif %}
+            {% if object_type == "featuretype" and object.category %}, Category: <b>{{ object.category }}</b>{% endif %}</p>
 
         <p class="body muted timestamp">{{ object.created_at }}</p>
         </li>
