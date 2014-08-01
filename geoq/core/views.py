@@ -110,7 +110,7 @@ class UserAllowedMixin(object):
         raise Http403(message)
 
     def dispatch(self, request, *args, **kwargs):
-        if not self.check_user(request.user, **kwargs):
+        if not self.check_user(request.user, kwargs):
             return self.user_check_failed(request, *args, **kwargs)
         return super(UserAllowedMixin, self).dispatch(request, *args, **kwargs)
 
@@ -120,7 +120,7 @@ class CreateFeaturesView(UserAllowedMixin, DetailView):
     queryset = AOI.objects.all()
     user_check_failure_path = ''
 
-    def check_user(self, user, **kwargs):
+    def check_user(self, user, kwargs):
         try:
             aoi = AOI.objects.get(id=kwargs.get('pk'))
         except ObjectDoesNotExist:
@@ -134,6 +134,7 @@ class CreateFeaturesView(UserAllowedMixin, DetailView):
             return True
         elif aoi.status == 'In work':
             if aoi.analyst != self.request.user:
+                kwargs['error'] = "Another analyst is already working on this workcell. Please select another workcell"
                 return False
             else:
                 return True
@@ -144,15 +145,18 @@ class CreateFeaturesView(UserAllowedMixin, DetailView):
                 aoi.save()
                 return True
             else:
+                kwargs['error'] = "Sorry, you have not been assigned as a reviewer for this workcell"
                 return False
         elif aoi.status == 'In review':
             # if this user previously reviewed this workcell, allow them in
             if self.request.user in aoi.reviewers.all():
                 return True
             else:
+                kwargs['error'] = "Sorry, only reviewers who previously reviewed this workcell may have access"
                 return False
         else:
             # Can't open a completed workcell
+            kwargs['error'] = "Sorry, this workcell has been completed and can no longer be edited"
             return False
 
 
