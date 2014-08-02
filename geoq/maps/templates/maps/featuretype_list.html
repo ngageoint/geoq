@@ -1,6 +1,8 @@
 {% extends "core/base.html" %}
 {% block title %}GeoQ: Feature Types{% endblock %}
-
+{% block static_libraries %}
+    <script src="{{ STATIC_URL }}core/js/jquery.tancolor.js"></script>
+{%  endblock %}
 {% block container %}
 
     <div class="row-fluid container-narrow">

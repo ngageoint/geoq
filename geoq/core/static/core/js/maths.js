@@ -53,6 +53,9 @@ maths.idealTextColor=function(bgColor) {
 };
 maths.getRGBComponents=function(color) {
 
+    if (!color || !color.length || color.length < 6) return false;
+    if (!_.str.startsWith(color,"#")) color = "#"+color;
+
     var r = color.substring(1, 3);
     var g = color.substring(3, 5);
     var b = color.substring(5, 7);

@@ -87,33 +87,79 @@ aoi_feature_edit.init = function () {
 };
 
 aoi_feature_edit.featureLayer_pointToLayer = function (feature, latlng, featureLayer, featureType) {
-    var featureTypeID = feature.properties.template; //TODO: Can we pull from featureType?
-    var iconTemplate = aoi_feature_edit.icon_style[featureTypeID];
+    var featureTypeID = feature.properties.template;
     var style_obj = featureType.style;
     var iconW,iconH,iconAnchorW,iconAnchorH;
 
-    if (style_obj.iconSize) {
-        iconW = iconH = style_obj.iconSize;
+    if (style_obj.iconSize && typeof style_obj.iconSize != "object") {
+        if (style_obj.iconSize) {
+            iconW = iconH = style_obj.iconSize;
+        }
+        if (style_obj.iconWidth) iconW = parseInt(style_obj.iconWidth);
+        if (style_obj.iconHeight) iconH = parseInt(style_obj.iconHeight);
+
+        if (iconW || iconH){
+            if (!iconW) iconW = iconH;
+            if (!iconH) iconH = iconW;
+            if (!iconAnchorW) iconAnchorW = Math.ceil(iconW/2);
+            if (!iconAnchorH) iconAnchorH = Math.ceil(iconH/2);
+
+            style_obj.iconAnchor = new L.Point(iconAnchorW, iconAnchorH);
+            style_obj.iconSize = new L.Point(iconW, iconH);
+        }
     }
-    if (style_obj.iconWidth) iconW = parseInt(style_obj.iconWidth);
-    if (style_obj.iconHeight) iconH = parseInt(style_obj.iconHeight);
 
-    if (iconW || iconH){
-        if (!iconW) iconW = iconH;
-        if (!iconH) iconH = iconW;
-        if (!iconAnchorW) iconAnchorW = Math.ceil(iconW/2);
-        if (!iconAnchorH) iconAnchorH = Math.ceil(iconH/2);
-
-        iconTemplate.iconAnchor = new L.Point(iconAnchorW, iconAnchorH);
-        iconTemplate.iconSize = new L.Point(iconW, iconH);
-    }
-
-    var icon = new aoi_feature_edit.icons[featureTypeID](iconTemplate);
+    var icon = new aoi_feature_edit.icons[featureTypeID](style_obj);
     var marker = new L.Marker(latlng, {
         icon: icon
     });
+    if (style_obj.color) {
+        marker.on('add',function(evt){
+            marker = evt.target
+            var $icon = $(marker._icon);
+            aoi_feature_edit.colorIconFromStyle($icon,style_obj);
+        });
+    }
     return marker;
 };
+aoi_feature_edit.colorIconFromStyle = function ($icon,style_obj){
+    var color = maths.getRGBComponents(style_obj.color);
+
+    var color_options = {
+        mode: style_obj.color_mode || 'replace_red',
+        method: style_obj.color_method || 'replace',
+
+        r_intensity:color.R,
+        g_intensity:color.G,
+        b_intensity:color.B,
+        r_max:style_obj.r_max,
+        g_max:style_obj.g_max,
+        b_max:style_obj.b_max,
+        r_min:style_obj.r_min,
+        g_min:style_obj.g_min,
+        b_min:style_obj.b_min,
+
+        blend_weight:style_obj.blend_weight || 3
+    };
+
+    var color2 = maths.getRGBComponents(style_obj.color2);
+    if (color2) {
+        color_options.mode2 = style_obj.color_mode2 || 'replace_white';
+        color_options.r2_intensity = color2.R;
+        color_options.g2_intensity = color2.G;
+        color_options.b2_intensity = color2.B;
+        color_options.r2_max = style_obj.r2_max;
+        color_options.g2_max = style_obj.g2_max;
+        color_options.b2_max = style_obj.b2_max;
+        color_options.r2_min = style_obj.r2_min;
+        color_options.g2_min = style_obj.g2_min;
+        color_options.b2_min = style_obj.b2_min;
+    }
+
+    //Modify the icon
+    $icon.tancolor(color_options);
+};
+
 aoi_feature_edit.featureLayer_onEachFeature = function (feature, layer, featureLayer) {
     if (feature.properties) {
         var id = feature.properties.id;
@@ -299,8 +345,10 @@ aoi_feature_edit.map_init = function (map, bounds) {
         return aoi_extents.getBounds();
     }
     (new L.Control.ResetView(locateBounds)).addTo(aoi_feature_edit.map);
-    aoi_feature_edit.map.fitBounds(aoi_extents.getBounds());
 
+    //Zoom to the bounds of the Workcell, then one more level
+    aoi_feature_edit.map.fitBounds(aoi_extents.getBounds());
+    aoi_feature_edit.map.setZoom(aoi_feature_edit.map.getZoom()+1);
 
 
     //Build layers, parse them, and add them to the map and to memory
@@ -638,6 +686,7 @@ aoi_feature_edit.buildDrawingControl = function (drawnItems) {
             }
         });
 
+        var setColorBG = true;
         if ($icon) {
             var bg_color = ftype.style.color;
             var bg_image = ftype.style.iconUrl || ftype.style.icon;
@@ -646,21 +695,42 @@ aoi_feature_edit.buildDrawingControl = function (drawnItems) {
                 $icon
                     .addClass('maki-icon '+ftype.style.icon)
                     .css('backgroundImage', "url(/static/images/maki/images/maki-sprite.png)");
-
-            } else {
-                if (bg_image) {
-                    var widthOffset = 5;
-                    var width = ftype.style.iconWidth || ftype.style.iconSize;
-                    if (width){
-                        widthOffset = parseInt((17 - width)/2);
-                        if (widthOffset<1) widthOffset=0;
+            } else if (bg_image) {
+                //Find the offset to center the icon
+                var widthOffset = 5;
+                var width = ftype.style.iconWidth || 11;
+                if (ftype.style.iconSize){
+                    if (ftype.style.iconSize.x) {
+                        width = ftype.style.iconSize.x;
+                    } else {
+                        width = ftype.style.iconSize;
                     }
+                }
+                width = parseInt(width);
+                if (width){
+                    widthOffset = parseInt((17 - width)/2);
+                    if (widthOffset<1) widthOffset=0;
+                }
 
+                if (ftype.style.color_mode) {
+                    if (width>21) width=21;
+                    $icon.css({position:'relative', background:'none'});
+                    setColorBG = false;
+
+                    var left_slide = 0;
+                    var $icon_infront = $('<img>')
+                        .attr('src',bg_image)
+                        .css({position:'absolute',width:width+'px',left:5+widthOffset+'px', top:5+widthOffset+'px'})
+                        .appendTo($icon);
+
+                    aoi_feature_edit.colorIconFromStyle($icon_infront,ftype.style);
+
+                } else {
                     bg_image = 'url("'+bg_image+'")';
                     $icon.css({background:bg_image, backgroundSize:'contain', backgroundRepeat:'no-repeat',backgroundPosition:widthOffset+'px'});
                 }
             }
-            if (bg_color) {
+            if (bg_color && setColorBG) {
                 $icon.css({backgroundColor:bg_color,opacity:0.7, borderColor:bg_color, borderWidth:1});
             }
 
@@ -874,6 +944,17 @@ aoi_feature_edit.createPointOptions = function (opts) {
         }
         options.icon = new icon_obj(style_obj);
     }
+
+//  TODO: Add support for circle markers
+//            marker = new L.CircleMarker(latlng, {
+//                radius: style_obj.iconSize || style_obj.iconWidth || style_obj.iconHeight || 9,
+//                fillColor: style_obj.color,
+//                color: "#000",
+//                weight: style_obj.weight || 1,
+//                opacity: 1,
+//                fillOpacity: 0.8,
+//            });
+
 
     options.repeatMode = true;
     options.id = opts.id;
