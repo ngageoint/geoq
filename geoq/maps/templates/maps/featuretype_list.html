@@ -1,7 +1,49 @@
 {% extends "core/base.html" %}
 {% block title %}GeoQ: Feature Types{% endblock %}
 {% block static_libraries %}
+    <script src="{{ STATIC_URL }}core/js/maths.js"></script>
     <script src="{{ STATIC_URL }}core/js/jquery.tancolor.js"></script>
+    <script>
+        function colorIconFromStyle ($icon,style_obj){
+            if (!style_obj || !style_obj.color) return;
+
+            var color = maths.getRGBComponents(style_obj.color);
+
+            var color_options = {
+                mode: style_obj.color_mode || 'replace_red',
+                method: style_obj.color_method || 'replace',
+
+                r_intensity:color.R,
+                g_intensity:color.G,
+                b_intensity:color.B,
+                r_max:style_obj.r_max,
+                g_max:style_obj.g_max,
+                b_max:style_obj.b_max,
+                r_min:style_obj.r_min,
+                g_min:style_obj.g_min,
+                b_min:style_obj.b_min,
+
+                blend_weight:style_obj.blend_weight || 3
+            };
+
+            var color2 = maths.getRGBComponents(style_obj.color2);
+            if (color2) {
+                color_options.mode2 = style_obj.color_mode2 || 'replace_white';
+                color_options.r2_intensity = color2.R;
+                color_options.g2_intensity = color2.G;
+                color_options.b2_intensity = color2.B;
+                color_options.r2_max = style_obj.r2_max;
+                color_options.g2_max = style_obj.g2_max;
+                color_options.b2_max = style_obj.b2_max;
+                color_options.r2_min = style_obj.r2_min;
+                color_options.g2_min = style_obj.g2_min;
+                color_options.b2_min = style_obj.b2_min;
+            }
+
+            //Modify the icon
+            $icon.tancolor(color_options);
+        }
+    </script>
 {%  endblock %}
 {% block container %}
 

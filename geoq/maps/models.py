@@ -404,7 +404,7 @@ class FeatureType(models.Model):
 
         return local_style
 
-    def iconized(self, height=24):
+    def iconized(self, height=25):
         style_html = "height:"+str(height)+"px; "
         src = "/static/leaflet/images/gray-marker-icon.png"
         bgColor = ""
@@ -428,6 +428,9 @@ class FeatureType(models.Model):
             html = "<span style='"+style_html+"border-radius:4px; display:inline-block; width:"+str(height)+"px;'> &nbsp; </span>"
 
         return html
+
+    def style_json(self):
+        return json.dumps(self.style)
 
     def featuretypes(self):
         return FeatureType.objects.all()

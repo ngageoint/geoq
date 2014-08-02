@@ -15,7 +15,15 @@
             <i class="icon-{% if object_type == "map" %}map-marker{% else %}edit{% endif %} icon-1x pull-left list-icon"></i>
             <span class="title"><a href="{{ object.get_absolute_url|default:"#" }}">
                 {% if object_type == "featuretype" %}
-                    {% autoescape off %}{{ object.iconized|safe }}{% endautoescape %} {{ object.name }}
+                    {% autoescape off %}<span id='feature_{{ object.id }}'>{{ object.iconized|safe }}</span>
+                    <script>
+                    $(document).ready(function(){
+                        var style = {{ object.style_json|safe|default:"{}" }};
+                        var $icon = $('#feature_{{ object.id }}').children().first();
+                        colorIconFromStyle($icon, style);
+                    });
+                    </script>{% endautoescape %}
+                    {{ object.name }}
                 {% elif object_type == "map" %}{{ object.title }}
                 {% else %}{{ object.name }}{% endif %}</a></span>
         </h3>
