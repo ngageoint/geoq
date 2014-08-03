@@ -221,9 +221,11 @@
                             <li><a href="{% url 'json-job' pk=1 %}">http://server/geoq/<b>api/jobs/&lt;id&gt;.geojson</b></a></li>
                             <li><a href="{% url 'kml-job' pk=1 %}">http://server/geoq/<b>api/jobs/&lt;id&gt;.kml</b></a></li>
                             <li><a href="{% url 'kml-networked-job' pk=1 %}">http://server/geoq/<b>api/jobs/&lt;id&gt;.networked.kml</b></a></li>
-                            <li><a href="{% url 'shape-job' pk=1 %}">http://server/geoq/<b>api/jobs/&lt;id&gt;.shp.zip</b></a></li>
+                            <li><a href="{% url 'shape-job' pk=1 %}">http://server/geoq/<b>api/jobs/&lt;id&gt;.shp.zip</b> (Workcells)</a></li>
                             <li><a href="{% url 'shape-job-type' pk=1 type='points' %}">http://server/geoq/<b>api/jobs/&lt;id&gt;.points.shp.zip</b></a></li>
                             <li><a href="{% url 'shape-job-type' pk=1 type='polygons' %}">http://server/geoq/<b>api/jobs/&lt;id&gt;.polygons.shp.zip</b></a></li>
+                            <li><a href="{% url 'json-job-features' pk=1 %}">http://server/geoq/<b>api/jobs/&lt;id&gt;features.json</b></a></li>
+                            <li><a href="{% url 'json-job-features-links' pk=1 %}">http://server/geoq/<b>api/jobs/&lt;id&gt;features.withlinks.json</b> (With linked items)</a></li>
                         </ul>
 
                     </td>

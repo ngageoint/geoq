@@ -347,6 +347,30 @@ class Feature(models.Model):
 
         return json.dumps(geojson) if as_json else geojson
 
+    def json_item(self, show_detailed_properties=False):
+        properties_main = self.properties or {}
+
+        if not show_detailed_properties:
+            if 'linked_items' in properties_main:
+                properties_main['linked_items'] = True
+            else:
+                properties_main['linked_items'] = False
+
+        properties_built = dict(
+            id=self.id,
+            feature_type=str(self.template.name) if hasattr(self.template, "name") else self.template.id,
+            analyst=str(self.analyst.username),
+            workcell_id=self.aoi.id,
+            status=str(self.status),
+            # created_at=datetime.strftime(self.created_at, '%Y-%m-%dT%H:%M:%S%Z'),
+            # updated_at=datetime.strftime(self.updated_at, '%Y-%m-%dT%H:%M:%S%Z'),
+        )
+
+        properties_feature = dict(self.template.properties or {})
+
+        properties = dict(properties_main.items() + properties_built.items() + properties_feature.items())
+        return properties
+
     def __unicode__(self):
         return "Feature created for {0}".format(self.aoi.name)
 
