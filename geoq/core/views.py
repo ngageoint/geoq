@@ -193,6 +193,7 @@ class JobDetailedListView(ListView):
     model = Job
     default_status = 'in work'
     request = None
+    metrics = False
 
     def get_queryset(self):
         status = getattr(self, 'status', None)
@@ -228,10 +229,16 @@ class JobDetailedListView(ListView):
 
     def get_context_data(self, **kwargs):
         cv = super(JobDetailedListView, self).get_context_data(**kwargs)
-        cv['object'] = get_object_or_404(self.model, pk=self.kwargs.get('pk'))
+        job_id = self.kwargs.get('pk')
+        cv['object'] = get_object_or_404(self.model, pk=job_id)
         cv['statuses'] = AOI.STATUS_VALUES
         cv['active_status'] = self.status
         cv['workcell_count'] = cv['object'].aoi_count()
+        cv['metrics'] = self.metrics
+        cv['metrics_url'] = reverse('job-metrics', args=[job_id])
+        cv['features_url'] = reverse('json-job-features', args=[job_id])
+        #TODO: Add feature_count
+
         if cv['object'].aoi_count() > 0:
             cv['completed'] = (cv['object'].complete().count() * 100) / cv['workcell_count']
         else:
@@ -663,6 +670,17 @@ class JobGeoJSON(ListView):
         geojson = job.features_geoJSON()
 
         return HttpResponse(geojson, mimetype="application/json", status=200)
+
+
+class JobFeaturesJSON(ListView):
+    model = Job
+    show_detailed_properties = False
+
+    def get(self, request, *args, **kwargs):
+        job = get_object_or_404(Job, pk=self.kwargs.get('pk'))
+        features_json = json.dumps([f.json_item(self.show_detailed_properties) for f in job.feature_set.all()], indent=2)
+
+        return HttpResponse(features_json, mimetype="application/json", status=200)
 
 
 class GridGeoJSON(ListView):

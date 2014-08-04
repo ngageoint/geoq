@@ -1,0 +1,189 @@
+{% extends "core/base.html" %}
+{% load compress %}
+{% block title %}GeoQ Job Metrics: {{ object.name }}{% endblock %}
+{% block jquery_version %}1.8.3{% endblock %}
+{% block jquery_ui_version %}1.9.2{% endblock %}
+{% block static_libraries %}
+    <script src="{{ STATIC_URL }}core/js/bootstrap-dialog.js"></script>
+    <script src="{{ STATIC_URL }}core/js/maths.js"></script>
+    <script src="{{ STATIC_URL }}core/js/jquery.tancolor.js"></script>
+    <script src="{{ STATIC_URL }}core/js/pivottable.js/pivot.js"></script>
+
+    <script type="text/javascript">
+        //Auto-exported site-wide settings
+        var features_url = "{{ features_url|default:'' }}";
+        $(document).ready(function(){
+            $.getJSON(features_url,function(job_data){
+                $("#loading_message").hide();
+
+                //Get a list of all keys found in data
+                var allKeys = [];
+                _.each(job_data,function(data){allKeys = allKeys.concat(_.keys(data))},allKeys);
+                allKeys = _.unique(allKeys);
+
+                //Make sure each object has all of the keys
+                _.each(job_data,function(data){
+                    _.each(allKeys,function(key){
+                        if (typeof data[key] == "undefined") data[key] = "";
+                    });
+                });
+
+                $("#output").pivotUI(job_data,{
+                    rows: ["analyst"],
+                    cols: ["feature_type"],
+                    rendererName: "Heatmap"
+                });
+            })
+            .error(function() {
+                $("#loading_message")
+                        .show()
+                        .css({backgroundColor:'red'})
+                        .html("Error Loading Metrics JSON data. Please inform an admin.")
+            })
+        });
+
+    </script>
+    {% compress css %}
+    <link href="{{ STATIC_URL }}core/less/geoq.less" media="all" rel="stylesheet" type="text/less" />
+    <link href="{{ STATIC_URL }}core/js/pivottable.js/pivot.css" media="all" rel="stylesheet" type="text/css" />
+    {% endcompress %}
+{% endblock %}
+
+{% block container %}
+    <div class="row-fluid container-narrow">
+
+        <div class="projectlist">
+
+            {% include 'core/_job_stat_list.html' %}
+
+            <h3>
+                <span class="icon-inbox icon-1x pull-left list-icon"></span>
+                <span class="title header">
+                    <a href="{%url 'job-detail' object.id %}">{{ object.name }}</a>
+                </span>
+            </h3>
+
+            <p class="body project-description">
+                {{ object.description }}
+            </p>
+
+            <div class="row body" style="margin-top:25px">
+                {% if 'accounts.change_aoi' in request.base_perms %}
+                <div class="btn-group pull-right">
+                    <a class="btn btn-mini" href="{{ object.get_update_url }}">
+                        <b> Edit Job </b>
+                    </a>
+                    <button class="btn btn-mini dropdown-toggle" data-toggle="dropdown">
+                        <span class="caret"></span>
+                    </button>
+                    <ul class="dropdown-menu">
+                        {% if 'accounts.add_job' in request.base_perms %}
+                        <li><a href="{% url 'job-create-aois' object.id%}">Create Workcells</a></li>
+                        {% endif %}
+                        {% if 'accounts.add_job' in request.base_perms %}
+                        <li><a href="{% url 'job-prioritize-workcells' object.id %}">Prioritize Workcells</a></li>
+                        {% endif %}
+                        {% if 'accounts.delete_job' in request.base_perms %}
+                        <li><a href="{% url 'job-delete' object.id %}">Delete Job</a></li>
+                        {% endif %}
+                        {% if 'accounts.change_job' in request.base_perms and object.map%}
+                        <li><a href="{% url 'map-update' object.map.id %}">Edit Map</a></li>
+                        {% endif %}
+                    </ul>
+                </div>
+                {% endif %}
+                <div class="span5" id="attribute-table" style="float:left">
+                    <table>
+                        <tr>
+                            <th style="min-width: 100px"></th>
+                            <th></th>
+                        </tr>
+                        <tr>
+                            <td>
+                                <b>Project:</b>
+                            </td>
+                            <td>
+                                <a href="{{ object.project.get_absolute_url }}">{{ object.project.name }}</a>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>
+                                <b>Created:</b>
+                            </td>
+                            <td>
+                                {{ object.created_at }}
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>
+                                <b>Project Type:</b>
+                            </td>
+                            <td>
+                                {{ object.project.project_type }}
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>
+                                <b>Completed:</b>
+                            </td>
+                            <td>
+                                <div class="progress" style="margin-bottom: 0px;">
+                                    <div class="bar" role="progressbar"
+                                         aria-valuenow="{{ completed }}"
+                                         aria-valuemin="0"
+                                         aria-valuemax="100"
+                                         style="width:{{ completed }}%; color: white; text-shadow: black 0.1em 0.1em 0.2em;">
+                                        {{ completed }}%
+                                    </div>
+                                </div>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td style="vertical-align: top;">
+                                <b>Description:</b>
+                            </td>
+                            <td>
+                                {{ object.project.description }}
+                            </td>
+                        </tr>
+                    </table>
+                </div>
+                <div class="span5" id="attribute-table">
+                    <table>
+                        <tr>
+                            <td><b>KML:</b></td>
+                            <td><a href="{{geoserver_job_kml}}">GeoServer Link</a></td>
+                        </tr>
+                        <tr>
+                            <td><b>Google Earth:</b></td>
+                            <td><a href="{% url 'kml-job' object.id %}" title="Best for use in other programs such as the Event Pages">KML Link</a> ||
+                            <a href="{% url 'kml-networked-job' object.id %}" title="Refereshes every 2 min when viewed in Google Earth">Networked KML Link</a>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td><b>GeoJSON:</b></td>
+                            <td><a href="{% url 'json-job' object.id %}">Link</a> ||
+                                <a href="{% url 'json-job-grid' object.id %}">Job Grid</a>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td><b>Shapefile:</b></td>
+                            <td><a href="{% url 'shape-job' object.id %}">Work Cells</a> ||
+                                <a href="{% url 'shape-job-type' object.id 'points' %}">Points</a> ||
+                                <a href="{% url 'shape-job-type' object.id 'polygons' %}">Polygons</a></td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+
+            <div class="row body">
+                <h3 id="loading_message">Loading Feature data into Metrics table...</h3>
+                <div id="output" style="margin: 30px;"></div>
+            </div>
+
+
+        </div>
+
+    </div>
+{% endblock %}
+

@@ -32,8 +32,8 @@
     <![endif]-->
 
     {% compress js %}
-        <script src="{{ STATIC_URL }}core/js/jquery.min.js" type="text/javascript"></script>
-        <script src="{{ STATIC_URL }}core/js/jquery-ui.custom.js" type="text/javascript"></script>
+        <script src="{{ STATIC_URL }}core/js/jquery.min{% block jquery_version %}{% endblock %}.js" type="text/javascript"></script>
+        <script src="{{ STATIC_URL }}core/js/jquery-ui{% block jquery_ui_version %}{% endblock %}.custom.js" type="text/javascript"></script>
         <script src="{{ STATIC_URL }}core/js/underscore-min.js" type="text/javascript"></script>
         <script src="{{ STATIC_URL }}core/js/underscore.string.min.js" type="text/javascript"></script>
         <script src="{{ STATIC_URL }}core/js/log4javascript.js" type="text/javascript"></script>
