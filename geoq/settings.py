@@ -229,6 +229,7 @@ INSTALLED_APPS = (
     'geoq.maps',
     'geoq.mgrs',
     'geoq.feedback',
+    'geoq.locations',
 )
 
 # A sample logging configuration. The only tangible logging

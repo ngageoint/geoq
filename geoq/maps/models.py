@@ -4,6 +4,7 @@
 
 import json
 from geoq.core.models import AOI, Job, Project, Setting
+from geoq.locations.models import Counties
 from django.contrib.auth.models import User
 from django.contrib.gis.db import models
 from django.core.exceptions import ValidationError
@@ -350,6 +351,18 @@ class Feature(models.Model):
     def json_item(self, show_detailed_properties=False):
         properties_main = self.properties or {}
 
+        #Pull the County data if it exists, otherwise find it and add it back to the object
+        if properties_main.has_key('county'):
+            county = properties_main['county']
+        else:
+            county_list = Counties.objects.filter(poly__contains=self.the_geom.centroid.wkt)
+            if len(county_list):
+                county = str(county_list[0].name)
+            else:
+                county = "Unknown"
+            self.properties = properties_main
+
+
         if not show_detailed_properties:
             if 'linked_items' in properties_main:
                 properties_main['linked_items'] = True
@@ -362,6 +375,7 @@ class Feature(models.Model):
             analyst=str(self.analyst.username),
             workcell_id=self.aoi.id,
             status=str(self.status),
+            county=county
             # created_at=datetime.strftime(self.created_at, '%Y-%m-%dT%H:%M:%S%Z'),
             # updated_at=datetime.strftime(self.updated_at, '%Y-%m-%dT%H:%M:%S%Z'),
         )
