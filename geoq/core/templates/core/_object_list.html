@@ -42,8 +42,12 @@
             </span>
         </h3>
 
-
-        <p class="body project-description">{{ object.description }}</p>
+        <p class="body">
+        {% if object_type == "job" %}
+            <b>Project:</b> <a href="{{ object.project.get_absolute_url|default:'#' }}">{{ object.project.name }}</a><br/>
+        {% endif %}
+            <b>{{ object_type|title }} Description</b>: <span class="project-description">{{ object.description }}</span>
+        </p>
 
         <p class="body muted timestamp">{{ object.created_at }}</p>
 

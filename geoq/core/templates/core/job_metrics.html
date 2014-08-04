@@ -64,7 +64,7 @@
             </h3>
 
             <p class="body project-description">
-                {{ object.description }}
+                <b>Job Details:</b> {{ object.description }}
             </p>
 
             <div class="row body" style="margin-top:25px">
@@ -99,7 +99,7 @@
                             <th></th>
                         </tr>
                         <tr>
-                            <td>
+                            <td style="vertical-align: top;">
                                 <b>Project:</b>
                             </td>
                             <td>
@@ -161,9 +161,10 @@
                             </td>
                         </tr>
                         <tr>
-                            <td><b>GeoJSON:</b></td>
-                            <td><a href="{% url 'json-job' object.id %}">Link</a> ||
-                                <a href="{% url 'json-job-grid' object.id %}">Job Grid</a>
+                            <td><b>Linked JSON:</b></td>
+                            <td><a href="{% url 'json-job' object.id %}">Job GeoJSON</a> ||
+                                <a href="{% url 'json-job-grid' object.id %}">Workcell Grid</a> ||
+                                <a href="{% url 'json-job-features-links' object.id %}">Features</a>
                             </td>
                         </tr>
                         <tr>
