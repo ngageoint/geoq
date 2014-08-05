@@ -319,6 +319,7 @@ class Feature(models.Model):
         properties_main = self.properties or {}
         properties_built = dict(id=self.id,
                           template=self.template.id if hasattr(self.template, "id") else None,
+                          status=self.status,
                           analyst=self.analyst.username,
                           created_at=datetime.strftime(self.created_at, '%Y-%m-%dT%H:%M:%S%Z'),
                           updated_at=datetime.strftime(self.updated_at, '%Y-%m-%dT%H:%M:%S%Z'),
@@ -326,17 +327,6 @@ class Feature(models.Model):
         properties = dict(properties_built.items() + properties_main.items())
 
         feature_type = FeatureType.objects.get(id=self.template.id)
-        # if feature_type.style.has_key('color'):
-        #     color = feature_type.style['color']
-        #     if color == 'orange':
-        #         color = '#ff6600'
-        #     if color == 'red':
-        #         color = '#ff0000'
-        #     if color == 'green':
-        #         color = '#00ff00'
-        #     if color == 'blue':
-        #         color = '#0000ff'
-        #     properties['color'] = color
 
         geojson = SortedDict()
         geojson["type"] = "Feature"

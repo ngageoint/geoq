@@ -173,6 +173,7 @@ class Job(GeoQBase):
             count[feature.template.name] += 1
             showtable = True
 
+        #TODO: Also return this as JSON, and build a nicer table
         if showtable:
             rows = '</tr><tr>\n'.join("<td><b>%s</b>:</td><td>%r</td>" % (key,val) for (key,val) in count.iteritems())
             output = "<table class='job_feature_list'><tr><th>Feature Type</th><th>Submitted</th></tr><tr>\n"+rows+"</tr></table>"
@@ -254,7 +255,7 @@ class AOI(GeoQBase):
     objects = AOIManager()
     polygon = models.MultiPolygonField()
     priority = models.SmallIntegerField(choices=PRIORITIES, max_length=1, default=5)
-    status = models.CharField(max_length=15, choices=STATUS_CHOICES, default='Unassigned')
+    status = models.CharField(max_length=15, choices=STATUS_CHOICES, default='In Work')
 
     class Meta:
         permissions = (

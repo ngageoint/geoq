@@ -46,7 +46,11 @@
         {% if object_type == "job" %}
             <b>Project:</b> <a href="{{ object.project.get_absolute_url|default:'#' }}">{{ object.project.name }}</a><br/>
         {% endif %}
+        {% if object_type == "aoi" %}
+            <b>Workcell Description</b>: <span class="project-description">{{ object.description }}</span>
+        {% else %}
             <b>{{ object_type|title }} Description</b>: <span class="project-description">{{ object.description }}</span>
+        {% endif %}
         </p>
 
         <p class="body muted timestamp">{{ object.created_at }}</p>

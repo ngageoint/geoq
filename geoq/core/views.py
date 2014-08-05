@@ -371,9 +371,16 @@ class ChangeAOIStatus(View):
             aoi = self._update_aoi(request, aoi, status)
             Comment(aoi=aoi,user=request.user,text='changed status to %s' % status).save()
 
+            features_updated = 0
+            if 'feature_ids' in request.POST:
+                features = request.POST['feature_ids']
+                feature_ids = tuple([int(x) for x in features.split(',')])
+                feature_list = Feature.objects.filter(id__in=feature_ids)
+                features_updated = feature_list.update(status=status)
+
             # send aoi completion event for badging
             send_aoi_create_event(request.user, aoi.id, aoi.features.all().count())
-            return HttpResponse(json.dumps({aoi.id: aoi.status}), mimetype="application/json")
+            return HttpResponse(json.dumps({aoi.id: aoi.status, 'features_updated': features_updated}), mimetype="application/json")
         else:
             error = dict(error=403,
                          details="User not allowed to modify the status of this AOI.",)
