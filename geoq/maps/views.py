@@ -60,6 +60,7 @@ class CreateFeatures(View):
         attrs['the_geom'] = geom_obj
 
         county_list = Counties.objects.filter(poly__contains=geom_obj.centroid.wkt)
+        county = None
         if len(county_list):
             county = str(county_list[0].name)
 
