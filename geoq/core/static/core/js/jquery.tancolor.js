@@ -139,7 +139,12 @@
             var h = img.naturalHeight || img.height;
             var canvas = convertImageToCanvas(img,w,h);
             var ctx = canvas.getContext("2d");
-            var imageData = ctx.getImageData(0, 0, w, h);
+            var imageData;
+            try {
+                imageData = ctx.getImageData(0, 0, w, h);
+            } catch (ex) {
+                return false;
+            }
 
             // Processing image data
             var data = imageData.data;

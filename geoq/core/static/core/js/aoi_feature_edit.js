@@ -6,7 +6,6 @@
 var aoi_feature_edit = {};
 aoi_feature_edit.layers = {features:[], base:[], overlays:[]};
 
-var feature_hash = {};
 aoi_feature_edit.drawnItems = new L.FeatureGroup();
 aoi_feature_edit.options = {};
 aoi_feature_edit.all_polygons = [];
@@ -163,7 +162,7 @@ aoi_feature_edit.colorIconFromStyle = function ($icon,style_obj){
 aoi_feature_edit.featureLayer_onEachFeature = function (feature, layer, featureLayer) {
     if (feature.properties) {
         var id = feature.properties.id;
-        feature_hash[id] = {layerGroup: featureLayer, layer: layer};
+        feature_manager.addAtId(id,{layerGroup: featureLayer, layer: layer});
 
         var popupContent = "<h5>Feature</h5>";
         if (id){
@@ -214,11 +213,11 @@ aoi_feature_edit.deleteFeature = function(id, delete_url) {
     BootstrapDialog.confirm(confirmText, confirmFunction);
 };
 aoi_feature_edit.deleteFeatureFromHash = function (id) {
-    var feature = feature_hash[id];
+    var feature = feature_manager.findById(id);
     if (feature) {
         feature.layerGroup.removeLayer(feature.layer);
         aoi_feature_edit.drawnItems.removeLayer(feature.layer);
-        delete feature_hash[id];
+        feature_manager.removeId(id);
     }
 };
 
@@ -398,7 +397,8 @@ aoi_feature_edit.map_init = function (map, bounds) {
         var featureType = aoi_feature_edit.feature_types[tnum];
 
         if (featureLayer && featureType) {
-            featureLayer.addData(featureCollection);
+            feature_manager.addFeatureToLayer(featureLayer,featureCollection);
+//            featureLayer.addData(featureCollection);
             featureLayer.eachLayer(function (layer) {
                 aoi_feature_edit.drawnItems.addLayer(layer);
             });
@@ -417,6 +417,7 @@ aoi_feature_edit.map_init = function (map, bounds) {
     leaflet_helper.addLocatorControl(map);
     aoi_feature_edit.buildDrawingControl(aoi_feature_edit.drawnItems);
     leaflet_helper.addGeocoderControl(map);
+    feature_manager.addStatusControl(map);
 
     //Build the filter drawer (currently on left, TODO: move to bottom)
     leaflet_filter_bar.init();
@@ -443,14 +444,20 @@ aoi_feature_edit.map_init = function (map, bounds) {
     help_control.addTo(map, {'position':'topleft'});
 
     function onSuccess(data, textStatus, jqXHR) {
-        if (data[0] && data[0].geojson) {
-            var tnum = data[0].fields.template;
-            var featureCollection = aoi_feature_edit.createFeatureCollection(tnum);
-            featureCollection.features.push($.parseJSON(data[0].geojson));
-            aoi_feature_edit.featureLayers[tnum].addData(featureCollection);
+        var feature = data[0];
+        if (feature && feature.geojson) {
+            var tnum = feature.fields.template;
 
-            var layer = feature_hash[data[0].pk].layer;
-            aoi_feature_edit.drawnItems.addLayer(layer);
+            //Create the feature
+            var featureCollection = aoi_feature_edit.createFeatureCollection(tnum);
+            featureCollection.features.push($.parseJSON(feature.geojson));
+
+            //Add the feature to the layer
+            feature_manager.addFeatureToLayer(aoi_feature_edit.featureLayers[tnum],featureCollection);
+//            aoi_feature_edit.featureLayers[tnum].addData(featureCollection);
+
+            var layer_holder = feature_manager.findById(feature.pk);
+            aoi_feature_edit.drawnItems.addLayer(layer_holder.layer);
         }
     }
 
@@ -1025,14 +1032,22 @@ aoi_feature_edit.buildDropdownMenu = function() {
     return $div;
 };
 aoi_feature_edit.complete_button_onClick = function(url) {
+    var data = {"feature_ids":feature_manager.featuresInWorkcellAsIds()};
     $.ajax({
         type: "POST",
+        data: data,
         url: url || aoi_feature_edit.awaitingreview_status_url,
         dataType: "json",
         success: function (response) {
+            var features_updated = response.features_updated;
+
+            var message = 'Your work has been uploaded. ';
+            if (features_updated) message+= features_updated + ' feature statuses updated.';
+            message += 'Would you like to:';
+
             BootstrapDialog.show({
                 title: 'Submitted',
-                message: 'Your work has been uploaded. Would you like to:',
+                message: message,
                 buttons: [{
                     label: 'Go back to the Job page',
                     action: function(dialog) {

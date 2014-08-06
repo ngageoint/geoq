@@ -17,6 +17,8 @@ from django.views.generic import ListView, View, DeleteView
 from forms import MapForm, MapInlineFormset
 
 from geoq.core.models import AOI
+from geoq.locations.models import Counties
+
 from models import Feature, FeatureType, Map, Layer, GeoeventsSource
 
 import logging
@@ -54,11 +56,22 @@ class CreateFeatures(View):
                      template=template)
 
         geometry = geojson.get('geometry')
-        attrs['the_geom'] = GEOSGeometry(json.dumps(geometry))
+        geom_obj = GEOSGeometry(json.dumps(geometry))
+        attrs['the_geom'] = geom_obj
+
+        county_list = Counties.objects.filter(poly__contains=geom_obj.centroid.wkt)
+        county = None
+        if len(county_list):
+            county = str(county_list[0].name)
 
         try:
             feature = Feature(**attrs)
             feature.full_clean()
+            if not feature.properties:
+                feature.properties = {}
+            if county:
+                feature.properties['county'] = county
+
             feature.save()
         except ValidationError as e:
             return HttpResponse(content=json.dumps(dict(errors=e.messages)), mimetype="application/json", status=400)

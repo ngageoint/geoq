@@ -17,7 +17,7 @@ urlpatterns = patterns('',
 
     # PROJECTS
     url(r'^projects/?$',
-        ListView.as_view(queryset=Project.objects.filter(active=True)),
+        ListView.as_view(queryset=Project.objects.filter(active=True).exclude(private=True)),
         name='project-list'),
 
     url(r'^projects/(?P<pk>\d+)/?$',
@@ -35,7 +35,7 @@ urlpatterns = patterns('',
         name='project-update'),
 
     # JOBS
-    url(r'^jobs/?$', ListView.as_view(queryset=Job.objects.all()), name='job-list'),
+    url(r'^jobs/?$', ListView.as_view(queryset=Job.objects.all().exclude(project__private=True)), name='job-list'),
     url(r'^jobs/(?P<pk>\d+)/(?P<status>[a-zA-Z_ ]+)?/?$',
         JobDetailedListView.as_view(template_name='core/job_detail.html'),
         name='job-detail'),
