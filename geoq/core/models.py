@@ -14,6 +14,7 @@ from jsonfield import JSONField
 from collections import defaultdict
 
 TRUE_FALSE = [(0, 'False'), (1, 'True')]
+STATUS_VALUES_LIST = ['Unassigned', 'In work', 'Awaiting review', 'In review', 'Completed'] #'Assigned'
 
 
 class Setting(models.Model):
@@ -166,17 +167,37 @@ class Job(GeoQBase):
         return self.analysts.count()
 
     def features_table_html(self):
-        count = defaultdict(int)
-        showtable = False
-        # style = defaultdict(int)
-        for feature in self.feature_set.all():
-            count[feature.template.name] += 1
-            showtable = True
+        counts = {}
 
-        #TODO: Also return this as JSON, and build a nicer table
-        if showtable:
-            rows = '</tr><tr>\n'.join("<td><b>%s</b>:</td><td>%r</td>" % (key,val) for (key,val) in count.iteritems())
-            output = "<table class='job_feature_list'><tr><th>Feature Type</th><th>Submitted</th></tr><tr>\n"+rows+"</tr></table>"
+        for feature_item in self.feature_set.all():
+            status = str(feature_item.status)
+            featuretype = str(feature_item.template.name)
+            if not featuretype in counts:
+                counts[featuretype] = {}
+            if not status in counts[featuretype]:
+                counts[featuretype][status] = 0
+            counts[featuretype][status] += 1
+
+        #TODO: Also return this as JSON
+        if len(counts):
+            output = "<table class='job_feature_list'>"
+
+            header = "<th><i>Feature Counts</i></th>"
+            for (featuretype, status_obj) in counts.iteritems():
+                header = header + "<th><b>"+featuretype+"</b></th>"
+            output += "<tr>"+header+"</tr>"
+
+            for status in STATUS_VALUES_LIST:
+                status = str(status)
+                row = "<td><b>"+status+"</b></td>"
+                for (featuretype, status_obj) in counts.iteritems():
+                    if status in status_obj:
+                        val = status_obj[status]
+                    else:
+                        val = 0
+                    row += "<td>" + str(val) + "</td>"
+                output += "<tr>"+row+"</tr>"
+            output += "</table>"
         else:
             output = ""
 
@@ -243,7 +264,7 @@ class AOI(GeoQBase):
     Low-level organizational object. Now (6/1/14) referred to as a 'Workcell'
     """
 
-    STATUS_VALUES = ['Unassigned', 'In work', 'Awaiting review', 'In review', 'Completed'] #'Assigned'
+    STATUS_VALUES = STATUS_VALUES_LIST
     STATUS_CHOICES = [(choice, choice) for choice in STATUS_VALUES]
 
     PRIORITIES = [(n, n) for n in range(1, 6)]

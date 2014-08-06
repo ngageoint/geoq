@@ -119,15 +119,21 @@
   }
   .job_feature_list{
       margin-left: 60px;
-      border-collapse: collapse;
+//      border-collapse: collapse;
       font-size: 10px;
       border: 1px solid rgb(0, 149, 255);
+      text-align: center;
+      max-width: 90%;
+      overflow-x: scroll;
 
       th{
+        padding: 6px;
+        border: 2px solid #000000;
+        background-color: lightyellow;
       }
 
-      td:nth-child(2){
-        text-align: center;
+      tr:nth-child(even){
+        background-color: lightgoldenrodyellow;
       }
 
       td{
