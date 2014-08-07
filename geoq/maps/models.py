@@ -299,7 +299,7 @@ class Feature(models.Model):
     objects = models.GeoManager()
     analyst = models.ForeignKey(User, editable=False)
     template = models.ForeignKey("FeatureType", on_delete=models.PROTECT)
-    status = models.CharField(max_length=15, choices=STATUS_CHOICES, default='Unassigned')
+    status = models.CharField(max_length=15, choices=STATUS_CHOICES, default='In work')
 
     # Allow the user to save their own properties
     properties = JSONField(load_kwargs={}, blank=True, null=True)

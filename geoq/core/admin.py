@@ -48,6 +48,7 @@ class AOIAdmin(ObjectAdmin):
 class JobAdmin(GuardedModelAdmin, ObjectAdmin):
     filter_horizontal = ("analysts", "reviewers", "feature_types")
     save_on_top = True
+    save_as = True
 
 
 class SettingAdmin(admin.ModelAdmin):

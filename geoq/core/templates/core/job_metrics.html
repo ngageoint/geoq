@@ -1,8 +1,10 @@
 {% extends "core/base.html" %}
 {% load compress %}
+{% load geoserver_job_link %}
 {% block title %}GeoQ Job Metrics: {{ object.name }}{% endblock %}
 {% block jquery_version %}1.8.3{% endblock %}
 {% block jquery_ui_version %}1.9.2{% endblock %}
+
 {% block static_libraries %}
     <script src="{{ STATIC_URL }}core/js/bootstrap-dialog.js"></script>
     <script src="{{ STATIC_URL }}core/js/maths.js"></script>
@@ -12,10 +14,19 @@
     <script type="text/javascript">
         //Auto-exported site-wide settings
         var features_url = "{{ features_url|default:'' }}";
+        var pivot;
         $(document).ready(function(){
+            var $output = $("#output");
             $.getJSON(features_url,function(job_data){
                 $("#loading_message").hide();
 
+                if (job_data.length == 0) {
+                    $("#loading_message")
+                        .show()
+                        .css({backgroundColor:'yellow'})
+                        .html("There are no Features recorded for this Job.")
+                    return;
+                }
                 //Get a list of all keys found in data
                 var allKeys = [];
                 _.each(job_data,function(data){allKeys = allKeys.concat(_.keys(data))},allKeys);
@@ -28,7 +39,44 @@
                     });
                 });
 
-                $("#output").pivotUI(job_data,{
+                //Add buttons of preset configurations
+                var $option_buttons = $('#option_buttons')
+                        .html("<b>Quick Reports:</b>");
+                $('<button class="btn btn-success">')
+                    .text('Analyst Features')
+                    .on('click',function(){
+                        $output.pivotUI(job_data,{
+                            rows: ["analyst"],
+                            cols: ["feature_type"],
+                            rendererName: "Heatmap"
+                        },true);
+
+                    })
+                    .appendTo($option_buttons);
+                $('<button class="btn btn-success">')
+                    .text('Workcell Status')
+                    .on('click',function(){
+                        $output.pivotUI(job_data,{
+                            rows: ["workcell_id"],
+                            cols: ["status"],
+                            rendererName: "Table"
+                        },true);
+
+                    })
+                    .appendTo($option_buttons);
+                if (_.indexOf(allKeys,'severity')>-1 && _.indexOf(allKeys,'structureType')> -1) {
+                    $('<button class="btn btn-success">')
+                        .text('FEMA County Severities')
+                        .on('click',function(){
+                            $output.pivotUI(job_data,{
+                                rows: ["county", "structureType"],
+                                cols: ["severity"]
+                            },true);
+                        })
+                        .appendTo($option_buttons);
+                }
+
+                $output.pivotUI(job_data,{
                     rows: ["analyst"],
                     cols: ["feature_type"],
                     rendererName: "Heatmap"
@@ -36,9 +84,9 @@
             })
             .error(function() {
                 $("#loading_message")
-                        .show()
-                        .css({backgroundColor:'red'})
-                        .html("Error Loading Metrics JSON data. Please inform an admin.")
+                    .show()
+                    .css({backgroundColor:'lightred'})
+                    .html("Error Loading Metrics JSON data. Please inform an admin.")
             })
         });
 
@@ -150,10 +198,18 @@
                 </div>
                 <div class="span5" id="attribute-table">
                     <table>
+                        {% geoserver_job_link object.id "wfs" as geoserver_job_wfs %}
+                        {% geoserver_job_link object.id "kml" as geoserver_job_kml %}
+                        {% if geoserver_job_wfs %}
                         <tr>
                             <td><b>KML:</b></td>
                             <td><a href="{{geoserver_job_kml}}">GeoServer Link</a></td>
                         </tr>
+                        <tr>
+                            <td><b>WFS URL:</b></td>
+                            <td>{{geoserver_job_wfs}}</td>
+                        </tr>
+                        {%  endif %}
                         <tr>
                             <td><b>Google Earth:</b></td>
                             <td><a href="{% url 'kml-job' object.id %}" title="Best for use in other programs such as the Event Pages">KML Link</a> ||
@@ -179,6 +235,7 @@
 
             <div class="row body">
                 <h3 id="loading_message">Loading Feature data into Metrics table...</h3>
+                <div id="option_buttons" style="padding: 10px; margin-left: 20px;"></div>
                 <div id="output" style="margin: 30px;"></div>
             </div>
 
