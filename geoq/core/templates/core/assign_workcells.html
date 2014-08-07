@@ -1,0 +1,142 @@
+{% extends "core/base.html" %}
+{% load compress %}
+{% load leaflet_tags %}
+{% load geoserver_job_link %}
+{% block title %}GeoQ Assign workcells: {{ object.name }}{% endblock %}
+{% block static_libraries %}
+    {% leaflet_js %}
+    <link rel="stylesheet" href="{{ STATIC_URL }}/css/theme.blue.css" />
+    <script src="{{ STATIC_URL }}core/js/leaflet_helper.js"></script>
+    <script src="{{ STATIC_URL }}core/js/bootstrap-dialog.js"></script>
+    <script src="{{ STATIC_URL }}core/js/maths.js"></script>
+    <script src="{{ STATIC_URL }}js/jquery.tablesorter.min.js"></script>
+    <script src="{{ STATIC_URL }}js/jquery.tablesorter.widgets.min.js"></script>
+    <script src="{{ STATIC_URL }}js/widget-scroller.js"></script>
+    <script src="{{ STATIC_URL }}core/js/leafletcontrols/Control.Select.js"></script>
+        <script src="{{ STATIC_URL }}core/js/leafletcontrols/leaflet.simple_button.js"></script>
+
+    <script src="{{ STATIC_URL }}core/js/job_map.js"></script>
+
+<script type="application/javascript">
+    job_map.groups_url = "{% url 'list_groups' %}";
+    job_map.users_url = "{% url 'list_users' %}";
+    job_map.data = {{ object.geoJSON|default:'[]'|safe }};
+    job_map.popup_template = '{% filter escapejs %}{% include "core/assign_workcell_popup.html" %}{% endfilter %}';
+
+
+    $(function() {
+        $(".tablesorter")
+                .tablesorter({
+                    theme: 'blue',
+                    cssChildRow: 'tablesorter-childRow',
+                    widgets: ['zebra', 'filter', 'scroller'],
+                    widgetOptions: {
+                        scroller_height: 300,
+                        scroller_barWidth: 18,
+                        scroller_upAfterSort: true,
+                        scroller_jumpToHeader: true,
+                        pager_output: '{startRow} - {endRow} / {filteredRows} ({totalRows})',
+                        pager_removeRows: false,
+                        filter_childRows: true,
+                        filter_cssFilter: 'tablesorter-filter',
+                        filter_startsWith: false,
+                        filter_ignoreCase: true
+                    }
+                });
+
+        $('.tablesorter-childRow td').hide();
+
+        $('.tablesorter').delegate('.toggle', 'click', function() {
+            $(this).closest('tr').nextUntil('tr.tablesorter-hasChildRow').find('td').toggle();
+
+            return false;
+        });
+
+        $('button.toggle-option').click(function() {
+            var c = $('.tablesorter')[1].config.widgetOptions,
+                    o = !c.filter_childRows;
+            c.filter_childRows = o;
+            $('.state').html(o.toString());
+            $('table').trigger('search', false);
+            return false;
+        });
+    });
+
+    $(document).ready(function()
+    {
+        $('#workcell-list').tablesorter();
+    });
+</script>
+
+    {% compress css %}
+    {% leaflet_css %}
+    <link href="{{ STATIC_URL }}core/less/geoq.less" media="all" rel="stylesheet" type="text/less" />
+{% endcompress %}
+{% endblock %}
+
+{% block container %}
+    <div class="row-fluid container-narrow">
+
+        <div class="projectlist">
+
+            {% include 'core/_job_stat_list.html' %}
+
+            <h3>
+                <span class="icon-inbox icon-1x pull-left list-icon"></span>
+                <span class="title header">
+                    <a href="{%url 'job-detail' object.id %}">{{ object.name }} - Assign Workcells</a>
+                </span>
+            </h3>
+
+            <p class="body project-description">
+                {{ object.description }}
+            </p>
+
+            <div class="row body" style="height:500px; margin-top:25px">
+                <div class="span4 thumbnail" id="map" style="height:450px; width: 700px; vertical-alignment:middle;">
+                {% leaflet_map "map" creatediv=False%}
+                </div>
+            </div>
+            <div class="row body">
+                <div id="workcells" class="row-fluid">
+                    <div id="c_form" class="span9 offset1">
+                        <table class="tablesorter" id="workcell-list">
+                            <colgroup>
+                                <col width="40" />
+                                <col width="80" />
+                                <col width="60" />
+                                <col width="40" />
+                                <col width="150" />
+                            </colgroup>
+                            <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Status</th>
+                                <th>Analyst</th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            </tbody>
+                        </table>
+
+                    </div><!-- end c_form -->
+                </div><!-- end contact -->
+            </div>
+
+        {% if not workcell_count %}
+            <div class="row body">
+            {% if 'accounts.add_job' in request.base_perms %}
+                <span><b>No workcells. Next step: </b> <a class="btn btn-large btn-success" href="{% url 'job-create-aois' job_pk=object.id %}">Create workcells</a></span>
+            {% else %}
+                <span><b>This project doesn't have any jobs yet, please ask a supervisor to create one</b></span>
+            {% endif %}
+            </div>
+        {% endif %}
+
+            {% include "core/_object_list.html" %}
+
+        </div>
+
+    </div>
+{% endblock %}
+

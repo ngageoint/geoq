@@ -1,0 +1,23 @@
+{% verbatim %}
+<div class="job-detail-popup">
+	<h5>
+		<a href="{{ job_properties.absolute_url }}">Work Cell # {{ job_properties.id }}</a>
+	</h5>
+	<div>
+		<label>Priority: </label>
+		<span>{{ job_properties.priority }}</span>
+	</div>
+	<div>
+		<label>Status: </label>
+		<span>{{ job_properties.status }}</span>
+	</div>
+	<div>
+		<label>Analyst: </label>
+		<span>{{ job_properties.analyst }}</span>
+	</div>
+    <br/>
+    <div>
+        <a onclick="javascript:assignAOI('{{ job_properties.id }}','{{ job_properties.delete_url }}');">Assign Workcell</a>
+    </div>
+</div>
+{% endverbatim %}

@@ -743,7 +743,8 @@ leaflet_layer_control.setLayerOpacity = function (layer, amount){
     if (layer.setStyle){
         layer.setStyle({opacity:amount, fillOpacity:amount});
     } else if (layer.setOpacity){
-        layer.setOpacity(amount);
+        try { layer.setOpacity(amount); }
+        catch(err) { console.error("Error while changing opacity", err); }
     }
 
     if (amount==0){

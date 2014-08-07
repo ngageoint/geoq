@@ -6,9 +6,11 @@ import json
 import requests
 
 from django.contrib.auth.decorators import login_required
+from django.contrib.auth.models import User, Group
 from django.contrib.gis.geos import GEOSGeometry
 from django.core.urlresolvers import reverse, reverse_lazy
 from django.core.exceptions import ObjectDoesNotExist
+from django.db.models import Q
 from django.forms.util import ValidationError
 from django.http import Http404, HttpResponse, HttpResponseRedirect, HttpResponseForbidden
 from django.shortcuts import get_object_or_404, redirect, render
@@ -22,6 +24,7 @@ from geoq.mgrs.utils import Grid, GridException, GeoConvertException
 from geoq.core.utils import send_aoi_create_event
 from geoq.core.middleware import Http403
 from geoq.mgrs.exceptions import ProgramException
+from guardian.decorators import permission_required
 from kml_view import *
 from shape_view import *
 
@@ -419,6 +422,23 @@ class PrioritizeWorkcells(TemplateView):
         return HttpResponseRedirect(job.get_absolute_url())
 
 
+class AssignWorkcellsView(TemplateView):
+    http_method_names = ['post', 'get']
+    template_name = 'core/assign_workcells.html'
+    model = Job
+
+    def get_queryset(self):
+        status = getattr(self, 'status', None)
+        q_set = AOI.objects.filter(job=self.kwargs.get('job_pk'))
+
+    def get_context_data(self, **kwargs):
+        cv = super(AssignWorkcellsView, self).get_context_data(**kwargs)
+        job_id = self.kwargs.get('job_pk')
+        cv['object'] = get_object_or_404(self.model, pk=job_id)
+        cv['workcell_count'] = cv['object'].aoi_count()
+        return cv
+
+
 def usng(request):
     """
     Proxy to USNG service.
@@ -500,6 +520,47 @@ def aoi_delete(request, pk):
 
 def display_help(request):
     return render(request, 'core/geoq_help.html')
+
+@permission_required('core.assign_workcells', return_403=True)
+def list_users(request):
+    usernames = User.objects.all().values('username').order_by('username')
+    users = []
+    for u in usernames:
+        users.append(u['username'])
+
+    return HttpResponse(json.dumps(users), mimetype="application/json")
+
+@permission_required('core.assign_workcells', return_403=True)
+def list_groups(request):
+    groupnames = Group.objects.all().values('name').order_by('name')
+    groups = []
+    for g in groupnames:
+        groups.append(g['name'])
+
+    return HttpResponse(json.dumps(groups), mimetype="application/json")
+
+@permission_required('core.assign_workcells', return_403=True)
+def assign_workcell(request, *args, **kwargs):
+    job_pk = kwargs.get('job_pk')
+    type = request.POST.get('type')
+    id = request.POST.get('id')
+    workcells = request.POST.get('workcells')
+
+    if type and id and workcells:
+        Type = User if type == 'user' else Group
+        keyfield = 'username' if type == 'user' else 'name'
+        q = Q(**{"%s__contains" % keyfield: id})
+        user_or_group = Type.objects.filter(q)
+        if user_or_group:
+            aois = AOI.objects.filter(id__in=workcells)
+            for aoi in aois:
+                aoi.assignee_type_id = 1 if type == 'user' else 2
+                aoi.assignee_id = user_or_group.get(0).id
+                aoi.save()
+
+        return HttpResponse('{"status":"ok"}', status=200)
+    else:
+        return HttpResponse('{"status":"required field missing"}', status=500)
 
 
 @login_required

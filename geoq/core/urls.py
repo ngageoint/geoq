@@ -63,6 +63,9 @@ urlpatterns = patterns('',
     url(r'^jobs/(?P<job_pk>\d+)/prioritize-workcells/?$',
         login_required(PrioritizeWorkcells.as_view()),
         name='job-prioritize-workcells'),
+    url(r'^jobs/(?P<job_pk>\d+)/assign-workcells/?$',
+        login_required(AssignWorkcellsView.as_view()),
+        name='job-assign-workcells'),
 
     url(r'^jobs/(?P<job_pk>\d+)/batch-create-aois/?$',
         #login required set in views
@@ -102,6 +105,8 @@ urlpatterns = patterns('',
     # OTHER URLS
     url(r'^edit/?$', TemplateView.as_view(template_name='core/edit.html'), name='edit'),
     url(r'^help/?$', display_help, name='help_page'),
+    url(r'^users/?$', list_users, name='list_users'),
+    url(r'^groups/?$', list_groups, name='list_groups'),
     url(r'^api/geo/usng/?$', 'core.views.usng', name='usng'),
     url(r'^api/geo/mgrs/?$', 'core.views.mgrs', name='mgrs'),
     url(r'^proxy/(?P<path>.*)$', proxy_to, {'target_url': ''}),
