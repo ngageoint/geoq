@@ -11,15 +11,13 @@ L.Control.OSMGeocoder = L.Control.extend({
 		bounds: null, // L.LatLngBounds
 		email: null, // String
 		callback: function (results) {
-            if (results.length == 0) {
-                console.log("ERROR: didn't find a result");
-                return;
+            if (results && results.length && results[0].boundingbox){
+                var bbox = results[0].boundingbox,
+                first = new L.LatLng(bbox[0], bbox[2]),
+                second = new L.LatLng(bbox[1], bbox[3]),
+                bounds = new L.LatLngBounds([first, second]);
+                this._map.fitBounds(bounds);
             }
-			var bbox = results[0].boundingbox,
-			first = new L.LatLng(bbox[0], bbox[2]),
-			second = new L.LatLng(bbox[1], bbox[3]),
-			bounds = new L.LatLngBounds([first, second]);
-			this._map.fitBounds(bounds);
 		}
 	},
 
@@ -98,7 +96,7 @@ L.Control.OSMGeocoder = L.Control.extend({
         else return null;
     },
     _isLatLon_decMin : function (q) {
-        console.log("is LatLon?: "+q);
+        log.log("is LatLon?: "+q);
         //N 53° 13.785' E 010° 23.887'
         //re = /[NS]\s*(\d+)\D*(\d+\.\d+).?\s*[EW]\s*(\d+)\D*(\d+\.\d+)\D*/;
         re = /([ns])\s*(\d+)\D*(\d+\.\d+).?\s*([ew])\s*(\d+)\D*(\d+\.\d+)/i;
@@ -116,7 +114,7 @@ L.Control.OSMGeocoder = L.Control.extend({
 		if (this._isLatLon(q) != null)
 		{
 			var m = this._isLatLon(q);
-			console.log("LatLon: "+m[1]+" "+m[2]);
+			log.log("LatLon: "+m[1]+" "+m[2]);
 			//m = {lon, lat}
             this.options.callback.call(this, this._createSearchResult(m[1],m[2]));
             return;
@@ -139,7 +137,7 @@ L.Control.OSMGeocoder = L.Control.extend({
 
         //and now Nominatim
 		//http://wiki.openstreetmap.org/wiki/Nominatim
-        console.log(this._callbackId);
+        log.log(this._callbackId);
 		window[("_l_osmgeocoder_"+this._callbackId)] = L.Util.bind(this.options.callback, this);
 
 
@@ -157,7 +155,7 @@ L.Control.OSMGeocoder = L.Control.extend({
 				params.bounded = 1;
 			}
 			else {
-				console.log('bounds must be of type L.LatLngBounds');
+				log.log('bounds must be of type L.LatLngBounds');
 				return;
 			}
 		}
@@ -167,7 +165,7 @@ L.Control.OSMGeocoder = L.Control.extend({
 				params.email = this.options.email;
 			}
 			else{
-				console.log('email must be a string');
+				log.log('email must be a string');
 			}
 		}
 
