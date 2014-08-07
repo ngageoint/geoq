@@ -7,6 +7,8 @@ import json
 from django.contrib.auth.models import User
 from django.contrib.gis.db import models
 from django.contrib.gis.geos import MultiPolygon
+from django.contrib.contenttypes import generic
+from django.contrib.contenttypes.models import ContentType
 from django.core.urlresolvers import reverse
 from django.utils.datastructures import SortedDict
 from managers import AOIManager
@@ -14,7 +16,7 @@ from jsonfield import JSONField
 from collections import defaultdict
 
 TRUE_FALSE = [(0, 'False'), (1, 'True')]
-STATUS_VALUES_LIST = ['Unassigned', 'In work', 'Awaiting review', 'In review', 'Completed'] #'Assigned'
+STATUS_VALUES_LIST = ['Unassigned', 'Assigned', 'In work', 'Awaiting review', 'In review', 'Completed'] #'Assigned'
 
 
 class Setting(models.Model):
@@ -26,6 +28,18 @@ class Setting(models.Model):
 
     def __unicode__(self):
         return self.name
+
+
+class Assignment(models.Model):
+    """
+    A generic relation to either a user or group
+    """
+    assignee_type = models.ForeignKey(ContentType, null=True)
+    assignee_id = models.PositiveIntegerField(null=True)
+    content_object = generic.GenericForeignKey('assignee_type','assignee_id')
+
+    class Meta:
+        abstract = True
 
 
 class GeoQBase(models.Model):
@@ -113,7 +127,7 @@ class Project(GeoQBase):
         return reverse('project-update', args=[self.id])
 
 
-class Job(GeoQBase):
+class Job(GeoQBase, Assignment):
     """
     Mid-level organizational object.
     """
@@ -259,7 +273,7 @@ class Job(GeoQBase):
         return json.dumps(geojson) if as_json else geojson
 
 
-class AOI(GeoQBase):
+class AOI(GeoQBase, Assignment):
     """
     Low-level organizational object. Now (6/1/14) referred to as a 'Workcell'
     """
