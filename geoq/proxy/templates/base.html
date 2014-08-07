@@ -1,0 +1,12 @@
+<!DOCTYPE html>
+{% comment %} deliberablely skipping all the stupid IE metacrap for now {% endcomment %}
+<html>
+ {% load staticfiles %}
+ <head>
+   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+   <title>{% block title%}Proxy{% endblock %}</title>
+ </head>
+ <body>
+   {% block content %}Someone neglected to define contact for this template{% endblock %}
+ </body>
+</html>
