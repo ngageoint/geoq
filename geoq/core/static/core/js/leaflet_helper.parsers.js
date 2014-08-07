@@ -46,6 +46,10 @@ leaflet_helper.constructors.identifyParser = function(result){
 
         parser = leaflet_helper.parsers.youTube;
         parserName = "YouTube Videos";
+    } else if (result && result.type && result.type=="FeatureCollection" && result.features) {
+
+        parser = leaflet_helper.parsers.basicJson;
+        parserName = "Basic JSON";
     }
     //ADD new parser detectors here
 
@@ -54,7 +58,7 @@ leaflet_helper.constructors.identifyParser = function(result){
 
 
 leaflet_helper.constructors.urlTemplater =function(url, map, layer_json){
-    if (url.indexOf("{") < 0) return url;
+    if (!url || !url.indexOf || url.indexOf("{") < 0) return url;
 
     //Turn search strings into underscore templates to make parseable text (safer than an eval statement)
     _.templateSettings.interpolate = /\{\{(.+?)\}\}/g;
@@ -310,12 +314,32 @@ leaflet_helper.constructors.geojson_success = function (data, proxiedURL, map, o
 
 //====================================
 leaflet_helper.parsers = {};
+leaflet_helper.parsers.basicJson = function (geojson, map) {
+    L.geoJson(geojson,
+        {onEachFeature: leaflet_helper.parsers.standard_onEachFeature}
+    ).addTo(map);
+};
+leaflet_helper.clean = function (text) {
+    return jQuery(text).text() || "";
+};
 leaflet_helper.parsers.standard_onEachFeature = function (feature, layer) {
-    if (feature.properties && feature.properties.popupContent) {
-        layer.bindPopup(feature.properties.popupContent);
-    }
-    if (feature.properties.heading && parseInt(feature.properties.heading) && layer.options){
-        layer.options.angle = parseInt(feature.properties.heading);
+    if (feature.properties) {
+        var popupContent = "";
+        if (feature.properties.popupContent) {
+            popupContent = feature.properties.popupContent;
+        } else if (feature.properties.name) {
+            popupContent = leaflet_helper.clean(feature.properties.name);
+            if (feature.properties.link){
+                var link = leaflet_helper.clean(feature.properties.link); //Strip out any offending
+                popupContent = "<a href='"+link+"' target='_blank'>"+popupContent+"</a>";
+            }
+        }
+        if (popupContent){
+            layer.bindPopup(popupContent);
+        }
+        if (feature.properties.heading && parseInt(feature.properties.heading) && layer.options){
+            layer.options.angle = parseInt(feature.properties.heading);
+        }
     }
 
 };
