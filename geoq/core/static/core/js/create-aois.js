@@ -1,5 +1,6 @@
-//TODO: Should prioritization colors/labels be pulled from a DB table?
-//TODO: What should be done with points/lines uploaded from a shapefile? Does this cause things to break?
+//TODO: Pull prioritization colors/labels From a settings object
+//TODO: What should be done with lines uploaded from a shapefile? Does this cause things to break?
+
 //TODO: How to assign users to a cell? Paintbrush?
 //TODO: Can there be a 'select/paintbrush' to remove large amounts of cells?
 
@@ -159,6 +160,7 @@ create_aois.init = function(){
             create_aois.update_info("Geocode Result: " + result.formatted_address);
             if (create_aois.map_object) {
                 create_aois.map_object.setView([result.geometry.location.lat(),result.geometry.location.lng()],13);
+                create_aois.map_object.fire('zoomend');
             }
         })
         .bind("geocode:error", function(event,status){
@@ -255,6 +257,36 @@ create_aois.init = function(){
     create_aois.initializeFileUploads();
 };
 
+create_aois.addLocatorControl = function(map){
+
+    var $map_move_info_update = $('<h4 class="location_info">Location Info</h4>');
+
+    var infoButtonOptions = {
+        html: $map_move_info_update,
+        position: 'bottomleft', /* The position of the control */
+        hideText: false,  // bool
+        maxWidth: 60,  // number
+        doToggle: false,  // bool
+        toggleStatus: false  // bool
+    };
+    var infoButton = new L.Control.Button(infoButtonOptions).addTo(map);
+
+    map.on('mousemove click', function(e) {
+        var ll = e.latlng;
+
+        var pt = maptools.locationInfoString({lat:ll.lat, lng:ll.lng, separator:"<br/>", boldTitles:true});
+
+        //Build text output to show in info box
+        var country = pt.country.name_long || pt.country.name || "";
+        var text = pt.usngCoords.usngString + "<br/><b>Lat:</b> "+ pt.lat + "<br/><b>Lon:</b> " + pt.lng;
+        if (country) text += "<br/>" + country;
+        if (pt.state && pt.state.name) text += "<br/>" + pt.state.name;
+
+        $map_move_info_update.html(text);
+    });
+
+};
+
 create_aois.mapInit = function(map) {
     setTimeout(function(){
         map.fitBounds([[52.429222277955134, -51.50390625],[21.043491216803556,-136.58203125]])
@@ -301,8 +333,18 @@ create_aois.mapInit = function(map) {
         var $usng = $("#option_usng");
         var $mgrs = $("#option_mgrs");
         var $poly = $("#option_polygon");
+
+        var isCONUS = true;
+        if (typeof maptools!="undefined") {
+            var ll = e.target.getCenter();
+            var pt = maptools.locationInfoString({lat:ll.lat, lng:ll.lng, separator:"<br/>", boldTitles:true});
+
+            isCONUS = (pt.country && pt.state && pt.country.abbr=="USA" && pt.state.name!="Hawaii" && pt.state.name!="Alaska");
+        }
+
         if (zoom > 8){
-            $usng.attr('disabled', false).text('USNG Cells (US only)');
+            //Hide USNG Menu if it's outside CONUS
+            $usng.attr('disabled', !isCONUS).text('USNG Cells (US only)');
             $mgrs.attr('disabled', false).text('MGRS Cells');
         } else {
             if ($usng.hasClass("active") || $mgrs.hasClass("active")){
@@ -312,6 +354,8 @@ create_aois.mapInit = function(map) {
             $mgrs.attr('disabled', true).text('>');
         }
     });
+
+    create_aois.addLocatorControl(map);
 
     map.on('draw:created', function (e) {
         var type = e.layerType,
@@ -337,9 +381,13 @@ create_aois.mapInit = function(map) {
                     data: { bbox: bboxStr},
                     contentType: "application/json",
                     success: function(data){
-                        create_aois.createWorkCellsFromService(data);
-                        if (create_aois.data_fields_obj && create_aois.data_fields_obj.daypop) {
-                            $("#prioritize-selector").val('Daypop').change();
+                        if (data && data.features &&data.features.length) {
+                            create_aois.createWorkCellsFromService(data);
+                            if (create_aois.data_fields_obj && create_aois.data_fields_obj.daypop) {
+                                $("#prioritize-selector").val('Daypop').change();
+                            }
+                        } else {
+                            create_aois.update_info("No LANDSCAN Population data available here");
                         }
                     },
                     beforeSend: function() {
