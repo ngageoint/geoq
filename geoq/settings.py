@@ -270,7 +270,7 @@ GAMIFICATION_SERVER = ''
 GAMIFICATION_PROJECT = 'geoq'
 
 #GeoServer
-GEOSERVER_WFS_JOB_LAYER = ''
+GEOSERVER_WFS_JOB_LAYER = None
 
 # Bootstrap variables to work with django-bootstrap-toolkit
 # Comment these out to use cdnjs.cloudflare.com versions of Bootstrap

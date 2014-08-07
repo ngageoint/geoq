@@ -59,7 +59,7 @@ class GeoQBase(models.Model):
 
     class Meta:
         abstract = True
-        ordering = ('-created_at',)
+        ordering = ('active', '-created_at',)
 
 
 class Project(GeoQBase):
@@ -95,6 +95,7 @@ class Project(GeoQBase):
         permissions = (
             ('open_project','Open Project'),('close_project','Close Project'),('archive_project','Archive Project'),
         )
+        ordering = ('-created_at',)
 
     @property
     def jobs(self):
@@ -149,6 +150,7 @@ class Job(GeoQBase, Assignment):
         permissions = (
             ('assign_job','Assign Job'),
         )
+        ordering = ('created_at',)
 
     def get_absolute_url(self):
         return reverse('job-detail', args=[self.id])
@@ -290,7 +292,7 @@ class AOI(GeoQBase, Assignment):
     objects = AOIManager()
     polygon = models.MultiPolygonField()
     priority = models.SmallIntegerField(choices=PRIORITIES, max_length=1, default=5)
-    status = models.CharField(max_length=15, choices=STATUS_CHOICES, default='In Work')
+    status = models.CharField(max_length=15, choices=STATUS_CHOICES, default='Unassigned')
 
     class Meta:
         permissions = (
