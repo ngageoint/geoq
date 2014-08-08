@@ -563,9 +563,9 @@ aoi_feature_edit.map_init = function (map, bounds) {
 
             if (feature_to_link) {
                 var feature_from_link = aoi_feature_edit.draggingFeature;
-                var feature_id_from = feature_from_link.feature.properties.source + ' #' +_.str.truncate(feature_from_link.feature.properties.id, 6);
+                var feature_id_from = (feature_from_link.feature.properties.source || "Feed item") + ' #' +_.str.truncate(feature_from_link.feature.properties.id, 6);
                 $text3
-                    .text('Link: '+feature_id_from)
+                    .html('<hr/>Link: '+feature_id_from)
                     .on('click',function(){
 
                         $holder3.empty();

@@ -225,7 +225,7 @@ leaflet_helper.constructors.geojson = function(layerConfig, map, useLayerInstead
     }
 
     var outputLayer = useLayerInstead || new L.geoJson(undefined,{
-        onEachFeature: leaflet_helper.parsers.standard_onEachFeature,
+        onEachFeature: function(feature, layer) {leaflet_helper.parsers.standard_onEachFeature(feature, layer, layerConfig); },
         style: leaflet_helper.constructors.polygonStyleBuilderCallback,
         pointToLayer: iconCallback
     });
@@ -344,7 +344,7 @@ leaflet_helper.parsers.basicJson = function (geojson, map, outputLayer) {
         outputLayer.addData(geojson);
     } else {
         outputLayer = L.geoJson(geojson,{
-            onEachFeature: leaflet_helper.parsers.standard_onEachFeature,
+            onEachFeature: function(feature, layer) {leaflet_helper.parsers.standard_onEachFeature(feature, layer, outputLayer); },
             style: leaflet_helper.constructors.polygonStyleBuilderCallback,
             pointToLayer: function(feature, latlng) { leaflet_helper.constructors.iconBuilderCallback(feature, latlng, outputLayer); }
             }
@@ -364,7 +364,8 @@ leaflet_helper.parsers.basicJson = function (geojson, map, outputLayer) {
 leaflet_helper.clean = function (text) {
     return jQuery("<div>"+text+"</div>").text() || "";
 };
-leaflet_helper.parsers.standard_onEachFeature = function (feature, layer) {
+leaflet_helper.id_count = 0;
+leaflet_helper.parsers.standard_onEachFeature = function (feature, layer, layerConfig) {
     if (feature.properties) {
         var popupContent = "";
         if (feature.properties.popupContent) {
@@ -377,6 +378,13 @@ leaflet_helper.parsers.standard_onEachFeature = function (feature, layer) {
             }
         }
         if (popupContent){
+            if (layerConfig && layerConfig.name) {
+                if (!feature.properties.id) {
+                    feature.properties.id = leaflet_helper.id_count++;
+                }
+                var id = feature.properties.id;
+                popupContent += leaflet_helper.addLinksToPopup(layerConfig.name, id, true, false);
+            }
             layer.bindPopup(popupContent);
         }
         if (feature.properties.heading && parseInt(feature.properties.heading) && layer.options){
@@ -399,6 +407,7 @@ leaflet_helper.addLinksToPopup = function (layerName,id,useMove,useHide,useDrop)
     if (useDrop) {
         output += "<br/><a href='#' class='make-droppable-hint'><span class='text-hint'></span>"+spanLink+"</a>";
     }
+    if (output) output = "<br/>"+output;
 
     return output;
 

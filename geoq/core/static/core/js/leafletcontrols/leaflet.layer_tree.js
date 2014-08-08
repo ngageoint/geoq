@@ -359,17 +359,22 @@ leaflet_layer_control.show_feature_info = function (feature) {
                             html += "Linked "+linked_item.created_at+"</br>";
                         }
                     }
-                    if (properties && properties.source) {
-                        html += "From "+properties.source+"</br>";
-                    }
-                    if (properties && properties.id) {
-                        html += "Source ID: "+ _.str.truncate(properties.id,9)+"</br>";
-                    }
-                    if (properties && properties.thumbnail) {
-                        html += "<img src='"+properties.thumbnail+"' width='100'><br/>";
-                    }
-                    if (properties && properties.image) {
-                        html += "<a href='"+properties.image+"' target='_blank'>Linked Image</a>";
+                    if (properties) {
+                        if (properties.name) {
+                            html += "Name: <b>"+ _.str.truncate(properties.name,80)+"</b></br>";
+                        }
+                        if (properties.source) {
+                            html += "From "+properties.source+"</br>";
+                        }
+                        if (properties.id) {
+                            html += "Source ID: "+ _.str.truncate(properties.id,9)+"</br>";
+                        }
+                        if (properties.thumbnail) {
+                            html += "<img src='"+properties.thumbnail+"' width='100'><br/>";
+                        }
+                        if (properties.image) {
+                            html += "<a href='"+properties.image+"' target='_blank'>Linked Image</a>";
+                        }
                     }
                     var img = $('<div>')
                         .addClass('linked-item status_block')
