@@ -131,7 +131,7 @@
                 <b>Job Details:</b> {{ object.description }}
             </p>
 
-            <div class="row body" style="height:250px; margin-top:25px">
+            <div class="row body" style="height:250px; margin-top:25px; margin-left:5px;">
                 {% if 'accounts.change_aoi' in request.base_perms %}
                 <div class="btn-group pull-right">
                     <a class="btn btn-mini" href="{{ object.get_update_url }}">
@@ -159,7 +159,7 @@
                     </ul>
                 </div>
                 {% endif %}
-                <div class="span4 thumbnail" id="map" style="height:225px; vertical-alignment:middle;">
+                <div class="span4 thumbnail" id="map" style="height:290px; margin-left: 0px; width: 400px;">
                 {% leaflet_map "map" creatediv=False%}
                 </div>
                 <div class="span6" id="attribute-table" style="float:left">
@@ -215,7 +215,7 @@
                                 <b>Completed:</b>
                             </td>
                             <td>
-                                <div class="progress" style="margin-bottom: 0px;">
+                                <div class="progress progress-bar-striped" style="margin-bottom: 0px;">
                                     <div class="bar" role="progressbar"
                                          aria-valuenow="{{ completed }}"
                                          aria-valuemin="0"
@@ -226,46 +226,16 @@
                                 </div>
                             </td>
                         </tr>
-                        {% geoserver_job_link object.id "wfs" as geoserver_job_wfs %}
-                        {% geoserver_job_link object.id "kml" as geoserver_job_kml %}
-                        {% if geoserver_job_wfs %}
-                        <tr>
-                            <td><b>KML:</b></td>
-                            <td><a href="{{geoserver_job_kml}}">GeoServer Link</a></td>
-                        </tr>
-                        <tr>
-                            <td><b>WFS URL:</b></td>
-                            <td>{{geoserver_job_wfs}}</td>
-                        </tr>
-                        {%  endif %}
-                        <tr>
-                            <td><b>Google Earth:</b></td>
-                            <td><a href="{% url 'kml-job' object.id %}" title="Best for use in other programs such as the Event Pages">KML Link</a> ||
-                            <a href="{% url 'kml-networked-job' object.id %}" title="Refereshes every 2 min when viewed in Google Earth"><b>Auto-updating KML Link</b></a>
-                            </td>
-                        </tr>
-                        <tr>
-                            <td><b>Linked JSON:</b></td>
-                            <td><a href="{% url 'json-job' object.id %}">Job GeoJSON</a> ||
-                                <a href="{% url 'json-job-grid' object.id %}">Workcell Grid</a> ||
-                                <a href="{% url 'json-job-features-links' object.id %}">Features</a>
-                            </td>
-                        </tr>
-                        <tr>
-                            <td><b>Shapefile:</b></td>
-                            <td><a href="{% url 'shape-job' object.id %}">Work Cells</a> ||
-                                <a href="{% url 'shape-job-type' object.id 'points' %}">Points</a> ||
-                                <a href="{% url 'shape-job-type' object.id 'polygons' %}">Polygons</a></td>
-                        </tr>
+                        {% include 'core/_job_links.html' %}
                     </table>
                 </div>
             </div>
 
-            <div class="row body">
+            <div class="row body" style="margin-left: 5px;">
                 <ul class="nav nav-tabs" style="float:left; width:100%;">
                     {% for status in statuses %}
                         {% with status=status|lower %}
-                    <li class="{% if status == active_status %}active{% endif %}">
+                    <li {% if status == active_status %}class="active"{% endif %}>
                         <a id="tab_{{ status|slugify }}" href="{{ object.get_absolute_url }}{{ status }}">{{ status|title }}</a>
                     </li>
                         {% endwith %}
@@ -278,7 +248,7 @@
             </div>
 
         {% if not workcell_count %}
-            <div class="row body">
+            <div class="row body" style="margin-left: 5px;">
             {% if 'accounts.add_job' in request.base_perms %}
                 <span><b>No workcells. Next step: </b> <a class="btn btn-large btn-success" href="{% url 'job-create-aois' job_pk=object.id %}">Create workcells</a></span>
             {% else %}
