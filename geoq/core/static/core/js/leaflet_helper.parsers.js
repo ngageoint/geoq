@@ -119,12 +119,25 @@ L.RotatedMarker = L.Marker.extend({
 L.rotatedMarker = function(pos, options) {
     return new L.RotatedMarker(pos, options);
 };
-
+//Set up base icon
+var MapMarker = L.Icon.extend({
+    options: {
+        id: 0,
+        shadowUrl: null,
+        iconAnchor: new L.Point(7, 24),
+        iconSize: new L.Point(15, 24),
+        repeatMode: true,
+        text: 'Social Media Pointer',
+        iconUrl: "/static/leaflet/images/orange-marker-icon.png"
+    }
+});
 
 leaflet_helper.constructors.geojson_layer_count = 0;
 leaflet_helper.constructors.geojson = function(layerConfig, map, useLayerInstead) {
 
-    var url = layerConfig.url;
+    if (!layerConfig) layerConfig = {};
+    var url = layerConfig.url || "";
+
     if (layerConfig.type == 'ESRI Identifiable MapServer'){
         if (_.str.endsWith(url,'?')) url = url.substr(0,url.length-1);
         if (_.str.endsWith(url,'/')) url = url.substr(0,url.length-1);
@@ -132,19 +145,6 @@ leaflet_helper.constructors.geojson = function(layerConfig, map, useLayerInstead
         url += '?geometryType=esriGeometryEnvelope&geometry={{bbox}}&mapExtent={{bbox}}';
         url += '&imageDisplay={{width}},{{height}},96&tolerance={{width}}&f=json&layers=visible:'+(layerConfig.layer||"all");
     }
-
-    //Set up base icon
-    var MapMarker = L.Icon.extend({
-        options: {
-            id: 0,
-            shadowUrl: null,
-            iconAnchor: new L.Point(7, 24),
-            iconSize: new L.Point(15, 24),
-            repeatMode: true,
-            text: 'Social Media Pointer',
-            iconUrl: aoi_feature_edit.available_icons[0]
-        }
-    });
 
     if (useLayerInstead && (useLayerInstead.geojson_layer_count !== undefined)) {
         layerConfig.geojson_layer_count = useLayerInstead.geojson_layer_count;
@@ -224,26 +224,9 @@ leaflet_helper.constructors.geojson = function(layerConfig, map, useLayerInstead
         return L.rotatedMarker(latlng, {icon: icon});
     }
 
-    function polygonStyleCallBack (feature) {
-        var style = {
-                weight: 2,
-                opacity: 1,
-                color: 'white',
-                fillOpacity: 0.1,
-                fillColor: '#ff0000'};
-        if (feature.properties.layer_type == "Aerial Oblique Line") {
-            style.color = 'green';
-            style.dashArray = '3';
-        } else if (feature.properties.layer_type == "Ground Lines") {
-            style.color = 'orange';
-            style.dashArray = '3';
-        }
-        return style;
-    }
-
     var outputLayer = useLayerInstead || new L.geoJson(undefined,{
         onEachFeature: leaflet_helper.parsers.standard_onEachFeature,
-        style: polygonStyleCallBack,
+        style: leaflet_helper.constructors.polygonStyleBuilderCallback,
         pointToLayer: iconCallback
     });
     if (outputLayer.geojson_layer_count == undefined) {
@@ -271,10 +254,50 @@ leaflet_helper.constructors.geojson = function(layerConfig, map, useLayerInstead
 
     return outputLayer;
 };
+leaflet_helper.constructors.iconBuilderCallback = function(feature, latlng, layerConfig){
+    var iconX = 15;
+    var iconY = 24;
+    var iconAnchor = null;
+
+    layerConfig = layerConfig || {geojson_layer_count:1, name:'JSON Layer'};
+
+    var layerNum = layerConfig.geojson_layer_count % aoi_feature_edit.available_icons.length;
+    var iconUrl = aoi_feature_edit.available_icons[layerNum];
+
+    //Build the icon injects
+    var iconData = {
+        iconUrl: iconUrl,
+        iconSize: new L.Point(iconX, iconY),
+        text: layerConfig.name
+    };
+    if (iconAnchor) iconData.iconAnchor = iconAnchor;
+    var icon = new MapMarker(iconData);
+
+    //Construct the final Icon
+    return L.rotatedMarker(latlng, {icon: icon});
+};
+
+leaflet_helper.constructors.polygonStyleBuilderCallback =function(feature) {
+    var style = {
+        weight: 2,
+        opacity: 1,
+        color: 'white',
+        fillOpacity: 0.1,
+        fillColor: '#ff0000'};
+    if (feature.properties.layer_type == "Aerial Oblique Line") {
+        style.color = 'green';
+        style.dashArray = '3';
+    } else if (feature.properties.layer_type == "Ground Lines") {
+        style.color = 'orange';
+        style.dashArray = '3';
+    }
+    return style;
+};
+
 leaflet_helper.constructors.geojson_error = function (resultobj){
     log.error ("A JSON layer was requested, but no valid response was received from the server, result:", resultobj);
 };
-leaflet_helper.constructors.geojson_success = function (data, proxiedURL, map, outputLayer) {
+leaflet_helper.constructors.geojson_success = function (data, proxiedURL, map, outputLayer, noparse) {
     var result;
     if (typeof data=="object") {
         result = data;
@@ -287,16 +310,18 @@ leaflet_helper.constructors.geojson_success = function (data, proxiedURL, map, o
         }
     }
 
-    if (result && result.error && result.error.message){
-        log.error("JSON layer error, message was: " + result.error.message + " url: "+ proxiedURL);
-    } else {
-        var parserInfo = leaflet_helper.constructors.identifyParser(result);
-        if (parserInfo && parserInfo.parser) {
-            parserInfo.parser(result, map, outputLayer);
+    if (!noparse){
+        if (result && result.error && result.error.message){
+            log.error("JSON layer error, message was: " + result.error.message + " url: "+ proxiedURL);
+        } else {
+            var parserInfo = leaflet_helper.constructors.identifyParser(result);
+            if (parserInfo && parserInfo.parser) {
+                parserInfo.parser(result, map, outputLayer);
 
-            var features = "NONE";
-            if (result && result.features && result.features.length) features = result.features.length;
-            log.info("JSON loaded from : "+ proxiedURL+ " - features: "+ features+ " - parser type: " + parserInfo.parserName);
+                var features = "NONE";
+                if (result && result.features && result.features.length) features = result.features.length;
+                log.info("JSON loaded from : "+ proxiedURL+ " - features: "+ features+ " - parser type: " + parserInfo.parserName);
+            }
         }
     }
 
@@ -314,13 +339,30 @@ leaflet_helper.constructors.geojson_success = function (data, proxiedURL, map, o
 
 //====================================
 leaflet_helper.parsers = {};
-leaflet_helper.parsers.basicJson = function (geojson, map) {
-    L.geoJson(geojson,
-        {onEachFeature: leaflet_helper.parsers.standard_onEachFeature}
-    ).addTo(map);
+leaflet_helper.parsers.basicJson = function (geojson, map, outputLayer) {
+    if (outputLayer) {
+        outputLayer.addData(geojson);
+    } else {
+        outputLayer = L.geoJson(geojson,{
+            onEachFeature: leaflet_helper.parsers.standard_onEachFeature,
+            style: leaflet_helper.constructors.polygonStyleBuilderCallback,
+            pointToLayer: function(feature, latlng) { leaflet_helper.constructors.iconBuilderCallback(feature, latlng, outputLayer); }
+            }
+        ).addTo(map);
+    }
+
+    if (outputLayer) {
+        leaflet_helper.update_tree_title(outputLayer);
+    }
+    if (outputLayer && !outputLayer.options) {
+        outputLayer.options = {};
+    }
+    outputLayer.options.opacity = 1;
+
+    return outputLayer;
 };
 leaflet_helper.clean = function (text) {
-    return jQuery(text).text() || "";
+    return jQuery("<div>"+text+"</div>").text() || "";
 };
 leaflet_helper.parsers.standard_onEachFeature = function (feature, layer) {
     if (feature.properties) {
@@ -442,8 +484,6 @@ leaflet_helper.parsers.addNOAADamageAssessmentToolkit = function (result, map, o
     }
 
     return outputLayer;
-
-
 };
 leaflet_helper.parsers.addFEMAImageEventsData = function (result, map, outputLayer) {
 
@@ -686,7 +726,6 @@ leaflet_helper.update_tree_title = function(outputLayer) {
             treeItem.setTitle(layerName + " ("+numFeatures+")");
         }
     }
-
 };
 
 leaflet_helper.parsers.flickrImages = function (result, map, outputLayer) {

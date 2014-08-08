@@ -1,6 +1,8 @@
 {% extends "core/base.html" %}
 {% load compress %}
 {% load leaflet_tags %}
+{% block title %}GeoQ Project: {{ object.name }}{% endblock %}
+
 {% block static_libraries %}
     {% leaflet_js %}
 
