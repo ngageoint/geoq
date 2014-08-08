@@ -54,7 +54,6 @@
                 <tbody>
                 <tr>
                     <td>
-                        <a href="#about"><span class="glyphicon glyphicon-file text-info"></span> About</a>
                         <h4>
                             <a name="user-content-geographic-work-queueing-and-tasking-system" class="anchor"
                                href="#geographic-work-queueing-and-tasking-system">
@@ -86,9 +85,14 @@
                         </p>
 
                         <p><b>This video gives an overview of making projects and jobs:</b></p>
-                        <img src="{{ STATIC_URL }}images/help/VideoThumbnail.PNG"
-                             style="cursor:pointer"
-                             onclick="window.open('{{ STATIC_URL }}help_video/UserHelpVideo.html');" />
+{#                        <img src="{{ STATIC_URL }}images/help/VideoThumbnail.png"#}
+{#                             style="cursor:pointer"#}
+{#                             onclick="window.open('{{ STATIC_URL }}help_video/UserHelpVideo.html');" />#}
+                        <iframe class="tscplayer_inline" id="embeddedSmartPlayerInstance"
+                                src="{{ STATIC_URL }}help_video/UserHelpVideo_player.html?embedIFrameId=embeddedSmartPlayerInstance"
+                                scrolling="no" frameborder="0" webkitAllowFullScreen mozallowfullscreen allowFullScreen
+                                width="900" height="600"></iframe>
+
                     </td>
                 </tr>
                 </tbody></table>
