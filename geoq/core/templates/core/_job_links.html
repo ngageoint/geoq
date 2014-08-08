@@ -32,51 +32,58 @@
 
 <tr><td colspan="2" style="padding-top:20px;">
     <div class="job_link_item">
-        <a href="{% url 'kml-networked-job' object.id %}" title="Refereshes every 2 min when viewed in Google Earth">
+        <a href="{% url 'kml-networked-job' object.id %}" title="Refereshes every 2 min when viewed in Google Earth" target="_new">
         <img src="/static/images/icons/kml_networked.png"/>
         <span><b>Auto-updating KML</b></span></a>
     </div>
 
     <div class="job_link_item">
-        <a href="{% url 'kml-job' object.id %}" title="Best for use in other programs such as the Event Pages">
+        <a href="{% url 'kml-job' object.id %}" title="Best for use in other programs such as the Event Pages" target="_new">
         <img src="/static/images/icons/kml_globe.png"/>
         <span>KML Link</span></a>
     </div>
 
     <div class="job_link_item">
-        <a href="{% url 'json-job' object.id %}" title="Data describing this job">
+        <a href="{% url 'shape-job' object.id %}" title="Workcells in a Shape File format" target="_new">
+        <img src="/static/images/icons/shape_file.png"/>
+        <span>Shape Workcells</span></a>
+    </div>
+
+    <div class="job_link_item">
+        <a href="{% url 'shape-job-type' object.id 'points' %}" title="Point Features in a Shape File format" target="_new">
+        <img src="/static/images/icons/shape_file.png"/>
+        <span>Shape Points</span></a>
+    </div>
+
+    <div class="job_link_item">
+        <a href="{% url 'shape-job-type' object.id 'polygons' %}" title="Polygon Features in a Shape File format" target="_new">
+        <img src="/static/images/icons/shape_file.png"/>
+        <span>Shape Polygons</span></a>
+    </div>
+
+    <div class="job_link_item">
+        <a href="{% url 'json-job' object.id %}" title="Data describing this job" target="_new">
         <img src="/static/images/icons/geo_json.png"/>
         <span>Job and Features</span></a>
     </div>   
  
     <div class="job_link_item">
-        <a href="{% url 'json-job-grid' object.id %}" title="Polygons and Data of all job workcells">
+        <a href="{% url 'json-job-grid' object.id %}" title="Polygons and Data of all job workcells" target="_new">
         <img src="/static/images/icons/geo_json.png"/>
         <span>Workcell Grid</span></a>
     </div>   
  
     <div class="job_link_item">
-        <a href="{% url 'json-job-features-links' object.id %}" title="All features from this job">
+        <a href="{% url 'json-job-features-links' object.id %}" title="All features from this job" target="_new">
         <img src="/static/images/icons/api_json.png"/>
-        <span>Features JSON</span></a>
+        <span>Features</span></a>
     </div>
- 
+
     <div class="job_link_item">
-        <a href="{% url 'shape-job' object.id %}" title="Workcells in a Shape File format">
-        <img src="/static/images/icons/shape_file.png"/>
-        <span>Shape Workcells</span></a>
+        <a href="{% url 'json-job-features' object.id %}" title="All features from this job without links" target="_new">
+        <img src="/static/images/icons/api_json.png"/>
+        <span>Simple Features</span></a>
     </div>
- 
-    <div class="job_link_item">
-        <a href="{% url 'shape-job-type' object.id 'points' %}" title="Point Features in a Shape File format">
-        <img src="/static/images/icons/shape_file.png"/>
-        <span>Shape Points</span></a>
-    </div>
- 
-    <div class="job_link_item">
-        <a href="{% url 'shape-job-type' object.id 'polygons' %}" title="Polygon Features in a Shape File format">
-        <img src="/static/images/icons/shape_file.png"/>
-        <span>Shape Polygons</span></a>
-    </div>
-    
+
+
 </td></tr>

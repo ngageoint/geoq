@@ -124,7 +124,7 @@
                                             {% if k == "break" %}
                                                 <li class="divider"></li>
                                             {% else %}
-                                                <li target="_new"><a href="{{v.url}}" {% if v.target %}target="{{ v.target }}"{% endif %}>{{k}}</a></li>
+                                                <li><a href="{{v.url}}" target="{% if v.target %}{{ v.target }}{% else %}_new{% endif %}">{{k}}</a></li>
                                             {% endif %}
                                         {%endfor%}
                                     </ul>

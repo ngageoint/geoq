@@ -219,6 +219,7 @@
                         <ul>
                             <li><a href="{% url 'json-layers' %}">http://server/geoq/<b>api/layers.json</b></a></li>
                             <li><a href="{% url 'json-job' pk=1 %}">http://server/geoq/<b>api/jobs/&lt;id&gt;.geojson</b></a></li>
+                            <li><a href="{% url 'json-job-grid' pk=1 %}">http://server/geoq/<b>api/jobs/&lt;id&gt;/grid/job-workcells.geojson</b></a></li>
                             <li><a href="{% url 'kml-job' pk=1 %}">http://server/geoq/<b>api/jobs/&lt;id&gt;.kml</b></a></li>
                             <li><a href="{% url 'kml-networked-job' pk=1 %}">http://server/geoq/<b>api/jobs/&lt;id&gt;.networked.kml</b></a></li>
                             <li><a href="{% url 'shape-job' pk=1 %}">http://server/geoq/<b>api/jobs/&lt;id&gt;.shp.zip</b> (Workcells)</a></li>
@@ -227,7 +228,6 @@
                             <li><a href="{% url 'json-job-features' pk=1 %}">http://server/geoq/<b>api/jobs/&lt;id&gt;features.json</b></a></li>
                             <li><a href="{% url 'json-job-features-links' pk=1 %}">http://server/geoq/<b>api/jobs/&lt;id&gt;features.withlinks.json</b> (With linked items)</a></li>
                         </ul>
-
                     </td>
                 </tr>
                 </tbody></table>

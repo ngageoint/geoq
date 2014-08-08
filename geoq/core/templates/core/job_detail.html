@@ -8,8 +8,12 @@
     <script src="{{ STATIC_URL }}core/js/leaflet_helper.js"></script>
     <script src="{{ STATIC_URL }}core/js/bootstrap-dialog.js"></script>
     <script src="{{ STATIC_URL }}core/js/maths.js"></script>
+    <script src="{{ STATIC_URL }}core/js/leafletcontrols/leaflet.simple_button.js"></script>
+    <script src="{{ STATIC_URL }}leaflet/L.Control.Button.js"></script>
     <script type="text/javascript">
 
+        var map_object;
+        var map_toggle=false;
         var status_colors = [
             {name:'Assigned', color: leaflet_helper.styles.assigned, slug:'assigned'},  //TODO: Are we still using 'Assigned'?
             {name:'Completed', color: leaflet_helper.styles.completed, slug:'completed'},
@@ -21,7 +25,7 @@
 
         var aoi_extents;
         function mapInit(map, bounds) {
-
+            map_object = map;
             aoi_extents = L.geoJson({{ object.geoJSON|default:'[]'|safe }}, {
                 style: function(feature) {
                     var status = _.find(status_colors,function(stat){return stat.name==feature.properties.status});
@@ -56,6 +60,46 @@
     		map.addLayer(drawnItems);
 
             configurePageUI();
+
+            //Add Fullscreen button
+            var $title = $("<a>")
+                .addClass("btn")
+                .text("Fullscreen")
+                .on('click',function(){
+                    map_toggle = !map_toggle;
+
+                    if (map_toggle) {
+                        $('#attribute-table').hide();
+                        $('#map').css({width:'100%', height:'800px'})
+                    } else {
+                        $('#attribute-table').show();
+                        $('#map').css({height:'290px', width: '400px'})
+                    }
+
+                    setTimeout(function(){
+                        map_object.invalidateSize();
+
+                        try {
+                            //AOI is sometimes getting no bounds data, which causes error
+                            var test = aoi_extents.getBounds().getCenter();
+                            map.fitBounds(aoi_extents.getBounds());
+                        } catch(ex){
+                        }
+
+                    },500);
+
+
+                });
+            var titleInfoOptions = {
+                'html': $title,  // string
+                'hideText': false,  // bool
+                position: 'topright',
+                'maxWidth': 60,  // number
+                'doToggle': false,  // bool
+                'toggleStatus': false  // bool
+            };
+            var titleInfoButton = new L.Control.Button(titleInfoOptions).addTo(map);
+
         }
 
         function highlightFeature(e) {
