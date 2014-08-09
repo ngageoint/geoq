@@ -120,8 +120,8 @@
             <option value="n_cells">Split polygon into</option>
             <option value="n_sized_cells">Split polygon by</option>
         </select>
-        <span id="poly_split_n_cells">approx <input type="text" id="split_number" value="100" /> cells</span>
-        <span id="poly_split_n_sized_cells" style="display: none;"><input type="text" id="split_sized" value="1000" />-sq-meter cells</span>
+        <span id="poly_split_n_cells">approx <input type="text" id="split_number" value="314" /> cells</span>
+        <span id="poly_split_n_sized_cells" style="display: none;"><input type="text" id="split_sized" value="5000" />-sq-meter cells</span>
         <button id="poly_split_button" class="btn btn-success" disabled="true">Split</button>
     </div>
     <div style="display:none" id="file_uploader_holder">
@@ -158,18 +158,14 @@
         Prioritize by: <select id="prioritize-selector" style="margin-bottom:0px;">
             <option>--add cells first--</option>
         </select>
-        <btn id="prioritize-reverse" class="btn btn-warning">Reverse</btn>
-        or set all cells to: <btn id="prioritize-aois-5-button" class="btn btn-warning">5 (Lowest)</btn>
-        <btn id="prioritize-aois-4-button" class="btn btn-warning">4</btn>
-        <btn id="prioritize-aois-3-button" class="btn btn-warning">3</btn>
-        <btn id="prioritize-aois-2-button" class="btn btn-warning">2</btn>
-        <btn id="prioritize-aois-1-button" class="btn btn-warning">1 (Highest)</btn>
-        <btn id="prioritize-aois-clear-button" class="btn btn-danger">Delete All</btn>
-        <hr/>
-    </div>
 
-    <div class="row">
-        <hr/>
+{#        <btn id="prioritize-reverse" class="btn btn-warning">Reverse</btn>#}
+{#        or set all cells to: <btn id="prioritize-aois-5-button" class="btn btn-warning">5 (Lowest)</btn>#}
+{#        <btn id="prioritize-aois-4-button" class="btn btn-warning">4</btn>#}
+{#        <btn id="prioritize-aois-3-button" class="btn btn-warning">3</btn>#}
+{#        <btn id="prioritize-aois-2-button" class="btn btn-warning">2</btn>#}
+{#        <btn id="prioritize-aois-1-button" class="btn btn-warning">1 (Highest)</btn>#}
+        <btn id="prioritize-aois-clear-button" class="btn btn-danger">Delete All</btn>
         <btn id="show-geojson-textarea" class="btn">Click to show detailed geojson of work cells</btn>
         <div id="geojson-textarea" style="display: none">
             Work Cells (copy and paste the geojson text below to tweak or export cell details):<br/>

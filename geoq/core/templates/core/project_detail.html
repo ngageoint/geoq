@@ -35,6 +35,13 @@
         var drawnItems = new L.FeatureGroup();
 		map.addLayer(drawnItems);
 
+
+        //Bold any entries within tables
+        $('.job_feature_list td').filter(function() {
+          return $(this).text() != '0';
+        }).css({fontWeight:'bold'});
+
+
     }
 </script>
 

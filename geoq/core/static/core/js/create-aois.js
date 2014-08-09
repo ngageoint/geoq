@@ -347,9 +347,22 @@ create_aois.mapInit = function(map) {
     create_aois.drawControl = drawControl;
 
     //Tweak Drawing Controls
-    $('a.leaflet-draw-edit-edit').attr("title","Click Work Cell box to delete it");
+    $('a.leaflet-draw-edit-edit').attr("title","Click Workcell to delete it");
     $('div.leaflet-draw.leaflet-control').find('a').popover({trigger:"hover",placement:"right"});
     $('a.leaflet-draw-draw-polygon').hide();
+
+
+    //Find the remove icon
+    var icons = $('div.leaflet-draw.leaflet-control').find('a');
+    _.each (icons,function(icon_obj){
+        var $icon_obj = $(icon_obj);
+        var icon_title = $icon_obj.attr('title') || $icon_obj.attr('data-original-title');
+        if (icon_title == "Freeform work cell" || icon_title == "Draw a rectangle"){
+            $icon_obj
+                .css('backgroundColor', "green");
+        }
+    });
+
 
 
 
@@ -458,6 +471,7 @@ create_aois.mapInit = function(map) {
                 create_aois.last_polygon_workcells = create_aois.createWorkCellsFromService(data);
 
                 $('#poly_split_button').attr('disabled',false);
+                $("#poly_split_button").trigger('click');
             } else {
                 //Using USNG or MGRS
                 create_aois.update_info("Requesting Grid Information from the server");
@@ -509,7 +523,7 @@ create_aois.mapInit = function(map) {
     _.each([1,2,3,4,5],function(num){
         var helpText = create_aois.helpText[num];
         var $btn = $("<button>")
-            .text('Pri '+num+' : '+helpText+' (0)')
+            .text(helpText+' Priority (0 cells)')
             .attr({id:'priority-map-'+num})
             .css('width','155px')
             .popover({
@@ -953,7 +967,7 @@ create_aois.updateCellCount = function() {
         var $bottomBtn = $("#priority-map-"+num);
         var helpText = create_aois.helpText[num];
 
-        var text = 'Priority '+num+' : '+helpText+' ('+counts[num]+')';
+        var text = helpText+' Priority: ('+counts[num]+')';
         $bottomBtn.text(text);
     });
 
