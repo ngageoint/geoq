@@ -2,6 +2,7 @@
 {% load compress %}
 {% load leaflet_tags %}
 {% load dynurl %}
+{% block title %}GeoQ: Draw Workcells for Job #{{ object.id }}{% endblock %}
 {% block static_libraries %}
     {% leaflet_js plugins="draw" %}
     <style>
