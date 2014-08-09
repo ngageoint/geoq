@@ -104,8 +104,8 @@
 
 
 {% block container %}
-    <div class="row-fluid container-narrow">
-    <h2>Draw new Work cells and assign priorities</h2>
+    <div class="row-fluid container" style="margin:0px 40px 0px 40px;">
+    <h2>Add workcells to the Job</h2>
 
     <div class="btn-group" data-toggle="buttons-radio">
         Draw using:
@@ -135,8 +135,9 @@
         <button id="file_holder_edit_btn" class="btn btn-success" disabled="true">Update</button>
     </div>
 
-    <div id="map" class="thumbnail" style="height: 500px; width: 100%;">{% leaflet_map "map" %}</div>
-        <br/>
+    <div id="map" class="thumbnail" style="height: 600px; width: 92%;">{% leaflet_map "map" %}</div>
+
+    <br/>
     <div class="row">
         <div class="col-md-3" style="display: inline-block">
         <label>Name for this group of work cells: (<span id="num_workcells">0</span>)</label>
