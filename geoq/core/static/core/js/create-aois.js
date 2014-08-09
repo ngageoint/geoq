@@ -305,15 +305,36 @@ create_aois.mapInit = function(map) {
         showArea: true
     };
 
+
+    function createPolygonOptions(opts) {
+        var options = {};
+
+        if (opts.name) {
+            options.title = opts.name;
+        }
+
+        options.allowIntersection = false;
+        options.drawError = { color: '#b00b00', timeout: 1000};
+
+        options.shapeOptions = opts.style || {borderColor: "black", backgroundColor: "brown"};
+        options.showArea = true;
+        options.id = opts.id;
+
+        return options;
+    }
+
+    L.drawLocal.draw.toolbar.actions.text = "Create";
+    L.drawLocal.draw.toolbar.actions.title = "Create Workcell Boundary";
+
     var drawControl = new L.Control.Draw({
         draw: {
             position: 'topleft',
-            polygons: [polygon],
             rectangle: {
                 shapeOptions: {
                     color: '#b00b00'
                 }
             },
+            polygons: [polygon],
             circle: false,
             polyline: false
         },
@@ -324,9 +345,42 @@ create_aois.mapInit = function(map) {
     });
     map.addControl(drawControl);
     create_aois.drawControl = drawControl;
+
+    //Tweak Drawing Controls
     $('a.leaflet-draw-edit-edit').attr("title","Click Work Cell box to delete it");
     $('div.leaflet-draw.leaflet-control').find('a').popover({trigger:"hover",placement:"right"});
     $('a.leaflet-draw-draw-polygon').hide();
+
+
+
+    //Add Delete Control
+    L.drawLocal.draw.toolbar.actions.text = "Delete";
+    L.drawLocal.draw.toolbar.actions.title = "Remove Workcells within polygon";
+
+    var deleteControl = new L.Control.Draw({
+        draw: {
+            position: 'topleft',
+            rectangle: false,
+            polygons: [createPolygonOptions({id:'delete',name:"Remove Workcells", style:{backgroundColor:'red'}})],
+            circle: false,
+            polyline: false
+        },
+        edit: false
+    });
+    map.addControl(deleteControl);
+    create_aois.deleteControl = deleteControl;
+
+    //Find the remove icon
+    var icons = $('div.leaflet-draw.leaflet-control').find('a');
+    _.each (icons,function(icon_obj){
+        var $icon_obj = $(icon_obj);
+        var icon_title = $icon_obj.attr('title') || $icon_obj.attr('data-original-title');
+        if (icon_title == "Remove Workcells"){
+            $icon_obj
+                .css('backgroundColor', "red");
+        }
+    });
+
 
     map.on('zoomend', function(e){
         var zoom = create_aois.map_object.getZoom();
@@ -357,11 +411,44 @@ create_aois.mapInit = function(map) {
 
     create_aois.addLocatorControl(map);
 
+    function convertPolyToXY(poly){
+        var newPoly = [];
+        _.each(poly,function(p){
+            newPoly.push({x:p[0],y:p[1]});
+        });
+        return newPoly;
+    }
+
     map.on('draw:created', function (e) {
         var type = e.layerType,
             layer = e.layer;
 
-        if (type === 'rectangle' || type === 'circle' || type === 'polygon-undefined' ) {
+        if (type == 'polygon-delete') {
+            //User drew with delete control
+
+            if (create_aois.last_polygon_drawn) {
+                var deleteJson = layer.toGeoJSON();
+                var deletePoly = deleteJson.geometry.coordinates[0];
+                deletePoly = convertPolyToXY(deletePoly);
+
+                var existingCells = create_aois.getBoundaries(true);
+                _.each(existingCells,function(cell){
+                    var cellJSON = cell.toGeoJSON();  //TODO: Can be more efficient
+                    var cellPoly = cellJSON.geometry.coordinates[0][0];
+                    cellPoly = convertPolyToXY(cellPoly);
+
+                    var intersects = intersectionPolygons(cellPoly,deletePoly);
+                    if (intersects && intersects.length){
+                        create_aois.removeWorkcell(cell);
+                    }
+                });
+
+            } else {
+                create_aois.update_info("No polygon to remove workcells from");
+            }
+
+
+        } else if (type === 'rectangle' || type === 'circle' || type === 'polygon-undefined' ) {
             if (create_aois.draw_method=="polygon") {
                 //Using free-form polygon
                 var geoJSON = create_aois.turnPolygonsIntoMultis(layer);
@@ -412,8 +499,8 @@ create_aois.mapInit = function(map) {
                     dataType: "json"
                 });
             }
+            drawnItems.addLayer(layer);
         }
-        drawnItems.addLayer(layer);
         create_aois.updateCellCount();
     });
 
@@ -905,15 +992,28 @@ create_aois.redrawStyles = function(){
     }
 };
 
-create_aois.getBoundaries = function() {
+create_aois.removeWorkcell = function(cell){
+    var m = create_aois.map_object;
+    if (m && (m._container.id == 'map') && (m.hasLayer(create_aois.aois))){
+        _.each(create_aois.aois.getLayers(), function(l){
+            if (l.hasLayer(cell)) l.removeLayer(cell);
+        });
+    }
+};
+create_aois.getBoundaries = function(useCellsInstead) {
     var boundaries = [];
 
+    var featureName = $('#aoi-name').val();
     var m = create_aois.map_object;
     if (m && (m._container.id == 'map') && (m.hasLayer(create_aois.aois))){
         _.each(create_aois.aois.getLayers(), function(l){
            _.each(l.getLayers(), function(f){
-               f.feature.name = $('#aoi-name').val();
-               boundaries.push(f.toGeoJSON());
+               f.feature.name = featureName;
+               if (useCellsInstead) {
+                   boundaries.push(f);
+               } else {
+                   boundaries.push(f.toGeoJSON());
+               }
            });
         });
     }

@@ -82,6 +82,7 @@
 	<script src="{{ STATIC_URL }}core/js/geojson-js-utils/geojson-utils.js"></script>
 	<script src="{{ STATIC_URL }}core/js/jsmaptools/jsmaptools.js"></script>
 	<script src="{{ STATIC_URL }}core/js/jsmaptools/jsmaptools_polygons.js"></script>
+	<script src="{{ STATIC_URL }}core/js/polygon.js"></script>
     <script src="{{ STATIC_URL }}core/js/leafletcontrols/leaflet.simple_button.js" type="text/javascript"></script>
     <script src="{{ STATIC_URL }}core/js/leaflet-shapefile/shp.js" type="text/javascript"></script>
 
@@ -146,7 +147,13 @@
         </div>
         <hr/>
     </div>
+
     <div class="row">
+        <btn id="save-aois-button" class="btn btn-success">Add these Workcells (you can add more later)</btn>
+    </div>
+
+    <div class="row">
+        <hr/>
         Prioritize by: <select id="prioritize-selector" style="margin-bottom:0px;">
             <option>--add cells first--</option>
         </select>
@@ -158,10 +165,6 @@
         <btn id="prioritize-aois-1-button" class="btn btn-warning">1 (Highest)</btn>
         <btn id="prioritize-aois-clear-button" class="btn btn-danger">Delete All</btn>
         <hr/>
-    </div>
-
-    <div class="row">
-        <btn id="save-aois-button" class="btn btn-success">Save Work Cells to Job</btn>
     </div>
 
     <div class="row">
