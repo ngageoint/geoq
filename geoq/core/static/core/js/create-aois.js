@@ -14,7 +14,7 @@ create_aois.batch_redirect_url = '';
 
 create_aois.drawControl = null;
 create_aois.deleteControl = null;
-create_aois.priorityControls = [];
+create_aois.prioritizeControl = [];
 create_aois.drawnItems = null;
 
 create_aois.last_shapes = null;
@@ -42,6 +42,7 @@ function mapInit(map) {
     create_aois.addDrawingControls(map);
     create_aois.addDeleteControls(map);
     create_aois.addLocatorControl(map);
+    create_aois.addPrioritizeControls(map);
     create_aois.buildPriorityBoxes(map);
     create_aois.setupStatusControls(map);
 };
@@ -402,6 +403,45 @@ create_aois.addDeleteControls = function(map){
         }
     });
 };
+create_aois.addPrioritizeControls = function(map){
+
+    //Add Delete Control
+    L.drawLocal.draw.toolbar.actions.text = "Prioritize";
+    L.drawLocal.draw.toolbar.actions.title = "Prioritize Workcells within polygon";
+
+    var polyOptions = [];
+    _.each([1,2,3,4,5],function(num){
+        var polygon = create_aois.createPolygonOptions({id:'pri_'+num,name:"Prioritize "+num});
+        polyOptions.push(polygon);
+    });
+
+    var prioritizeControl = new L.Control.Draw({
+        draw: {
+            position: 'topleft',
+            rectangle: false,
+            polygons: polyOptions,
+            circle: false,
+            polyline: false
+        },
+        edit: false
+    });
+    map.addControl(prioritizeControl);
+    create_aois.prioritizeControl = prioritizeControl;
+
+    //Find the remove icon
+    var icons = $('div.leaflet-draw.leaflet-control').find('a');
+    _.each (icons,function(icon_obj){
+        var $icon_obj = $(icon_obj);
+        var icon_title = $icon_obj.attr('title') || $icon_obj.attr('data-original-title');
+        if (_.str.startsWith(icon_title,"Prioritize ")){
+            var num = parseInt(icon_title.split(" ")[1]);
+            var color = create_aois.colors[num] || '';
+            $icon_obj
+                .css('backgroundColor',color);
+        }
+    });
+};
+
 create_aois.convertPolyToXY = function(poly){
     var newPoly = [];
     _.each(poly,function(p){
@@ -409,33 +449,54 @@ create_aois.convertPolyToXY = function(poly){
     });
     return newPoly;
 };
+create_aois.doSomethingWithOverlappingPolys = function (layer, funcToDo) {
+    if (create_aois.last_polygon_drawn) {
+        var deleteJson = layer.toGeoJSON();
+        var selectPoly = deleteJson.geometry.coordinates[0];
+        selectPoly = create_aois.convertPolyToXY(selectPoly);
+
+        var existingCells = create_aois.getBoundaries(true);
+        _.each(existingCells,function(cell){
+            var cellJSON = cell.toGeoJSON();  //TODO: Can be more efficient
+            var cellPoly = cellJSON.geometry.coordinates[0][0];
+            cellPoly = create_aois.convertPolyToXY(cellPoly);
+
+            var intersects = intersectionPolygons(cellPoly,selectPoly);
+            if (intersects && intersects.length){
+                funcToDo(cell);
+            }
+        });
+    } else {
+        create_aois.update_info("No polygon to remove workcells from");
+    }
+};
+
 create_aois.somethingWasDrawn = function (e){
     var type = e.layerType,
         layer = e.layer;
 
     if (type == 'polygon-delete') {
         //User drew with delete control
-
-        if (create_aois.last_polygon_drawn) {
-            var deleteJson = layer.toGeoJSON();
-            var deletePoly = deleteJson.geometry.coordinates[0];
-            deletePoly = create_aois.convertPolyToXY(deletePoly);
-
-            var existingCells = create_aois.getBoundaries(true);
-            _.each(existingCells,function(cell){
-                var cellJSON = cell.toGeoJSON();  //TODO: Can be more efficient
-                var cellPoly = cellJSON.geometry.coordinates[0][0];
-                cellPoly = create_aois.convertPolyToXY(cellPoly);
-
-                var intersects = intersectionPolygons(cellPoly,deletePoly);
-                if (intersects && intersects.length){
-                    create_aois.removeWorkcell(cell);
-                }
-            });
-
-        } else {
-            create_aois.update_info("No polygon to remove workcells from");
+        var func = function(cell){
+            create_aois.removeWorkcell(cell);
         }
+        create_aois.doSomethingWithOverlappingPolys(layer,func);
+    } else if (_.str.startsWith(type,"polygon-pri_")) {
+        var num = parseInt(type.split("_")[1]);
+        var func = function(cell){
+            cell.feature.properties.priority = num;
+            cell.feature.priority = num;
+
+            if (cell.setStyle){
+                cell.setStyle(create_aois.styleFromPriority(num));
+            }
+
+        }
+        create_aois.doSomethingWithOverlappingPolys(layer,func);
+        create_aois.updateCellCount();
+        create_aois.redrawStyles();
+
+        create_aois.update_info("Priorities updated");
 
 
     } else if (type === 'rectangle' || type === 'circle' || type === 'polygon-undefined' ) {
