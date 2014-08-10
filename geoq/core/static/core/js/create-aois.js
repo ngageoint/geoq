@@ -6,7 +6,7 @@ create_aois.colors = site_settings.priority_colors || ['#ff0000','#00ff00','#00B
 create_aois.helpText = site_settings.priority_text || ['unassigned','Highest','High','Medium','Low','Lowest'];
 create_aois.map_object = null;
 create_aois.aois = new L.FeatureGroup();
-create_aois.priority_to_use = 1;
+create_aois.priority_to_use = 3;
 create_aois.draw_method = 'usng'; //This should be updated on page creation
 create_aois.get_grids_url = ''; //This should be updated on page creation
 create_aois.batch_redirect_url = '';
@@ -40,11 +40,14 @@ function mapInit(map) {
     map.on('draw:created', create_aois.somethingWasDrawn);
 
     create_aois.addDrawingControls(map);
-    create_aois.addDeleteControls(map);
     create_aois.addLocatorControl(map);
     create_aois.addPrioritizeControls(map);
-    create_aois.buildPriorityBoxes(map);
+    create_aois.addDeleteControls(map);
+//    create_aois.buildPriorityBoxes(map);
     create_aois.setupStatusControls(map);
+    $('div.leaflet-left div.leaflet-draw.leaflet-control').find('a').popover({trigger:"hover",placement:"right"});
+    $('div.leaflet-right div.leaflet-draw.leaflet-control').find('a').popover({trigger:"hover",placement:"left"});
+
 };
 
 create_aois.init = function(){
@@ -312,7 +315,7 @@ create_aois.createPolygonOptions = function(opts) {
         options.title = opts.name;
     }
 
-    options.allowIntersection = false;
+    options.allowIntersection = true;
     options.drawError = { color: '#b00b00', timeout: 1000};
 
     options.shapeOptions = opts.style || {borderColor: "black", backgroundColor: "brown"};
@@ -325,7 +328,7 @@ create_aois.addDrawingControls = function(map){
 
     var polygon = {
         title: 'Freeform work cell',
-        allowIntersection: false,
+        allowIntersection: true,
         drawError: {color: '#b00b00', timeout: 1000},
         shapeOptions: {borderColor: "black", backgroundColor: "brown"},
         showArea: true
@@ -346,28 +349,28 @@ create_aois.addDrawingControls = function(map){
             circle: false,
             polyline: false
         },
-        edit: {
-            featureGroup: create_aois.aois,
-            remove: false
-        }
+        edit: false
     });
     map.addControl(drawControl);
     create_aois.drawControl = drawControl;
 
     //Tweak Drawing Controls
     $('a.leaflet-draw-edit-edit').attr("title","Click Workcell to delete it");
-    $('div.leaflet-draw.leaflet-control').find('a').popover({trigger:"hover",placement:"right"});
     $('a.leaflet-draw-draw-polygon').hide();
 
 
+    create_aois.setDrawingControlColor();
+};
+create_aois.setDrawingControlColor = function(){
     //Find the create icons and color them
     var icons = $('div.leaflet-draw.leaflet-control').find('a');
     _.each (icons,function(icon_obj){
         var $icon_obj = $(icon_obj);
         var icon_title = $icon_obj.attr('title') || $icon_obj.attr('data-original-title');
         if (icon_title == "Freeform work cell" || icon_title == "Draw a rectangle"){
-            $icon_obj
-                .css('backgroundColor', "green");
+
+            var color = create_aois.colors[create_aois.priority_to_use];
+            $icon_obj.css('backgroundColor', color);
         }
     });
 };
@@ -380,8 +383,8 @@ create_aois.addDeleteControls = function(map){
     var polygon = create_aois.createPolygonOptions({id:'delete',name:"Remove Workcells", style:{backgroundColor:'red'}})
 
     var deleteControl = new L.Control.Draw({
+        position: 'topright',
         draw: {
-            position: 'topleft',
             rectangle: false,
             polygons: [polygon],
             circle: false,
@@ -411,13 +414,14 @@ create_aois.addPrioritizeControls = function(map){
 
     var polyOptions = [];
     _.each([1,2,3,4,5],function(num){
-        var polygon = create_aois.createPolygonOptions({id:'pri_'+num,name:"Prioritize "+num});
+        var helpText = create_aois.helpText[num];
+        var polygon = create_aois.createPolygonOptions({id:'pri_'+num,name:"Prioritize "+num+": "  +helpText});
         polyOptions.push(polygon);
     });
 
     var prioritizeControl = new L.Control.Draw({
+        position: 'topright',
         draw: {
-            position: 'topleft',
             rectangle: false,
             polygons: polyOptions,
             circle: false,
@@ -483,6 +487,10 @@ create_aois.somethingWasDrawn = function (e){
         create_aois.doSomethingWithOverlappingPolys(layer,func);
     } else if (_.str.startsWith(type,"polygon-pri_")) {
         var num = parseInt(type.split("_")[1]);
+
+        create_aois.priority_to_use = num;
+        create_aois.setDrawingControlColor();
+
         var func = function(cell){
             cell.feature.properties.priority = num;
             cell.feature.priority = num;
@@ -491,13 +499,12 @@ create_aois.somethingWasDrawn = function (e){
                 cell.setStyle(create_aois.styleFromPriority(num));
             }
 
-        }
+        };
         create_aois.doSomethingWithOverlappingPolys(layer,func);
         create_aois.updateCellCount();
         create_aois.redrawStyles();
 
         create_aois.update_info("Priorities updated");
-
 
     } else if (type === 'rectangle' || type === 'circle' || type === 'polygon-undefined' ) {
         if (create_aois.draw_method=="polygon") {
@@ -1026,6 +1033,7 @@ create_aois.updateCellCount = function() {
         }
     });
     $('#num_workcells').text(aoi_count);
+    $("#save-aois-button").attr('disabled',(aoi_count == 0));
 
     //Update Priority on-map Buttons
     _.each([1,2,3,4,5],function(num){

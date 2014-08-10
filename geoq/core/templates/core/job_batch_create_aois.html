@@ -105,7 +105,8 @@
 
 {% block container %}
     <div class="row-fluid container" style="margin:0px 40px 0px 40px;">
-    <h2>Add workcells to the Job</h2>
+    <h2>Add workcells to Job #{{ object.id }}</h2>
+    <b>Name workcells: </b><input type="text" name="aoi-name" id="aoi-name" value="{{ object.name }}" style="width:300px;"/><br/>
 
     <div class="btn-group" data-toggle="buttons-radio">
         Draw using:
@@ -139,19 +140,12 @@
 
     <br/>
     <div class="row">
-        <div class="col-md-3" style="display: inline-block">
-        <label>Name for this group of work cells: (<span id="num_workcells">0</span>)</label>
-        <input type="text" name="aoi-name" id="aoi-name" value="{{ object.name }}" style="width:300px;"/>
+        <div class="span6" style="display: inline-block">
+            <btn id="save-aois-button" class="btn btn-success" disabled="true">Add <span id="num_workcells">0</span> Workcells (you can add more later)</btn>
         </div>
-        <div class="cod-md-3" style="display: inline-block; margin-left: 100px">
-            <label>Zoom above map to Location:</label>
-            <input type="text" id="geocomplete" />
+        <div class="span4" style="display: inline-block; margin-left: 100px">
+            <i>Zoom map to:</i><input type="text" id="geocomplete" style="vertical-align:baseline;"/>
         </div>
-        <hr/>
-    </div>
-
-    <div class="row">
-        <btn id="save-aois-button" class="btn btn-success">Add these Workcells (you can add more later)</btn>
     </div>
 
     <div class="row">
