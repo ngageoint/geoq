@@ -432,7 +432,7 @@ create_aois.addPrioritizeControls = function(map){
     map.addControl(prioritizeControl);
     create_aois.prioritizeControl = prioritizeControl;
 
-    //Find the remove icon
+    //Find the prioritize icons
     var icons = $('div.leaflet-draw.leaflet-control').find('a');
     _.each (icons,function(icon_obj){
         var $icon_obj = $(icon_obj);
@@ -441,7 +441,11 @@ create_aois.addPrioritizeControls = function(map){
             var num = parseInt(icon_title.split(" ")[1]);
             var color = create_aois.colors[num] || '';
             $icon_obj
-                .css('backgroundColor',color);
+                .css('backgroundColor',color)
+                .on('click',function(){
+                    create_aois.priority_to_use = num;
+                    create_aois.setDrawingControlColor();
+                });
         }
     });
 };
@@ -453,7 +457,8 @@ create_aois.convertPolyToXY = function(poly){
     });
     return newPoly;
 };
-create_aois.doSomethingWithOverlappingPolys = function (layer, funcToDo) {
+create_aois.doSomethingWithOverlappingPolys = function (layer, funcToDo, noneMessage) {
+    var countOverlaps = 0;
     if (create_aois.last_polygon_drawn) {
         var deleteJson = layer.toGeoJSON();
         var selectPoly = deleteJson.geometry.coordinates[0];
@@ -468,11 +473,13 @@ create_aois.doSomethingWithOverlappingPolys = function (layer, funcToDo) {
             var intersects = intersectionPolygons(cellPoly,selectPoly);
             if (intersects && intersects.length){
                 funcToDo(cell);
+                countOverlaps++;
             }
         });
     } else {
-        create_aois.update_info("No polygon to remove workcells from");
+        create_aois.update_info(noneMessage || "No polygon to remove workcells from");
     }
+    return countOverlaps;
 };
 
 create_aois.somethingWasDrawn = function (e){
@@ -488,9 +495,6 @@ create_aois.somethingWasDrawn = function (e){
     } else if (_.str.startsWith(type,"polygon-pri_")) {
         var num = parseInt(type.split("_")[1]);
 
-        create_aois.priority_to_use = num;
-        create_aois.setDrawingControlColor();
-
         var func = function(cell){
             cell.feature.properties.priority = num;
             cell.feature.priority = num;
@@ -500,11 +504,11 @@ create_aois.somethingWasDrawn = function (e){
             }
 
         };
-        create_aois.doSomethingWithOverlappingPolys(layer,func);
+        var count = create_aois.doSomethingWithOverlappingPolys(layer,func,"No existing polygon to change priorities of");
         create_aois.updateCellCount();
         create_aois.redrawStyles();
 
-        create_aois.update_info("Priorities updated");
+        if (count) create_aois.update_info(count + "workcell priorities updated");
 
     } else if (type === 'rectangle' || type === 'circle' || type === 'polygon-undefined' ) {
         if (create_aois.draw_method=="polygon") {
@@ -513,7 +517,7 @@ create_aois.somethingWasDrawn = function (e){
             create_aois.last_polygon_drawn = layer;
 
             var data = {"type":"FeatureCollection","features":geoJSON};
-            create_aois.last_polygon_workcells = create_aois.createWorkCellsFromService(data);
+            create_aois.last_polygon_workcells = create_aois.createWorkCellsFromService(data, false, true);
 
             $('#poly_split_button').attr('disabled',false);
             $("#poly_split_button").trigger('click');
@@ -557,8 +561,8 @@ create_aois.somethingWasDrawn = function (e){
                 },
                 dataType: "json"
             });
+            create_aois.drawnItems.addLayer(layer);
         }
-        create_aois.drawnItems.addLayer(layer);
     }
     create_aois.updateCellCount();
 };
@@ -880,9 +884,11 @@ create_aois.removeFeature = function(e) {
     create_aois.updateCellCount();
 };
 
-create_aois.createWorkCellsFromService = function(data,zoomAfter,saveLayerTo){
+create_aois.createWorkCellsFromService = function(data,zoomAfter,skipFeatureSplitting){
 
-    data.features = create_aois.turnPolygonsIntoMultis(data.features || data);
+    if (!skipFeatureSplitting) {
+        data.features = create_aois.turnPolygonsIntoMultis(data.features || data);
+    }
 
     var features = L.geoJson(data, {
         style: function(feature) {
@@ -941,7 +947,7 @@ create_aois.createWorkCellsFromService = function(data,zoomAfter,saveLayerTo){
         }
     });
 
-    if (features){
+    if (features && !skipFeatureSplitting){
         create_aois.aois.addLayer(features);
         create_aois.map_object.addLayer(create_aois.aois);
 
