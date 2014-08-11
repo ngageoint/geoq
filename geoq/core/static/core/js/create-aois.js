@@ -134,7 +134,9 @@ create_aois.init = function(){
         }
 
         if (num>0) {
-            create_aois.removeAllFeatures();
+            if (create_aois.last_polygon_workcells) {
+                create_aois.map_object.removeLayer(create_aois.last_polygon_workcells);
+            }
             var geoJSON = create_aois.splitPolygonsIntoSections(create_aois.last_polygon_drawn, num, splitIntoSized);
 
             var data = {"type":"FeatureCollection","features":geoJSON};
@@ -508,7 +510,7 @@ create_aois.somethingWasDrawn = function (e){
         create_aois.updateCellCount();
         create_aois.redrawStyles();
 
-        if (count) create_aois.update_info(count + "workcell priorities updated");
+        if (count) create_aois.update_info(count + " workcell priorities updated");
 
     } else if (type === 'rectangle' || type === 'circle' || type === 'polygon-undefined' ) {
         if (create_aois.draw_method=="polygon") {
