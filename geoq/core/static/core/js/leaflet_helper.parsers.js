@@ -377,13 +377,16 @@ leaflet_helper.parsers.standard_onEachFeature = function (feature, layer, layerC
                 popupContent = "<a href='"+link+"' target='_blank'>"+popupContent+"</a>";
             }
         }
-        if (popupContent){
-            if (layerConfig && layerConfig.name) {
-                if (!feature.properties.id) {
-                    feature.properties.id = leaflet_helper.id_count++;
+        if (popupContent && _.isString(popupContent)) {
+
+            if (!popupContent.indexOf("<span class='hide feature-id-hint'>")){
+                if (layerConfig && layerConfig.name) {
+                    if (!feature.properties.id) {
+                        feature.properties.id = leaflet_helper.id_count++;
+                    }
+                    var id = feature.properties.id;
+                    popupContent += leaflet_helper.addLinksToPopup(layerConfig.name, id, true, false);
                 }
-                var id = feature.properties.id;
-                popupContent += leaflet_helper.addLinksToPopup(layerConfig.name, id, true, false);
             }
             layer.bindPopup(popupContent);
         }
