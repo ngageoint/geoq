@@ -6,7 +6,7 @@ create_aois.colors = site_settings.priority_colors || ['#ff0000','#00ff00','#00B
 create_aois.helpText = site_settings.priority_text || ['unassigned','Highest','High','Medium','Low','Lowest'];
 create_aois.map_object = null;
 create_aois.aois = new L.FeatureGroup();
-create_aois.priority_to_use = 3;
+create_aois.priority_to_use = 5;
 create_aois.draw_method = 'usng'; //This should be updated on page creation
 create_aois.get_grids_url = ''; //This should be updated on page creation
 create_aois.batch_redirect_url = '';
@@ -770,7 +770,7 @@ create_aois.determine_poly_fill_percentage = function(layer_poly, left, south, w
         if (gju.pointInPolygon({coordinates:coord},layer_poly)) fillNum++;
     }
     fillPercentage = fillNum/((slices-2)*(slices-2))-.02;
-    log.log((fillPercentage*100)+"% filled polygon drawn");
+//    log.log((fillPercentage*100)+"% filled polygon drawn");
     fillPercentage = fillPercentage<.2?.2:fillPercentage>.97?1:fillPercentage;
 
     return fillPercentage;
@@ -885,6 +885,35 @@ create_aois.removeFeature = function(e) {
     }
     create_aois.updateCellCount();
 };
+create_aois.splitFeature = function(e) {
+    var layerParent
+    var layer = e.target;
+
+    for (var key in create_aois.aois._layers) {
+        if (create_aois.aois._layers[key]._layers[e.target._leaflet_id]) {
+            layerParent = create_aois.aois._layers[key];
+        }
+    }
+
+    if (layerParent){
+        var simplerLayer = _.toArray(layer._layers)[0];
+        var layers = create_aois.splitPolygonsIntoSections(simplerLayer,4);
+        var properties = layer.feature.properties || {};
+        var priority = properties.priority || create_aois.priority_to_use || 5;
+        var newPriority = priority>1 ? priority-1 : 1;
+        properties.priority = newPriority;
+
+        _.each(layers,function(l){
+            l.properties = properties;
+        });
+        layerParent.removeLayer(layer);
+        layerParent.addData(layers);
+    }
+
+
+    create_aois.updateCellCount();
+};
+
 
 create_aois.createWorkCellsFromService = function(data,zoomAfter,skipFeatureSplitting){
 
@@ -944,7 +973,7 @@ create_aois.createWorkCellsFromService = function(data,zoomAfter,skipFeatureSpli
             layer.on({
                 mouseover: create_aois.highlightFeature,
                 mouseout: create_aois.resetHighlight,
-                click: create_aois.removeFeature
+                click: create_aois.splitFeature
             });
         }
     });
