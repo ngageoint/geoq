@@ -910,7 +910,7 @@ create_aois.splitFeature = function(e) {
         layerParent.addData(layers);
     }
 
-
+    create_aois.redrawStyles();
     create_aois.updateCellCount();
 };
 

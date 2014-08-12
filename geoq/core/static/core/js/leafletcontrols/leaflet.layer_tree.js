@@ -102,7 +102,7 @@ leaflet_layer_control.submitComment = function() {
             action: function(dialog) {
                 var text = dialog.getModalBody().find('input').val();
                 $.ajax({
-                    url: document.URL + "/comment",
+                    url: "/geoq/aois/work/" + aoi_feature_edit.aoi_id + "/comment",
                     type: 'POST',
                     data: {
                         comment : text,
@@ -134,6 +134,7 @@ leaflet_layer_control.refreshLogInfo = function() {
         })
         .done(function(entries) {
             body.empty();
+            entries = entries.reverse();
             _.each(entries, function(entry) {
                 $("<tr><td>" + entry.timestamp + "</td><td>" +
                     entry.user + "</td><td>" + entry.text + "</td></tr>")

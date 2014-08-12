@@ -566,6 +566,7 @@ leaflet_helper.parsers.addFEMAImageEventsData = function (result, map, outputLay
                 color = "yellow";
             }
             var heading = feature.attributes.CalculatedHeading || feature.attributes.Heading || 0;
+            heading = parseInt(heading);
 
             var geometry = {};
             if (feature.geometry && feature.geometry.paths) {
