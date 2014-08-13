@@ -10,7 +10,7 @@ from django.contrib.gis.db import models
 # from django.contrib.gis.utils import LayerMapping
 # from geoq.locations.models import *
 # mapping = {'name': 'NAME', 'state': 'STATEFP', 'poly': 'MULTIPOLYGON',}
-# lm = LayerMapping(Counties, 'test_maps/cb_2013_us_county_20m.shp', mapping, encoding='cp1252')
+# lm = LayerMapping(Counties, 'static/world_cells/counties/cb_2013_us_county_20m.shp', mapping, encoding='cp1252')
 # lm.save(verbose=True)
 
 
