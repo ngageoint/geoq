@@ -17,16 +17,28 @@
             "fillOpacity": .2
         };
 
-        var aoi_extents = L.geoJson({{ object.aois_envelope.json|safe }},
-            {style: extentStyle,
-            onEachFeature: function(feature, layer) {
-{#                var popupContent = "Test";#}
-{#                layer.bindPopup(popupContent);#}
-//TODO: have aoi_envelopes return as separate polygons and include links and data?
-            }}
+        //Get Polygon JOSN of each Job
+        var job_list = {{ object.aois_envelope_by_job|safe|default:"[]" }};
+        _.each(job_list,function(job){
 
-        );
-        aoi_extents.addTo(map);
+           var job_layer = L.geoJson(job,
+                {style: extentStyle,
+                onEachFeature: function(feature, layer) {
+                    if (feature && feature.properties && feature.properties.link) {
+                        var popupContent = "<a href='"+feature.properties.link+"'>Open Job</a>";
+                        layer.bindPopup(popupContent);
+                    }
+                }}
+            );
+            if (job_layer) job_layer.addTo(map);
+
+        });
+
+        //Build the extents and load that if above didn't work
+        var aoi_extents = L.geoJson({{ object.aois_envelope.json|safe }},{style: extentStyle});
+        if (!job_list || !job_list.length && aoi_extents) {
+            aoi_extents.addTo(map);
+        }
 
         // Map doesn't update without this delay.
         setTimeout(function(){

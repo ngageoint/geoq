@@ -6,7 +6,7 @@ import json
 
 from django.contrib.auth.models import User
 from django.contrib.gis.db import models
-from django.contrib.gis.geos import MultiPolygon
+from django.contrib.gis.geos import MultiPolygon, Polygon
 from django.contrib.contenttypes import generic
 from django.contrib.contenttypes.models import ContentType
 from django.core.urlresolvers import reverse
@@ -120,6 +120,21 @@ class Project(GeoQBase):
     @property
     def aois_envelope(self):
         return MultiPolygon([n.aois_envelope() for n in self.jobs if n.aois.count()])
+
+    @property
+    def aois_envelope_by_job(self):
+
+        jobs = []
+        for job in self.jobs:
+            if job.aois.count():
+                job_envelope = job.aois_envelope()
+                envelope_string = job_envelope.json
+                if envelope_string:
+                    job_poly = json.loads(envelope_string)
+                    job_poly['properties'] = {"job_id": str(job.id), "link": str(job.get_absolute_url())}
+                    jobs.append(job_poly)
+
+        return json.dumps(jobs, ensure_ascii=True)
 
     def get_absolute_url(self):
         return reverse('project-detail', args=[self.id])
