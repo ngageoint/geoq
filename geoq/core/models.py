@@ -123,7 +123,6 @@ class Project(GeoQBase):
 
     @property
     def aois_envelope_by_job(self):
-
         jobs = []
         for job in self.jobs:
             if job.aois.count():
@@ -131,9 +130,8 @@ class Project(GeoQBase):
                 envelope_string = job_envelope.json
                 if envelope_string:
                     job_poly = json.loads(envelope_string)
-                    job_poly['properties'] = {"job_id": str(job.id), "link": str(job.get_absolute_url())}
+                    job_poly['properties'] = {"job_id": str(job.id), "link": str(job.get_absolute_url()), "name": str(job.name)}
                     jobs.append(job_poly)
-
         return json.dumps(jobs, ensure_ascii=True)
 
     def get_absolute_url(self):

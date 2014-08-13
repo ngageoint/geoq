@@ -25,7 +25,9 @@
                 {style: extentStyle,
                 onEachFeature: function(feature, layer) {
                     if (feature && feature.properties && feature.properties.link) {
-                        var popupContent = "<a href='"+feature.properties.link+"'>Open Job</a>";
+                        var name = "Open Job";
+                        if (feature.properties.name) name = feature.properties.name;
+                        var popupContent = "<a href='"+feature.properties.link+"'>"+name+"</a>";
                         layer.bindPopup(popupContent);
                     }
                 }}
@@ -105,10 +107,10 @@
                     </ul>
                 </div>
                 {% endif %}
-                <div class="span4 thumbnail" id="map" style="height:225px; vertical-alignment:middle;">
+                <div class="span6 thumbnail" id="map" style="height:260px; vertical-alignment:middle;">
                 {% leaflet_map "map" creatediv=False%}
                 </div>
-                <div class="span6">
+                <div class="span5">
                     <table class="project_info_list">
                         <tr>
                             <th style="min-width: 100px"></th>
