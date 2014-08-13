@@ -884,7 +884,20 @@ leaflet_helper.parsers.webDataLink = function (result, map, outputLayer) {
         var tThumbnail = selThumbnail ? _.template(selThumbnail) : "";
         var tImage = selImage ? _.template(selImage) : "";
 
-        _.each(result[rootField],function(item){
+        //Some results have multiple levels, build through these
+        var results = result;
+//        if (rootField.indexOf(".")>0) {
+//            var levels = rootField.split(".");
+//            _.each(levels,function(level){
+//               results =  results[level];
+//            });
+//        } else {
+            results = result[rootField];
+//        }
+
+        if (!_.isArray(results)) results = [results]; //Sometimes, a single object is returned. Make it an array
+
+        _.each(results,function(item){
             var id = leaflet_helper.parsers.getTemplateVal (tID,item,['id','title'],parseInt(Math.random() * 1000000));
             if (!item.id) item.id = id;
             var description, fieldsToShow, point, polygon, link, thumbnail, image;
@@ -966,12 +979,4 @@ leaflet_helper.parsers.webDataLink = function (result, map, outputLayer) {
         log.error("Problem parsing a Web Data Link: "+outputLayer.name);
     }
     return outputLayer;
-};
-
-leaflet_helper.parsers.geoNameWikiData = function (result, map, outputLayer) {
-
-    //TODO: Empty
-
-    log.log(result);
-
 };
