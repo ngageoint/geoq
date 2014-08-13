@@ -12,12 +12,20 @@
         var extentStyle = {
             "weight":2,
             "color":"red",
-            "fill":null,
-            "opacity":.7
-        }
+            "opacity":.7,
+            "fillColor": "orange",
+            "fillOpacity": .2
+        };
 
         var aoi_extents = L.geoJson({{ object.aois_envelope.json|safe }},
-                {style: extentStyle});
+            {style: extentStyle,
+            onEachFeature: function(feature, layer) {
+{#                var popupContent = "Test";#}
+{#                layer.bindPopup(popupContent);#}
+//TODO: have aoi_envelopes return as separate polygons and include links and data?
+            }}
+
+        );
         aoi_extents.addTo(map);
 
         // Map doesn't update without this delay.

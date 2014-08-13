@@ -847,25 +847,26 @@ aoi_feature_edit.buildTreeLayers = function(){
     options.layers.push(aoi_feature_edit.layers.overlays);
 
     options.titles.push('Social Networking Feeds');
-    options.layers.push(aoi_feature_edit.layersOfType("Social Networking Link"));
+    options.layers.push(aoi_feature_edit.layersOfType("Social Networking Link",'social'));
 
     options.titles.push('GeoJump Data Lookups');
-    options.layers.push(aoi_feature_edit.layersOfType("Web Data Link"));
+    options.layers.push(aoi_feature_edit.layersOfType("Web Data Link",'weblinks'));
 
     options = removeEmptyParents(options);
 
     return options;
 };
 
-aoi_feature_edit.layersOfType = function(layerType){
+aoi_feature_edit.layersOfType = function(layerType,layers_sub_name){
     var layers = [];
     layerType = layerType || "Social Networking Link";
+    layers_sub_name = layers_sub_name || 'social';
     try {
         var all_layers = JSON.parse(aoi_feature_edit.aoi_map_json.all_layers);
         var social_layers = _.filter(all_layers, function(l){
             return (l.type == layerType);
         });
-        aoi_feature_edit.layers.social = social_layers;
+        aoi_feature_edit.layers[layers_sub_name] = social_layers;
         _.each(social_layers,function(l){
             var l_all = _.clone(l);
             l_all.name = l.name + " - All";
