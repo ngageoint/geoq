@@ -68,6 +68,7 @@ SERVICE_TYPES = (
                 #('GML','GML'),
                 ('WMTS', 'WMTS'),
                 ('Social Networking Link', 'Social Networking Link'),
+                ('Web Data Link', 'Web Data Link'),
                 ('Bing', 'Bing'),
                 ('Google Maps', 'Google Maps'),
                 ('Yandex', 'Yandex'),

@@ -306,7 +306,7 @@ aoi_feature_edit.map_init = function (map, bounds) {
 
     map.options.maxZoom = 19;
 
-    var custom_map = aoi_feature_edit.aoi_map_json;
+    var custom_map = aoi_feature_edit.aoi_map_json || {};
     aoi_feature_edit.map = map;
 
     var baseLayers = {};
@@ -351,8 +351,11 @@ aoi_feature_edit.map_init = function (map, bounds) {
 
 
     //Build layers, parse them, and add them to the map and to memory
-    if (custom_map.hasOwnProperty("layers")) {
-        _.each(custom_map.layers, function (layer_data) {
+    if (custom_map.layers) {
+        var layers = _.filter(custom_map.layers,function(l){
+           return (l.type!="Social Networking Link" && l.type!="Web Data Link")
+        });
+        _.each(layers, function (layer_data) {
             var built_layer = leaflet_helper.layer_conversion(layer_data, map);
             if (built_layer !== undefined) {
                 if (layer_data.isBaseLayer) {
@@ -813,25 +816,6 @@ aoi_feature_edit.buildTreeLayers = function(){
         return layers;
     }
 
-    function layers_only_social(){
-        var layers = [];
-        try {
-            var all_layers = JSON.parse(aoi_feature_edit.aoi_map_json.all_layers);
-            var social_layers = _.filter(all_layers, function(l){
-                return (l.type == "Social Networking Link");
-            });
-            aoi_feature_edit.layers.social = social_layers;
-            _.each(social_layers,function(l){
-                var l_all = _.clone(l);
-                l_all.name = l.name + " - All";
-                layers.push(l_all);
-            });
-
-        } catch (ex) {
-            log.error("aoi_map_json.all_layers isn't being parsed as valid JSON.");
-        }
-        return layers;
-    }
 
     function removeEmptyParents(options){
         var optionsNew = {titles:[], layers:[]};
@@ -863,12 +847,37 @@ aoi_feature_edit.buildTreeLayers = function(){
     options.layers.push(aoi_feature_edit.layers.overlays);
 
     options.titles.push('Social Networking Feeds');
-    options.layers.push(layers_only_social());
+    options.layers.push(aoi_feature_edit.layersOfType("Social Networking Link"));
+
+    options.titles.push('GeoJump Data Lookups');
+    options.layers.push(aoi_feature_edit.layersOfType("Web Data Link"));
 
     options = removeEmptyParents(options);
 
     return options;
 };
+
+aoi_feature_edit.layersOfType = function(layerType){
+    var layers = [];
+    layerType = layerType || "Social Networking Link";
+    try {
+        var all_layers = JSON.parse(aoi_feature_edit.aoi_map_json.all_layers);
+        var social_layers = _.filter(all_layers, function(l){
+            return (l.type == layerType);
+        });
+        aoi_feature_edit.layers.social = social_layers;
+        _.each(social_layers,function(l){
+            var l_all = _.clone(l);
+            l_all.name = l.name + " - All";
+            layers.push(l_all);
+        });
+
+    } catch (ex) {
+        log.error("aoi_map_json.all_layers isn't being parsed as valid JSON.");
+    }
+    return layers;
+};
+
 aoi_feature_edit.getDrawConsole = function () {
 
     var geometry_type = null;

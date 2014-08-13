@@ -924,9 +924,14 @@ leaflet_layer_control.drawEachLayer=function(data,map){
 
                     //TODO: This should be consolidated into one move event
                     //TODO: The 'refresh layer json' should be a function added to the layer
-                    if (layer.type == "Social Networking Link") {
-                        leaflet_filter_bar.showInputTags();
-                        map.on('moveend viewreset', function (e) {
+                    if (layer.type == "Social Networking Link" || layer.type == "Web Data Link") {
+
+                        if (layer.type == "Social Networking Link") {
+                            leaflet_filter_bar.showInputTags();
+                        }
+                        //Run every 15 seconds after map move
+                        var refreshFunction = _.debounce( function () {
+                            log.log('Refreshing Layer at : '+new Date);
                             var currentOpacity = 1;
                             if (newLayer.options) {
                                 currentOpacity = newLayer.options.opacity;
@@ -934,7 +939,8 @@ leaflet_layer_control.drawEachLayer=function(data,map){
                             if (currentOpacity > 0) {
                                 leaflet_helper.constructors.geojson(layer, map, newLayer);
                             }
-                        });
+                        },15000);
+                        map.on('moveend viewreset',refreshFunction);
                     }
                 }
             }
