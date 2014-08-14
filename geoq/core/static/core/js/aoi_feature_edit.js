@@ -92,10 +92,10 @@ aoi_feature_edit.promptForUserAcceptance = function(){
     if (site_settings.user_agreement_text && site_settings.user_agreement_text.text) {
         //TODO: Check UserAuthorization.user_accepted_terms_on, and show text if not that and no cookie
         if (aoi_feature_edit.user_accepted_tems) {
-            log.log("User has previously accepted terms of use");
+            //log.log("User has previously accepted terms of use");
         } else {
 
-
+            //Build a dialog to show the user if they haven't seen it yet
             BootstrapDialog.show({
                 title: 'Terms of Use',
                 message: site_settings.user_agreement_text.text,

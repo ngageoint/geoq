@@ -335,7 +335,7 @@ leaflet_helper.constructors.geojson_success = function (data, proxiedURL, map, o
                         features = _.toArray(result)[0].length;
                     } catch (ex) {}
                 }
-                log.info("+ JSON loaded from : "+ proxiedURL+ " - features: "+ features+ " - parser type: " + parserInfo.parserName);
+//                log.info("+ JSON loaded from : "+ proxiedURL+ " - features: "+ features+ " - parser type: " + parserInfo.parserName);
             }
         }
     }
