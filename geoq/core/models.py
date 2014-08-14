@@ -298,7 +298,7 @@ class AOI(GeoQBase, Assignment):
 
     PRIORITIES = [(n, n) for n in range(1, 6)]
 
-    analyst = models.ForeignKey(User, blank=True, null=True, help_text="User responsible for the AOI.")
+    analyst = models.ForeignKey(User, blank=True, null=True, help_text="User assigned to work the workcell.")
     job = models.ForeignKey(Job, related_name="aois")
     reviewers = models.ManyToManyField(User, blank=True, null=True, related_name="aoi_reviewers",
                                        help_text='Users that actually reviewed this work.')

@@ -381,9 +381,14 @@ class ChangeAOIStatus(View):
             features_updated = 0
             if 'feature_ids' in request.POST:
                 features = request.POST['feature_ids']
-                feature_ids = tuple([int(x) for x in features.split(',')])
-                feature_list = Feature.objects.filter(id__in=feature_ids)
-                features_updated = feature_list.update(status=status)
+                features = str(features)
+                if features and len(features):
+                    try:
+                        feature_ids = tuple([int(x) for x in features.split(',')])
+                        feature_list = Feature.objects.filter(id__in=feature_ids)
+                        features_updated = feature_list.update(status=status)
+                    except ValueError:
+                        features_updated = 0
 
             # send aoi completion event for badging
             send_aoi_create_event(request.user, aoi.id, aoi.features.all().count())
