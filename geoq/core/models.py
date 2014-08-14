@@ -14,9 +14,10 @@ from django.utils.datastructures import SortedDict
 from managers import AOIManager
 from jsonfield import JSONField
 from collections import defaultdict
+from django.db.models import Q
 
 TRUE_FALSE = [(0, 'False'), (1, 'True')]
-STATUS_VALUES_LIST = ['Unassigned', 'Assigned', 'In work', 'Awaiting review', 'In review', 'Completed'] #'Assigned'
+STATUS_VALUES_LIST = ['Unassigned', 'Assigned', 'In work', 'Awaiting review', 'In review', 'Completed']
 
 
 class Setting(models.Model):
@@ -232,18 +233,6 @@ class Job(GeoQBase, Assignment):
 
         return output
 
-    def unassigned_aois(self):
-        """
-        Returns the unassigned AOIs.
-        """
-        return self.aois.filter(status='Unassigned')
-
-    def in_work_aois(self):
-        """
-        Returns the in work AOIs.
-        """
-        return self.aois.filter(status='In work')
-
     def complete(self):
         """
         Returns the completed AOIs.
@@ -252,9 +241,19 @@ class Job(GeoQBase, Assignment):
 
     def in_work(self):
         """
-        Returns the AOIs currently being worked
+        Returns the AOIs currently being worked on or in review
         """
-        return self.aois.filter(status='In work')
+        return self.aois.filter(Q(status='In work') | Q(status='Awaiting review') | Q(status='In review'))
+
+    def in_work_count(self):
+        return self.in_work().count()
+
+    def complete_count(self):
+        return self.complete().count()
+
+    def total_count(self):
+        return self.aois.count()
+
 
     def geoJSON(self, as_json=True):
         """

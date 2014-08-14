@@ -18,9 +18,9 @@ class JobKML(ListView):
 
         feature_types = FeatureType.objects.all()
 
-        aoi_count = job.aois.count()
-        aoi_complete = job.complete().count()
-        aoi_work = job.in_work().count()
+        aoi_count = job.total_count()
+        aoi_complete = job.complete_count()
+        aoi_work = job.in_work_count()
 
         description = 'Job #'+str(job.id)+': '+str(job.name)+'\n'+str(job.project.name)+'\n'
 
@@ -49,7 +49,7 @@ class JobKML(ListView):
         output += '    <Style id="geoq_inwork">\n'
         output += '      <LineStyle>\n'
         output += '        <width>4</width>\n'
-        output += '        <color>7f00ffff</color>\n'
+        output += '        <color>7f0186cf</color>\n'
         output += '      </LineStyle>\n'
         output += '      <PolyStyle>\n'
         output += '        <fill>0</fill>\n'
@@ -60,7 +60,7 @@ class JobKML(ListView):
         output += '    <Style id="geoq_complete">\n'
         output += '      <LineStyle>\n'
         output += '        <width>3</width>\n'
-        output += '        <color>7f00ff00</color>\n'
+        output += '        <color>7f0101cf</color>\n'
         output += '      </LineStyle>\n'
         output += '      <PolyStyle>\n'
         output += '        <fill>0</fill>\n'
@@ -205,9 +205,9 @@ class JobKMLNetworkLink(ListView):
 
         url = request.build_absolute_uri('/geoq/api/job/'+id+'.kml')
 
-        aoi_count = job.aois.count()
-        aoi_complete = job.complete().count()
-        aoi_work = job.in_work().count()
+        aoi_count = job.total_count()
+        aoi_complete = job.complete_count()
+        aoi_work = job.in_work_count()
 
         aoi_comp_pct = int(100 * float(aoi_complete)/float(aoi_count))
         aoi_work_pct = int(100 * float(aoi_work)/float(aoi_count))
