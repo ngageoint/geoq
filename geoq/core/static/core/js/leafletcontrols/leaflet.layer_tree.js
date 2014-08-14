@@ -987,9 +987,25 @@ leaflet_layer_control.likelyHasFeatures = function(layer){
 // Drawer open and closing controls
 leaflet_layer_control.drawerIsOpen = false;
 leaflet_layer_control.openDrawer = function() {
-    leaflet_layer_control.$map.animate({marginLeft: "300px"}, 300);
+    leaflet_layer_control.$map.animate(
+        {marginLeft: "300px"},
+        {
+            duration: 600,
+            specialEasing: {
+                width: "linear",
+                height: "easeOutBack"
+            }
+        });
     leaflet_layer_control.$map.css("overflow", "hidden");
-    leaflet_layer_control.$drawer.animate({marginLeft: "0px"}, 300);
+    leaflet_layer_control.$drawer.animate(
+        {marginLeft: "0px"},
+        {
+            duration: 600,
+            specialEasing: {
+                width: "linear",
+                height: "easeOutBack"
+            }
+        });
     $.cookie('leaflet_layer_control.drawer', 'open');
 };
 leaflet_layer_control.closeDrawer = function() {
