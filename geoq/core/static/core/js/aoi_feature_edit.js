@@ -3,6 +3,8 @@
 
 //requires leaflet_helper.js, underscore, jquery, leaflet, log4javascript
 
+//TODO: Have a view-only mode
+
 var aoi_feature_edit = {};
 aoi_feature_edit.layers = {features:[], base:[], overlays:[]};
 
@@ -83,6 +85,47 @@ aoi_feature_edit.init = function () {
     //Close Alert field if shown
     setTimeout(function(){$('div.alert').css({display:'none'});},3000);
 
+    $(document).ready(aoi_feature_edit.promptForUserAcceptance);
+};
+
+aoi_feature_edit.promptForUserAcceptance = function(){
+    if (site_settings.user_agreement_text && site_settings.user_agreement_text.text) {
+        //TODO: Check UserAuthorization.user_accepted_terms_on, and show text if not that and no cookie
+        if (aoi_feature_edit.user_accepted_tems) {
+            log.log("User has previously accepted terms of use");
+        } else {
+
+
+            BootstrapDialog.show({
+                title: 'Terms of Use',
+                message: site_settings.user_agreement_text.text,
+                buttons: [{
+                    label: 'Accept for only this workcell',
+                    action: function(dialog) {
+                        dialog.close();
+                    }
+                }, {
+                    label: 'Accept for all future workcells',
+                    cssClass: 'btn-primary',
+                    action: function(dialog) {
+                        $.post('/accounts/accept_terms_of_use');
+                        dialog.close();
+                    }
+                },{
+                    label: 'Do not accept',
+                    cssClass: 'btn-warning',
+                    action: function(dialog) {
+                        geoq.redirect("/");
+                        dialog.close();
+                    }
+
+                }]
+            });
+
+
+        }
+
+    }
 };
 
 aoi_feature_edit.featureLayer_pointToLayer = function (feature, latlng, featureLayer, featureType) {

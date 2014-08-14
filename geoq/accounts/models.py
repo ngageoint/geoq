@@ -112,9 +112,25 @@ class UserAuthorization(models.Model):
     permissions_granted_by = models.ForeignKey(User, null=True, blank=True,
         related_name='permissions_granted_by')
     permission_granted_on = models.DateTimeField(auto_now_add=True, default=datetime.now())
+    user_accepted_terms_on = models.DateTimeField(null=True, blank=True)
 
     def __str__(self):
         return "%s, %s" % (self.user, self.user_profile)
+
+    def permissions_list(self):
+        perms = []
+        if self.authorized:
+            perms.append('authorized')
+        if self.permissions_granted_by:
+            perms.append('permissions_granted')
+            perms.append('permissions_granted_by: '+str(self.permissions_granted_by.username))
+        if self.permission_granted_on:
+            perms.append('permissions_granted')
+            perms.append('permission_granted_on: '+str(self.permission_granted_on))
+        if self.user_accepted_terms_on:
+            perms.append('user_accepted_terms')
+            perms.append('user_accepted_terms_on: '+str(self.user_accepted_terms_on))
+        return perms
 
     def save(self, *args, **kwargs):
         user_presave = User.objects.get(pk=self.user.id)
