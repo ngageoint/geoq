@@ -295,7 +295,7 @@ leaflet_layer_control.addWorkCellInfo = function($accordion) {
         .appendTo($ul2);
     $("<a>")
         .attr({role:"menuitem", tabindex:"-1", href:"#"})
-        .text("Job as GeoRSS")
+        .text("Job as GeoJSON")
         .on("click",function(ev){
             window.open(aoi_feature_edit.api_url_job_georss, "_blank");
             $ul2.dropdown("toggle");
@@ -308,7 +308,7 @@ leaflet_layer_control.addWorkCellInfo = function($accordion) {
         .appendTo($ul2);
     $("<a>")
         .attr({role:"menuitem", tabindex:"-1", href:"#"})
-        .text("This Cell's bounds as GeoRSS")
+        .text("This Cell's bounds as GeoJSON")
         .on("click",function(ev){
             window.open(aoi_feature_edit.api_url_aoi_georss, "_blank");
             $ul2.dropdown("toggle");

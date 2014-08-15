@@ -90,7 +90,6 @@ aoi_feature_edit.init = function () {
 
 aoi_feature_edit.promptForUserAcceptance = function(){
     if (site_settings.user_agreement_text && site_settings.user_agreement_text.text) {
-        //TODO: Check UserAuthorization.user_accepted_terms_on, and show text if not that and no cookie
         if (aoi_feature_edit.user_accepted_tems) {
             //log.log("User has previously accepted terms of use");
         } else {
@@ -426,6 +425,9 @@ aoi_feature_edit.map_init = function (map, bounds) {
         } else if (ftype.type == 'Point') {
             var point = aoi_feature_edit.createPointOptions(ftype);
             if (point) aoi_feature_edit.all_markers.push(point);
+        } else if (ftype.type == 'Text') {
+            //TODO: Create an icon and renderer for text objects
+
         } else {
             log.error("Item should be drawn, but not a Polygon or Point object.")
         }

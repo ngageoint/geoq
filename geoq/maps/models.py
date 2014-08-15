@@ -394,8 +394,10 @@ class FeatureType(models.Model):
 
     FEATURE_TYPES = (
         ('Point', 'Point'),
-        ('Line', 'Line'),
+        # ('Line', 'Line'),  #TODO: Support Lines somehow
         ('Polygon', 'Polygon'),
+        # ('Text', 'Text'),
+        # ('Overlay', 'Overlay'),  #TODO: Support overlay images. Should these be features?
     )
 
     name = models.CharField(max_length=200)
@@ -437,6 +439,7 @@ class FeatureType(models.Model):
         style_html = "height:"+str(height)+"px; "
         src = "/static/leaflet/images/gray-marker-icon.png"
         bgColor = ""
+        opacity = "1"
 
         style = self.style or {}
         if style.has_key('iconUrl'):
@@ -449,12 +452,14 @@ class FeatureType(models.Model):
             bgColor = color
         if style.has_key('fill'):
             bgColor = str(style['fill'])
+        if style.has_key('opacity'):
+            opacity = str(style['opacity'])
 
         if self.type == "Point":
             html = "<img src='"+src+"' style='"+style_html+"vertical-align:initial;' />"
         else:
             style_html = style_html + "background-color:"+bgColor+"; "
-            html = "<span style='"+style_html+"border-radius:4px; display:inline-block; width:"+str(height)+"px;'> &nbsp; </span>"
+            html = "<span style='"+style_html+"border-radius:4px; display:inline-block; opacity:"+opacity+"; width:"+str(height)+"px;'> &nbsp; </span>"
 
         return html
 

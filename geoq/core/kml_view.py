@@ -149,6 +149,8 @@ class JobKML(ListView):
             date_time_desc = datetime_obj_utc.strftime('%Y-%m-%d %H:%M:%S')
 
             desc = 'Posted by '+analyst_name+' at '+date_time_desc+' Zulu (UTC) in Job #'+job_id
+            #TODO: Add more details
+            #TODO: Add links to linked objects
 
             kml = str(loc.the_geom.kml)
             if '<Polygon><outerBoundaryIs><LinearRing><coordinates>' in kml:

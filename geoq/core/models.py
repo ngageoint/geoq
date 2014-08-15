@@ -162,9 +162,9 @@ class Job(GeoQBase, Assignment):
 
     class Meta:
         permissions = (
-            ('assign_job','Assign Job'),
+            ('assign_job', 'Assign Job'),
         )
-        ordering = ('created_at',)
+        ordering = ('-created_at',)
 
     def get_absolute_url(self):
         return reverse('job-detail', args=[self.id])
