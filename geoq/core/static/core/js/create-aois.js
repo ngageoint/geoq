@@ -461,7 +461,7 @@ create_aois.convertPolyToXY = function(poly){
 };
 create_aois.doSomethingWithOverlappingPolys = function (layer, funcToDo, noneMessage) {
     var countOverlaps = 0;
-    if (create_aois.last_polygon_drawn) {
+    if (create_aois.aois && create_aois.aois.getLayers()) {
         var deleteJson = layer.toGeoJSON();
         var selectPoly = deleteJson.geometry.coordinates[0];
         selectPoly = create_aois.convertPolyToXY(selectPoly);
