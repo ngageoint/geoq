@@ -55,7 +55,7 @@ leaflet_helper.constructors.identifyParser = function(result, outputLayer){
         parser = leaflet_helper.parsers.geoNameWikiData;
         parserName = "GeoName Lookup";
 
-    } else if (result && outputLayer && outputLayer.config.type && outputLayer.config.type && outputLayer.config.type=="Web Data Link") {
+    } else if (result && outputLayer && outputLayer.config && outputLayer.config.type && outputLayer.config.type=="Web Data Link") {
 
         parser = leaflet_helper.parsers.webDataLink;
         parserName = "Web Data Lookup";

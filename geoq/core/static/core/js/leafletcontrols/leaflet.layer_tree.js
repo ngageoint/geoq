@@ -629,12 +629,16 @@ leaflet_layer_control.layerDataList = function (options) {
 
     var layerGroups = options.layers;
 
+    var previouslyLookedAtLayers = $.cookie('leaflet_layer_control.layers') || "";
+    previouslyLookedAtLayers = previouslyLookedAtLayers.split(",");
+
     //For each layer group
     _.each(layerGroups,function(layerGroup,groupNum){
         var layerName = options.titles[groupNum] || "Layers";
         var folderName = "folder."+ groupNum;
-        treeData.push({title: layerName, folder: true, key: folderName, children: [], expanded:true });
-
+        var expanded = true;
+        if (layerName == "Features" || layerName == "AOI Base Maps") expanded=false;
+        treeData.push({title: layerName, folder: true, key: folderName, children: [], expanded:expanded });
 
         var inUSBounds = true;
         if (typeof maptools != "undefined" && aoi_feature_edit.map && aoi_feature_edit.map.getCenter) {
@@ -654,13 +658,23 @@ leaflet_layer_control.layerDataList = function (options) {
                 //If there are any later layers with same name/settings, mark them to skip
                 leaflet_layer_control.removeDuplicateLayers(layerGroups,layer);
 
+                //Check through cookie info to see if layer was previously selected
+                var layerID;
+                if (layer && layer.config && layer.config.id) layerID = layer.config.id+""; //NOTE: Convert it to string
+                if (layer && layer.id) layerID = layer.id+"";
+
+                var layerPreviouslyChosen = false;
+                if (layerID && _.indexOf(previouslyLookedAtLayers,layerID) > -1) {
+                    layerPreviouslyChosen = true;
+                }
+
                 //Figure out if it is visible and should be "checked"
                 var showEvenIfNotInUS = true;
                 if (layer.options && layer.options.us_only && !inUSBounds) {
                     showEvenIfNotInUS = false;
                 }
 
-                if (showEvenIfNotInUS) {
+                if (showEvenIfNotInUS || layerPreviouslyChosen) {
                     if (layer.getLayers && layer.getLayers() && layer.getLayers()[0]) {
                         var layerItem = layer.getLayers()[0];
                         var options = layerItem._options || layerItem.options;
@@ -677,6 +691,7 @@ leaflet_layer_control.layerDataList = function (options) {
                     } else if (layer.options && layer.options.is_geoq_feature) {
                         layer_obj.selected = true;
                     }
+                    if (layerPreviouslyChosen) layer_obj.selected = true;
                 }
                 if (!layer_obj.selected) {
                     leaflet_layer_control.setLayerOpacity(layer,0);
@@ -737,7 +752,7 @@ leaflet_layer_control.removeDuplicateLayers = function(layerList, layer){
 
 
 leaflet_layer_control.zIndexesOfHighest = 2;
-leaflet_layer_control.setLayerOpacity = function (layer, amount){
+leaflet_layer_control.setLayerOpacity = function (layer, amount, doNotMoveToTop){
 
     if (!layer.options) layer.options={};
     layer.options.opacity = amount;
@@ -750,7 +765,7 @@ leaflet_layer_control.setLayerOpacity = function (layer, amount){
         layer.setStyle({opacity:amount, fillOpacity:amount});
     } else if (layer.setOpacity){
         try { layer.setOpacity(amount); }
-        catch(err) { console.error("Error while changing opacity", err); }
+        catch(err) { log.error("Error while changing opacity", err); }
     }
 
     if (amount==0){
@@ -780,13 +795,17 @@ leaflet_layer_control.setLayerOpacity = function (layer, amount){
         }
         if (layer.getContainer) {
             var $lc = $(layer.getContainer());
-            leaflet_layer_control.zIndexesOfHighest++;
-            $lc.zIndex(leaflet_layer_control.zIndexesOfHighest);
+            if (!doNotMoveToTop) {
+                leaflet_layer_control.zIndexesOfHighest++;
+                $lc.zIndex(leaflet_layer_control.zIndexesOfHighest);
+            }
             $lc.show();
         } else if (layer._container) {
             var $lc = $(layer._container);
-            leaflet_layer_control.zIndexesOfHighest++;
-            $lc.zIndex(leaflet_layer_control.zIndexesOfHighest);
+            if (!doNotMoveToTop) {
+                leaflet_layer_control.zIndexesOfHighest++;
+                $lc.zIndex(leaflet_layer_control.zIndexesOfHighest);
+            }
             $lc.css('opacity',amount);
         }
     }
@@ -834,6 +853,9 @@ leaflet_layer_control.addLayerControl = function (map, options, $accordion) {
         autoScroll: true,
         selectMode: 2,
         source: treeData,
+        init: function (event, data) {
+            leaflet_layer_control.drawEachLayer(data,map,true);
+        },
         activate: function (event, data) {
             //Clicked on a treenode title
             var node = data.node;
@@ -869,7 +891,7 @@ leaflet_layer_control.addLayerControl = function (map, options, $accordion) {
         leaflet_layer_control.toggleDrawer();
     }
 };
-leaflet_layer_control.drawEachLayer=function(data,map){
+leaflet_layer_control.drawEachLayer=function(data,map,doNotMoveToTop){
 
     var selectedLayers = data.tree.getSelectedNodes();
     var layersUnClicked = _.difference(leaflet_layer_control.lastSelectedNodes, selectedLayers);
@@ -878,7 +900,7 @@ leaflet_layer_control.drawEachLayer=function(data,map){
     _.each(layersUnClicked,function(layer_obj){
         if (layer_obj && layer_obj.data && _.toArray(layer_obj.data).length) {
             var layer = layer_obj.data;
-            leaflet_layer_control.setLayerOpacity(layer,0);
+            leaflet_layer_control.setLayerOpacity(layer,0,doNotMoveToTop);
         } else if (layer_obj.children && layer_obj.children.length) {
             //A category was clicked
             _.each(layer_obj.children, function(layer_obj_item){
@@ -894,7 +916,7 @@ leaflet_layer_control.drawEachLayer=function(data,map){
             if (layer._map && layer._initHooksCalled) {
                 //It's a layer that's been already built
                 var oldOpacity = layer.options? layer.options.opacity||layer.options.oldOpacity||1 : 1;
-                leaflet_layer_control.setLayerOpacity(layer,oldOpacity);
+                leaflet_layer_control.setLayerOpacity(layer,oldOpacity,doNotMoveToTop);
 
                 if (leaflet_layer_control.likelyHasFeatures(layer)) {
                     leaflet_helper.constructors.geojson(layer.config, map);
@@ -908,7 +930,7 @@ leaflet_layer_control.drawEachLayer=function(data,map){
                 var newLayer = leaflet_helper.layer_conversion(layer, map);
                 if (newLayer) {
                     aoi_feature_edit.map.addLayer(newLayer);
-                    leaflet_layer_control.setLayerOpacity(newLayer,1);
+                    leaflet_layer_control.setLayerOpacity(newLayer,1,doNotMoveToTop);
                     //TODO: Rethink if this should become a sub-item of the object
                     layer_obj.data = newLayer;
 
@@ -958,6 +980,15 @@ leaflet_layer_control.drawEachLayer=function(data,map){
         }
     });
 
+    //Set a cookie with all viewed Layers
+    var checkedIDs = [];
+    _.each(selectedLayers,function(layer_obj){
+        if (layer_obj.data && layer_obj.data.config && layer_obj.data.config.id && layer_obj.parent.title!="Features") {
+            checkedIDs.push(layer_obj.data.config.id);
+        }
+    });
+    var checkedIDs_str = checkedIDs.join(",");
+    $.cookie('leaflet_layer_control.layers', checkedIDs_str);
 };
 
 leaflet_layer_control.toggleZooming=function($control){
