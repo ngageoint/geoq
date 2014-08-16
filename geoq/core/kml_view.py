@@ -71,7 +71,7 @@ class JobKML(ListView):
         output += '    <Style id="geoq_unassigned">\n'
         output += '      <LineStyle>\n'
         output += '        <width>2</width>\n'
-        output += '        <color>7f0000ff</color>\n'
+        output += '        <color>7f00ff00</color>\n'
         output += '      </LineStyle>\n'
         output += '      <PolyStyle>\n'
         output += '        <fill>0</fill>\n'
