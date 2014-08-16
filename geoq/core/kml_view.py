@@ -152,11 +152,12 @@ class JobKML(ListView):
             #TODO: Add more details
             #TODO: Add links to linked objects
 
-            kml = str(loc.the_geom.kml)
+            #Simplify polygons to reduce points in complex shapes
+            kml = str(loc.the_geom.simplify(0.0002).kml)
             if '<Polygon><outerBoundaryIs><LinearRing><coordinates>' in kml:
                 add_text = '<altitudeMode>clampToGround</altitudeMode>'
-                kmls = kml.split('<coordinates>')
-                kml = kmls[0] + add_text + '<coordinates>' + kmls[1]
+                kml = kml.replace('<coordinates>', add_text+'<coordinates>')
+                kml = kml.replace('</outerBoundaryIs></Polygon><Polygon><outerBoundaryIs><LinearRing>', '')
 
             output += '    <Placemark><name>'+template_name+'</name>\n'
             output += '      <TimeStamp><when>'+date_time+'</when></TimeStamp>\n'
@@ -177,12 +178,10 @@ class JobKML(ListView):
                 style = 'unassigned'
             aoi_name = "#"+str(aoi.id)+", "+str(aoi.status)+" - Priority:"+str(aoi.priority)
 
-            kml = str(aoi.polygon.kml)
+            kml = str(aoi.polygon.simplify(0.0002).kml)
             if '<Polygon><outerBoundaryIs><LinearRing><coordinates>' in kml:
-                add_text = '<altitudeMode>clampToGround</altitudeMode>'
-                kmls = kml.split('<coordinates>')
-                kml = '<LinearRing><tessellate>1</tessellate>' + add_text + '<coordinates>' + kmls[1]
-                kml = kml.replace('</outerBoundaryIs></Polygon></MultiGeometry>', '')
+                add_text = '<tessellate>1</tessellate><altitudeMode>clampToGround</altitudeMode>'
+                kml = kml.replace('<coordinates>', add_text+'<coordinates>')
 
             output += '    <Placemark>\n'
             output += '      <name>'+aoi_name+'</name>\n'
