@@ -1,20 +1,22 @@
-//TODO: Should prioritization colors/labels be pulled from a DB table?
-//TODO: What should be done with points/lines uploaded from a shapefile? Does this cause things to break?
+//TODO: What should be done with lines uploaded from a shapefile? Does this cause things to break?
 //TODO: How to assign users to a cell? Paintbrush?
-//TODO: Can there be a 'select/paintbrush' to remove large amounts of cells?
 
 var create_aois = {};
-create_aois.colors = ['red','#00FF00','#00BB00','#008800','#004400','#001100'];
-create_aois.helpText = ['unassigned','Highest','High','Medium','Low','Lowest'];
+create_aois.colors = site_settings.priority_colors || ['#ff0000','#00ff00','#00BB00','#008800','#004400','#001100'];
+create_aois.helpText = site_settings.priority_text || ['unassigned','Highest','High','Medium','Low','Lowest'];
 create_aois.map_object = null;
-create_aois.df = null;
 create_aois.aois = new L.FeatureGroup();
-create_aois.priority_to_use = 1;
+create_aois.priority_to_use = 5;
 create_aois.draw_method = 'usng'; //This should be updated on page creation
 create_aois.get_grids_url = ''; //This should be updated on page creation
 create_aois.batch_redirect_url = '';
 //create_aois.batch_prioritize_rand = "";  //Included as an example
+
 create_aois.drawControl = null;
+create_aois.deleteControl = null;
+create_aois.prioritizeControl = [];
+create_aois.drawnItems = null;
+
 create_aois.last_shapes = null;
 create_aois.$feature_info = null;
 create_aois.data_fields_obj = {};
@@ -24,8 +26,29 @@ create_aois.highlightMode = 'delete';
 
 function mapInit(map) {
     //Auto-called after leaflet map is initialized
-    create_aois.mapInit(map);
-}
+    create_aois.map_object = map;
+
+    setTimeout(function(){
+        var startingBounds = site_settings.map_starting_bounds || [[52.429222277955134, -51.50390625],[21.043491216803556,-136.58203125]];
+        map.fitBounds(startingBounds);
+    }, 1);
+
+    create_aois.drawnItems = new L.FeatureGroup();
+    map.addLayer(create_aois.drawnItems);
+
+    map.on('zoomend', create_aois.mapWasZoomed);
+    map.on('draw:created', create_aois.somethingWasDrawn);
+
+    create_aois.addDrawingControls(map);
+    create_aois.addLocatorControl(map);
+    create_aois.addPrioritizeControls(map);
+    create_aois.addDeleteControls(map);
+//    create_aois.buildPriorityBoxes(map);
+    create_aois.setupStatusControls(map);
+    $('div.leaflet-left div.leaflet-draw.leaflet-control').find('a').popover({trigger:"hover",placement:"right"});
+    $('div.leaflet-right div.leaflet-draw.leaflet-control').find('a').popover({trigger:"hover",placement:"left"});
+
+};
 
 create_aois.init = function(){
     var $usng = $('#option_usng').click(function () {
@@ -111,7 +134,9 @@ create_aois.init = function(){
         }
 
         if (num>0) {
-            create_aois.removeAllFeatures();
+            if (create_aois.last_polygon_workcells) {
+                create_aois.map_object.removeLayer(create_aois.last_polygon_workcells);
+            }
             var geoJSON = create_aois.splitPolygonsIntoSections(create_aois.last_polygon_drawn, num, splitIntoSized);
 
             var data = {"type":"FeatureCollection","features":geoJSON};
@@ -159,6 +184,7 @@ create_aois.init = function(){
             create_aois.update_info("Geocode Result: " + result.formatted_address);
             if (create_aois.map_object) {
                 create_aois.map_object.setView([result.geometry.location.lat(),result.geometry.location.lng()],13);
+                create_aois.map_object.fire('zoomend');
             }
         })
         .bind("geocode:error", function(event,status){
@@ -255,126 +281,325 @@ create_aois.init = function(){
     create_aois.initializeFileUploads();
 };
 
-create_aois.mapInit = function(map) {
-    setTimeout(function(){
-        map.fitBounds([[52.429222277955134, -51.50390625],[21.043491216803556,-136.58203125]])
-    }, 1);
+create_aois.addLocatorControl = function(map){
 
-    var drawnItems = new L.FeatureGroup();
-    create_aois.df = drawnItems;
+    var $map_move_info_update = $('<h4 class="location_info">Location Info</h4>');
 
-    map.addLayer(drawnItems);
+    var infoButtonOptions = {
+        html: $map_move_info_update,
+        position: 'bottomleft', /* The position of the control */
+        hideText: false,  // bool
+        maxWidth: 60,  // number
+        doToggle: false,  // bool
+        toggleStatus: false  // bool
+    };
+    var infoButton = new L.Control.Button(infoButtonOptions).addTo(map);
+
+    map.on('mousemove click', function(e) {
+        var ll = e.latlng;
+
+        var pt = maptools.locationInfoString({lat:ll.lat, lng:ll.lng, separator:"<br/>", boldTitles:true});
+
+        //Build text output to show in info box
+        var country = pt.country.name_long || pt.country.name || "";
+        var text = pt.usngCoords.usngString + "<br/><b>Lat:</b> "+ pt.lat + "<br/><b>Lon:</b> " + pt.lng;
+        if (country) text += "<br/>" + country;
+        if (pt.state && pt.state.name) text += "<br/>" + pt.state.name;
+
+        $map_move_info_update.html(text);
+    });
+
+};
+create_aois.createPolygonOptions = function(opts) {
+    var options = {};
+
+    if (opts.name) {
+        options.title = opts.name;
+    }
+
+    options.allowIntersection = true;
+    options.drawError = { color: '#b00b00', timeout: 1000};
+
+    options.shapeOptions = opts.style || {borderColor: "black", backgroundColor: "brown"};
+    options.showArea = true;
+    options.id = opts.id;
+
+    return options;
+};
+create_aois.addDrawingControls = function(map){
 
     var polygon = {
         title: 'Freeform work cell',
-        allowIntersection: false,
+        allowIntersection: true,
         drawError: {color: '#b00b00', timeout: 1000},
         shapeOptions: {borderColor: "black", backgroundColor: "brown"},
         showArea: true
     };
 
+    L.drawLocal.draw.toolbar.actions.text = "Create";
+    L.drawLocal.draw.toolbar.actions.title = "Create Workcell Boundary";
+
     var drawControl = new L.Control.Draw({
         draw: {
             position: 'topleft',
-            polygons: [polygon],
             rectangle: {
                 shapeOptions: {
                     color: '#b00b00'
                 }
             },
+            polygons: [polygon],
             circle: false,
             polyline: false
         },
-        edit: {
-            featureGroup: create_aois.aois,
-            remove: false
-        }
+        edit: false
     });
     map.addControl(drawControl);
     create_aois.drawControl = drawControl;
-    $('a.leaflet-draw-edit-edit').attr("title","Click Work Cell box to delete it");
-    $('div.leaflet-draw.leaflet-control').find('a').popover({trigger:"hover",placement:"right"});
+
+    //Tweak Drawing Controls
+    $('a.leaflet-draw-edit-edit').attr("title","Click Workcell to delete it");
     $('a.leaflet-draw-draw-polygon').hide();
 
-    map.on('zoomend', function(e){
-        var zoom = create_aois.map_object.getZoom();
-        var $usng = $("#option_usng");
-        var $mgrs = $("#option_mgrs");
-        var $poly = $("#option_polygon");
-        if (zoom > 8){
-            $usng.attr('disabled', false).text('USNG Cells (US only)');
-            $mgrs.attr('disabled', false).text('MGRS Cells');
-        } else {
-            if ($usng.hasClass("active") || $mgrs.hasClass("active")){
-                $poly.click();
-            }
-            $usng.attr('disabled', true).text('Zoom in to use USNG/MGRS');
-            $mgrs.attr('disabled', true).text('>');
+
+    create_aois.setDrawingControlColor();
+};
+create_aois.setDrawingControlColor = function(){
+    //Find the create icons and color them
+    var icons = $('div.leaflet-draw.leaflet-control').find('a');
+    _.each (icons,function(icon_obj){
+        var $icon_obj = $(icon_obj);
+        var icon_title = $icon_obj.attr('title') || $icon_obj.attr('data-original-title');
+        if (icon_title == "Freeform work cell" || icon_title == "Draw a rectangle"){
+
+            var color = create_aois.colors[create_aois.priority_to_use];
+            $icon_obj.css('backgroundColor', color);
         }
     });
+};
+create_aois.addDeleteControls = function(map){
 
-    map.on('draw:created', function (e) {
-        var type = e.layerType,
-            layer = e.layer;
+    //Add Delete Control
+    L.drawLocal.draw.toolbar.actions.text = "Delete";
+    L.drawLocal.draw.toolbar.actions.title = "Remove Workcells within polygon";
 
-        if (type === 'rectangle' || type === 'circle' || type === 'polygon-undefined' ) {
-            if (create_aois.draw_method=="polygon") {
-                //Using free-form polygon
-                var geoJSON = create_aois.turnPolygonsIntoMultis(layer);
-                create_aois.last_polygon_drawn = layer;
+    var polygon = create_aois.createPolygonOptions({id:'delete',name:"Remove Workcells", style:{backgroundColor:'red'}})
 
-                var data = {"type":"FeatureCollection","features":geoJSON};
-                create_aois.last_polygon_workcells = create_aois.createWorkCellsFromService(data);
+    var deleteControl = new L.Control.Draw({
+        position: 'topright',
+        draw: {
+            rectangle: false,
+            polygons: [polygon],
+            circle: false,
+            polyline: false
+        },
+        edit: false
+    });
+    map.addControl(deleteControl);
+    create_aois.deleteControl = deleteControl;
 
-                $('#poly_split_button').attr('disabled',false);
-            } else {
-                //Using USNG or MGRS
-                create_aois.update_info("Requesting Grid Information from the server");
-                var bboxStr = layer.getBounds().toBBoxString();
-                $.ajax({
-                    type: "GET",
-                    url: create_aois.get_grids_url,
-                    data: { bbox: bboxStr},
-                    contentType: "application/json",
-                    success: function(data){
+    //Find the remove icon
+    var icons = $('div.leaflet-draw.leaflet-control').find('a');
+    _.each (icons,function(icon_obj){
+        var $icon_obj = $(icon_obj);
+        var icon_title = $icon_obj.attr('title') || $icon_obj.attr('data-original-title');
+        if (icon_title == "Remove Workcells"){
+            $icon_obj
+                .css('backgroundColor', "red");
+        }
+    });
+};
+create_aois.addPrioritizeControls = function(map){
+
+    //Add Delete Control
+    L.drawLocal.draw.toolbar.actions.text = "Prioritize";
+    L.drawLocal.draw.toolbar.actions.title = "Prioritize Workcells within polygon";
+
+    var polyOptions = [];
+    _.each([1,2,3,4,5],function(num){
+        var helpText = create_aois.helpText[num];
+        var polygon = create_aois.createPolygonOptions({id:'pri_'+num,name:"Prioritize "+num+": "  +helpText});
+        polyOptions.push(polygon);
+    });
+
+    var prioritizeControl = new L.Control.Draw({
+        position: 'topright',
+        draw: {
+            rectangle: false,
+            polygons: polyOptions,
+            circle: false,
+            polyline: false
+        },
+        edit: false
+    });
+    map.addControl(prioritizeControl);
+    create_aois.prioritizeControl = prioritizeControl;
+
+    //Find the prioritize icons
+    var icons = $('div.leaflet-draw.leaflet-control').find('a');
+    _.each (icons,function(icon_obj){
+        var $icon_obj = $(icon_obj);
+        var icon_title = $icon_obj.attr('title') || $icon_obj.attr('data-original-title');
+        if (_.str.startsWith(icon_title,"Prioritize ")){
+            var num = parseInt(icon_title.split(" ")[1]);
+            var color = create_aois.colors[num] || '';
+            $icon_obj
+                .css('backgroundColor',color)
+                .on('click',function(){
+                    create_aois.priority_to_use = num;
+                    create_aois.setDrawingControlColor();
+                });
+        }
+    });
+};
+
+create_aois.convertPolyToXY = function(poly){
+    var newPoly = [];
+    _.each(poly,function(p){
+        newPoly.push({x:p[0],y:p[1]});
+    });
+    return newPoly;
+};
+create_aois.doSomethingWithOverlappingPolys = function (layer, funcToDo, noneMessage) {
+    var countOverlaps = 0;
+    if (create_aois.aois && create_aois.aois.getLayers()) {
+        var deleteJson = layer.toGeoJSON();
+        var selectPoly = deleteJson.geometry.coordinates[0];
+        selectPoly = create_aois.convertPolyToXY(selectPoly);
+
+        var existingCells = create_aois.getBoundaries(true);
+        _.each(existingCells,function(cell){
+            var cellJSON = cell.toGeoJSON();  //TODO: Can be more efficient
+            var cellPoly = cellJSON.geometry.coordinates[0][0];
+            cellPoly = create_aois.convertPolyToXY(cellPoly);
+
+            var intersects = intersectionPolygons(cellPoly,selectPoly);
+            if (intersects && intersects.length){
+                funcToDo(cell);
+                countOverlaps++;
+            }
+        });
+    } else {
+        create_aois.update_info(noneMessage || "No polygon to remove workcells from");
+    }
+    return countOverlaps;
+};
+
+create_aois.somethingWasDrawn = function (e){
+    var type = e.layerType,
+        layer = e.layer;
+
+    if (type == 'polygon-delete') {
+        //User drew with delete control
+        var func = function(cell){
+            create_aois.removeWorkcell(cell);
+        }
+        create_aois.doSomethingWithOverlappingPolys(layer,func);
+    } else if (_.str.startsWith(type,"polygon-pri_")) {
+        var num = parseInt(type.split("_")[1]);
+
+        var func = function(cell){
+            cell.feature.properties.priority = num;
+            cell.feature.priority = num;
+
+            if (cell.setStyle){
+                cell.setStyle(create_aois.styleFromPriority(num));
+            }
+
+        };
+        var count = create_aois.doSomethingWithOverlappingPolys(layer,func,"No existing polygon to change priorities of");
+        create_aois.updateCellCount();
+        create_aois.redrawStyles();
+
+        if (count) create_aois.update_info(count + " workcell priorities updated");
+
+    } else if (type === 'rectangle' || type === 'circle' || type === 'polygon-undefined' ) {
+        if (create_aois.draw_method=="polygon") {
+            //Using free-form polygon
+            var geoJSON = create_aois.turnPolygonsIntoMultis(layer);
+            create_aois.last_polygon_drawn = layer;
+
+            var data = {"type":"FeatureCollection","features":geoJSON};
+            create_aois.last_polygon_workcells = create_aois.createWorkCellsFromService(data, false, true);
+
+            $('#poly_split_button').attr('disabled',false);
+            $("#poly_split_button").trigger('click');
+        } else {
+            //Using USNG or MGRS
+            create_aois.update_info("Requesting Grid Information from the server");
+            var bboxStr = layer.getBounds().toBBoxString();
+            $.ajax({
+                type: "GET",
+                url: create_aois.get_grids_url,
+                data: { bbox: bboxStr},
+                contentType: "application/json",
+                success: function(data){
+                    if (data && data.features &&data.features.length) {
                         create_aois.createWorkCellsFromService(data);
                         if (create_aois.data_fields_obj && create_aois.data_fields_obj.daypop) {
                             $("#prioritize-selector").val('Daypop').change();
                         }
-                    },
-                    beforeSend: function() {
-                        $("#map").css({
-                           'cursor': 'wait'
-                        });
-                    },
-                    complete: function() {
-                        $("#map").css({
-                           'cursor': 'default'
-                        });
-                    },
-                    error: function(response) {
-                        create_aois.update_info("Error received from server when looking up grid cells");
-                        if (response.responseText) {
-                            var message = JSON.parse(response.responseText);
-                            if (message.details) {
-                                log.error(message.details);
-                            }
+                    } else {
+                        create_aois.update_info("No LANDSCAN Population data available here");
+                    }
+                },
+                beforeSend: function() {
+                    $("#map").css({
+                       'cursor': 'wait'
+                    });
+                },
+                complete: function() {
+                    $("#map").css({
+                       'cursor': 'default'
+                    });
+                },
+                error: function(response) {
+                    create_aois.update_info("Error received from server when looking up grid cells");
+                    if (response.responseText) {
+                        var message = JSON.parse(response.responseText);
+                        if (message.details) {
+                            log.error(message.details);
                         }
-                    },
-                    dataType: "json"
-                });
-            }
+                    }
+                },
+                dataType: "json"
+            });
+            create_aois.drawnItems.addLayer(layer);
         }
-        drawnItems.addLayer(layer);
-        create_aois.updateCellCount();
-    });
+    }
+    create_aois.updateCellCount();
+};
 
-    create_aois.map_object = map;
-    
+create_aois.mapWasZoomed = function(e){
+    var zoom = create_aois.map_object.getZoom();
+    var $usng = $("#option_usng");
+    var $mgrs = $("#option_mgrs");
+    var $poly = $("#option_polygon");
+
+    var isCONUS = true;
+    if (typeof maptools!="undefined") {
+        var ll = e.target.getCenter();
+        var pt = maptools.locationInfoString({lat:ll.lat, lng:ll.lng, separator:"<br/>", boldTitles:true});
+
+        isCONUS = (pt.country && pt.state && pt.country.abbr=="USA" && pt.state.name!="Hawaii" && pt.state.name!="Alaska");
+    }
+
+    if (zoom > 8){
+        //Hide USNG Menu if it's outside CONUS
+        $usng.attr('disabled', !isCONUS).text('USNG Cells (US only)');
+        $mgrs.attr('disabled', false).text('MGRS Cells');
+    } else {
+        if ($usng.hasClass("active") || $mgrs.hasClass("active")){
+            $poly.click();
+        }
+        $usng.attr('disabled', true).text('Zoom in to use USNG/MGRS');
+        $mgrs.attr('disabled', true).text('>');
+    }
+};
+create_aois.buildPriorityBoxes = function(map){
     _.each([1,2,3,4,5],function(num){
         var helpText = create_aois.helpText[num];
         var $btn = $("<button>")
-            .text('Pri '+num+' : '+helpText+' (0)')
+            .text(helpText+' Priority (0)')
             .attr({id:'priority-map-'+num})
             .css('width','155px')
             .popover({
@@ -401,7 +626,9 @@ create_aois.mapInit = function(map) {
         $btn.css({color:(num >2)?'white':'black'});
         $btn.parent().css({backgroundColor:create_aois.colors[num]});
     });
+};
 
+create_aois.setupStatusControls = function (map){
     create_aois.$feature_info = $('<div>')
         .addClass('feature_info');
 
@@ -413,9 +640,9 @@ create_aois.mapInit = function(map) {
         position: 'bottomright'
     });
     status_control.addTo(map);
-
 };
 
+//TODO: Turn this into a Leaflet Plugin
 create_aois.splitPolygonsIntoSections = function(layer, num, splitIntoSized){
     var bounds = layer.getBounds();
     var left = bounds.getWest();
@@ -543,7 +770,7 @@ create_aois.determine_poly_fill_percentage = function(layer_poly, left, south, w
         if (gju.pointInPolygon({coordinates:coord},layer_poly)) fillNum++;
     }
     fillPercentage = fillNum/((slices-2)*(slices-2))-.02;
-    log.log((fillPercentage*100)+"% filled polygon drawn");
+//    log.log((fillPercentage*100)+"% filled polygon drawn");
     fillPercentage = fillPercentage<.2?.2:fillPercentage>.97?1:fillPercentage;
 
     return fillPercentage;
@@ -658,10 +885,41 @@ create_aois.removeFeature = function(e) {
     }
     create_aois.updateCellCount();
 };
+create_aois.splitFeature = function(e) {
+    var layerParent
+    var layer = e.target;
 
-create_aois.createWorkCellsFromService = function(data,zoomAfter,saveLayerTo){
+    for (var key in create_aois.aois._layers) {
+        if (create_aois.aois._layers[key]._layers[e.target._leaflet_id]) {
+            layerParent = create_aois.aois._layers[key];
+        }
+    }
 
-    data.features = create_aois.turnPolygonsIntoMultis(data.features || data);
+    if (layerParent){
+        var simplerLayer = _.toArray(layer._layers)[0];
+        var layers = create_aois.splitPolygonsIntoSections(simplerLayer,4);
+        var properties = layer.feature.properties || {};
+        var priority = properties.priority || create_aois.priority_to_use || 5;
+        var newPriority = priority>1 ? priority-1 : 1;
+        properties.priority = newPriority;
+
+        _.each(layers,function(l){
+            l.properties = properties;
+        });
+        layerParent.removeLayer(layer);
+        layerParent.addData(layers);
+    }
+
+    create_aois.redrawStyles();
+    create_aois.updateCellCount();
+};
+
+
+create_aois.createWorkCellsFromService = function(data,zoomAfter,skipFeatureSplitting){
+
+    if (!skipFeatureSplitting) {
+        data.features = create_aois.turnPolygonsIntoMultis(data.features || data);
+    }
 
     var features = L.geoJson(data, {
         style: function(feature) {
@@ -715,12 +973,12 @@ create_aois.createWorkCellsFromService = function(data,zoomAfter,saveLayerTo){
             layer.on({
                 mouseover: create_aois.highlightFeature,
                 mouseout: create_aois.resetHighlight,
-                click: create_aois.removeFeature
+                click: create_aois.splitFeature
             });
         }
     });
 
-    if (features){
+    if (features && !skipFeatureSplitting){
         create_aois.aois.addLayer(features);
         create_aois.map_object.addLayer(create_aois.aois);
 
@@ -812,13 +1070,14 @@ create_aois.updateCellCount = function() {
         }
     });
     $('#num_workcells').text(aoi_count);
+    $("#save-aois-button").attr('disabled',(aoi_count == 0));
 
     //Update Priority on-map Buttons
     _.each([1,2,3,4,5],function(num){
         var $bottomBtn = $("#priority-map-"+num);
         var helpText = create_aois.helpText[num];
 
-        var text = 'Priority '+num+' : '+helpText+' ('+counts[num]+')';
+        var text = helpText+' Priority: ('+counts[num]+')';
         $bottomBtn.text(text);
     });
 
@@ -857,15 +1116,28 @@ create_aois.redrawStyles = function(){
     }
 };
 
-create_aois.getBoundaries = function() {
+create_aois.removeWorkcell = function(cell){
+    var m = create_aois.map_object;
+    if (m && (m._container.id == 'map') && (m.hasLayer(create_aois.aois))){
+        _.each(create_aois.aois.getLayers(), function(l){
+            if (l.hasLayer(cell)) l.removeLayer(cell);
+        });
+    }
+};
+create_aois.getBoundaries = function(useCellsInstead) {
     var boundaries = [];
 
+    var featureName = $('#aoi-name').val();
     var m = create_aois.map_object;
     if (m && (m._container.id == 'map') && (m.hasLayer(create_aois.aois))){
         _.each(create_aois.aois.getLayers(), function(l){
            _.each(l.getLayers(), function(f){
-               f.feature.name = $('#aoi-name').val();
-               boundaries.push(f.toGeoJSON());
+               f.feature.name = featureName;
+               if (useCellsInstead) {
+                   boundaries.push(f);
+               } else {
+                   boundaries.push(f.toGeoJSON());
+               }
            });
         });
     }

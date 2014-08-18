@@ -96,7 +96,7 @@ L.Control.OSMGeocoder = L.Control.extend({
         else return null;
     },
     _isLatLon_decMin : function (q) {
-        log.log("is LatLon?: "+q);
+//        log.log("is LatLon?: "+q);
         //N 53° 13.785' E 010° 23.887'
         //re = /[NS]\s*(\d+)\D*(\d+\.\d+).?\s*[EW]\s*(\d+)\D*(\d+\.\d+)\D*/;
         re = /([ns])\s*(\d+)\D*(\d+\.\d+).?\s*([ew])\s*(\d+)\D*(\d+\.\d+)/i;
@@ -114,7 +114,7 @@ L.Control.OSMGeocoder = L.Control.extend({
 		if (this._isLatLon(q) != null)
 		{
 			var m = this._isLatLon(q);
-			log.log("LatLon: "+m[1]+" "+m[2]);
+			//log.log("LatLon: "+m[1]+" "+m[2]);
 			//m = {lon, lat}
             this.options.callback.call(this, this._createSearchResult(m[1],m[2]));
             return;
@@ -137,7 +137,7 @@ L.Control.OSMGeocoder = L.Control.extend({
 
         //and now Nominatim
 		//http://wiki.openstreetmap.org/wiki/Nominatim
-        log.log(this._callbackId);
+        //log.log(this._callbackId);
 		window[("_l_osmgeocoder_"+this._callbackId)] = L.Util.bind(this.options.callback, this);
 
 

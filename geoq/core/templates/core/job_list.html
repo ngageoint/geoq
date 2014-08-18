@@ -1,4 +1,5 @@
 {% extends "core/base.html" %}
+{% block title %}GeoQ Jobs{% endblock %}
 
 {% block container %}
 
@@ -28,7 +29,12 @@
                     capped = linkify(capped);
                     $(d).html(capped);
                 }
-            })
+            });
+
+            //Bold any entries within tables
+            $('.job_feature_list td').filter(function() {
+              return $(this).text() != '0';
+            }).css({fontWeight:'bold'});
         });
 
     function linkify(inputText) {

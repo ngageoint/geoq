@@ -1,6 +1,6 @@
 //====================================
 leaflet_helper.constructors = {};
-leaflet_helper.constructors.identifyParser = function(result){
+leaflet_helper.constructors.identifyParser = function(result, outputLayer){
     //Use GeoJSON as the standard to try if no matches are found
     var parser = L.GeoJSON;
     var parserName = "Leaflet GeoJSON";
@@ -46,6 +46,19 @@ leaflet_helper.constructors.identifyParser = function(result){
 
         parser = leaflet_helper.parsers.youTube;
         parserName = "YouTube Videos";
+    } else if (result && result.type && result.type=="FeatureCollection" && result.features) {
+
+        parser = leaflet_helper.parsers.basicJson;
+        parserName = "Basic JSON";
+    } else if (result && result.geonames && result.geonames.length && false) {
+
+        parser = leaflet_helper.parsers.geoNameWikiData;
+        parserName = "GeoName Lookup";
+
+    } else if (result && outputLayer && outputLayer.config && outputLayer.config.type && outputLayer.config.type=="Web Data Link") {
+
+        parser = leaflet_helper.parsers.webDataLink;
+        parserName = "Web Data Lookup";
     }
     //ADD new parser detectors here
 
@@ -54,7 +67,7 @@ leaflet_helper.constructors.identifyParser = function(result){
 
 
 leaflet_helper.constructors.urlTemplater =function(url, map, layer_json){
-    if (url.indexOf("{") < 0) return url;
+    if (!url || !url.indexOf || url.indexOf("{") < 0) return url;
 
     //Turn search strings into underscore templates to make parseable text (safer than an eval statement)
     _.templateSettings.interpolate = /\{\{(.+?)\}\}/g;
@@ -115,12 +128,25 @@ L.RotatedMarker = L.Marker.extend({
 L.rotatedMarker = function(pos, options) {
     return new L.RotatedMarker(pos, options);
 };
-
+//Set up base icon
+var MapMarker = L.Icon.extend({
+    options: {
+        id: 0,
+        shadowUrl: null,
+        iconAnchor: new L.Point(7, 24),
+        iconSize: new L.Point(15, 24),
+        repeatMode: true,
+        text: 'Social Media Pointer',
+        iconUrl: "/static/leaflet/images/orange-marker-icon.png"
+    }
+});
 
 leaflet_helper.constructors.geojson_layer_count = 0;
 leaflet_helper.constructors.geojson = function(layerConfig, map, useLayerInstead) {
 
-    var url = layerConfig.url;
+    if (!layerConfig) layerConfig = {};
+    var url = layerConfig.url || "";
+
     if (layerConfig.type == 'ESRI Identifiable MapServer'){
         if (_.str.endsWith(url,'?')) url = url.substr(0,url.length-1);
         if (_.str.endsWith(url,'/')) url = url.substr(0,url.length-1);
@@ -128,19 +154,6 @@ leaflet_helper.constructors.geojson = function(layerConfig, map, useLayerInstead
         url += '?geometryType=esriGeometryEnvelope&geometry={{bbox}}&mapExtent={{bbox}}';
         url += '&imageDisplay={{width}},{{height}},96&tolerance={{width}}&f=json&layers=visible:'+(layerConfig.layer||"all");
     }
-
-    //Set up base icon
-    var MapMarker = L.Icon.extend({
-        options: {
-            id: 0,
-            shadowUrl: null,
-            iconAnchor: new L.Point(7, 24),
-            iconSize: new L.Point(15, 24),
-            repeatMode: true,
-            text: 'Social Media Pointer',
-            iconUrl: aoi_feature_edit.available_icons[0]
-        }
-    });
 
     if (useLayerInstead && (useLayerInstead.geojson_layer_count !== undefined)) {
         layerConfig.geojson_layer_count = useLayerInstead.geojson_layer_count;
@@ -220,26 +233,9 @@ leaflet_helper.constructors.geojson = function(layerConfig, map, useLayerInstead
         return L.rotatedMarker(latlng, {icon: icon});
     }
 
-    function polygonStyleCallBack (feature) {
-        var style = {
-                weight: 2,
-                opacity: 1,
-                color: 'white',
-                fillOpacity: 0.1,
-                fillColor: '#ff0000'};
-        if (feature.properties.layer_type == "Aerial Oblique Line") {
-            style.color = 'green';
-            style.dashArray = '3';
-        } else if (feature.properties.layer_type == "Ground Lines") {
-            style.color = 'orange';
-            style.dashArray = '3';
-        }
-        return style;
-    }
-
     var outputLayer = useLayerInstead || new L.geoJson(undefined,{
-        onEachFeature: leaflet_helper.parsers.standard_onEachFeature,
-        style: polygonStyleCallBack,
+        onEachFeature: function(feature, layer) {leaflet_helper.parsers.standard_onEachFeature(feature, layer, layerConfig); },
+        style: leaflet_helper.constructors.polygonStyleBuilderCallback,
         pointToLayer: iconCallback
     });
     if (outputLayer.geojson_layer_count == undefined) {
@@ -267,10 +263,50 @@ leaflet_helper.constructors.geojson = function(layerConfig, map, useLayerInstead
 
     return outputLayer;
 };
+leaflet_helper.constructors.iconBuilderCallback = function(feature, latlng, layerConfig){
+    var iconX = 15;
+    var iconY = 24;
+    var iconAnchor = null;
+
+    layerConfig = layerConfig || {geojson_layer_count:1, name:'JSON Layer'};
+
+    var layerNum = layerConfig.geojson_layer_count % aoi_feature_edit.available_icons.length;
+    var iconUrl = aoi_feature_edit.available_icons[layerNum];
+
+    //Build the icon injects
+    var iconData = {
+        iconUrl: iconUrl,
+        iconSize: new L.Point(iconX, iconY),
+        text: layerConfig.name
+    };
+    if (iconAnchor) iconData.iconAnchor = iconAnchor;
+    var icon = new MapMarker(iconData);
+
+    //Construct the final Icon
+    return L.rotatedMarker(latlng, {icon: icon});
+};
+
+leaflet_helper.constructors.polygonStyleBuilderCallback =function(feature) {
+    var style = {
+        weight: 2,
+        opacity: 1,
+        color: 'white',
+        fillOpacity: 0.1,
+        fillColor: '#ff0000'};
+    if (feature.properties.layer_type == "Aerial Oblique Line") {
+        style.color = 'green';
+        style.dashArray = '3';
+    } else if (feature.properties.layer_type == "Ground Lines") {
+        style.color = 'orange';
+        style.dashArray = '3';
+    }
+    return style;
+};
+
 leaflet_helper.constructors.geojson_error = function (resultobj){
     log.error ("A JSON layer was requested, but no valid response was received from the server, result:", resultobj);
 };
-leaflet_helper.constructors.geojson_success = function (data, proxiedURL, map, outputLayer) {
+leaflet_helper.constructors.geojson_success = function (data, proxiedURL, map, outputLayer, noparse) {
     var result;
     if (typeof data=="object") {
         result = data;
@@ -283,16 +319,24 @@ leaflet_helper.constructors.geojson_success = function (data, proxiedURL, map, o
         }
     }
 
-    if (result && result.error && result.error.message){
-        log.error("JSON layer error, message was: " + result.error.message + " url: "+ proxiedURL);
-    } else {
-        var parserInfo = leaflet_helper.constructors.identifyParser(result);
-        if (parserInfo && parserInfo.parser) {
-            parserInfo.parser(result, map, outputLayer);
+    if (!noparse){
+        if (result && result.error && result.error.message){
+            log.error("JSON layer error, message was: " + result.error.message + " url: "+ proxiedURL);
+        } else {
+            var parserInfo = leaflet_helper.constructors.identifyParser(result, outputLayer);
+            if (parserInfo && parserInfo.parser) {
+                parserInfo.parser(result, map, outputLayer);
 
-            var features = "NONE";
-            if (result && result.features && result.features.length) features = result.features.length;
-            log.info("JSON loaded from : "+ proxiedURL+ " - features: "+ features+ " - parser type: " + parserInfo.parserName);
+                var features = 0;
+                if (result && result.features && result.features.length) {
+                    features = result.features.length;
+                } else if (result) {
+                    try {
+                        features = _.toArray(result)[0].length;
+                    } catch (ex) {}
+                }
+//                log.info("+ JSON loaded from : "+ proxiedURL+ " - features: "+ features+ " - parser type: " + parserInfo.parserName);
+            }
         }
     }
 
@@ -309,15 +353,9 @@ leaflet_helper.constructors.geojson_success = function (data, proxiedURL, map, o
 
 
 //====================================
-leaflet_helper.parsers = {};
-leaflet_helper.parsers.standard_onEachFeature = function (feature, layer) {
-    if (feature.properties && feature.properties.popupContent) {
-        layer.bindPopup(feature.properties.popupContent);
-    }
-    if (feature.properties.heading && parseInt(feature.properties.heading) && layer.options){
-        layer.options.angle = parseInt(feature.properties.heading);
-    }
-
+leaflet_helper.id_count = 0;
+leaflet_helper.clean = function (text) {
+    return jQuery("<div>"+text+"</div>").text() || "";
 };
 leaflet_helper.addLinksToPopup = function (layerName,id,useMove,useHide,useDrop) {
 
@@ -333,8 +371,86 @@ leaflet_helper.addLinksToPopup = function (layerName,id,useMove,useHide,useDrop)
     if (useDrop) {
         output += "<br/><a href='#' class='make-droppable-hint'><span class='text-hint'></span>"+spanLink+"</a>";
     }
+    if (output) output = "<br/>"+output;
 
     return output;
+
+};
+leaflet_helper.update_tree_title = function(outputLayer) {
+    var treeNodes = leaflet_layer_control.$tree.fancytree('getTree').rootNode;
+
+    var layerName = outputLayer.name;
+    var treeItem = null;
+    _.each(treeNodes.children,function(treeCats){
+        _.each(treeCats.children,function(treeNode){
+            var treeNodeTitle = treeNode.title;
+
+            if (_.str.startsWith(treeNodeTitle,layerName)){
+                treeItem = treeNode;
+            }
+        });
+    });
+
+    if (treeItem){
+        if (outputLayer._layers) {
+            var numFeatures = _.toArray(outputLayer._layers).length;
+            treeItem.setTitle(layerName + " ("+numFeatures+")");
+        }
+    }
+};
+
+leaflet_helper.parsers = {};
+leaflet_helper.parsers.basicJson = function (geojson, map, outputLayer) {
+    if (outputLayer) {
+        outputLayer.addData(geojson);
+    } else {
+        outputLayer = L.geoJson(geojson,{
+            onEachFeature: function(feature, layer) {leaflet_helper.parsers.standard_onEachFeature(feature, layer, outputLayer); },
+            style: leaflet_helper.constructors.polygonStyleBuilderCallback,
+            pointToLayer: function(feature, latlng) { leaflet_helper.constructors.iconBuilderCallback(feature, latlng, outputLayer); }
+            }
+        ).addTo(map);
+    }
+
+    if (outputLayer) {
+        leaflet_helper.update_tree_title(outputLayer);
+    }
+    if (outputLayer && !outputLayer.options) {
+        outputLayer.options = {};
+    }
+    outputLayer.options.opacity = 1;
+
+    return outputLayer;
+};
+leaflet_helper.parsers.standard_onEachFeature = function (feature, layer, layerConfig) {
+    if (feature.properties) {
+        var popupContent = "";
+        if (feature.properties.popupContent) {
+            popupContent = feature.properties.popupContent;
+        } else if (feature.properties.name) {
+            popupContent = leaflet_helper.clean(feature.properties.name);
+            if (feature.properties.link){
+                var link = leaflet_helper.clean(feature.properties.link); //Strip out any offending
+                popupContent = "<a href='"+link+"' target='_blank'>"+popupContent+"</a>";
+            }
+        }
+        if (popupContent && _.isString(popupContent)) {
+
+            if (!popupContent.indexOf("<span class='hide feature-id-hint'>")){
+                if (layerConfig && layerConfig.name) {
+                    if (!feature.properties.id) {
+                        feature.properties.id = leaflet_helper.id_count++;
+                    }
+                    var id = feature.properties.id;
+                    popupContent += leaflet_helper.addLinksToPopup(layerConfig.name, id, true, false);
+                }
+            }
+            layer.bindPopup(popupContent);
+        }
+        if (feature.properties.heading && parseInt(feature.properties.heading) && layer.options){
+            layer.options.angle = parseInt(feature.properties.heading);
+        }
+    }
 
 };
 leaflet_helper.parsers.addNOAADamageAssessmentToolkit = function (result, map, outputLayer) {
@@ -418,8 +534,6 @@ leaflet_helper.parsers.addNOAADamageAssessmentToolkit = function (result, map, o
     }
 
     return outputLayer;
-
-
 };
 leaflet_helper.parsers.addFEMAImageEventsData = function (result, map, outputLayer) {
 
@@ -490,6 +604,7 @@ leaflet_helper.parsers.addFEMAImageEventsData = function (result, map, outputLay
                 color = "yellow";
             }
             var heading = feature.attributes.CalculatedHeading || feature.attributes.Heading || 0;
+            heading = parseInt(heading);
 
             var geometry = {};
             if (feature.geometry && feature.geometry.paths) {
@@ -641,30 +756,6 @@ leaflet_helper.parsers.instagramImages = function (result, map, outputLayer) {
 };
 
 
-leaflet_helper.update_tree_title = function(outputLayer) {
-    var treeNodes = leaflet_layer_control.$tree.fancytree('getTree').rootNode;
-
-    var layerName = outputLayer.name;
-    var treeItem = null;
-    _.each(treeNodes.children,function(treeCats){
-        _.each(treeCats.children,function(treeNode){
-            var treeNodeTitle = treeNode.title;
-
-            if (_.str.startsWith(treeNodeTitle,layerName)){
-                treeItem = treeNode;
-            }
-        });
-    });
-
-    if (treeItem){
-        if (outputLayer._layers) {
-            var numFeatures = _.toArray(outputLayer._layers).length;
-            treeItem.setTitle(layerName + " ("+numFeatures+")");
-        }
-    }
-
-};
-
 leaflet_helper.parsers.flickrImages = function (result, map, outputLayer) {
     var jsonObjects = [];
     var photos = result.photos;
@@ -733,4 +824,159 @@ leaflet_helper.parsers.flickrImages = function (result, map, outputLayer) {
 leaflet_helper.parsers.youTube = function (result, map, outputLayer){
     //TODO: Parsing YouTube requires OAuth2, need a server component to do the handshake
     log.info("YouTube changed their API, v3 is not yet supported.")
+};
+
+leaflet_helper.parsers.getTemplateVal = function (template,item,backup_ids,backup_val) {
+    // try to find the value in item defined by a template, then loop through all the keys in backup_ids, lastly use backup_val
+
+    var output = undefined;
+    if (backup_ids && !_.isArray(backup_ids)) {
+        backup_ids = [backup_ids];
+    }
+
+    try {
+        if (template) output = template(item);
+    } catch (ex) {
+        output = undefined;
+    }
+
+    if (typeof output == "undefined") {
+        for(var i=0;i<backup_ids.length;i++){
+            var backup_temp_val = item[backup_ids[i]];
+            if (backup_temp_val) {
+                output = backup_temp_val;
+                break;
+            }
+        }
+    }
+
+    return output || backup_val;
+};
+
+leaflet_helper.parsers.webDataLink = function (result, map, outputLayer) {
+
+    var jsonObjects = [];
+    if (!outputLayer.options) outputLayer.options = {};
+    if (!outputLayer.options.items) outputLayer.options.items = [];
+
+    var properties = outputLayer.config || {};
+    var params = properties.layerParams || {};
+
+    //Fields and selectors:
+    var rootField = properties.rootField || "";
+    var selDescription = properties.description || "";
+    var selFieldsToShow = properties.fieldsToShow || "";
+    var selID = params.selectionID || "{{id}}";
+    var selPoint = params.selectionPoint || "";
+    var selPolygon = params.selectionPolygon || "";
+    var selLink = params.selectionLink || "";
+    var selThumbnail = params.selectionThumbnail || "";
+    var selImage = params.selectionImage || "";
+
+    var newItems = 0;
+    try {
+        var tID = _.template(selID);
+        var tFieldsToShow = selFieldsToShow ? _.template(selFieldsToShow) : "";
+        var tDescription = selDescription ? _.template(selDescription) : "";
+        var tPoint = selPoint ? _.template(selPoint) : "";
+        var tPolygon = selPolygon ? _.template(selPolygon) : "";
+        var tLink = selLink ? _.template(selLink) : "";
+        var tThumbnail = selThumbnail ? _.template(selThumbnail) : "";
+        var tImage = selImage ? _.template(selImage) : "";
+
+        //Some results have multiple levels, build through these
+        var results = result;
+//        if (rootField.indexOf(".")>0) {
+//            var levels = rootField.split(".");
+//            _.each(levels,function(level){
+//               results =  results[level];
+//            });
+//        } else {
+            results = result[rootField];
+//        }
+
+        if (!_.isArray(results)) results = [results]; //Sometimes, a single object is returned. Make it an array
+
+        _.each(results,function(item){
+            var id = leaflet_helper.parsers.getTemplateVal (tID,item,['id','title'],parseInt(Math.random() * 1000000));
+            if (!item.id) item.id = id;
+            var description, fieldsToShow, point, polygon, link, thumbnail, image;
+
+            var itemFound = false;
+            _.each(outputLayer.options.items,function(previous_item){
+                var prev_id = leaflet_helper.parsers.getTemplateVal (tID,previous_item,['id','title'],-1);
+                if (id == prev_id) itemFound = true;
+            });
+            if (!itemFound) {
+                //Item hasn't been previously seen, so add it to the page
+                outputLayer.options.items.push(item);
+
+                try {
+                    description = leaflet_helper.parsers.getTemplateVal (tDescription,item,'description','');
+                    fieldsToShow = leaflet_helper.parsers.getTemplateVal (tFieldsToShow,item,'title',outputLayer.name || "Item");
+                    point = leaflet_helper.parsers.getTemplateVal (tPoint,item,'location','');
+                    polygon = leaflet_helper.parsers.getTemplateVal (tPolygon,item,'area','');
+                    link = leaflet_helper.parsers.getTemplateVal (tLink,item,'link','');
+                    thumbnail = leaflet_helper.parsers.getTemplateVal (tThumbnail,item,'thumbnail','');
+                    image = leaflet_helper.parsers.getTemplateVal (tImage,item,'image','');
+                } catch (ex) {
+                    log.error("Error parsing a Web Data template within: "+outputLayer.name);
+                }
+                //Build Popup text
+                var popupContent = "<h5>";
+                if (link) popupContent += "<a href='" + link + "' target='_new'>";
+                popupContent += fieldsToShow;
+                if (link) popupContent += "</a>";
+                popupContent += "</h5>";
+
+                if (description) popupContent += description+"<br/>";
+                if (image) popupContent += "<a href='" + image + "' target='_new'>";
+                if (thumbnail) popupContent += "<img style='width:150px' src='" + thumbnail + "' />";
+                if (image) popupContent += "</a>";
+                popupContent += leaflet_helper.addLinksToPopup(outputLayer.name, id, true, true);
+
+                //Build JSON for the item
+                var json = {
+                    type: "Feature",
+                    properties: {
+                        name: fieldsToShow,
+                        id: id,
+                        source: outputLayer.name,
+                        image: image,
+                        thumbnail: thumbnail,
+                        popupContent: popupContent
+                    }
+                };
+                if (point) {
+                    var point_pieces = point.split(" ");
+                    var lat = parseFloat(point_pieces[0]);
+                    var lng = parseFloat(point_pieces[1]);
+
+                    json.geometry = {
+                        type: "Point",
+                        coordinates: [lng, lat]
+                    };
+                } else if (polygon) {
+                    json.geometry = {
+                        type: "Polygon",
+                        coordinates: JSON.parse(polygon)  //TODO: Verify
+                    };
+                }
+
+                jsonObjects.push(json);
+                newItems++;
+            }
+        });
+
+        outputLayer.addData(jsonObjects);
+        if (newItems) {
+            log.info("A Web Data Link layer ("+outputLayer.name+") was appended with "+ newItems+" features");
+        } else {
+            log.info("A Web Data Link layer ("+outputLayer.name+") response was returned, but with no features.");
+        }
+
+    } catch (ex) {
+        log.error("Problem parsing a Web Data Link: "+outputLayer.name);
+    }
+    return outputLayer;
 };

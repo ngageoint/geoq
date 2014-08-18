@@ -2,6 +2,7 @@
 {% load compress %}
 {% load leaflet_tags %}
 {% load dynurl %}
+{% block title %}GeoQ: Draw Workcells for Job #{{ object.id }}{% endblock %}
 {% block static_libraries %}
     {% leaflet_js plugins="draw" %}
     <style>
@@ -55,6 +56,8 @@
             border-radius: 4px;
             max-height: 400px;
             padding: 2px;
+            font-size: 1.2em;
+            font-weight: bold;
         }
         #poly_split_holder input#split_sized {
             width: 50px;
@@ -78,6 +81,9 @@
     <script src="{{ STATIC_URL }}core/js/jquery.geocomplete.js" type="text/javascript"></script>
     <script src="{{ STATIC_URL }}core/js/create-aois.js" type="text/javascript"></script>
 	<script src="{{ STATIC_URL }}core/js/geojson-js-utils/geojson-utils.js"></script>
+	<script src="{{ STATIC_URL }}core/js/jsmaptools/jsmaptools.js"></script>
+	<script src="{{ STATIC_URL }}core/js/jsmaptools/jsmaptools_polygons.js"></script>
+	<script src="{{ STATIC_URL }}core/js/polygon.js"></script>
     <script src="{{ STATIC_URL }}core/js/leafletcontrols/leaflet.simple_button.js" type="text/javascript"></script>
     <script src="{{ STATIC_URL }}core/js/leaflet-shapefile/shp.js" type="text/javascript"></script>
 
@@ -98,8 +104,9 @@
 
 
 {% block container %}
-    <div class="row-fluid container-narrow">
-    <h2>Draw new Work cells and assign priorities</h2>
+    <div class="row-fluid container" style="margin:0px 40px 0px 40px;">
+    <h2>Add workcells to Job #{{ object.id }}</h2>
+    <b>Name workcells: </b><input type="text" name="aoi-name" id="aoi-name" value="{{ object.name }}" style="width:300px;"/><br/>
 
     <div class="btn-group" data-toggle="buttons-radio">
         Draw using:
@@ -114,8 +121,8 @@
             <option value="n_cells">Split polygon into</option>
             <option value="n_sized_cells">Split polygon by</option>
         </select>
-        <span id="poly_split_n_cells">approx <input type="text" id="split_number" value="100" /> cells</span>
-        <span id="poly_split_n_sized_cells" style="display: none;"><input type="text" id="split_sized" value="1000" />-sq-meter cells</span>
+        <span id="poly_split_n_cells">approximately <input type="text" id="split_number" value="314" /> cells</span>
+        <span id="poly_split_n_sized_cells" style="display: none;"><input type="text" id="split_sized" value="5000" />-sq-meter cells</span>
         <button id="poly_split_button" class="btn btn-success" disabled="true">Split</button>
     </div>
     <div style="display:none" id="file_uploader_holder">
@@ -129,39 +136,31 @@
         <button id="file_holder_edit_btn" class="btn btn-success" disabled="true">Update</button>
     </div>
 
-    <div id="map" class="thumbnail" style="height: 500px; width: 100%;">{% leaflet_map "map" %}</div>
-        <br/>
+    <div id="map" class="thumbnail" style="height: 600px; width: 92%;">{% leaflet_map "map" %}</div>
+
+    <br/>
     <div class="row">
-        <div class="col-md-3" style="display: inline-block">
-        <label>Name for this group of work cells: (<span id="num_workcells">0</span>)</label>
-        <input type="text" name="aoi-name" id="aoi-name" value="{{ object.name }}" style="width:300px;"/>
+        <div class="span6" style="display: inline-block">
+            <btn id="save-aois-button" class="btn btn-success" disabled="true">Add <span id="num_workcells">0</span> Workcells (you can add more later)</btn>
         </div>
-        <div class="cod-md-3" style="display: inline-block; margin-left: 100px">
-            <label>Zoom above map to Location:</label>
-            <input type="text" id="geocomplete" />
+        <div class="span4" style="display: inline-block; margin-left: 100px">
+            <i>Zoom map to:</i><input type="text" id="geocomplete" style="vertical-align:baseline;"/>
         </div>
-        <hr/>
     </div>
+
     <div class="row">
+        <hr/>
         Prioritize by: <select id="prioritize-selector" style="margin-bottom:0px;">
             <option>--add cells first--</option>
         </select>
-        <btn id="prioritize-reverse" class="btn btn-warning">Reverse</btn>
-        or set all cells to: <btn id="prioritize-aois-5-button" class="btn btn-warning">5 (Lowest)</btn>
-        <btn id="prioritize-aois-4-button" class="btn btn-warning">4</btn>
-        <btn id="prioritize-aois-3-button" class="btn btn-warning">3</btn>
-        <btn id="prioritize-aois-2-button" class="btn btn-warning">2</btn>
-        <btn id="prioritize-aois-1-button" class="btn btn-warning">1 (Highest)</btn>
+
+{#        <btn id="prioritize-reverse" class="btn btn-warning">Reverse</btn>#}
+{#        or set all cells to: <btn id="prioritize-aois-5-button" class="btn btn-warning">5 (Lowest)</btn>#}
+{#        <btn id="prioritize-aois-4-button" class="btn btn-warning">4</btn>#}
+{#        <btn id="prioritize-aois-3-button" class="btn btn-warning">3</btn>#}
+{#        <btn id="prioritize-aois-2-button" class="btn btn-warning">2</btn>#}
+{#        <btn id="prioritize-aois-1-button" class="btn btn-warning">1 (Highest)</btn>#}
         <btn id="prioritize-aois-clear-button" class="btn btn-danger">Delete All</btn>
-        <hr/>
-    </div>
-
-    <div class="row">
-        <btn id="save-aois-button" class="btn btn-success">Save Work Cells to Job</btn>
-    </div>
-
-    <div class="row">
-        <hr/>
         <btn id="show-geojson-textarea" class="btn">Click to show detailed geojson of work cells</btn>
         <div id="geojson-textarea" style="display: none">
             Work Cells (copy and paste the geojson text below to tweak or export cell details):<br/>

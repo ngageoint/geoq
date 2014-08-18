@@ -90,6 +90,9 @@
         aoi_feature_edit.static_root = "{{ STATIC_URL }}";
         aoi_feature_edit.help_url = "{% url 'help_page' %}";
 
+        {% if 'user_accepted_terms' in request.base_perms %}aoi_feature_edit.user_accepted_tems = true{% endif %}
+        {% if 'permissions_granted' in request.base_perms %}aoi_feature_edit.permissions_granted = true{% endif %}
+
         aoi_feature_edit.init();
 
     </script>

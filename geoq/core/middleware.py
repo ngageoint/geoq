@@ -6,7 +6,7 @@ from django.utils.importlib import import_module
 from django.conf import settings
 from django.http import HttpResponseForbidden
 from django.template import RequestContext, Template, loader, TemplateDoesNotExist
-
+from geoq.accounts.models import UserAuthorization
 
 class UserPermsMiddleware(object):
 
@@ -17,8 +17,14 @@ class UserPermsMiddleware(object):
         """
         user = request.user
         perms = []
+        user_auth_perms = []
 
-        perms = list(user.get_all_permissions()) + perms
+        if user and user.username:
+            user_auth_additions = UserAuthorization.objects.filter(user=user)
+            if user_auth_additions and len(user_auth_additions):
+                user_auth_perms = user_auth_additions[0].permissions_list()
+
+        perms = list(user.get_all_permissions()) + perms + user_auth_perms
         request.base_perms = set(perms)
 
         return None

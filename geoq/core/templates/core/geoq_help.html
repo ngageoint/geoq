@@ -5,7 +5,7 @@
 <html>
 <head lang="en">
     <meta charset="UTF-8">
-    <title>GeoQ User Guide</title>
+    <title>GeoQ: User Guide</title>
     <script src="{{ STATIC_URL }}core/js/jquery.min.js"></script>
 
     {% bootstrap_stylesheet_tag %}
@@ -54,7 +54,6 @@
                 <tbody>
                 <tr>
                     <td>
-                        <a href="#about"><span class="glyphicon glyphicon-file text-info"></span> About</a>
                         <h4>
                             <a name="user-content-geographic-work-queueing-and-tasking-system" class="anchor"
                                href="#geographic-work-queueing-and-tasking-system">
@@ -86,9 +85,14 @@
                         </p>
 
                         <p><b>This video gives an overview of making projects and jobs:</b></p>
-                        <img src="{{ STATIC_URL }}images/help/projects_jobs_video.png"
-                             style="cursor:pointer"
-                             onclick="window.open('{{ STATIC_URL }}help_video/h5_help_video.html');" />
+{#                        <img src="{{ STATIC_URL }}images/help/VideoThumbnail.png"#}
+{#                             style="cursor:pointer"#}
+{#                             onclick="window.open('{{ STATIC_URL }}help_video/UserHelpVideo.html');" />#}
+                        <iframe class="tscplayer_inline" id="embeddedSmartPlayerInstance"
+                                src="{{ STATIC_URL }}help_video/UserHelpVideo_player.html?embedIFrameId=embeddedSmartPlayerInstance"
+                                scrolling="no" frameborder="0" webkitAllowFullScreen mozallowfullscreen allowFullScreen
+                                width="900" height="600"></iframe>
+
                     </td>
                 </tr>
                 </tbody></table>
@@ -219,6 +223,7 @@
                         <ul>
                             <li><a href="{% url 'json-layers' %}">http://server/geoq/<b>api/layers.json</b></a></li>
                             <li><a href="{% url 'json-job' pk=1 %}">http://server/geoq/<b>api/jobs/&lt;id&gt;.geojson</b></a></li>
+                            <li><a href="{% url 'json-job-grid' pk=1 %}">http://server/geoq/<b>api/jobs/&lt;id&gt;/grid/job-workcells.geojson</b></a></li>
                             <li><a href="{% url 'kml-job' pk=1 %}">http://server/geoq/<b>api/jobs/&lt;id&gt;.kml</b></a></li>
                             <li><a href="{% url 'kml-networked-job' pk=1 %}">http://server/geoq/<b>api/jobs/&lt;id&gt;.networked.kml</b></a></li>
                             <li><a href="{% url 'shape-job' pk=1 %}">http://server/geoq/<b>api/jobs/&lt;id&gt;.shp.zip</b> (Workcells)</a></li>
@@ -227,7 +232,6 @@
                             <li><a href="{% url 'json-job-features' pk=1 %}">http://server/geoq/<b>api/jobs/&lt;id&gt;features.json</b></a></li>
                             <li><a href="{% url 'json-job-features-links' pk=1 %}">http://server/geoq/<b>api/jobs/&lt;id&gt;features.withlinks.json</b> (With linked items)</a></li>
                         </ul>
-
                     </td>
                 </tr>
                 </tbody></table>

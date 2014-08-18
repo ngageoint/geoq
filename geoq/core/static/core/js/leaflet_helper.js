@@ -1,6 +1,8 @@
 //converts leaflet layer to WKT
 //requires Leaflet, Leaflet ArcGIS plugin, log4javascript
 
+//TODO: Add "Assigned" style to settings object and UI
+
 var leaflet_helper = {};
 
 var c;
@@ -15,8 +17,7 @@ leaflet_helper.styles = {
     awaiting_review: {"weight": 2, "color": "red",  "fillColor": c[2], "fillOpacity": .5, "opacity": 1},
     in_review:       {"weight": 2, "color": "red",  "fillColor": c[3], "fillOpacity": .7, "opacity": 1},
     completed:       {"weight": 2, "color": "red",  "fillColor": c[4], "fillOpacity": .9, "opacity": 1},
-
-    assigned: {"weight": 2, "color": "black", "fillColor": "gray", "fillOpacity": .9, "opacity": 1}, //TODO: Are we still using 'Assigned'?
+    assigned:        {"weight": 2, "color": "black", "fillColor": "gray", "fillOpacity": .9, "opacity": 1},
     extentStyle_hollow: {"weight": 2, "color": "red", "opacity": 1, "fillOpacity":0 }
 };
 
@@ -111,6 +112,8 @@ leaflet_helper.layer_conversion = function (lyr, map) {
     } else if (lyr.type == 'Leaflet Tile Layer') {
         outputLayer = L.tileLayer(lyr.url, lyr.layerParams);
     } else if (lyr.type == 'ESRI Identifiable MapServer') {
+        outputLayer = leaflet_helper.constructors.geojson(lyr, map);
+    } else if (lyr.type == 'Web Data Link') {
         outputLayer = leaflet_helper.constructors.geojson(lyr, map);
     }
 

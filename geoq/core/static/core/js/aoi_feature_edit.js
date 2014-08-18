@@ -3,6 +3,8 @@
 
 //requires leaflet_helper.js, underscore, jquery, leaflet, log4javascript
 
+//TODO: Have a view-only mode
+
 var aoi_feature_edit = {};
 aoi_feature_edit.layers = {features:[], base:[], overlays:[]};
 
@@ -83,6 +85,46 @@ aoi_feature_edit.init = function () {
     //Close Alert field if shown
     setTimeout(function(){$('div.alert').css({display:'none'});},3000);
 
+    $(document).ready(aoi_feature_edit.promptForUserAcceptance);
+};
+
+aoi_feature_edit.promptForUserAcceptance = function(){
+    if (site_settings.user_agreement_text && site_settings.user_agreement_text.text) {
+        if (aoi_feature_edit.user_accepted_tems) {
+            //log.log("User has previously accepted terms of use");
+        } else {
+
+            //Build a dialog to show the user if they haven't seen it yet
+            BootstrapDialog.show({
+                title: 'Terms of Use',
+                message: site_settings.user_agreement_text.text,
+                buttons: [{
+                    label: 'Accept for only this workcell',
+                    action: function(dialog) {
+                        dialog.close();
+                    }
+                }, {
+                    label: 'Accept for all future workcells',
+                    cssClass: 'btn-primary',
+                    action: function(dialog) {
+                        $.post('/accounts/accept_terms_of_use');
+                        dialog.close();
+                    }
+                },{
+                    label: 'Do not accept',
+                    cssClass: 'btn-warning',
+                    action: function(dialog) {
+                        geoq.redirect("/");
+                        dialog.close();
+                    }
+
+                }]
+            });
+
+
+        }
+
+    }
 };
 
 aoi_feature_edit.featureLayer_pointToLayer = function (feature, latlng, featureLayer, featureType) {
@@ -306,7 +348,7 @@ aoi_feature_edit.map_init = function (map, bounds) {
 
     map.options.maxZoom = 19;
 
-    var custom_map = aoi_feature_edit.aoi_map_json;
+    var custom_map = aoi_feature_edit.aoi_map_json || {};
     aoi_feature_edit.map = map;
 
     var baseLayers = {};
@@ -351,8 +393,11 @@ aoi_feature_edit.map_init = function (map, bounds) {
 
 
     //Build layers, parse them, and add them to the map and to memory
-    if (custom_map.hasOwnProperty("layers")) {
-        _.each(custom_map.layers, function (layer_data) {
+    if (custom_map.layers) {
+        var layers = _.filter(custom_map.layers,function(l){
+           return (l.type!="Social Networking Link" && l.type!="Web Data Link")
+        });
+        _.each(layers, function (layer_data) {
             var built_layer = leaflet_helper.layer_conversion(layer_data, map);
             if (built_layer !== undefined) {
                 if (layer_data.isBaseLayer) {
@@ -380,6 +425,9 @@ aoi_feature_edit.map_init = function (map, bounds) {
         } else if (ftype.type == 'Point') {
             var point = aoi_feature_edit.createPointOptions(ftype);
             if (point) aoi_feature_edit.all_markers.push(point);
+        } else if (ftype.type == 'Text') {
+            //TODO: Create an icon and renderer for text objects
+
         } else {
             log.error("Item should be drawn, but not a Polygon or Point object.")
         }
@@ -563,9 +611,9 @@ aoi_feature_edit.map_init = function (map, bounds) {
 
             if (feature_to_link) {
                 var feature_from_link = aoi_feature_edit.draggingFeature;
-                var feature_id_from = feature_from_link.feature.properties.source + ' #' +_.str.truncate(feature_from_link.feature.properties.id, 6);
+                var feature_id_from = (feature_from_link.feature.properties.source || "Feed item") + ' #' +_.str.truncate(feature_from_link.feature.properties.id, 6);
                 $text3
-                    .text('Link: '+feature_id_from)
+                    .html('<hr/>Link: '+feature_id_from)
                     .on('click',function(){
 
                         $holder3.empty();
@@ -813,25 +861,6 @@ aoi_feature_edit.buildTreeLayers = function(){
         return layers;
     }
 
-    function layers_only_social(){
-        var layers = [];
-        try {
-            var all_layers = JSON.parse(aoi_feature_edit.aoi_map_json.all_layers);
-            var social_layers = _.filter(all_layers, function(l){
-                return (l.type == "Social Networking Link");
-            });
-            aoi_feature_edit.layers.social = social_layers;
-            _.each(social_layers,function(l){
-                var l_all = _.clone(l);
-                l_all.name = l.name + " - All";
-                layers.push(l_all);
-            });
-
-        } catch (ex) {
-            log.error("aoi_map_json.all_layers isn't being parsed as valid JSON.");
-        }
-        return layers;
-    }
 
     function removeEmptyParents(options){
         var optionsNew = {titles:[], layers:[]};
@@ -863,12 +892,38 @@ aoi_feature_edit.buildTreeLayers = function(){
     options.layers.push(aoi_feature_edit.layers.overlays);
 
     options.titles.push('Social Networking Feeds');
-    options.layers.push(layers_only_social());
+    options.layers.push(aoi_feature_edit.layersOfType("Social Networking Link",'social'));
+
+    options.titles.push('GeoJump Data Lookups');
+    options.layers.push(aoi_feature_edit.layersOfType("Web Data Link",'weblinks'));
 
     options = removeEmptyParents(options);
 
     return options;
 };
+
+aoi_feature_edit.layersOfType = function(layerType,layers_sub_name){
+    var layers = [];
+    layerType = layerType || "Social Networking Link";
+    layers_sub_name = layers_sub_name || 'social';
+    try {
+        var all_layers = JSON.parse(aoi_feature_edit.aoi_map_json.all_layers);
+        var social_layers = _.filter(all_layers, function(l){
+            return (l.type == layerType);
+        });
+        aoi_feature_edit.layers[layers_sub_name] = social_layers;
+        _.each(social_layers,function(l){
+            var l_all = _.clone(l);
+            l_all.name = l.name + " - All";
+            layers.push(l_all);
+        });
+
+    } catch (ex) {
+        log.error("aoi_map_json.all_layers isn't being parsed as valid JSON.");
+    }
+    return layers;
+};
+
 aoi_feature_edit.getDrawConsole = function () {
 
     var geometry_type = null;

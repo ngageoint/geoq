@@ -1,6 +1,8 @@
 {% extends "core/base.html" %}
 {% load compress %}
 {% load leaflet_tags %}
+{% block title %}GeoQ Project: {{ object.name }}{% endblock %}
+
 {% block static_libraries %}
     {% leaflet_js %}
 
@@ -10,13 +12,35 @@
         var extentStyle = {
             "weight":2,
             "color":"red",
-            "fill":null,
-            "opacity":.7
-        }
+            "opacity":.7,
+            "fillColor": "orange",
+            "fillOpacity": .2
+        };
 
-        var aoi_extents = L.geoJson({{ object.aois_envelope.json|safe }},
-                {style: extentStyle});
-        aoi_extents.addTo(map);
+        //Get Polygon JOSN of each Job
+        var job_list = {{ object.aois_envelope_by_job|safe|default:"[]" }};
+        _.each(job_list,function(job){
+
+           var job_layer = L.geoJson(job,
+                {style: extentStyle,
+                onEachFeature: function(feature, layer) {
+                    if (feature && feature.properties && feature.properties.link) {
+                        var name = "Open Job";
+                        if (feature.properties.name) name = feature.properties.name;
+                        var popupContent = "<a href='"+feature.properties.link+"'>"+name+"</a>";
+                        layer.bindPopup(popupContent);
+                    }
+                }}
+            );
+            if (job_layer) job_layer.addTo(map);
+
+        });
+
+        //Build the extents and load that if above didn't work
+        var aoi_extents = L.geoJson({{ object.aois_envelope.json|safe }},{style: extentStyle});
+        if (!job_list || !job_list.length && aoi_extents) {
+            aoi_extents.addTo(map);
+        }
 
         // Map doesn't update without this delay.
         setTimeout(function(){
@@ -32,6 +56,13 @@
 
         var drawnItems = new L.FeatureGroup();
 		map.addLayer(drawnItems);
+
+
+        //Bold any entries within tables
+        $('.job_feature_list td').filter(function() {
+          return $(this).text() != '0';
+        }).css({fontWeight:'bold'});
+
 
     }
 </script>
@@ -76,10 +107,10 @@
                     </ul>
                 </div>
                 {% endif %}
-                <div class="span4 thumbnail" id="map" style="height:225px; vertical-alignment:middle;">
+                <div class="span6 thumbnail" id="map" style="height:260px; vertical-alignment:middle;">
                 {% leaflet_map "map" creatediv=False%}
                 </div>
-                <div class="span6">
+                <div class="span5">
                     <table class="project_info_list">
                         <tr>
                             <th style="min-width: 100px"></th>

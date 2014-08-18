@@ -86,12 +86,6 @@ div.leaflet-control-button.leaflet-control > div > h4 {
     padding: 6px;
 }
 
-.location_info {
-    font-size: 12px;
-    line-height: 1.1;
-    font-weight: normal;
-}
-
 #aoi-submit {
     background-color: hsl(203, 100%, 30%) !important;
     background-repeat: repeat-x;

@@ -6,6 +6,7 @@ from django.conf import settings
 from forms import SignupFormExtra
 
 from userena import views as userena_views
+from views import accept_terms_of_use
 
 logout_page = getattr(settings, 'LOGOUT_URL', '/geoq')
 
@@ -24,10 +25,10 @@ urlpatterns = patterns('',
     # Signup, signin and signout
     # url(r'^signup/$',
     #    point_to_404, name='userena_signup'),
-    # url(r'^signin/$',
-    #     userena_views.signin,
-    #     {'template_name': 'accounts/templates/accounts/signin_form.html'},
-    #     name='userena_signin'),
+    url(r'^signin/$',
+        userena_views.signin,
+        {'template_name': 'accounts/templates/accounts/signin_form.html'},
+        name='userena_signin'),
     # url(r'^signout/$',
     #    userena_views.signout,
     #    {'next_page': logout_page},
@@ -92,6 +93,9 @@ urlpatterns = patterns('',
     #    point_to_404, name='userena_profile_list_paginated'),
     # url(r'^$',
     #    point_to_404, name='userena_profile_list'),
+
+    url(r'^accept_terms_of_use/?$', accept_terms_of_use, name='accept_terms_link'),
+
 
     # If nothing overrides the urls, then load the default with userena.
     url(r'^', include('userena.urls')),

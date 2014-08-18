@@ -18,9 +18,9 @@ class JobKML(ListView):
 
         feature_types = FeatureType.objects.all()
 
-        aoi_count = job.aois.count()
-        aoi_complete = job.complete().count()
-        aoi_work = job.in_work().count()
+        aoi_count = job.total_count()
+        aoi_complete = job.complete_count()
+        aoi_work = job.in_work_count()
 
         description = 'Job #'+str(job.id)+': '+str(job.name)+'\n'+str(job.project.name)+'\n'
 
@@ -49,7 +49,7 @@ class JobKML(ListView):
         output += '    <Style id="geoq_inwork">\n'
         output += '      <LineStyle>\n'
         output += '        <width>4</width>\n'
-        output += '        <color>7f00ffff</color>\n'
+        output += '        <color>7f0186cf</color>\n'
         output += '      </LineStyle>\n'
         output += '      <PolyStyle>\n'
         output += '        <fill>0</fill>\n'
@@ -60,7 +60,7 @@ class JobKML(ListView):
         output += '    <Style id="geoq_complete">\n'
         output += '      <LineStyle>\n'
         output += '        <width>3</width>\n'
-        output += '        <color>7f00ff00</color>\n'
+        output += '        <color>7f0101cf</color>\n'
         output += '      </LineStyle>\n'
         output += '      <PolyStyle>\n'
         output += '        <fill>0</fill>\n'
@@ -71,7 +71,7 @@ class JobKML(ListView):
         output += '    <Style id="geoq_unassigned">\n'
         output += '      <LineStyle>\n'
         output += '        <width>2</width>\n'
-        output += '        <color>7f0000ff</color>\n'
+        output += '        <color>7f00ff00</color>\n'
         output += '      </LineStyle>\n'
         output += '      <PolyStyle>\n'
         output += '        <fill>0</fill>\n'
@@ -149,12 +149,15 @@ class JobKML(ListView):
             date_time_desc = datetime_obj_utc.strftime('%Y-%m-%d %H:%M:%S')
 
             desc = 'Posted by '+analyst_name+' at '+date_time_desc+' Zulu (UTC) in Job #'+job_id
+            #TODO: Add more details
+            #TODO: Add links to linked objects
 
-            kml = str(loc.the_geom.kml)
+            #Simplify polygons to reduce points in complex shapes
+            kml = str(loc.the_geom.simplify(0.0002).kml)
             if '<Polygon><outerBoundaryIs><LinearRing><coordinates>' in kml:
                 add_text = '<altitudeMode>clampToGround</altitudeMode>'
-                kmls = kml.split('<coordinates>')
-                kml = kmls[0] + add_text + '<coordinates>' + kmls[1]
+                kml = kml.replace('<coordinates>', add_text+'<coordinates>')
+                kml = kml.replace('</outerBoundaryIs></Polygon><Polygon><outerBoundaryIs><LinearRing>', '')
 
             output += '    <Placemark><name>'+template_name+'</name>\n'
             output += '      <TimeStamp><when>'+date_time+'</when></TimeStamp>\n'
@@ -175,12 +178,10 @@ class JobKML(ListView):
                 style = 'unassigned'
             aoi_name = "#"+str(aoi.id)+", "+str(aoi.status)+" - Priority:"+str(aoi.priority)
 
-            kml = str(aoi.polygon.kml)
+            kml = str(aoi.polygon.simplify(0.0002).kml)
             if '<Polygon><outerBoundaryIs><LinearRing><coordinates>' in kml:
-                add_text = '<altitudeMode>clampToGround</altitudeMode>'
-                kmls = kml.split('<coordinates>')
-                kml = '<LinearRing><tessellate>1</tessellate>' + add_text + '<coordinates>' + kmls[1]
-                kml = kml.replace('</outerBoundaryIs></Polygon></MultiGeometry>', '')
+                add_text = '<tessellate>1</tessellate><altitudeMode>clampToGround</altitudeMode>'
+                kml = kml.replace('<coordinates>', add_text+'<coordinates>')
 
             output += '    <Placemark>\n'
             output += '      <name>'+aoi_name+'</name>\n'
@@ -205,9 +206,9 @@ class JobKMLNetworkLink(ListView):
 
         url = request.build_absolute_uri('/geoq/api/job/'+id+'.kml')
 
-        aoi_count = job.aois.count()
-        aoi_complete = job.complete().count()
-        aoi_work = job.in_work().count()
+        aoi_count = job.total_count()
+        aoi_complete = job.complete_count()
+        aoi_work = job.in_work_count()
 
         aoi_comp_pct = int(100 * float(aoi_complete)/float(aoi_count))
         aoi_work_pct = int(100 * float(aoi_work)/float(aoi_count))
