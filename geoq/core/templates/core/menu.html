@@ -4,76 +4,17 @@
 {% load version %}
 
 <script>
-    function getbadges() {
-        var host = "{% gamification_value 'GAMIFICATION_SERVER' %}";
-        var project = "{% gamification_value 'GAMIFICATION_PROJECT' %}";
-        var user = "{{ request.user.username }}";
-
-        var $badge_container = $("#badge-container");
-        if ( user != undefined && user.length > 0 && host && project) {
-            var badgeUrl = host + '/users/' + user + '/projects/' + project + '/badges?format=json';
-
-            var proxiedURL = "/geoq/proxy/" + encodeURI(badgeUrl);
-            proxiedURL = proxiedURL.replace(/%253D/g,'%3D');
-
-            $.ajax({
-                type: 'GET',
-                url: proxiedURL,
-                dataType: 'json',
-                timeout: 3000,
-                success: function (badge_info, textstatus, jqXHR) {
-                    if ($badge_container && badge_info.profile && badge_info.profile.length ) {
-                        var maxBadgesToShow = 6;
-                        if (badge_info.profile.length < maxBadgesToShow) maxBadgesToShow = badge_info.profile.length;
-                        for (var i = 0; i < maxBadgesToShow; i++ ) {
-                            var badge = badge_info.profile[i];
-                            var $span = $('<span>')
-                                    .attr('id','badge_header_'+ _.str.dasherize(badge.projectbadge__name))
-                                    .attr('title',badge.projectbadge__name)
-                                    .popover({
-                                        title:badge.projectbadge__name + " ("+badge.count+")",
-                                        content:badge.projectbadge__description,
-                                        trigger:'hover',
-                                        placement:'bottom'
-                                    })
-                                    .addClass('badge_holder')
-                                    .appendTo($badge_container);
-
-                            var proxiedURL = "/geoq/proxy/" + encodeURI(badge.projectbadge__badge__icon);
-                            proxiedURL = proxiedURL.replace(/%253D/g,'%3D');
-
-                            $('<img>')
-                                    .attr('src',proxiedURL)
-                                    .appendTo($span);
-                            $('<span>')
-                                    .text(badge.count)
-                                    .appendTo($span);
-                        }
-                        $badge_container
-                            .click(function(){
-                                window.open(host+'/projects/'+project+'/','_blank');
-                            })
-                            .css({cursor:'pointer'});
-
-                        $badge_container.show();
-                    } else {
-                        $badge_container.append("None yet");
-                    }
-                },
-                error: function(xhr, err){
-                    $badge_container.hide();
-                }
-            });
-        } else {
-            $badge_container.hide();
-        }
-    }
-
     $(document).ready(function() {
-        getbadges();
+        if (typeof site_settings!="undefined" && site_settings.gamification && site_settings.gamification.server) {
+            gamification.init({
+                server_url:site_settings.gamification.server,
+                project_names:site_settings.gamification.project,
+                user_name: "{{ request.user.username }}",
+                $badge_container: $('#badge-container')
+            });
+        }
     });
 </script>
-
 
 
 <div class="navbar navbar-fixed-top">
@@ -105,7 +46,6 @@
                                 <li><a href="{% url 'userena_signup' %}?next={{ request.path }}">Sign Up</a></li>
                         {% endif%}
                         <li><a href="#">{% version_date %}</a></li>
-
                     </ul>
                 </div>
                 <div class="nav-collapse">
