@@ -43,7 +43,9 @@
                                 <li><a href="{% url 'userena_signout' %}">Sign Out</a></li>
                         {% else %}
                                 <li><a href="{% url 'userena_signin' %}?next={{ request.path }}">Sign In</a></li>
+                             {% if not prevent_signups %}
                                 <li><a href="{% url 'userena_signup' %}?next={{ request.path }}">Sign Up</a></li>
+                             {% endif %}
                         {% endif%}
                         <li><a href="#">{% version_date %}</a></li>
                     </ul>

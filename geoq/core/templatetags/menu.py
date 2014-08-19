@@ -4,7 +4,7 @@
 
 from django import template
 from geoq.core.menu import menu
-
+from geoq.core.models import Setting
 register = template.Library()
 
 def get_menu(request=None, **kwargs):
@@ -14,6 +14,10 @@ def get_menu(request=None, **kwargs):
     menu_dict = kwargs
     menu_dict['menu_items'] = menu(request_path=request_path, request_user=request_user)
     menu_dict['request'] = request
+
+    prevent_obj = Setting.objects.filter(name='prevent_signups')
+    if len(prevent_obj):
+        menu_dict['prevent_signups'] = 'true'
 
     return menu_dict
 
