@@ -58,7 +58,15 @@ gamification.badgeDataError = function() {
 gamification.badgeDataReturned = function (badge_info) {
     if (badge_info && badge_info.profile && badge_info.profile.length ) {
 
-        gamification.$badge_container.append('<span class="muted" style="vertical-align: super;">Badges:</span>');
+        var points = badge_info.points || 0;
+        var badge_text = 'Badges: ';
+        if (points) badge_text = 'Points: <b>'+points+'</b>, '+badge_text;
+
+        $('<span>')
+            .addClass('muted')
+            .css({verticalAlign: 'super'})
+            .html(badge_text)
+            .appendTo(gamification.$badge_container);
 
         var allBadges = badge_info.profile;
         allBadges = _.sortBy(allBadges,function(b){return -b.count}); //Reverse count order
