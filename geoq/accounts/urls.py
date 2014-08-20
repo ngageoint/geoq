@@ -23,8 +23,10 @@ urlpatterns = patterns('',
     #    name='userena_signup_complete'),
 
     # Signup, signin and signout
-    # url(r'^signup/$',
-    #    point_to_404, name='userena_signup'),
+    url(r'^signup/$',
+        userena_views.signin,
+        {'template_name': 'accounts/templates/accounts/signup_form.html'},
+        name='userena_signup'),
     url(r'^signin/$',
         userena_views.signin,
         {'template_name': 'accounts/templates/accounts/signin_form.html'},

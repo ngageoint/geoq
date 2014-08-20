@@ -1,9 +1,29 @@
-{% extends 'userena/base_userena.html' %}
+{% extends "core/base.html" %}
 {% load i18n %}
 
-{% block title %}{% trans "Signup" %}{% endblock %}
+{% load url from future %}
+
+{% block title %}GeoQ: {% trans "Signup" %}{% endblock %}
 
 {% block content %}
+    {% if 'prevent_signups' in settings and 'true' in settings.prevent_signups  %}
+
+<h1>Signups are currently disallowed by the administrator</h1>
+
+    {% else %}
+
+<script>
+    $(document).ready(function(){
+        if (site_settings && site_settings.user_agreement_text && site_settings.user_agreement_text.text) {
+            var text = "<h1>Terms of Use</h1>"+site_settings.user_agreement_text.text;
+            $('#user_agreement_text')
+                .html(text)
+                .css('display','block');
+        }
+    });
+</script>
+
+<div id="user_agreement_text" style="display: none"></div>
 <form action="" method="post">
   {% csrf_token %}
   <fieldset>
@@ -18,7 +38,7 @@
     </p>
     {% else %}
     <p>
-    {{ field.label_tag }} 
+    {{ field.label_tag }}
     {{ field }}
     </p>
     {% endif %}
@@ -26,4 +46,7 @@
   </fieldset>
   <input type="submit" value="{% trans "Signup"%}" />
 </form>
+
+    {% endif %}
+
 {% endblock %}
