@@ -78,6 +78,8 @@ gamification.badgeDataReturned = function (badge_info) {
             var count = badge.count || 1;
             var description = badge.projectbadge__description || "";
             var icon_url = badge.projectbadge__badge__icon || "";
+            var project = badge.projectbadge__project__name || "";
+            if (project) description = "<b>"+_.str.titleize(project)+":</b> " + description;
 
             var image_url = encodeURI(icon_url);
             image_url = gamification.proxify(image_url);
@@ -86,6 +88,7 @@ gamification.badgeDataReturned = function (badge_info) {
                 .attr({id:'badge_header_'+ _.str.dasherize(name), title:name})
                 .addClass('badge_holder')
                 .popover({
+                    html:true,
                     title:name + " ("+count+")",
                     content:description,
                     trigger:'hover',
