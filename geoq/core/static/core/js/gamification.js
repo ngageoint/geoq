@@ -9,7 +9,7 @@ gamification.user_name = "";
 gamification.proxy_url = "/geoq/proxy/";
 gamification.$badge_container = null;
 gamification.no_badges_message = "No badges yet";
-gamification.maxBadgesToShow = 6;
+gamification.maxBadgesToShow = 8;
 
 gamification.init = function(options){
     gamification.server_url = options.server_url;
@@ -58,37 +58,40 @@ gamification.badgeDataError = function() {
 gamification.badgeDataReturned = function (badge_info) {
     if (badge_info && badge_info.profile && badge_info.profile.length ) {
 
+        gamification.$badge_container.append('<span class="muted" style="vertical-align: super;">Badges:</span>');
+
         var allBadges = badge_info.profile;
         allBadges = _.sortBy(allBadges,function(b){return -b.count}); //Reverse count order
 
-        var badgesToShow = _.first(allBadges,gamification.maxBadgesToShow);
+        var badgesToShow = _.first(allBadges,gamification.maxBadgesToShow); //Only grab the first 6
 
         _.each(badgesToShow,function(badge){
-            var name = badge.projectbadge__name;
-            var count = badge.count;
-            var description = badge.projectbadge__description;
-            var icon_url = badge.projectbadge__badge__icon;
-            var $span = $('<span>')
-                    .attr('id','badge_header_'+ _.str.dasherize(name))
-                    .attr('title',name)
-                    .popover({
-                        title:name + " ("+count+")",
-                        content:description,
-                        trigger:'hover',
-                        placement:'bottom'
-                    })
-                    .addClass('badge_holder')
-                    .appendTo(gamification.$badge_container);
+            var name = badge.projectbadge__name || "Badge";
+            var count = badge.count || 1;
+            var description = badge.projectbadge__description || "";
+            var icon_url = badge.projectbadge__badge__icon || "";
 
             var image_url = encodeURI(icon_url);
             image_url = gamification.proxify(image_url);
 
+            var $span = $('<span>')
+                .attr({id:'badge_header_'+ _.str.dasherize(name), title:name})
+                .addClass('badge_holder')
+                .popover({
+                    title:name + " ("+count+")",
+                    content:description,
+                    trigger:'hover',
+                    placement:'bottom'
+                })
+                .appendTo(gamification.$badge_container);
+
             $('<img>')
-                    .attr('src',image_url)
-                    .appendTo($span);
+                .attr({src:image_url})
+                .appendTo($span);
+
             $('<span>')
-                    .text(count)
-                    .appendTo($span);
+                .text(count)
+                .appendTo($span);
         });
 
         gamification.$badge_container

@@ -6,12 +6,45 @@
   line-height: 1.5em;
 }
 
+#badge-container {
+  line-height: 1em;
+  margin-top: 4px;
+}
+
 .badge_holder {
   margin-left: 5px;
+  position:relative;
+  height:28px;
+  width:28px;
+  display: inline-block;
+  line-height: 1.5em;
 
   img {
-    width: 20px;
+    position: absolute;
+    top: 0px;
+    left: 0px;
+    height: 28px;
+    width: 28px;
+    vertical-align: middle;
   }
+
+  span {
+    position: absolute;
+    top: 0px;
+    left: 0px;
+    /* background-color: gray; */
+    opacity: 0.8;
+    border-radius: 4px;
+    font-weight: bold;
+    margin: 4px;
+    color: white;
+    width: 20px;
+    height: 20px;
+    text-align: center;
+    vertical-align: middle;
+    text-shadow: 2px 2px black;
+  }
+
 }
 
 .leaflet-popup-content {
