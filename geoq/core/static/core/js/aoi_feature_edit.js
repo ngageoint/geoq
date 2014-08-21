@@ -5,6 +5,14 @@
 
 //TODO: Have a view-only mode
 
+// Feature Styles can be:
+//            style_obj.color // FillColor
+//            style_obj.weight // Border Weight
+//            style_obj.mapTextStyle // "red_overlay"
+//            style_obj.opacity // Opacity
+//            style_obj.iconType // "circle"
+//            feature.properties.mapText = "Whatever"
+
 var aoi_feature_edit = {};
 aoi_feature_edit.layers = {features:[], base:[], overlays:[]};
 
@@ -36,7 +44,7 @@ aoi_feature_edit.init = function () {
 
     //Start building feature icons
     _.each(aoi_feature_edit.feature_types, function (ftype) {
-        // if this is a point, create icon for it first
+        // if this is a point, create default icons for it first (they might be later modified in pointToLayer)
         if (ftype.type == 'Point' && ftype.style) {
             aoi_feature_edit.icon_style[ftype.id] = ftype.style || {"type":"image"};
             if (ftype.style.type == 'maki') {
@@ -71,6 +79,7 @@ aoi_feature_edit.init = function () {
                 leaflet_layer_control.show_feature_info(e.layer.feature);
             }
         });
+        //TODO: Add some mouseover events for certain features
 
         featureLayer.name = ftype.name;
         aoi_feature_edit.featureLayers[ftype.id] = featureLayer;
@@ -85,6 +94,7 @@ aoi_feature_edit.init = function () {
     //Close Alert field if shown
     setTimeout(function(){$('div.alert').css({display:'none'});},3000);
 
+    //Open Terms of Use prompt if necessary
     $(document).ready(aoi_feature_edit.promptForUserAcceptance);
 };
 
@@ -120,15 +130,50 @@ aoi_feature_edit.promptForUserAcceptance = function(){
 
                 }]
             });
-
-
         }
-
     }
 };
-
-aoi_feature_edit.featureLayer_pointToLayer = function (feature, latlng, featureLayer, featureType) {
+aoi_feature_edit.buildCustomIcon = function (feature, featureType) {
+    feature.properties = feature.properties || {};
     var featureTypeID = feature.properties.template;
+    var style_obj = featureType.style;
+    var icon;
+
+    //The feature has mapText, so draw a rectangle to hold the text
+    if (feature.properties.mapText) {
+        var text = feature.properties.mapText;
+        var textLen = text.length;
+        var mapTextSize = [120, 40];
+        if (textLen < 25) {
+            mapTextSize = [textLen*8,18];
+        } else if (textLen < 50) {
+            mapTextSize = [200,35];
+        } else if (textLen < 75) {
+            mapTextSize = [200,50];
+        } else {
+            mapTextSize = [240,65];
+        }
+
+        //TODO: Make sure it works with Maki icons
+        if (style_obj.iconUrl) {
+            text = "<img src='"+style_obj.iconUrl+"' style='height:18px;float:left;'/> "+text;
+            //NOTE: These will be recolored later if necessary in featureLayer_pointToLayer
+        }
+        var className = 'text_marker_background ' + (style_obj.mapTextStyle || 'blue_overlay');
+        icon = L.divIcon({
+            className: className,
+            html: text,
+            iconSize: mapTextSize
+        });
+        icon._setIconStyles(style_obj);  //TODO: Verify other fill styles are applied
+
+    } else {
+        var iconLoader = aoi_feature_edit.icons[featureTypeID];
+        icon = new iconLoader(style_obj);
+    }
+    return icon;
+};
+aoi_feature_edit.featureLayer_pointToLayer = function (feature, latlng, featureLayer, featureType) {
     var style_obj = featureType.style;
     var iconW,iconH,iconAnchorW,iconAnchorH;
 
@@ -150,45 +195,43 @@ aoi_feature_edit.featureLayer_pointToLayer = function (feature, latlng, featureL
         }
     }
 
-    var icon;
-    if (feature.properties.mapText) {
-        //TODO: Move this to a convenience function
-        var text = feature.properties.mapText;
-        var textLen = text.length;
-        var mapTextSize = [120, 40];
-        if (textLen < 25) {
-            mapTextSize = [textLen*8,18];
-        } else if (textLen < 50) {
-            mapTextSize = [200,35];
-        } else if (textLen < 75) {
-            mapTextSize = [200,50];
-        } else {
-            mapTextSize = [240,65];
-        }
+    var icon = aoi_feature_edit.buildCustomIcon(feature, featureType);
+    var marker;
 
-
-        icon = L.divIcon({
-            className: style_obj.mapTextStyle || 'text_marker_bg_blue',  //TODO: Add multiple style types
-            html: text,
-            iconSize: mapTextSize
+//  TODO: Verify support for circle markers
+    if (style_obj.iconType=='circle') {
+        marker = new L.CircleMarker(latlng, {
+            radius: style_obj.iconSize || style_obj.iconWidth || style_obj.iconHeight || 9,
+            fillColor: style_obj.color,
+            color: "#000",
+            weight: style_obj.weight || 2,
+            opacity: 1,
+            fillOpacity: style_obj.opacity || 0.8
         });
-
     } else {
-        icon = new aoi_feature_edit.icons[featureTypeID](style_obj);
+        marker = new L.Marker(latlng, {
+            icon: icon
+        });
     }
-    var marker = new L.Marker(latlng, {
-        icon: icon
-    });
+
     if (style_obj.color) {
         marker.on('add',function(evt){
-            marker = evt.target
+            marker = evt.target;
             var $icon = $(marker._icon);
-            aoi_feature_edit.colorIconFromStyle($icon,style_obj);
+
+            if ($icon.is('div')) {
+                $icon = $icon.find('img');
+            }
+
+            if ($icon.is('img')) {
+                aoi_feature_edit.colorIconFromStyle($icon,style_obj);
+            }
         });
     }
     return marker;
 };
 aoi_feature_edit.colorIconFromStyle = function ($icon,style_obj){
+    //TODO: Rebuild tancolor API to be more 'flowy'
     var color = maths.getRGBComponents(style_obj.color);
 
     var color_options = {
@@ -450,9 +493,6 @@ aoi_feature_edit.map_init = function (map, bounds) {
         } else if (ftype.type == 'Point') {
             var point = aoi_feature_edit.createPointOptions(ftype);
             if (point) aoi_feature_edit.all_markers.push(point);
-        } else if (ftype.type == 'Text') {
-            //TODO: Create an icon and renderer for text objects
-
         } else {
             log.error("Item should be drawn, but not a Polygon or Point object.")
         }
@@ -460,8 +500,15 @@ aoi_feature_edit.map_init = function (map, bounds) {
         var featuretype = ftype.type;
         var featureCollection = aoi_feature_edit.createFeatureCollection(tnum);
 
+        //Split all features into the proper feature type layers
         _.each(aoi_feature_edit.job_features_geojson.features, function (feature) {
             if (feature.properties.template == tnum && feature.geometry.type == featuretype) {
+
+                //Add in any default properties from the feature type
+                feature.properties = feature.properties || {};
+                if (ftype.properties) feature.properties = $.extend(ftype.properties,feature.properties);
+
+                //Associate this feature with the feature type layer
                 featureCollection.features.push(feature);
             }
         });
@@ -1007,6 +1054,8 @@ aoi_feature_edit.createPolygonOptions = function (opts) {
     options.showArea = true;
     options.id = opts.id;
 
+    //TODO: Show mapText if it exists, maybe add a DivIcon?
+
     return options;
 };
 
@@ -1031,17 +1080,6 @@ aoi_feature_edit.createPointOptions = function (opts) {
         }
         options.icon = new icon_obj(style_obj);
     }
-
-//  TODO: Add support for circle markers
-//            marker = new L.CircleMarker(latlng, {
-//                radius: style_obj.iconSize || style_obj.iconWidth || style_obj.iconHeight || 9,
-//                fillColor: style_obj.color,
-//                color: "#000",
-//                weight: style_obj.weight || 1,
-//                opacity: 1,
-//                fillOpacity: 0.8,
-//            });
-
 
     options.repeatMode = true;
     options.id = opts.id;
