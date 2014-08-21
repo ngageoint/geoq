@@ -91,7 +91,7 @@
                 {{ object.description }}
             </p>
 
-            <div class="row body" style="height:250px; margin-top:25px">
+            <div class="row body" style="margin-top:25px">
                 {% if 'accounts.add_job' in request.base_perms %}
                 <div class="btn-group pull-right">
                     <a class="btn btn-mini" href="{{ object.get_update_url }}">
