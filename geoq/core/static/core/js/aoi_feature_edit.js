@@ -150,7 +150,32 @@ aoi_feature_edit.featureLayer_pointToLayer = function (feature, latlng, featureL
         }
     }
 
-    var icon = new aoi_feature_edit.icons[featureTypeID](style_obj);
+    var icon;
+    if (feature.properties.mapText) {
+        //TODO: Move this to a convenience function
+        var text = feature.properties.mapText;
+        var textLen = text.length;
+        var mapTextSize = [120, 40];
+        if (textLen < 25) {
+            mapTextSize = [textLen*8,18];
+        } else if (textLen < 50) {
+            mapTextSize = [200,35];
+        } else if (textLen < 75) {
+            mapTextSize = [200,50];
+        } else {
+            mapTextSize = [240,65];
+        }
+
+
+        icon = L.divIcon({
+            className: style_obj.mapTextStyle || 'text_marker_bg_blue',  //TODO: Add multiple style types
+            html: text,
+            iconSize: mapTextSize
+        });
+
+    } else {
+        icon = new aoi_feature_edit.icons[featureTypeID](style_obj);
+    }
     var marker = new L.Marker(latlng, {
         icon: icon
     });

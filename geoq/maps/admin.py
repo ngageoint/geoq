@@ -49,8 +49,11 @@ class MapLayerAdmin(reversion.VersionAdmin, admin.ModelAdmin):
 
 
 class FeatureAdmin(reversion.VersionAdmin, admin.OSMGeoAdmin):
-    list_display = ['template', 'aoi', 'project', 'analyst', 'created_at']
+    list_display = ['template', 'status', 'aoi', 'job', 'analyst', 'created_at']
+    list_filter = ['template', 'status', 'analyst',  'job']
 
+    fields = ('template',  'status', 'properties')
+    readonly_fields = ('analyst', 'aoi', 'created_at', 'updated_at')
 
 class FeatureTypeAdmin(reversion.VersionAdmin, admin.ModelAdmin):
     list_display = ['name', 'category', 'type', 'order']

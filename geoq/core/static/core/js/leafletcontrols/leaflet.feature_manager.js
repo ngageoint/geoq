@@ -61,10 +61,10 @@ feature_manager.updateStatusButtonCounts=_.throttle(function(){
 ,500);
 
 feature_manager.addFeatureToLayer=function(layer,feature,deleteInstead){
-    //This is only for adding 'features', not for JOSN or other data that is handled through leaflet_helper.parsers.js
+    //This is only for adding 'features', not for JSON or other data that is handled through leaflet_helper.parsers.js
 
     //TODO: Build a tracking object that looks for dupes, can handle new adds and removes, and can change style of those selected
-    if (layer && feature && layer.addData) {
+    if (layer && feature && feature.features && layer.addData) {
         layer.addData(feature);
     } else {
         log.error("Tried to add a feature to a layer that doesn't seem to support it.");

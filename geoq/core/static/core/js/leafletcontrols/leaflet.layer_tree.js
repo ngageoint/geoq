@@ -925,7 +925,7 @@ leaflet_layer_control.drawEachLayer=function(data,map,doNotMoveToTop){
                 //It's an object with layer info, not yet built - build the layer from the config data
                 var name = layer.name;
                 if (!name && layer.options) name = layer.options.name;
-                log.info("Creating a map layer " + name+ " URL: " + layer.url);
+//                log.info("Creating a map layer " + name+ " URL: " + layer.url);
 
                 var newLayer = leaflet_helper.layer_conversion(layer, map);
                 if (newLayer) {
