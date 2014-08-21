@@ -1,4 +1,3 @@
-//TODO: Have multiple projects
 //TODO: Show Leaderboard
 //TODO: Save badge json to user model
 
@@ -79,11 +78,18 @@ gamification.badgeDataReturned = function (badge_info) {
             var description = badge.projectbadge__description || "";
             var icon_url = badge.projectbadge__badge__icon || "";
             var project = badge.projectbadge__project__name || "";
-            if (project) description = "<b>"+_.str.titleize(project)+":</b> " + description;
+            if (project) {
+                description = "<b>"+_.str.titleize(project)+":</b> " + description;
+            } else {
+                project = gamification.project_names;
+            }
 
             var image_url = encodeURI(icon_url);
             image_url = gamification.proxify(image_url);
 
+            if (image_url) {
+                description = "<img src='"+image_url+"' style='width:64px;float:left'/> "+description;
+            }
             var $span = $('<span>')
                 .attr({id:'badge_header_'+ _.str.dasherize(name), title:name})
                 .addClass('badge_holder')
@@ -96,20 +102,23 @@ gamification.badgeDataReturned = function (badge_info) {
                 })
                 .appendTo(gamification.$badge_container);
 
+            var page_url = gamification.server_url+'/projects/'+project+'/';
             $('<img>')
                 .attr({src:image_url})
+                .click(function(){
+                    window.open(page_url,'_blank');
+                })
+                .css({cursor:'pointer'})
                 .appendTo($span);
 
             $('<span>')
                 .text(count)
+                .click(function(){
+                    window.open(page_url,'_blank');
+                })
+                .css({cursor:'pointer'})
                 .appendTo($span);
         });
-
-        gamification.$badge_container
-            .click(function(){
-                window.open(gamification.server_url+'/projects/'+gamification.project_names+'/','_blank');
-            })
-            .css({cursor:'pointer'});
 
         gamification.$badge_container.show();
     } else {
