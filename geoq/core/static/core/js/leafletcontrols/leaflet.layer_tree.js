@@ -203,8 +203,8 @@ leaflet_layer_control.addWorkCellInfo = function($accordion) {
                     style  : 'inherit',
                     tooltip: 'Click to change the status of this cell'
                 });
-
         }
+
         if (index == 'priority') {
             skipIt = true;
             var $status = $('<div>')
@@ -220,8 +220,8 @@ leaflet_layer_control.addWorkCellInfo = function($accordion) {
                     style  : 'inherit',
                     tooltip: 'Click to change the priority of this cell'
                 });
-
         }
+
         if (!skipIt){
             var html = '<b>'+_.str.capitalize(index)+'</b>: '+_.str.capitalize(value);
             $('<div>')
@@ -335,6 +335,33 @@ leaflet_layer_control.show_feature_info = function (feature) {
         if (index == 'feature_note') {
             feature_note = value;
             skipIt = true;
+        } else if (index == 'mapText') {
+            skipIt = true;
+            var $status = $('<div>')
+                .html('<b>Map Text</b>: ')
+                .appendTo($content);
+            $('<span class="editable" id="mapText" style="display: inline">'+value+'</span>')
+                .appendTo($status)
+                .editable(editableUrl, {
+                    select:true,
+                    tooltip: 'Enter text if it should be shown as a map overlay'
+                });
+        } else if (index == 'status') {
+            skipIt = true;
+            var $status = $('<div>')
+                .addClass('status_block')
+                .html('<b>Status</b>: ')
+                .appendTo($content);
+            $('<span class="editable" id="status" style="display: inline">'+_.str.capitalize(value)+'</span>')
+                .appendTo($status)
+                .editable(editableUrl, {
+                    data   : " {'Unassigned':'Unassigned','In work':'In work', 'In review':'In review', 'Completed':'Completed'}",
+                    type   : 'select',
+                    submit : 'OK',
+                    style  : 'inherit',
+                    tooltip: 'Click to change the status of this cell'
+                });
+
         } else if (index == 'linked_items') {
             skipIt = true;
             if (_.isArray(value) && value.length) {

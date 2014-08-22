@@ -402,10 +402,10 @@ class FeatureType(models.Model):
 
     name = models.CharField(max_length=200)
     type = models.CharField(choices=FEATURE_TYPES, max_length=25)
-    category = models.CharField(max_length=25, default="", blank=True, null=True)
+    category = models.CharField(max_length=25, default="", blank=True, null=True, help_text="An optional group to make finding this feature type easier. e.g. 'FEMA'")
     order = models.IntegerField(default=0, null=True, blank=True, help_text='Optionally specify the order features should appear on the edit menu. Lower numbers appear sooner.')
-    properties = JSONField(load_kwargs={}, blank=True, null=True)
-    style = JSONField(load_kwargs={}, blank=True, null=True)
+    properties = JSONField(load_kwargs={}, blank=True, null=True, help_text='Metadata added to properties of individual features. Should be in JSON format, e.g. {"severity":"high", "mapText":"Text to Show instead of icon"}')
+    style = JSONField(load_kwargs={}, blank=True, null=True, help_text='Any special CSS style that features of this types should have. e.g. {"opacity":0.7, "color":"red", "backgroundColor":"white", "mapTextStyle":"white_overlay", "iconUrl":"path/to/icon.png"}')
 
     def to_json(self):
         return json.dumps(dict(id=self.id,
