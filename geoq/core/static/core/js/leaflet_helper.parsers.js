@@ -588,7 +588,7 @@ leaflet_helper.parsers.addFEMAImageEventsData = function (result, map, outputLay
             var popupContent = leaflet_layer_control.parsers.textIfExists({name: display, title:"Image", header:true, linkit:attributes.ThumbnailURL});
             popupContent += leaflet_layer_control.parsers.textIfExists({name: photo_date, title:"Photo Date", datify:"calendar, fromnow"});
             popupContent += "<a href='" + attributes.ImageURL + "' target='_new'><img style='width:150px' src='" + attributes.ThumbnailURL + "' /></a><br/>";
-            popupContent += leaflet_layer_control.parsers.textIfExists({name: altitude, title:"Altitude", suffix:" ft"});
+            popupContent += leaflet_layer_control.parsers.textIfExists({name: altitude, title:"Altitude", suffix:" meters"});
             popupContent += leaflet_layer_control.parsers.textIfExists({name: image_type, title:"Collection Type"});
             popupContent += leaflet_helper.addLinksToPopup(outputLayer.name, id, true, false);
 
