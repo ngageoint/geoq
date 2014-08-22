@@ -153,6 +153,7 @@ class Job(GeoQBase, Assignment):
     GRID_SERVICE_CHOICES = [(choice, choice) for choice in GRID_SERVICE_VALUES]
 
     analysts = models.ManyToManyField(User, blank=True, null=True, related_name="analysts")
+    teams = models.ManyToManyField(Group, blank=True, null=True, related_name="teams")
     reviewers = models.ManyToManyField(User, blank=True, null=True, related_name="reviewers")
     progress = models.SmallIntegerField(max_length=2, blank=True, null=True)
     project = models.ForeignKey(Project, related_name="project")

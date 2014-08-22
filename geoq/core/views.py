@@ -457,6 +457,7 @@ class AssignWorkcellsView(TemplateView):
             keyfield = 'username' if utype == 'user' else 'name'
             q = Q(**{"%s__contains" % keyfield: id})
             user_or_group = Type.objects.filter(q)
+            import pdb; pdb.set_trace()
             if user_or_group.count() > 0:
                 aois = AOI.objects.filter(id__in=workcells)
                 for aoi in aois:
@@ -556,8 +557,9 @@ def display_help(request):
     return render(request, 'core/geoq_help.html')
 
 @permission_required('core.assign_workcells', return_403=True)
-def list_users(request):
-    usernames = User.objects.all().values('username').order_by('username')
+def list_users(request, job_pk):
+    job = get_object_or_404(Job, pk=job_pk)
+    usernames = job.analysts.all().values('username').order_by('username')
     users = []
     for u in usernames:
         users.append(u['username'])
@@ -565,8 +567,9 @@ def list_users(request):
     return HttpResponse(json.dumps(users), mimetype="application/json")
 
 @permission_required('core.assign_workcells', return_403=True)
-def list_groups(request):
-    groupnames = Group.objects.all().values('name').order_by('name')
+def list_groups(request, job_pk):
+    job = get_object_or_404(Job, pk=job_pk)
+    groupnames = job.teams.all().values('name').order_by('name')
     groups = []
     for g in groupnames:
         groups.append(g['name'])
