@@ -4,7 +4,7 @@
 
 import json
 
-from django.contrib.auth.models import User
+from django.contrib.auth.models import User, Group
 from django.contrib.gis.db import models
 from django.contrib.gis.geos import MultiPolygon, Polygon
 from django.contrib.contenttypes import generic
@@ -19,6 +19,8 @@ from django.db.models import Q
 TRUE_FALSE = [(0, 'False'), (1, 'True')]
 STATUS_VALUES_LIST = ['Unassigned', 'Assigned', 'In work', 'Awaiting review', 'In review', 'Completed']
 
+class AssigneeType:
+    USER, GROUP = range(1,3)
 
 class Setting(models.Model):
     """
@@ -308,7 +310,7 @@ class AOI(GeoQBase, Assignment):
 
     class Meta:
         permissions = (
-            ('assign_aoi','Assign AOI'),('certify_aoi','Certify AOI'),
+            ('assign_workcells','Assign Workcells'),('certify_workcells','Certify Workcells'),
         )
 
     def __unicode__(self):
@@ -318,6 +320,17 @@ class AOI(GeoQBase, Assignment):
     @property
     def log(self):
         return Comment.objects.filter(aoi=self).order_by('created_at')
+
+    @property
+    def assignee_name(self):
+        if self.assignee_id is None:
+            return 'Unknown'
+        else:
+            if self.assignee_type_id == AssigneeType.USER:
+                return User.objects.get(id=self.assignee_id).username
+            else:
+                return Group.objects.get(id=self.assignee_id).name
+
 
     #def save(self):
     # if analyst or reviewer updated, then create policy to give them permission to edit this object.....
@@ -339,7 +352,8 @@ class AOI(GeoQBase, Assignment):
         geojson["properties"] = dict(
             id=self.id,
             status=self.status,
-            analyst=(self.analyst.username if self.analyst is not None else 'Unassigned'),
+            analyst=(self.analyst.username if self.analyst is not None else 'None'),
+            assignee=self.assignee_name,
             priority=self.priority,
             absolute_url=reverse('aoi-work', args=[self.id]),
             delete_url=reverse('aoi-deleter', args=[self.id]))
