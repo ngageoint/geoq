@@ -187,8 +187,7 @@ leaflet_layer_control.addWorkCellInfo = function($accordion) {
         if (index == 'workcell_note') {
             workcell_note = value;
             skipIt = true;
-        }
-        if (index == 'status') {
+        } else if (index == 'status') {
             skipIt = true;
             var $status = $('<div>')
                 .addClass('status_block')
@@ -203,9 +202,7 @@ leaflet_layer_control.addWorkCellInfo = function($accordion) {
                     style  : 'inherit',
                     tooltip: 'Click to change the status of this cell'
                 });
-        }
-
-        if (index == 'priority') {
+        } else if (index == 'priority') {
             skipIt = true;
             var $status = $('<div>')
                 .addClass('status_block')
@@ -317,6 +314,19 @@ leaflet_layer_control.addWorkCellInfo = function($accordion) {
         .appendTo($li24);
 
 };
+leaflet_layer_control.removePythonDateTime = function(value) {
+    var isUTC = _.str.endsWith(value,"UTC");
+    if (isUTC) {
+        var newValue = value.substr(0,value.length-3)+"+0000";
+        var tryMoment = moment(newValue);
+        if (tryMoment && tryMoment.isValid()){
+            var cal = tryMoment.calendar();
+            var dtg = tryMoment.format('YYYY-MM-DD HH:mm');
+            value = "<span title='"+dtg+"'>"+cal+"</span>";
+        }
+    }
+    return value;
+};
 leaflet_layer_control.show_feature_info = function (feature) {
 
     var $content = leaflet_layer_control.$feature_info;
@@ -416,6 +426,8 @@ leaflet_layer_control.show_feature_info = function (feature) {
                         .appendTo($status);
                 });
             }
+        } else {
+            value = leaflet_layer_control.removePythonDateTime(value);
         }
 
         if (!skipIt && _.isString(value)){
