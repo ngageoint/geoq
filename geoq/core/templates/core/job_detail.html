@@ -204,7 +204,7 @@
                         {% if 'accounts.add_job' in request.base_perms %}
                         <li><a href="{% url 'job-prioritize-workcells' object.id %}">Prioritize Workcells</a></li>
                         {% endif %}
-                        {% if 'core.assign_aoi' in request.base_perms %}
+                        {% if 'core.assign_workcells' in request.base_perms %}
                         <li><a href="{% url 'job-assign-workcells' object.id%}">Assign Workcells</a></li>
                         {% endif %}
                         {% if 'accounts.delete_job' in request.base_perms %}
