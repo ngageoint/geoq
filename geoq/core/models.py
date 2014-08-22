@@ -256,7 +256,6 @@ class Job(GeoQBase, Assignment):
     def total_count(self):
         return self.aois.count()
 
-
     def geoJSON(self, as_json=True):
         """
         Returns geoJSON of the feature.

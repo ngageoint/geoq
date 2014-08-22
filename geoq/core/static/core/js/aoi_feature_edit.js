@@ -165,7 +165,6 @@ aoi_feature_edit.buildCustomIcon = function (feature, featureType) {
             html: text,
             iconSize: mapTextSize
         });
-        icon._setIconStyles(style_obj);  //TODO: Verify other fill styles are applied
 
     } else {
         var iconLoader = aoi_feature_edit.icons[featureTypeID];
@@ -214,13 +213,15 @@ aoi_feature_edit.featureLayer_pointToLayer = function (feature, latlng, featureL
         });
     }
 
-    if (style_obj.color) {
+    if (style_obj.color || style_obj.backgroundColor) {
         marker.on('add',function(evt){
             marker = evt.target;
             var $icon = $(marker._icon);
 
             if ($icon.is('div')) {
-                $icon = $icon.find('img');
+                $icon.css(style_obj);  //Apply any color styles to the div for mapText items
+
+                $icon = $icon.find('img'); //Only apply icon styles to images
             }
 
             if ($icon.is('img')) {
