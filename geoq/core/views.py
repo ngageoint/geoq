@@ -556,8 +556,9 @@ def display_help(request):
     return render(request, 'core/geoq_help.html')
 
 @permission_required('core.assign_workcells', return_403=True)
-def list_users(request):
-    usernames = User.objects.all().values('username').order_by('username')
+def list_users(request, job_pk):
+    job = get_object_or_404(Job, pk=job_pk)
+    usernames = job.analysts.all().values('username').order_by('username')
     users = []
     for u in usernames:
         users.append(u['username'])
@@ -565,36 +566,14 @@ def list_users(request):
     return HttpResponse(json.dumps(users), mimetype="application/json")
 
 @permission_required('core.assign_workcells', return_403=True)
-def list_groups(request):
-    groupnames = Group.objects.all().values('name').order_by('name')
+def list_groups(request, job_pk):
+    job = get_object_or_404(Job, pk=job_pk)
+    groupnames = job.teams.all().values('name').order_by('name')
     groups = []
     for g in groupnames:
         groups.append(g['name'])
 
     return HttpResponse(json.dumps(groups), mimetype="application/json")
-
-@permission_required('core.assign_workcells', return_403=True)
-def assign_workcell(request, *args, **kwargs):
-    job_pk = kwargs.get('job_pk')
-    type = request.POST.get('type')
-    id = request.POST.get('id')
-    workcells = request.POST.get('workcells')
-
-    if type and id and workcells:
-        Type = User if type == 'user' else Group
-        keyfield = 'username' if type == 'user' else 'name'
-        q = Q(**{"%s__contains" % keyfield: id})
-        user_or_group = Type.objects.filter(q)
-        if user_or_group:
-            aois = AOI.objects.filter(id__in=workcells)
-            for aoi in aois:
-                aoi.assignee_type_id = 1 if type == 'user' else 2
-                aoi.assignee_id = user_or_group.get(0).id
-                aoi.save()
-
-        return HttpResponse('{"status":"ok"}', status=200)
-    else:
-        return HttpResponse('{"status":"required field missing"}', status=500)
 
 
 @login_required

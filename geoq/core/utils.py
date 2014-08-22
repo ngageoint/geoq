@@ -40,7 +40,7 @@ def send_assignment_email(user_or_group, job, request):
     subject = "GeoQ Assignment for %s Project" % job.project.name
     work_uri = request.build_absolute_uri(reverse('job-detail', kwargs = {'status': 'Assigned', 'pk': job.id}))
 
-    if (user_or_group is Group):
+    if isinstance(user_or_group, Group):
         user_set = user_or_group.user_set.all().values('username','email')
     else:
         user_set = [{'username':user_or_group.username, 'email':user_or_group.email}]
