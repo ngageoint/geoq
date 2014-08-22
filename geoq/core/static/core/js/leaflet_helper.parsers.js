@@ -1,5 +1,53 @@
 //====================================
 leaflet_helper.constructors = {};
+leaflet_helper.static_root = "/static";
+
+// MIT-licensed code by Benjamin Becquet
+// https://github.com/bbecquet/Leaflet.PolylineDecorator
+L.RotatedMarker = null;
+L.rotatedMarker = null;
+//Set up base icon
+var MapMarker = null;
+
+leaflet_helper.init = function(){
+
+    leaflet_helper.static_root = (typeof aoi_feature_edit!="undefined")?aoi_feature_edit.static_root:"/static";
+
+    L.RotatedMarker = L.Marker.extend({
+      options: { angle: 0 },
+      _setPos: function(pos) {
+        L.Marker.prototype._setPos.call(this, pos);
+        if (L.DomUtil.TRANSFORM) {
+          // use the CSS transform rule if available
+          this._icon.style[L.DomUtil.TRANSFORM] += ' rotate(' + this.options.angle + 'deg)';
+        } else if (L.Browser.ie) {
+          // fallback for IE6, IE7, IE8
+          var rad = this.options.angle * L.LatLng.DEG_TO_RAD,
+          costheta = Math.cos(rad),
+          sintheta = Math.sin(rad);
+          this._icon.style.filter += ' progid:DXImageTransform.Microsoft.Matrix(sizingMethod=\'auto expand\', M11=' +
+            costheta + ', M12=' + (-sintheta) + ', M21=' + sintheta + ', M22=' + costheta + ')';
+        }
+      }
+    });
+    L.rotatedMarker = function(pos, options) {
+        return new L.RotatedMarker(pos, options);
+    };
+    //Set up base icon
+    MapMarker = L.Icon.extend({
+        options: {
+            id: 0,
+            shadowUrl: null,
+            iconAnchor: new L.Point(7, 24),
+            iconSize: new L.Point(15, 24),
+            repeatMode: true,
+            text: 'Social Media Pointer',
+            iconUrl: leaflet_helper.static_root +"/leaflet/images/orange-marker-icon.png"
+        }
+    });
+
+};
+
 leaflet_helper.constructors.identifyParser = function(result, outputLayer){
     //Use GeoJSON as the standard to try if no matches are found
     var parser = L.GeoJSON;
@@ -106,41 +154,6 @@ leaflet_helper.constructors.urlTemplater =function(url, map, layer_json){
     return new_url || url;
 };
 
-// MIT-licensed code by Benjamin Becquet
-// https://github.com/bbecquet/Leaflet.PolylineDecorator
-L.RotatedMarker = L.Marker.extend({
-  options: { angle: 0 },
-  _setPos: function(pos) {
-    L.Marker.prototype._setPos.call(this, pos);
-    if (L.DomUtil.TRANSFORM) {
-      // use the CSS transform rule if available
-      this._icon.style[L.DomUtil.TRANSFORM] += ' rotate(' + this.options.angle + 'deg)';
-    } else if (L.Browser.ie) {
-      // fallback for IE6, IE7, IE8
-      var rad = this.options.angle * L.LatLng.DEG_TO_RAD,
-      costheta = Math.cos(rad),
-      sintheta = Math.sin(rad);
-      this._icon.style.filter += ' progid:DXImageTransform.Microsoft.Matrix(sizingMethod=\'auto expand\', M11=' +
-        costheta + ', M12=' + (-sintheta) + ', M21=' + sintheta + ', M22=' + costheta + ')';
-    }
-  }
-});
-L.rotatedMarker = function(pos, options) {
-    return new L.RotatedMarker(pos, options);
-};
-//Set up base icon
-var MapMarker = L.Icon.extend({
-    options: {
-        id: 0,
-        shadowUrl: null,
-        iconAnchor: new L.Point(7, 24),
-        iconSize: new L.Point(15, 24),
-        repeatMode: true,
-        text: 'Social Media Pointer',
-        iconUrl: "/static/leaflet/images/orange-marker-icon.png"
-    }
-});
-
 leaflet_helper.constructors.geojson_layer_count = 0;
 leaflet_helper.constructors.geojson = function(layerConfig, map, useLayerInstead) {
 
@@ -171,6 +184,7 @@ leaflet_helper.constructors.geojson = function(layerConfig, map, useLayerInstead
         //TODO: Move these to a special iconParser?
         if (feature && feature.properties && feature.properties.icon_type=="ImageEvents" &&  feature.properties.layer_type) {
 
+            var imageRoot = leaflet_helper.static_root +"/images/ImageEvents/";
             iconX = 14;
             iconY = 14;
             iconAnchor = new L.Point(7, 7);
@@ -178,32 +192,32 @@ leaflet_helper.constructors.geojson = function(layerConfig, map, useLayerInstead
             if (feature.properties.layer_type == "Aerial Oblique") {
                 if (feature.properties.heading) {
                     //TODO: Rotate properly
-                    iconUrl = "/static/images/ImageEvents/c5739cf19fe5e7635c04ae6eb2e7572f.png";
+                    iconUrl = imageRoot+"c5739cf19fe5e7635c04ae6eb2e7572f.png";
                 } else {
-                    iconUrl = "/static/images/ImageEvents/32d612809f495aa6e5491efbe6ebc8fd.png";
+                    iconUrl = imageRoot+"32d612809f495aa6e5491efbe6ebc8fd.png";
                 }
             } else if (feature.properties.layer_type == "Aerial Oblique Target") {
-                iconUrl = "/static/images/ImageEvents/f92b227dfe6c1fbdc122eeeef2904381.png";
+                iconUrl = imageRoot+"f92b227dfe6c1fbdc122eeeef2904381.png";
             } else if (feature.properties.layer_type == "Aerial Oblique Line") {
                 //Should only be lines and set in polygonStyleCallBack, keeping this as a backup
-                iconUrl = "/static/images/ImageEvents/f92b227dfe6c1fbdc122eeeef2904381.png";
+                iconUrl = imageRoot+"f92b227dfe6c1fbdc122eeeef2904381.png";
 
             } else if (feature.properties.layer_type == "Aerial Nadir") {
-                iconUrl = "/static/images/ImageEvents/a2790e3ba9dcb053c40320e539a7ad59.png";
+                iconUrl = imageRoot+"a2790e3ba9dcb053c40320e539a7ad59.png";
 
 
             } else if (feature.properties.layer_type == "Ground Images") {
                 if (feature.properties.heading) {
-                    //TODO: Rotate properly
-                    iconUrl = "/static/images/ImageEvents/3353b7bc2d8b9fa6085b08ba446dfc8a.png";
+                    //TODO: Validate that these are Rotated properly
+                    iconUrl = imageRoot+"3353b7bc2d8b9fa6085b08ba446dfc8a.png";
                 } else {
-                    iconUrl = "/static/images/ImageEvents/5e65279a5d62555c05d2bc421e7ddc62.png";
+                    iconUrl = imageRoot+"5e65279a5d62555c05d2bc421e7ddc62.png";
                 }
             } else if (feature.properties.layer_type == "Ground Targets") {
-                iconUrl = "/static/images/ImageEvents/8e4c73a221dda8debdcf2658969c3670.png";
+                iconUrl = imageRoot+"8e4c73a221dda8debdcf2658969c3670.png";
             } else if (feature.properties.layer_type == "Ground Lines") {
                 //Should only be lines and set in polygonStyleCallBack, keeping this as a backup
-                iconUrl = "/static/images/ImageEvents/8e4c73a221dda8debdcf2658969c3670.png";
+                iconUrl = imageRoot+"8e4c73a221dda8debdcf2658969c3670.png";
             } else {
                 var layerNum = layerConfig.geojson_layer_count % aoi_feature_edit.available_icons.length;
                 iconUrl = aoi_feature_edit.available_icons[layerNum];

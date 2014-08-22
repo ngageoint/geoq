@@ -11,6 +11,8 @@
 //            style_obj.mapTextStyle // "red_overlay"
 //            style_obj.opacity // Opacity
 //            style_obj.iconType // "circle"
+//            style_obj.schema (array of {properties:options} and others)
+
 //            feature.properties.mapText = "Whatever"
 
 var aoi_feature_edit = {};
@@ -29,6 +31,7 @@ aoi_feature_edit.init = function () {
     aoi_feature_edit.icons = {};
     aoi_feature_edit.icon_style = {};
 
+    leaflet_helper.init();
 
     //Set up base icon
     aoi_feature_edit.MapIcon = L.Icon.extend({
@@ -79,7 +82,31 @@ aoi_feature_edit.init = function () {
                 leaflet_layer_control.show_feature_info(e.layer.feature);
             }
         });
-        //TODO: Add some mouseover events for certain features
+
+        //Build mouseover table of data
+        if (ftype.style && ftype.style.showOnMouseOver) {
+            var layerPopup;
+            featureLayer.on('mouseover', function(e){
+                var coordinates = e.layer.feature.geometry.coordinates;
+                if (coordinates && coordinates[1] && aoi_feature_edit.map) {
+                    var swapped_coordinates = [coordinates[1], coordinates[0]];
+
+                    var popupContent = 'Feature #'+e.layer.feature.properties.id;
+                    popupContent = aoi_feature_edit.addFeatureTable(e.layer.feature, ftype) || popupContent;
+
+                    layerPopup = L.popup()
+                       .setLatLng(swapped_coordinates)
+                       .setContent(popupContent)
+                       .openOn(aoi_feature_edit.map);
+                }
+            });
+            featureLayer.on('mouseout', function (e) {
+                if (layerPopup && aoi_feature_edit.map && aoi_feature_edit.map.closePopup) {
+                    aoi_feature_edit.map.closePopup(layerPopup);
+                    layerPopup = null;
+                }
+            });
+        }
 
         featureLayer.name = ftype.name;
         aoi_feature_edit.featureLayers[ftype.id] = featureLayer;
@@ -96,6 +123,32 @@ aoi_feature_edit.init = function () {
 
     //Open Terms of Use prompt if necessary
     $(document).ready(aoi_feature_edit.promptForUserAcceptance);
+};
+
+aoi_feature_edit.addFeatureTable = function(feature, ftype){
+    var props = feature.properties || {};
+    var style = ftype.style || {};
+    var html = "";
+
+    html+=leaflet_layer_control.parsers.textIfExists({name: props.mapText || props.name, header:true});
+
+    if (style.showOnMouseOver || style.dataTable) {
+        var fields = style.showOnMouseOver || style.dataTable || "";
+        fields = fields.split(",");
+        _.each(fields,function(field){
+            field = _.str.trim(field);
+            if (field){
+                var val = props[field] || "";
+                if (val) {
+                    field = _.str.capitalize(field);
+                    field = field.replace(/_/g," ");
+                    html+=leaflet_layer_control.parsers.textIfExists({name: val, title:field});
+                }
+            }
+        });
+    }
+
+    return html;
 };
 
 aoi_feature_edit.promptForUserAcceptance = function(){
@@ -145,7 +198,7 @@ aoi_feature_edit.buildCustomIcon = function (feature, featureType) {
         var textLen = text.length;
         var mapTextSize = [120, 40];
         if (textLen < 25) {
-            mapTextSize = [textLen*8,18];
+            mapTextSize = [textLen*7,18];
         } else if (textLen < 50) {
             mapTextSize = [200,35];
         } else if (textLen < 75) {
@@ -279,8 +332,9 @@ aoi_feature_edit.featureLayer_onEachFeature = function (feature, layer, featureL
         if (id){
             popupContent = '<h5>Feature #' + id + '</h5>';
         }
+        var template;
         if (feature.properties.template) {
-            var template = aoi_feature_edit.feature_types[parseInt(feature.properties.template)];
+            template = aoi_feature_edit.feature_types[parseInt(feature.properties.template)];
             popupContent += '<b>' + template.name + '</b><br/>';
         }
         if (feature.properties.analyst){
@@ -299,6 +353,11 @@ aoi_feature_edit.featureLayer_onEachFeature = function (feature, layer, featureL
         if (feature.properties.feature_note){
             popupContent += '<br/><b>Note:</b> ' + feature.properties.feature_note;
         }
+
+        if (template) {
+            popupContent += aoi_feature_edit.addFeatureTable(feature, template);
+        }
+
         if (id){
             popupContent += '<br/><a onclick="javascript:aoi_feature_edit.deleteFeature(\'' + id + '\', \'/geoq/features/delete/' + id + '\');">Delete Feature</a>';
         }
@@ -822,7 +881,7 @@ aoi_feature_edit.buildDrawingControl = function (drawnItems) {
             if (ftype.style.type=="maki"){
                 $icon
                     .addClass('maki-icon '+ftype.style.icon)
-                    .css('backgroundImage', "url(/static/images/maki/images/maki-sprite.png)");
+                    .css('backgroundImage', "url("+aoi_feature_edit.static_root +"/images/maki/images/maki-sprite.png)");
             } else if (bg_image) {
                 //Find the offset to center the icon
                 var widthOffset = 5;
@@ -1077,7 +1136,7 @@ aoi_feature_edit.createPointOptions = function (opts) {
     var icon_obj = aoi_feature_edit.icons[id];
     if (style_obj && icon_obj) {
         if (!style_obj.iconUrl && icon_obj.type != 'maki') {
-            style_obj.iconUrl = "/static/leaflet/images/red-marker-icon.png";
+            style_obj.iconUrl = aoi_feature_edit.static_root +"/leaflet/images/red-marker-icon.png";
         }
         options.icon = new icon_obj(style_obj);
     }

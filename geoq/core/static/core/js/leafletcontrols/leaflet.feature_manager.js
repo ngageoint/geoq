@@ -5,6 +5,9 @@ feature_manager.$status_buttons = [];
 
 feature_manager.addStatusControl = function(map) {
 
+    //Check that user has reviewer permissions
+    if (!aoi_feature_edit.permissions_review) return;
+
     var $statusButton = $('<div class="btn-group">');
     $('<button class="btn">Features:</button>').appendTo($statusButton);
 
