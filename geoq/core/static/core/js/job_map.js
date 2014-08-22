@@ -34,6 +34,13 @@ function mapInit(map, bounds) {
 
             var $tr = $('<tr>');
 
+            var $tdc = $('<td>')
+                .appendTo($tr);
+
+            $('<input>')
+                .attr('type', 'checkbox')
+                .appendTo($tdc);
+
             var $td = $('<td>')
                 .appendTo($tr);
 
@@ -43,6 +50,9 @@ function mapInit(map, bounds) {
                 .appendTo($td);
             $('<td>')
                 .text(job_properties.status)
+                .appendTo($tr);
+            $('<td>')
+                .text(job_properties.assignee)
                 .appendTo($tr);
             $('<td>')
                 .text(job_properties.analyst)
@@ -56,6 +66,8 @@ function mapInit(map, bounds) {
             });
         }
     }).addTo(map);
+
+    $('#workcell-list').trigger('update');
 
 // Map doesn't update without this delay.
     setTimeout(function(){
@@ -124,53 +136,92 @@ function getList() {
     })
 }
 
-function assignAOI(id, assign_url) {
+function assignAOI(id, assign_url, token) {
 
-
-    BootstrapDialog.show({
-        message: function(dialogItself) {
-            var $assign_form = $('<form>')
-                .attr('id','assign-workcell');
-            $('<label>Type</label>')
-                .appendTo($assign_form);
-            var $combo1 = $('<select>')
-                .attr('id','type-select')
-                .attr('onchange', 'getList(this);')
-                .appendTo($assign_form);
-            $('<option>')
-                .attr('value', 'choose')
-                .text('Choose one')
-                .appendTo($combo1);
-            $('<option>')
-                .attr('value', 'user')
-                .text('User')
-                .appendTo($combo1);
-            $('<option>')
-                .attr('value', 'group')
-                .text('Group')
-                .appendTo($combo1);
-            $('<label>Choices</label>')
-                .appendTo($assign_form);
-            $('<select>')
-                .attr('id', 'assign-choices')
-                .appendTo($assign_form);
-            $('<option>')
-
-            return $assign_form;
-        },
-        buttons: [{
-            label: 'Save',
-            action: function(dialogItself) {
-                alert('saving user');
-            }
-        },
-            {
-                label: 'Cancel',
-                action: function(dialogItself) {
-                    alert('cancel');
-                }
-            }]
+    // make sure they've selected some workcells. If not, show error
+    selected_workcells = [];
+    $('#workcell-list tr').filter(':has(:checkbox:checked)').find('a').each( function() {
+        selected_workcells.push(this.text);
     });
+
+    if ( selected_workcells.length == 0 ) {
+        BootstrapDialog.alert({
+            title: 'Assign Workcells',
+            message: 'Please check workcells from the list to assign',
+            type: BootstrapDialog.TYPE_INFO,
+            closable: true,
+            buttonLabel: 'Return'
+        })
+    } else {
+
+
+        BootstrapDialog.show({
+            message: function (dialogItself) {
+                var $assign_form = $('<form>')
+                    .attr('id', 'assign-workcell');
+                $('<label>Type</label>')
+                    .appendTo($assign_form);
+                var $combo1 = $('<select>')
+                    .attr('id', 'type-select')
+                    .attr('onchange', 'getList(this);')
+                    .appendTo($assign_form);
+                $('<option>')
+                    .attr('value', 'choose')
+                    .text('Choose one')
+                    .appendTo($combo1);
+                $('<option>')
+                    .attr('value', 'user')
+                    .text('User')
+                    .appendTo($combo1);
+                $('<option>')
+                    .attr('value', 'group')
+                    .text('Group')
+                    .appendTo($combo1);
+                $('<label>Choices</label>')
+                    .appendTo($assign_form);
+                $('<select>')
+                    .attr('id', 'assign-choices')
+                    .appendTo($assign_form);
+                $('<div><label class="checkbox inline"><input id="email-users" type="checkbox">Email User(s)</label></div>')
+                    .appendTo($assign_form);
+                $('<option>')
+
+                return $assign_form;
+            },
+            buttons: [
+                {
+                    label: 'Save',
+                    action: function (dialogItself) {
+                        var data = {};
+                        data.workcells = selected_workcells;
+                        data.email = true;
+                        data.user_type = $('#type-select option').filter(':selected').val();
+                        data.user_data = $('#assign-choices option').filter(':selected').val();
+
+                        $.ajax({
+                            type: 'POST',
+                            url: assign_url,
+                            data: data,
+                            csrfmiddlewaretoken: token,
+                            success: function() {
+                                dialogItself.close();
+                                location.reload();
+                            },
+                            error: function() {
+                                alert('Failed to update workcell assignments');
+                            }
+                        });
+                    }
+                },
+                {
+                    label: 'Cancel',
+                    action: function (dialogItself) {
+                        dialogItself.close();
+                    }
+                }
+            ]
+        });
+    }
 }
 
 function configurePageUI () {

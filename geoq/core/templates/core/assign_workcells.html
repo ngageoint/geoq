@@ -9,6 +9,7 @@
     <script src="{{ STATIC_URL }}core/js/leaflet_helper.js"></script>
     <script src="{{ STATIC_URL }}core/js/bootstrap-dialog.js"></script>
     <script src="{{ STATIC_URL }}core/js/maths.js"></script>
+    <!-- script src="{{ STATIC_URL }}core/js/jquery.min.js"></script -->
     <script src="{{ STATIC_URL }}js/jquery.tablesorter.min.js"></script>
     <script src="{{ STATIC_URL }}js/jquery.tablesorter.widgets.min.js"></script>
     <script src="{{ STATIC_URL }}js/widget-scroller.js"></script>
@@ -30,13 +31,12 @@
                     theme: 'blue',
                     cssChildRow: 'tablesorter-childRow',
                     widgets: ['zebra', 'filter', 'scroller'],
+                    headers: {
+                        0: {
+                            sorter: 'checkbox'
+                        }
+                    },
                     widgetOptions: {
-                        scroller_height: 300,
-                        scroller_barWidth: 18,
-                        scroller_upAfterSort: true,
-                        scroller_jumpToHeader: true,
-                        pager_output: '{startRow} - {endRow} / {filteredRows} ({totalRows})',
-                        pager_removeRows: false,
                         filter_childRows: true,
                         filter_cssFilter: 'tablesorter-filter',
                         filter_startsWith: false,
@@ -60,11 +60,6 @@
             $('table').trigger('search', false);
             return false;
         });
-    });
-
-    $(document).ready(function()
-    {
-        $('#workcell-list').tablesorter();
     });
 </script>
 
@@ -102,16 +97,18 @@
                     <div id="c_form" class="span9 offset1">
                         <table class="tablesorter" id="workcell-list">
                             <colgroup>
+                                <col width="10" />
                                 <col width="40" />
-                                <col width="80" />
                                 <col width="60" />
-                                <col width="40" />
-                                <col width="150" />
+                                <col width="60" />
+                                <col width="60" />
                             </colgroup>
                             <thead>
                             <tr>
+                                <th><input type="checkbox"></th>
                                 <th>ID</th>
                                 <th>Status</th>
+                                <th>Assigned To</th>
                                 <th>Analyst</th>
                             </tr>
                             </thead>
@@ -137,6 +134,15 @@
 
         </div>
 
+    </div>
+    <div class="row-fluid container-narrow" style="margin-bottom: 25px;">
+        <div class="row body">
+            <div class="btn-toolbar offset3">
+                <a class="btn btn-primary" href="javascript:assignAOI('{{ job_properties.id }}','{{ job_properties.delete_url }}', '{{ csrf_token }}');">Assign Workcells</a>
+                <a class="btn btn-primary" href="#">Assign Workcells and Close</a>
+                <a class="btn btn-primary" href="{% url 'job-detail' object.id %}">Return</a>
+            </div>
+        </div>
     </div>
 {% endblock %}
 

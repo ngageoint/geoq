@@ -17,8 +17,9 @@ from django.shortcuts import get_object_or_404, redirect, render
 from django.views.generic import DetailView, ListView, TemplateView, View, DeleteView, CreateView, UpdateView
 from datetime import datetime
 
-from models import Project, Job, AOI, Comment
+from models import Project, Job, AOI, Comment, AssigneeType
 from geoq.maps.models import *
+from utils import send_assignment_email
 
 from geoq.mgrs.utils import Grid, GridException, GeoConvertException
 from geoq.core.utils import send_aoi_create_event
@@ -443,6 +444,34 @@ class AssignWorkcellsView(TemplateView):
         cv['workcell_count'] = cv['object'].aoi_count()
         return cv
 
+    def post(self, request, **kwargs):
+        job_id = self.kwargs.get('job_pk')
+        job = get_object_or_404(self.model, pk=job_id)
+        workcells = request.POST.getlist('workcells[]')
+        utype = request.POST['user_type']
+        id = request.POST['user_data']
+        send_email = request.POST['email']
+
+        if utype and id and workcells:
+            Type = User if utype == 'user' else Group
+            keyfield = 'username' if utype == 'user' else 'name'
+            q = Q(**{"%s__contains" % keyfield: id})
+            user_or_group = Type.objects.filter(q)
+            if user_or_group.count() > 0:
+                aois = AOI.objects.filter(id__in=workcells)
+                for aoi in aois:
+                    aoi.assignee_type_id = AssigneeType.USER if utype == 'user' else AssigneeType.GROUP
+                    aoi.assignee_id = user_or_group.get().id
+                    aoi.status = 'Assigned'
+                    aoi.save()
+
+                if send_email:
+                    send_assignment_email(user_or_group.get(), job, request)
+
+
+            return HttpResponse('{"status":"ok"}', status=200)
+        else:
+            return HttpResponse('{"status":"required field missing"}', status=500)
 
 def usng(request):
     """
