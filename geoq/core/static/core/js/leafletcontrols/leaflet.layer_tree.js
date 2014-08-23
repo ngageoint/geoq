@@ -354,7 +354,16 @@ leaflet_layer_control.show_feature_info = function (feature) {
                 .appendTo($status)
                 .editable(editableUrl, {
                     select:true,
-                    tooltip: 'Enter text if it should be shown as a map overlay'
+                    tooltip: 'Enter text if it should be shown as a map overlay',
+                    callback:function(newText,settings){
+                        if (feature.layer && feature.layer._icon) {
+                            var $icon = $(feature.layer._icon);
+                            $icon.text(newText);
+
+                            var mapTextSize = aoi_feature_edit.getMapTextDivSize(newText);
+                            $icon.css({width:mapTextSize[0]+'px',height:mapTextSize[1]+'px'});
+                        }
+                    }
                 });
         } else if (index == 'status') {
             skipIt = true;

@@ -186,6 +186,20 @@ aoi_feature_edit.promptForUserAcceptance = function(){
         }
     }
 };
+aoi_feature_edit.getMapTextDivSize = function(text){
+    var textLen = text.length;
+    var mapTextSize = [120, 40];
+    if (textLen < 25) {
+        mapTextSize = [textLen*7,18];
+    } else if (textLen < 50) {
+        mapTextSize = [200,35];
+    } else if (textLen < 75) {
+        mapTextSize = [200,50];
+    } else {
+        mapTextSize = [240,65];
+    }
+    return mapTextSize;
+};
 aoi_feature_edit.buildCustomIcon = function (feature, featureType) {
     feature.properties = feature.properties || {};
     var featureTypeID = feature.properties.template;
@@ -195,17 +209,7 @@ aoi_feature_edit.buildCustomIcon = function (feature, featureType) {
     //The feature has mapText, so draw a rectangle to hold the text
     if (feature.properties.mapText) {
         var text = feature.properties.mapText;
-        var textLen = text.length;
-        var mapTextSize = [120, 40];
-        if (textLen < 25) {
-            mapTextSize = [textLen*7,18];
-        } else if (textLen < 50) {
-            mapTextSize = [200,35];
-        } else if (textLen < 75) {
-            mapTextSize = [200,50];
-        } else {
-            mapTextSize = [240,65];
-        }
+        var mapTextSize = aoi_feature_edit.getMapTextDivSize(text);
 
         //TODO: Make sure it works with Maki icons
         if (style_obj.iconUrl) {
@@ -364,6 +368,7 @@ aoi_feature_edit.featureLayer_onEachFeature = function (feature, layer, featureL
         popupContent += leaflet_helper.addLinksToPopup(featureLayer.name, id, false, false, true);
 
         layer.bindPopup(popupContent);
+        feature.layer = layer;
     }
 };
 aoi_feature_edit.deleteFeature = function(id, delete_url) {
