@@ -765,7 +765,8 @@ aoi_feature_edit.map_init = function (map, bounds) {
                         $.ajax({
                             type: "POST",
                             url: editableUrl,
-                            data: { id: 'add_link',
+                            data: {
+                                id: 'add_link',
                                 value: json
                             },
                             success: function(result){
@@ -777,7 +778,9 @@ aoi_feature_edit.map_init = function (map, bounds) {
 
                                 leaflet_layer_control.show_feature_info(feature);
                             },
-                            error: function(){log.log("Error in linking image")},
+                            error: function(){
+                                log.error("Error in linking image");
+                            },
                             dataType: "json"
                         });
 

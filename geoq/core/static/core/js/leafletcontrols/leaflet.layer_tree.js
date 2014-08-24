@@ -357,6 +357,7 @@ leaflet_layer_control.show_feature_info = function (feature) {
                     tooltip: 'Enter text if it should be shown as a map overlay',
                     callback:function(newText,settings){
                         if (feature.layer && feature.layer._icon) {
+                            //Find the layer item and update it's text and text size
                             var $icon = $(feature.layer._icon);
                             $icon.text(newText);
 
@@ -437,6 +438,23 @@ leaflet_layer_control.show_feature_info = function (feature) {
             }
         } else {
             value = leaflet_layer_control.removePythonDateTime(value);
+
+            var schemaSettings = leaflet_layer_control.featureSchemaSelect(feature, index);
+            if (schemaSettings && schemaSettings.type) {
+                skipIt = true;
+                var $schemaItem = $('<div>')
+                    .html('<b>'+index+'</b>: ')
+                    .appendTo($content);
+                $('<span class="editable" id="'+index+'" style="display: inline">'+_.str.capitalize(value)+'</span>')
+                    .appendTo($schemaItem)
+                    .editable(editableUrl, {
+                        data   : schemaSettings.data,
+                        type   : schemaSettings.type,
+                        submit : 'OK',
+                        style  : 'inherit',
+                        tooltip: 'Click to change this value'
+                    });
+            }
         }
 
         if (!skipIt && _.isString(value)){
@@ -453,8 +471,34 @@ leaflet_layer_control.show_feature_info = function (feature) {
         .attr('id','feature_note')
         .html(feature_note)
         .appendTo($content)
-        .editable(editableUrl, {select : true});
+        .editable(editableUrl, {
+            select : true,
+            tooltip: 'Set a note on this feature'
+        });
 
+};
+leaflet_layer_control.featureSchemaSelect = function (feature, index) {
+    var settings = {};
+
+    //data   : " {'Unassigned':'Unassigned','In work':'In work', 'In review':'In review', 'Completed':'Completed'}",
+    var styles = feature.style || {};
+
+    if (styles && styles.schema && _.isArray(styles.schema)) {
+        var schemaInfo = _.find(styles.schema, function(setting) {return setting.property==index;});
+
+        if (schemaInfo && schemaInfo.options) {
+            settings.type = "select";
+            settings.data = {};
+            _.each(schemaInfo.options, function(opt){
+               settings.data[opt] = opt;
+            });
+        } else if (schemaInfo && schemaInfo.text) {
+            //TODO: check
+            settings.type = "text";
+            settings.data = null;
+        }
+    }
+    return settings;
 };
 leaflet_layer_control.show_info = function (objToShow, node) {
     var html_objects = [];
