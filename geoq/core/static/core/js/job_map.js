@@ -8,9 +8,13 @@ job_map.data = [];
 job_map.groups_url = "#";
 job_map.users_url = "#";
 job_map.popup_template = '';
+job_map.token = "";
+job_map.map_object = null;
+job_map.aois = new L.FeatureGroup();
+job_map.url = "#";
 
 job_map.status_colors = [
-    {name:'Assigned', color: leaflet_helper.styles.assigned, slug:'assigned'},  //TODO: Are we still using 'Assigned'?
+    {name:'Assigned', color: leaflet_helper.styles.assigned, slug:'assigned'},
     {name:'Completed', color: leaflet_helper.styles.completed, slug:'completed'},
     {name:'In work', color: leaflet_helper.styles.in_work, slug:'in-work'},
     {name:'In review', color: leaflet_helper.styles.in_review, slug:'in-review'},
@@ -20,6 +24,8 @@ job_map.status_colors = [
 
 var aoi_extents;
 function mapInit(map, bounds) {
+
+    job_map.map_object = map;
 
     aoi_extents = L.geoJson(job_map.data, {
         style: function(feature) {
@@ -61,8 +67,8 @@ function mapInit(map, bounds) {
             $('#workcell-list tbody').append($tr);
 
             layer.on({
-                mouseover: highlightFeature,
-                mouseout: resetHighlight
+                mouseover: job_map.highlightFeature,
+                mouseout: job_map.resetHighlight
             });
         }
     }).addTo(map);
@@ -80,23 +86,147 @@ function mapInit(map, bounds) {
         }
     }, 1);
 
-    var options = {
-        position: 'topright', /* The position of the control */
-        hideText: true,  // bool
-        toggle: true,  // bool
-        iconUrl: '/static/images/markers/tux.png'
-    };
-    var boxselector = new L.Control.Select(options);
-    boxselector.addTo(map);
+    map.addLayer(job_map.aois);
+    map.on('draw:created', job_map.selectionDrawn);
 
 
-    var drawnItems = new L.FeatureGroup();
-    map.addLayer(drawnItems);
-
-    configurePageUI();
+    job_map.addAssignmentControls(map);
 }
 
-function highlightFeature(e) {
+job_map.assignWorkcells = function (){
+
+    var m = job_map.map_object;
+    if (m && (m._container.id == 'map') && (m.hasLayer(job_map.aois))){
+
+        _.each(job_map.aois.getLayers(), function(l){
+            _.each(l.getLayers(), function(featureHolder){
+                var props = featureHolder.feature.properties;
+                //props = props || {};
+                //props.priority = num;
+            });
+        });
+        //create_aois.resetBoundaries();
+    }
+};
+
+job_map.createPolygonOptions = function(opts) {
+    var options = {};
+
+    if (opts.name) {
+        options.title = opts.name;
+    }
+
+    options.allowIntersection = true;
+    options.drawError = { color: '#b00b00', timeout: 1000};
+
+    options.shapeOptions = opts.style || {borderColor: "black", backgroundColor: "brown"};
+    options.showArea = true;
+    options.id = opts.id;
+
+    return options;
+};
+
+job_map.selectionDrawn = function (e){
+    var type = e.layerType,
+        layer = e.layer;
+
+    if (type == 'polygon-assign-workcells') {
+        //User drew with assign-workcells control
+        job_map.doSomethingWithOverlappingPolys(layer,job_map.assignWorkcellList);
+    }
+};
+
+job_map.doSomethingWithOverlappingPolys = function (layer, funcToDo, noneMessage) {
+    var countOverlaps = 0;
+    if (job_map.aois && job_map.aois.getLayers()) {
+        var deleteJson = layer.toGeoJSON();
+        var selectPoly = deleteJson.geometry.coordinates[0];
+        selectPoly = job_map.convertPolyToXY(selectPoly);
+
+        var existingCells = job_map.getBoundaries(true);
+        var selectedCells = [];
+        _.each(existingCells,function(cell){
+            var cellPoly = cell.geometry.coordinates[0][0];
+            cellPoly = job_map.convertPolyToXY(cellPoly);
+
+            var intersects = intersectionPolygons(cellPoly,selectPoly);
+            if (intersects && intersects.length){
+                selectedCells.push(cell);
+                countOverlaps++;
+            }
+        });
+        if (selectedCells.length) {
+            var cellIds = [];
+            _.each(selectedCells, function(cell) {
+                cellIds.push(cell.properties.id);
+            });
+            job_map.assignAOI(cellIds);
+        }
+    } else {
+        create_aois.update_info(noneMessage || "No polygon to remove workcells from");
+    }
+    return countOverlaps;
+};
+
+job_map.assignWorkcellList = function() {
+    alert('assign a list of cells');
+};
+
+job_map.convertPolyToXY = function(poly){
+    var newPoly = [];
+    _.each(poly,function(p){
+        newPoly.push({x:p[0],y:p[1]});
+    });
+    return newPoly;
+};
+
+job_map.getBoundaries = function(useCellsInstead) {
+    var boundaries = [];
+
+    var featureName = $('#aoi-name').val();
+    var m = job_map.map_object;
+    if (m && (m._container.id == 'map') && (m.hasLayer(job_map.aois))){
+        job_map.map_object.eachLayer(function(l) {
+            if (l.feature) {
+                var f = l.feature;
+                if (useCellsInstead) {
+                    boundaries.push(f);
+                } else {
+                    boundaries.push(f.toGeoJSON());
+                }
+            }
+        });
+    }
+    if (!boundaries.length) boundaries = false;
+
+    return boundaries;
+};
+
+job_map.addAssignmentControls = function(map){
+
+    //Add Delete Control
+    L.drawLocal.draw.toolbar.actions.text = "Assign";
+    L.drawLocal.draw.toolbar.actions.title = "Assign Workcells";
+
+    var helpText = "Select Workcells to Assign";
+    var polygon = job_map.createPolygonOptions({id:'assign-workcells',name:"Assign Workcells"});
+
+    var assignControl = new L.Control.Draw({
+        position: 'topleft',
+        draw: {
+            rectangle: false,
+            polygons: [polygon],
+            circle: false,
+            polyline: false
+        },
+        edit: false
+    });
+    map.addControl(assignControl);
+    job_map.assignControl = assignControl;
+
+};
+
+job_map.highlightFeature = function(e) {
     var layer = e.target;
     layer.setStyle({
         color: 'black',
@@ -105,14 +235,14 @@ function highlightFeature(e) {
         fillOpacity:.3,
         fillColor: 'gray'
     });
-}
+};
 
-function resetHighlight(e) {
+job_map.resetHighlight = function(e) {
     aoi_extents.resetStyle(e.target);
-}
+};
 
 
-function setList(listmembers) {
+job_map.setList = function(listmembers) {
     var clist = $('#assign-choices');
     clist.empty();
     _.each(listmembers, function(member) {
@@ -121,33 +251,34 @@ function setList(listmembers) {
             .text(member)
             .appendTo(clist);
     });
-}
+};
 
-function getList() {
+job_map.getList = function() {
     var type = $('#type-select :selected').val();
     url = (type == 'user') ? job_map.users_url : job_map.groups_url;
     $.ajax({
         url: url,
         type: 'GET',
         success: function(data) {
-            setList(data);
+            job_map.setList(data);
         },
         failure: function() { log.error('Failed to retrieve user list ');}
     })
-}
+};
 
-function assignAOI(id, assign_url, token) {
+job_map.assignAOI = function(selected_workcells) {
 
     // make sure they've selected some workcells. If not, show error
-    selected_workcells = [];
-    $('#workcell-list tr').filter(':has(:checkbox:checked)').find('a').each( function() {
-        selected_workcells.push(this.text);
-    });
+    if ( selected_workcells.length == 0 ) {
+        $('#workcell-list tr').filter(':has(:checkbox:checked)').find('a').each( function() {
+            selected_workcells.push(this.text);
+        });
+    }
 
     if ( selected_workcells.length == 0 ) {
         BootstrapDialog.alert({
             title: 'Assign Workcells',
-            message: 'Please check workcells from the list to assign',
+            message: 'Please check workcells from the list to assign, \nor use polygon tool on map',
             type: BootstrapDialog.TYPE_INFO,
             closable: true,
             buttonLabel: 'Return'
@@ -163,7 +294,7 @@ function assignAOI(id, assign_url, token) {
                     .appendTo($assign_form);
                 var $combo1 = $('<select>')
                     .attr('id', 'type-select')
-                    .attr('onchange', 'getList(this);')
+                    .attr('onchange', 'job_map.getList(this);')
                     .appendTo($assign_form);
                 $('<option>')
                     .attr('value', 'choose')
@@ -200,9 +331,9 @@ function assignAOI(id, assign_url, token) {
 
                         $.ajax({
                             type: 'POST',
-                            url: assign_url,
+                            url: job_map.url,
                             data: data,
-                            csrfmiddlewaretoken: token,
+                            csrfmiddlewaretoken: job_map.token,
                             success: function() {
                                 dialogItself.close();
                                 location.reload();
@@ -222,19 +353,5 @@ function assignAOI(id, assign_url, token) {
             ]
         });
     }
-}
+};
 
-function configurePageUI () {
-    //Color tabs with same colors as features
-    _.each(job_map.status_colors, function(stat){
-        var tab_name = '#tab_'+stat.slug;
-        var $tab = $(tab_name);
-        var bg_color = (stat.color) ? stat.color.fillColor : '';
-        bg_color = bg_color || '#ffffff';
-        var color = maths.idealTextColor(bg_color);
-
-        if ($tab.length && bg_color) {
-            $tab.css({backgroundColor:bg_color, color:color});
-        }
-    });
-}
