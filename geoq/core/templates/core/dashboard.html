@@ -3,42 +3,55 @@
 {% block container %}
     <div class="container">
     <div class="row-fluid">
-        <div class="span4 hero-unit">
-            <h2>Projects</h2>
-            <p class="description">Projects store related geospatial jobs and are the highest organizational structure in GeoQ. You can think of a project as a folder for your GeoQ jobs.</p>
-            <div class="actions pull-right">
-                <small>
-                    <i class="icon-list-alt"></i>
-                    <a href="{% url 'project-list' %}">View All</a>
-
-                    {% if 'accounts.add_project' in request.base_perms %}
-                    |
-                    <i class="icon-edit"></i>
-                        <a href="{% url 'project-create' %}">Create</a>
-                    {% endif %}
-
-                </small>
-            </div>
+        <div class="span6 hero-unit-smaller">
+            <h2>GeoQ: <span style="font-size: 28px;font-style: italic;vertical-align: baseline;">Geospatial Tasks & Questions</span></h2>
+            <p class="description">
+                GeoQ is an <a href="https://github.com/ngageoint/geoq" target="_blank">open source tool</a> that provides crowd
+                sourcing of geospatial questions, common structured observation collection formats,
+                analytical metrics, common workflow for collaborative coordinated response, open APIs to seamless work with COTS software packages
+                and gamification to promote tradecraft and incentivize quality work. There are other software packages
+                like <a href="https://github.com/ngageoint/rfi-generator" target="_blank">RFI Tool</a> and
+                <a href="https://github.com/ngageoint/geoevents" target="_blank">Event Pages</a> on
+                <a hreg="https://github.com/ngageoint/" target="_blank">NGA's GitHub page</a> that are integrated with this work flow.
+            </p>
+            <p class="description">
+                Our goal is to <b>create a community</b> of open source users and coders to promote <b>readiness, response and
+                recovery</b> efforts worldwide.
+            </p>
         </div>
-        <div class="span4 hero-unit">
-            <h2>Jobs</h2>
-            <p class="description">Jobs are geospatial work that can be assigned over large geographic areas. This work is further divided into manageable areas called "Workcells".</p>
-            <div class="actions pull-right">
-                <small>
-                    <i class="icon-list-alt"></i>
-                    <a href="{% url 'job-list' %}">View All</a>
-                </small>
-            </div>
-        </div>
-        <div class="span4 hero-unit">
-            <h2>Workcells</h2>
-            <p class="description">Workcells are a collection of manageable geospatial tasks across an Area of Interest and each is assigned to a single user to complete.</p>
-            <div class="actions pull-right">
-                <small>
-                    <i class="icon-list-alt"></i>
-                    <a href="{% url 'aoi-list' %}">View All</a>
-                </small>
-            </div>
+        <div class="span6 hero-unit-smaller">
+            <h3>Projects</h3>
+            <p class="description">
+                Projects store related geospatial jobs and are usually grouped around major events - like a folder for your GeoQ jobs.
+                <span class="actions pull-right">
+                    <small>
+                        <i class="icon-list-alt"></i>
+                        <a href="{% url 'project-list' %}">View All</a>
+
+                        {% if 'accounts.add_project' in request.base_perms %}
+                        |
+                        <i class="icon-edit"></i>
+                            <a href="{% url 'project-create' %}">Create</a>
+                        {% endif %}
+
+                    </small>
+                </span>
+            </p>
+
+            <h3>Jobs</h3>
+            <p class="description">
+                Jobs are geospatial work that can be assigned over large geographic areas - like a <b>city</b>, <b>coastline</b> or <b>island</b>.
+                <span class="actions pull-right">
+                    <small>
+                        <i class="icon-list-alt"></i>
+                        <a href="{% url 'job-list' %}">View All</a>
+                    </small>
+                </span>
+            </p>
+
+
+            <h3>Workcells</h3>
+            <p class="description">Workcells are tasks of geospatial work assigned to a single user to complete. Examples: <b>Look for Flooding</b>, or <b>Count Damaged Buildings</b>.</p>
         </div>
     </div>
 
