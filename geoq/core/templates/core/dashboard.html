@@ -173,7 +173,6 @@
         var map = L.map('background_map', { zoomControl:false })
                 .setView([lat, lng], 6);
 
-        //TODO: These tiles are looking all random... not sure why
     	var osmAttr = '&copy; <a href="http://openstreetmap.org">OpenStreetMap</a> contributors, <a href="http://creativecommons.org/licenses/by-sa/2.0/">CC-BY-SA</a>';
         L.tileLayer('http://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{attribution: osmAttr}).addTo(map);
 
