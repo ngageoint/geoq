@@ -19,7 +19,7 @@
     {% if object.analyst == request.user %}
     <li title="Unassign this Work Cell">
         <i class="icon-circle-arrow-down"></i>
-        <a href="{% url 'aoi-update-status' object.id 'Unassigned' %}">Unassign</a>
+        <a href="{% url 'aoi-update-status' object.id 'Unassigned' %}">Release</a>
     </li>
     {% endif %}
     {% endif %}
