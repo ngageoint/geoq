@@ -101,4 +101,29 @@
         </div>
     </div>
 </div>
+
+<script language="JavaScript">
+
+    $(document).ready(function(){
+        var maxHeight = 0;
+        var $titles = $('.hero-unit-smaller');
+
+        //Find the biggest div
+        _.each($titles,function(title_div){
+            var $title_div = $(title_div);
+
+            var height = parseInt($title_div.css('height') || 0);
+            if (height>maxHeight) maxHeight=height;
+        });
+
+        //Reset the div sizes to match
+        _.each($titles,function(title_div){
+            var $title_div = $(title_div);
+
+            //Even out the height of everything
+            $title_div.css({height:maxHeight});
+        });
+
+    });
+</script>
 {% endblock %}
