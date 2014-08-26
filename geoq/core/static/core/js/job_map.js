@@ -168,10 +168,6 @@ job_map.doSomethingWithOverlappingPolys = function (layer, funcToDo, noneMessage
     return countOverlaps;
 };
 
-job_map.assignWorkcellList = function() {
-    alert('assign a list of cells');
-};
-
 job_map.convertPolyToXY = function(poly){
     var newPoly = [];
     _.each(poly,function(p){
