@@ -190,11 +190,11 @@ aoi_feature_edit.getMapTextDivSize = function(text){
     var textLen = text.length;
     var mapTextSize = [120, 40];
     if (textLen < 25) {
-        mapTextSize = [textLen*7,18];
+        mapTextSize = [26 + textLen*7,18];
     } else if (textLen < 50) {
-        mapTextSize = [200,35];
+        mapTextSize = [216,35];
     } else if (textLen < 75) {
-        mapTextSize = [200,50];
+        mapTextSize = [220,50];
     } else {
         mapTextSize = [240,65];
     }
@@ -571,7 +571,7 @@ aoi_feature_edit.map_init = function (map, bounds) {
 
                 //Add in any default properties from the feature type
                 feature.properties = feature.properties || {};
-                if (ftype.properties) feature.properties = $.extend(ftype.properties,feature.properties);
+                if (ftype.properties) feature.properties = $.extend({},ftype.properties,feature.properties);
 
                 //Associate this feature with the feature type layer
                 featureCollection.features.push(feature);
