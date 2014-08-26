@@ -54,7 +54,7 @@ def send_assignment_email(user_or_group, job, request):
             continue
 
     message = "Hello GeoQ User;\n  You have been assigned some workcells in the GeoQ system. Please go to \n\n" + \
-            "<a href='%s'>%s</a> \n\n To see your currently tasked work \n\nRegards,\nThe GeoQ Team" % (work_uri, work_uri)
+            "%s \n\n To see your currently tasked work \n\nRegards,\nThe GeoQ Team" % (work_uri)
     sender = "geoq@%s" % Site.objects.get_current().domain
 
     send_mail(subject, message, sender, recipients, fail_silently=True)
