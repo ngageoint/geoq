@@ -63,6 +63,8 @@
 </head>
 
 <body>
+{% get_menu request %}
+
 {% block container %}
     <div class="container">
 
@@ -77,7 +79,6 @@
     </div> <!-- container -->
 {% endblock %}
 
-{% get_menu request %}
 {% bootstrap_messages %}
 
 </body>
