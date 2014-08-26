@@ -3,18 +3,19 @@
 {% load leaflet_tags %}
 {% load geoserver_job_link %}
 {% block title %}GeoQ Assign workcells: {{ object.name }}{% endblock %}
-{% block static_libraries %}
-    {% leaflet_js %}
+{% block static_libraries %}                                                                  f
+{% leaflet_js plugins="draw" %}
+{% compress css %}
+{% leaflet_css plugins="draw"%}
+{% endcompress %}
     <link rel="stylesheet" href="{{ STATIC_URL }}/css/theme.blue.css" />
     <script src="{{ STATIC_URL }}core/js/leaflet_helper.js"></script>
     <script src="{{ STATIC_URL }}core/js/bootstrap-dialog.js"></script>
     <script src="{{ STATIC_URL }}core/js/maths.js"></script>
-    <!-- script src="{{ STATIC_URL }}core/js/jquery.min.js"></script -->
+    <script src="{{ STATIC_URL }}core/js/polygon.js"></script>
     <script src="{{ STATIC_URL }}js/jquery.tablesorter.min.js"></script>
     <script src="{{ STATIC_URL }}js/jquery.tablesorter.widgets.min.js"></script>
     <script src="{{ STATIC_URL }}js/widget-scroller.js"></script>
-    <script src="{{ STATIC_URL }}core/js/leafletcontrols/Control.Select.js"></script>
-        <script src="{{ STATIC_URL }}core/js/leafletcontrols/leaflet.simple_button.js"></script>
 
     <script src="{{ STATIC_URL }}core/js/job_map.js"></script>
 
@@ -23,6 +24,9 @@
     job_map.users_url = "{% url 'list_users' object.id %}";
     job_map.data = {{ object.geoJSON|default:'[]'|safe }};
     job_map.popup_template = '{% filter escapejs %}{% include "core/assign_workcell_popup.html" %}{% endfilter %}';
+    job_map.token = "{{ csrf_token }}";
+    job_map.url = '{{ job_properties.delete_url }}';
+
 
 
     $(function() {
@@ -138,8 +142,8 @@
     <div class="row-fluid container-narrow" style="margin-bottom: 25px;">
         <div class="row body">
             <div class="btn-toolbar offset3">
-                <a class="btn btn-primary" href="javascript:assignAOI('{{ job_properties.id }}','{{ job_properties.delete_url }}', '{{ csrf_token }}');">Assign Workcells</a>
-                <a class="btn btn-primary" href="#">Assign Workcells and Close</a>
+                <a class="btn btn-primary" href="javascript:job_map.assignAOI([]);">Assign Workcells</a>
+                <a class="btn btn-primary" href="javascript:job_map.assignAOI([])">Assign Workcells and Close</a>
                 <a class="btn btn-primary" href="{% url 'job-detail' object.id %}">Return</a>
             </div>
         </div>
