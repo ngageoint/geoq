@@ -105,7 +105,7 @@
 
 {% block container %}
     <div class="row-fluid container" style="margin:0px 40px 0px 40px;">
-    <h2>Add workcells to Job #{{ object.id }}</h2>
+    <h2>Add workcells to Job #{{ object.id }}<span style="font-size: 18px"> ({{ object.name }})</span></h2>
     <b>Name workcells: </b><input type="text" name="aoi-name" id="aoi-name" value="{{ object.name }}" style="width:300px;"/><br/>
 
     <div class="btn-group" data-toggle="buttons-radio">

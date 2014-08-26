@@ -192,11 +192,11 @@
 
     });
     function panToNewLatLng(lat, lng, map) {
-        var newLat = lat + getRandomInRange(-2,2,3);
-        var newLng = lng + getRandomInRange(-2,2,3);
+        var newLat = lat + getRandomInRange(-1,1,3);
+        var newLng = lng + getRandomInRange(-1,1,3);
 
-        map.panTo([newLat, newLng], {animate: true, duration: 10.0});
-        setTimeout(function(){panToNewLatLng(newLat, newLng, map);}, 10000);
+        map.panTo([newLat, newLng], {animate: true, duration: 15.0});
+        setTimeout(function(){panToNewLatLng(newLat, newLng, map);}, 15000);
 
     }
 </script>
