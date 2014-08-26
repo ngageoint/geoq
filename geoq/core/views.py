@@ -131,7 +131,9 @@ class CreateFeaturesView(UserAllowedMixin, DetailView):
             return False
 
         # logic for what we'll allow
-        if aoi.status == 'Unassigned':
+        if self.request.user.is_superuser or self.request.user.groups.filter(name='admin_group').count() > 0:
+            return True
+        elif aoi.status == 'Unassigned':
             aoi.analyst = self.request.user
             aoi.status = 'In work'
             aoi.save()
