@@ -17,7 +17,7 @@
         z-index:-10;
         width: 120%;
         height: 100%;
-        opacity: 0.15;
+        opacity: 0.2;
         top: 0;
         left: 0;
         margin: 0 !important;
@@ -85,7 +85,7 @@
 
 
             <h3>Workcells</h3>
-            <p class="description">Workcells are tasks of geospatial work assigned to a single user to complete. Examples: <b>Look for Flooding</b>, or <b>Count Damaged Buildings</b>.</p>
+            <p class="description">Workcells are geospatial tasks assigned to a single user to complete. Examples: <b>Look for Flooding</b>, or <b>Count Damaged Buildings</b>.</p>
         </div>
     </div>
 
@@ -171,7 +171,7 @@
         //var zoom = parseInt(getRandomInRange(3, 10, 0));
 
         var map = L.map('background_map', { zoomControl:false })
-                .setView([lat, lng], 6);
+                .setView([lat, lng], 7);
 
     	var osmAttr = '&copy; <a href="http://openstreetmap.org">OpenStreetMap</a> contributors, <a href="http://creativecommons.org/licenses/by-sa/2.0/">CC-BY-SA</a>';
         L.tileLayer('http://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{attribution: osmAttr}).addTo(map);
@@ -186,8 +186,18 @@
         $(".leaflet-control-container").css("visibility", "hidden");
         map._onResize();
 
+        setTimeout(function(){panToNewLatLng(lat, lng, map);}, 3000);
+
         page_background_map = map;
 
     });
+    function panToNewLatLng(lat, lng, map) {
+        var newLat = lat + getRandomInRange(-2,2,3);
+        var newLng = lng + getRandomInRange(-2,2,3);
+
+        map.panTo([newLat, newLng], {animate: true, duration: 10.0});
+        setTimeout(function(){panToNewLatLng(newLat, newLng, map);}, 10000);
+
+    }
 </script>
 {% endblock %}
