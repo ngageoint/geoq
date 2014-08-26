@@ -1,6 +1,40 @@
 {% extends "core/base.html" %}
+{% load compress %}
+
+{% load leaflet_tags %}
+{% block static_libraries %}
+    {% leaflet_js %}
+{% endblock %}
 
 {% block container %}
+    {% compress css %}
+        {% leaflet_css plugins="draw"%}
+    {% endcompress %}
+
+<style>
+    .map_underlay{
+        position:fixed;
+        z-index:-10;
+        width: 120%;
+        height: 100%;
+        opacity: 0.2;
+        top: 0;
+        left: 0;
+        margin: 0 !important;
+        padding: 0 !important;
+        overflow: hidden;
+
+        -webkit-background-size: cover;
+        -moz-background-size: cover;
+        -o-background-size: cover;
+        background-size: cover;
+    }
+    .hero-unit-smaller {
+        opacity: .8;
+    }
+</style>
+
+    <div id="background_map" class="map_underlay"></div>
     <div class="container">
     <div class="row-fluid">
         <div class="span6 hero-unit-smaller">
@@ -51,7 +85,7 @@
 
 
             <h3>Workcells</h3>
-            <p class="description">Workcells are tasks of geospatial work assigned to a single user to complete. Examples: <b>Look for Flooding</b>, or <b>Count Damaged Buildings</b>.</p>
+            <p class="description">Workcells are geospatial tasks assigned to a single user to complete. Examples: <b>Look for Flooding</b>, or <b>Count Damaged Buildings</b>.</p>
         </div>
     </div>
 
@@ -101,4 +135,69 @@
         </div>
     </div>
 </div>
+
+<script language="JavaScript">
+
+    function getRandomInRange(from, to, fixed) {
+        return (Math.random() * (to - from) + from).toFixed(fixed) * 1;
+        // .toFixed() returns string, so ' * 1' is a trick to convert to number
+    }
+
+    var page_background_map;
+    $(document).ready(function(){
+        var maxHeight = 0;
+        var $titles = $('.hero-unit-smaller');
+
+        //Find the biggest div
+        _.each($titles,function(title_div){
+            var $title_div = $(title_div);
+
+            var height = parseInt($title_div.css('height') || 0);
+            if (height>maxHeight) maxHeight=height;
+        });
+
+        //Reset the div sizes to match
+        _.each($titles,function(title_div){
+            var $title_div = $(title_div);
+
+            //Even out the height of everything
+            $title_div.css({height:maxHeight});
+        });
+
+        $('#background_map').height($(window).height());
+
+        var lat = getRandomInRange(24, 50, 3);
+        var lng = getRandomInRange(-125, -67, 3);
+        //var zoom = parseInt(getRandomInRange(3, 10, 0));
+
+        var map = L.map('background_map', { zoomControl:false })
+                .setView([lat, lng], 7);
+
+    	var osmAttr = '&copy; <a href="http://openstreetmap.org">OpenStreetMap</a> contributors, <a href="http://creativecommons.org/licenses/by-sa/2.0/">CC-BY-SA</a>';
+        L.tileLayer('http://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{attribution: osmAttr}).addTo(map);
+
+
+        map.touchZoom.disable();
+        map.doubleClickZoom.disable();
+        map.scrollWheelZoom.disable();
+        map.boxZoom.disable();
+        map.keyboard.disable();
+        $(".leaflet-control-zoom").css("visibility", "hidden");
+        $(".leaflet-control-container").css("visibility", "hidden");
+        map._onResize();
+
+        setTimeout(function(){panToNewLatLng(lat, lng, map);}, 3000);
+
+        page_background_map = map;
+
+    });
+    function panToNewLatLng(lat, lng, map) {
+        var newLat = lat + getRandomInRange(-1,1,3);
+        var newLng = lng + getRandomInRange(-1,1,3);
+
+        map.panTo([newLat, newLng], {animate: true, duration: 15.0});
+        setTimeout(function(){panToNewLatLng(newLat, newLng, map);}, 15000);
+
+    }
+</script>
 {% endblock %}

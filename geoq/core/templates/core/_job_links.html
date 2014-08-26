@@ -1,46 +1,15 @@
-{#{% geoserver_job_link object.id "wfs" as geoserver_job_wfs %}#}
-{#{% geoserver_job_link object.id "kml" as geoserver_job_kml %}#}
-{#{% if geoserver_job_wfs %}#}
-{#<tr>#}
-{#    <td><b>KML:</b></td>#}
-{#    <td><a href="{{geoserver_job_kml}}">GeoServer Link</a></td>#}
-{#</tr>#}
-{#<tr>#}
-{#    <td><b>WFS URL:</b></td>#}
-{#    <td>{{geoserver_job_wfs}}</td>#}
-{#</tr>#}
-{#{%  endif %}#}
-{#<tr>#}
-{#    <td><b>Google Earth:</b></td>#}
-{#    <td><a href="{% url 'kml-job' object.id %}" title="Best for use in other programs such as the Event Pages">KML Link</a> ||#}
-{#    <a href="{% url 'kml-networked-job' object.id %}" title="Refereshes every 2 min when viewed in Google Earth"><b>Auto-updating KML Link</b></a>#}
-{#    </td>#}
-{#</tr>#}
-{#<tr>#}
-{#    <td><b>Linked JSON:</b></td>#}
-{#    <td><a href="{% url 'json-job' object.id %}">Job GeoJSON</a> ||#}
-{#        <a href="{% url 'json-job-grid' object.id %}">Workcell Grid</a> ||#}
-{#        <a href="{% url 'json-job-features-links' object.id %}">Features</a>#}
-{#    </td>#}
-{#</tr>#}
-{#<tr>#}
-{#    <td><b>Shapefile:</b></td>#}
-{#    <td><a href="{% url 'shape-job' object.id %}">Work Cells</a> ||#}
-{#        <a href="{% url 'shape-job-type' object.id 'points' %}">Points</a> ||#}
-{#        <a href="{% url 'shape-job-type' object.id 'polygons' %}">Polygons</a></td>#}
-{#</tr>#}
-
-<tr><td colspan="2" style="padding-top:20px;">
+<tr><td colspan="2" style="padding-top:20px;"><h3>Share Your Work:</h3></td></tr>
+<tr><td colspan="2">
     <div class="job_link_item">
         <a href="{% url 'kml-networked-job' object.id %}" title="Refereshes every 2 min when viewed in Google Earth" target="_new">
         <img src="/static/images/icons/kml_networked.png"/>
-        <span><b>Auto-updating KML</b></span></a>
+        <span><b>Continuous KML</b></span></a>
     </div>
 
     <div class="job_link_item">
         <a href="{% url 'kml-job' object.id %}" title="Best for use in other programs such as the Event Pages" target="_new">
         <img src="/static/images/icons/kml_globe.png"/>
-        <span>KML Link</span></a>
+        <span>Direct KML Link</span></a>
     </div>
 
     <div class="job_link_item">
@@ -76,7 +45,7 @@
     <div class="job_link_item">
         <a href="{% url 'json-job-features-links' object.id %}" title="All features from this job" target="_new">
         <img src="/static/images/icons/api_json.png"/>
-        <span>Features</span></a>
+        <span>Detailed Features</span></a>
     </div>
 
     <div class="job_link_item">

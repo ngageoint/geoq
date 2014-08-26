@@ -443,7 +443,7 @@ leaflet_layer_control.show_feature_info = function (feature) {
             if (schemaSettings && schemaSettings.type) {
                 skipIt = true;
                 var $schemaItem = $('<div>')
-                    .html('<b>'+index+'</b>: ')
+                    .html('<b>'+ _.str.capitalize(index)+'</b>: ')
                     .appendTo($content);
                 $('<span class="editable" id="'+index+'" style="display: inline">'+_.str.capitalize(value)+'</span>')
                     .appendTo($schemaItem)

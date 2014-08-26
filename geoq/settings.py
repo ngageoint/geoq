@@ -225,6 +225,7 @@ INSTALLED_APPS = (
     'leaflet',
     'jsonfield',
     'crispy_forms',
+    'django_extensions',
 
     'geoq.accounts',
     'geoq.core',

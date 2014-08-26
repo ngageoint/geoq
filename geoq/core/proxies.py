@@ -1,6 +1,8 @@
 # This technical data was produced for the U. S. Government under Contract No. W15P7T-13-C-F600, and
 # is subject to the Rights in Technical Data-Noncommercial Items clause at DFARS 252.227-7013 (FEB 2012)
 
+from django.contrib.auth.decorators import login_required
+from django.views.decorators.cache import patch_cache_control
 from django.http import HttpResponse
 import json
 import mimetypes
@@ -11,6 +13,7 @@ import logging
 logger = logging.getLogger(__name__)
 
 
+@login_required
 def proxy_to(request, path, target_url):
     url = '%s%s' % (target_url, path)
 
@@ -51,7 +54,12 @@ def proxy_to(request, path, target_url):
 
         errorCode = 'Proxy generic exception: ' + traceback.format_exc()
     else:
-        return HttpResponse(content, status=status_code, mimetype=mimetype)
+        response = HttpResponse(content, status=status_code, mimetype=mimetype)
+
+        if ".png" in url or ".jpg" in url:
+            patch_cache_control(response, max_age=60 * 60 * 1, public=True) #Cache for 1 hour
+
+        return response
 
     if errorCode and len(errorCode):
         logger.error(errorCode)

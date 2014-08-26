@@ -617,8 +617,10 @@ leaflet_helper.parsers.addFEMAImageEventsData = function (result, map, outputLay
             } else if (feature.layerName == "Ground Lines") {
                 color = "yellow";
             }
+            //Adjust heading 90 degrees to the right
             var heading = feature.attributes.CalculatedHeading || feature.attributes.Heading || 0;
-            heading = parseInt(heading);
+            heading = 90 + parseInt(heading);
+            if (heading > 360) heading -= 360;
 
             var geometry = {};
             if (feature.geometry && feature.geometry.paths) {

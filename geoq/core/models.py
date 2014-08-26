@@ -50,7 +50,7 @@ class GeoQBase(models.Model):
     A generic model for GeoQ objects.
     """
 
-    active = models.BooleanField(default=True)
+    active = models.BooleanField(default=True, help_text="Make projects visible to all users")
     created_at = models.DateTimeField(auto_now_add=True)
     name = models.CharField(max_length=200)
     description = models.TextField()
