@@ -130,22 +130,26 @@ class CreateFeaturesView(UserAllowedMixin, DetailView):
         except ObjectDoesNotExist:
             return False
 
-        # logic for what we'll allow
+        is_admin = False
         if self.request.user.is_superuser or self.request.user.groups.filter(name='admin_group').count() > 0:
-            return True
-        elif aoi.status == 'Unassigned':
+            is_admin = True
+
+        # logic for what we'll allow
+        if aoi.status == 'Unassigned':
             aoi.analyst = self.request.user
             aoi.status = 'In work'
             aoi.save()
             return True
         elif aoi.status == 'In work':
-            if aoi.analyst != self.request.user:
+            if is_admin:
+                return True
+            elif aoi.analyst != self.request.user:
                 kwargs['error'] = "Another analyst is already working on this workcell. Please select another workcell"
                 return False
             else:
                 return True
         elif aoi.status == 'Awaiting review':
-            if self.request.user in aoi.job.reviewers.all():
+            if self.request.user in aoi.job.reviewers.all() or is_admin:
                 aoi.status = 'In review'
                 aoi.reviewers.add(self.request.user)
                 aoi.save()
@@ -155,11 +159,13 @@ class CreateFeaturesView(UserAllowedMixin, DetailView):
                 return False
         elif aoi.status == 'In review':
             # if this user previously reviewed this workcell, allow them in
-            if self.request.user in aoi.reviewers.all():
+            if self.request.user in aoi.reviewers.all() or is_admin:
                 return True
             else:
                 kwargs['error'] = "Sorry, only reviewers who previously reviewed this workcell may have access"
                 return False
+        elif is_admin:
+            return True
         else:
             # Can't open a completed workcell
             kwargs['error'] = "Sorry, this workcell has been completed and can no longer be edited"
