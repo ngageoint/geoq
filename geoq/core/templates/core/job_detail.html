@@ -189,7 +189,7 @@
             </p>
 
             <div class="row body" style="height:250px; margin-top:25px; margin-left:5px;">
-                {% if 'accounts.change_aoi' in request.base_perms %}
+                {% if 'core.change_aoi' in request.base_perms %}
                 <div class="btn-group pull-right">
                     <a class="btn btn-mini" href="{{ object.get_update_url }}">
                         <b> Edit Job </b>
@@ -198,19 +198,19 @@
                         <span class="caret"></span>
                     </button>
                     <ul class="dropdown-menu">
-                        {% if 'accounts.add_job' in request.base_perms %}
+                        {% if 'core.add_job' in request.base_perms %}
                         <li><a href="{% url 'job-create-aois' object.id%}">Create Workcells</a></li>
                         {% endif %}
-                        {% if 'accounts.add_job' in request.base_perms %}
+                        {% if 'core.add_job' in request.base_perms %}
                         <li><a href="{% url 'job-prioritize-workcells' object.id %}">Prioritize Workcells</a></li>
                         {% endif %}
                         {% if 'core.assign_workcells' in request.base_perms %}
                         <li><a href="{% url 'job-assign-workcells' object.id%}">Assign Workcells</a></li>
                         {% endif %}
-                        {% if 'accounts.delete_job' in request.base_perms %}
+                        {% if 'core.delete_job' in request.base_perms %}
                         <li><a href="{% url 'job-delete' object.id %}">Delete Job</a></li>
                         {% endif %}
-                        {% if 'accounts.change_job' in request.base_perms and object.map%}
+                        {% if 'core.change_job' in request.base_perms and object.map%}
                         <li><a href="{% url 'map-update' object.map.id %}">Edit Map</a></li>
                         {% endif %}
                     </ul>

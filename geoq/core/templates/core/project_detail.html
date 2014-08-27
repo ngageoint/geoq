@@ -92,7 +92,7 @@
             </p>
 
             <div class="row body" style="margin-top:25px">
-                {% if 'accounts.add_job' in request.base_perms %}
+                {% if 'core.add_job' in request.base_perms %}
                 <div class="btn-group pull-right">
                     <a class="btn btn-mini" href="{{ object.get_update_url }}">
                         <b> Edit Project </b>
@@ -101,7 +101,7 @@
                         <span class="caret"></span>
                     </button>
                     <ul class="dropdown-menu">
-                        {% if 'accounts.add_job' in request.base_perms %}
+                        {% if 'core.add_job' in request.base_perms %}
                         <li><a href="{% url 'job-create' %}?project={{ object.id }}">Add New Job</a></li>
                         {% endif %}
                     </ul>
