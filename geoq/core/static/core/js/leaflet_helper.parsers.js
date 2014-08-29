@@ -569,88 +569,92 @@ leaflet_helper.parsers.addFEMAImageEventsData = function (result, map, outputLay
             feature.attributes = feature.attributes || {};
             var attributes = feature.attributes;
 
-            var lat = feature.geometry.y || attributes.Latitutde || 0;
-            var lng = feature.geometry.x || attributes.Longitude || 0;
-            lat = parseFloat(lat);
-            lng = parseFloat(lng);
+            try {
+                var lat = feature.geometry.y || attributes.Latitutde || 0;
+                var lng = feature.geometry.x || attributes.Longitude || 0;
+                lat = parseFloat(lat);
+                lng = parseFloat(lng);
 
-            var photo_date = attributes.EXIFPhotoDate;
-            var altitude = attributes.Altitude;
-            var team_name = attributes.TeamName;
-            var event_name = attributes.EventName;
+                var photo_date = attributes.EXIFPhotoDate;
+                var altitude = attributes.Altitude;
+                var team_name = attributes.TeamName;
+                var event_name = attributes.EventName;
 
-            var display = "";
-            if (feature.displayFieldName) {
-                display = attributes[feature.displayFieldName];
-            } else if (feature.value) {
-                display = feature.value;
-            } else if (event_name && team_name) {
-                display = event_name+": "+team_name;
-            } else {
-                display = "Uploaded Photo";
-            }
-
-            var image_type = "";
-            if (feature.attributes.ImageTypeId == 1) {
-                image_type = "Aerial Oblique";
-            } else if (feature.attributes.ImageTypeId == 2) {
-                image_type = "Aerial Nadir";
-            } else if (feature.attributes.ImageTypeId == 3) {
-                image_type = "Ground";
-            }
-
-            var popupContent = leaflet_layer_control.parsers.textIfExists({name: display, title:"Image", header:true, linkit:attributes.ThumbnailURL});
-            popupContent += leaflet_layer_control.parsers.textIfExists({name: photo_date, title:"Photo Date", datify:"calendar, fromnow"});
-            popupContent += "<a href='" + attributes.ImageURL + "' target='_new'><img style='width:150px' src='" + attributes.ThumbnailURL + "' /></a><br/>";
-            popupContent += leaflet_layer_control.parsers.textIfExists({name: altitude, title:"Altitude", suffix:" meters"});
-            popupContent += leaflet_layer_control.parsers.textIfExists({name: image_type, title:"Collection Type"});
-            popupContent += leaflet_helper.addLinksToPopup(outputLayer.name, id, true, false);
-
-            //TODO: Not using color yet
-            var color = "blue";
-            if (feature.layerName == "Track Points") {
-                color = "purple";
-            } else if (feature.layerName == "Ground Images") {
-                color = "orange";
-            } else if (feature.layerName == "Ground Targets") {
-                color = "green";
-            } else if (feature.layerName == "Ground Lines") {
-                color = "yellow";
-            }
-            //Adjust heading 90 degrees to the right
-            var heading = feature.attributes.CalculatedHeading || feature.attributes.Heading || 0;
-            heading = 90 + parseInt(heading);
-            if (heading > 360) heading -= 360;
-
-            var geometry = {};
-            if (feature.geometry && feature.geometry.paths) {
-                geometry = { type: "MultiLineString",
-                    coordinates: feature.geometry.paths //[ [100.0, 0.0], [101.0, 1.0] ]
+                var display = "";
+                if (feature.displayFieldName) {
+                    display = attributes[feature.displayFieldName];
+                } else if (feature.value) {
+                    display = feature.value;
+                } else if (event_name && team_name) {
+                    display = event_name+": "+team_name;
+                } else {
+                    display = "Uploaded Photo";
                 }
-            } else {
-                geometry = {
-                    type: "Point",
-                    coordinates: [lng, lat]
-                }
-            }
 
-            var json = {
-                type: "Feature",
-                properties: {
-                    id: id,
-                    source: 'CAP ImageEvents',
-                    name: display,
-                    image: feature.attributes.ImageURL,
-                    thumbnail: feature.attributes.ThumbnailURL,
-                    popupContent: popupContent,
-                    icon_type: "ImageEvents",
-                    layer_type: feature.layerName,
-                    heading: heading,
-                    color: color
-                },
-                geometry: geometry
-            };
-            jsonObjects.push(json);
+                var image_type = "";
+                if (feature.attributes.ImageTypeId == 1) {
+                    image_type = "Aerial Oblique";
+                } else if (feature.attributes.ImageTypeId == 2) {
+                    image_type = "Aerial Nadir";
+                } else if (feature.attributes.ImageTypeId == 3) {
+                    image_type = "Ground";
+                }
+
+                var popupContent = leaflet_layer_control.parsers.textIfExists({name: display, title:"Image", header:true, linkit:attributes.ThumbnailURL});
+                popupContent += leaflet_layer_control.parsers.textIfExists({name: photo_date, title:"Photo Date", datify:"calendar, fromnow"});
+                popupContent += "<a href='" + attributes.ImageURL + "' target='_new'><img style='width:150px' src='" + attributes.ThumbnailURL + "' /></a><br/>";
+                popupContent += leaflet_layer_control.parsers.textIfExists({name: altitude, title:"Altitude", suffix:" meters"});
+                popupContent += leaflet_layer_control.parsers.textIfExists({name: image_type, title:"Collection Type"});
+                popupContent += leaflet_helper.addLinksToPopup(outputLayer.name, id, true, false);
+
+                //TODO: Not using color yet
+                var color = "blue";
+                if (feature.layerName == "Track Points") {
+                    color = "purple";
+                } else if (feature.layerName == "Ground Images") {
+                    color = "orange";
+                } else if (feature.layerName == "Ground Targets") {
+                    color = "green";
+                } else if (feature.layerName == "Ground Lines") {
+                    color = "yellow";
+                }
+                //Adjust heading 90 degrees to the right
+                var heading = feature.attributes.CalculatedHeading || feature.attributes.Heading || 0;
+                heading = 90 + parseInt(heading);
+                if (heading > 360) heading -= 360;
+
+                var geometry = {};
+                if (feature.geometry && feature.geometry.paths) {
+                    geometry = { type: "MultiLineString",
+                        coordinates: feature.geometry.paths //[ [100.0, 0.0], [101.0, 1.0] ]
+                    }
+                } else {
+                    geometry = {
+                        type: "Point",
+                        coordinates: [lng, lat]
+                    }
+                }
+
+                var json = {
+                    type: "Feature",
+                    properties: {
+                        id: id,
+                        source: 'CAP ImageEvents',
+                        name: display,
+                        image: feature.attributes.ImageURL,
+                        thumbnail: feature.attributes.ThumbnailURL,
+                        popupContent: popupContent,
+                        icon_type: "ImageEvents",
+                        layer_type: feature.layerName,
+                        heading: heading,
+                        color: color
+                    },
+                    geometry: geometry
+                };
+                jsonObjects.push(json);
+            } catch (ex) {
+                log.error("There was an error importing a CAP ImageEvents feature", feature);
+            }
         }
     });
     outputLayer.addData(jsonObjects);
