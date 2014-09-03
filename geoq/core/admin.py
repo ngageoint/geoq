@@ -59,7 +59,12 @@ class SettingAdmin(admin.ModelAdmin):
     list_display = ['name', 'value']
 
 
+class ProjectAdmin(admin.ModelAdmin):
+    list_display = ('name', 'created_at', 'updated_at')
+    filter_horizontal = ('project_admins', 'contributors',)
+
+
 admin.site.register(Setting, SettingAdmin)
-admin.site.register(Project, ObjectAdmin)
+admin.site.register(Project, ProjectAdmin)
 admin.site.register(Job, JobAdmin)
 admin.site.register(AOI, AOIAdmin)
