@@ -61,11 +61,30 @@ gamification.badgeDataReturned = function (badge_info) {
         var badge_text = 'Badges: ';
         if (points) badge_text = 'Points: <b>'+points+'</b>, '+badge_text;
 
-        $('<span>')
+        var tags = [];
+        var tagText = "";
+        if (badge_info.tags) {
+            for (var field in badge_info.tags) {
+                tags.push({name:field, num:badge_info.tags[field]});
+            }
+            tags = _.sortBy(tags,"num");
+            tags = tags.reverse();
+
+            var tag_list = [];
+            _.each(tags,function(tag){
+                tag_list.push(tag.name);
+            });
+            tagText = "Tags: " + tag_list.join(", ");
+        }
+
+        var $title = $('<span>')
             .addClass('muted')
             .css({verticalAlign: 'super'})
             .html(badge_text)
             .appendTo(gamification.$badge_container);
+        if (tagText) {
+            $title.attr('title',tagText);
+        }
 
         var allBadges = badge_info.profile;
         allBadges = _.sortBy(allBadges,function(b){return -b.count}); //Reverse count order
