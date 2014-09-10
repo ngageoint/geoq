@@ -77,11 +77,11 @@ urlpatterns = patterns('',
     # # Edit profile
     # url(r'^(?P<username>[\.\w-]+)/edit/$',
     #    point_to_404, name='userena_profile_edit'),
-    url(r'^(?P<username>[\.\w-]+)/edit/$',
+    url(r'^(?P<username>[\.@\w-]+)/edit/$',
        userena_views.profile_edit, {'template_name': 'accounts/profile_form.html'},
        name='userena_profile_edit' ),
     # View profiles
-    url(r'^(?P<username>(?!signout|signup|signin)[\.\w-]+)/$',
+    url(r'^(?P<username>(?!signout|signup|signin)[\.@\w-]+)/$',
        userena_views.profile_detail,
        name='userena_profile_detail'),
     #

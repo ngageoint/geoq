@@ -17,7 +17,7 @@ urlpatterns = patterns('',
     url(r'^maps/', include('geoq.maps.urls')),
     url(r'^feedback/', include('geoq.feedback.urls')),
     url(r'^accounts/', include('geoq.accounts.urls')),
-    url(r'^proxy/', include('proxy.urls',namespace="proxy")),
+    url(r'^proxy/', include('proxy.urls', namespace="proxy")),
 
     url(r'^messages/', include('userena.contrib.umessages.urls'), name='userena_messages'),
 
