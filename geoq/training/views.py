@@ -8,6 +8,7 @@ from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User, Group
 from django.shortcuts import get_object_or_404, redirect, render
 from django.http import Http404, HttpResponse, HttpResponseRedirect, HttpResponseForbidden
+from django.template.response import TemplateResponse
 from django.core.exceptions import ValidationError, ObjectDoesNotExist
 from datetime import datetime
 from models import Training
@@ -40,7 +41,7 @@ class TrainingQuizView(ListView):
 
     def get_context_data(self, **kwargs):
         context = super(TrainingQuizView, self).get_context_data(**kwargs)
-        context['admin'] = self.request.user.has_perm('training.add_course') #TODO: Or admin or primary_contact
+        context['admin'] = self.request.user.has_perm('training.edit_course') #TODO: Or admin or primary_contact
         course = Training.objects.get(pk=self.kwargs.get('pk'))
         context['object'] = course
         context['quiz_html'] = build_quiz(course.quiz_data)
@@ -50,10 +51,10 @@ class TrainingQuizView(ListView):
         answers = request.POST.get('answers')
         result = {}
 
+        course = None
         if not answers:
             result = {"result": "No answers passed in"}
         else:
-            course = None
             answers_data = []
             try:
                 answers_data = json.loads(answers)
@@ -86,7 +87,12 @@ class TrainingQuizView(ListView):
 
         result['quiz_id'] = self.kwargs.get('pk')
 
-        return HttpResponse(json.dumps(result), mimetype="application/json", status=200)
+        return TemplateResponse(request, "training/quiz_response.html", {
+                "quiz_result": result,
+                "object": course
+        })
+
+#        return HttpResponse(json.dumps(result), mimetype="application/json", status=200)
 
 
 def check_if_quiz_passed(quiz_data, answers_data):

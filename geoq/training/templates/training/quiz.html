@@ -8,6 +8,7 @@
         <a href="/training">Return to Training Page</a>
         <br/>
         {{ object.description }}
+
         <form action="" method="post" id="quiz">
             {% csrf_token %}
 
@@ -23,11 +24,9 @@
         $(document).ready(function(){
             $('#quiz')
                     .on('click',build_answers);
-{#                    .on('submit',build_answers);#}
         });
 
         function build_answers(){
-
             var serials = $('#quiz').serializeArray();
             var answers = [];
             _.each(serials,function(serial){
