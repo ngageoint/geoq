@@ -232,6 +232,8 @@ INSTALLED_APPS = (
     'geoq.feedback',
     'geoq.proxy',
     'geoq.locations',
+    'geoq.training',
+
 )
 
 # A sample logging configuration. The only tangible logging
