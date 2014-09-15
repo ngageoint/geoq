@@ -55,20 +55,16 @@ leaflet_helper.layer_conversion = function (lyr, map) {
         log.warn('Esri Leaflet plugin not installed.  Esri layer types disabled.');
     }
 
+    layerOptions = _.extend(options, layerParams);
     if (lyr.type == 'WMS') {
-        layerOptions = _.extend(options, layerParams);
         outputLayer = new L.tileLayer.wms(lyr.url, layerOptions);
     } else if (lyr.type == 'ESRI Tiled Map Service' && esriPluginInstalled) {
-        layerOptions = options;
         outputLayer = new L.esri.tiledMapLayer(lyr.url, layerOptions);
     } else if (lyr.type == 'ESRI Dynamic Map Layer' && esriPluginInstalled) {
-        layerOptions = options;
         outputLayer = new L.esri.dynamicMapLayer(lyr.url, layerOptions);
     } else if (lyr.type == 'ESRI Feature Layer' && esriPluginInstalled) {
-        layerOptions = options;
         outputLayer = new L.esri.featureLayer(lyr.url, layerOptions);
     } else if (lyr.type == 'ESRI Clustered Feature Layer' && esriPluginInstalled) {
-        layerOptions = _.extend(options, layerParams);
         if (layerOptions.createMarker) {
             layerOptions.createMarker = leaflet_helper.createMarker[layerOptions.createMarker];
         }
@@ -83,7 +79,7 @@ leaflet_helper.layer_conversion = function (lyr, map) {
         } else {
             layerOptions = options;
 
-            var url = leaflet_helper.constructors.urlTemplater(lyr.url, map, lyr.layerParams);
+            var url = leaflet_helper.constructors.urlTemplater(lyr.url, map, layerOptions);
             var proxiedURL = leaflet_helper.proxify(url);
 
             outputLayer = new L.KML(proxiedURL, layerOptions);
