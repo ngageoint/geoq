@@ -1,3 +1,10 @@
+{% if object.required_courses.all %}
+<tr><td colspan="2" style="padding-top:20px;">
+    {% for course in object.required_courses.all %}
+    <b>Required Course:</b> <a href="/training/{{ course.id }}" target="_blank">{{ course.name }}</a><br/>
+    {% endfor %}
+</td></tr>
+{% endif %}
 <tr><td colspan="2" style="padding-top:20px;"><h3>Share Your Work:</h3></td></tr>
 <tr><td colspan="2">
     <div class="job_link_item">

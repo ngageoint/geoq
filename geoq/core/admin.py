@@ -46,9 +46,9 @@ class AOIAdmin(ObjectAdmin):
 
 
 class JobAdmin(GuardedModelAdmin, ObjectAdmin):
-    filter_horizontal = ("analysts", "reviewers", "feature_types")
+    filter_horizontal = ("analysts", "reviewers", "feature_types", "required_courses")
 
-    fields = ('name', 'map', 'analysts',  'reviewers', 'feature_types', 'project', 'tags')
+    fields = ('name', 'map', 'analysts',  'reviewers', 'feature_types', 'required_courses', 'project', 'tags')
     readonly_fields = ('created_at', 'updated_at')
 
     save_on_top = True

@@ -143,9 +143,9 @@ def check_if_quiz_passed(quiz_data, answers_data):
     result['questions_failed'] = questions_failed
 
     if result['passed']:
-        result['text'] = "User passed"
+        result['text'] = "User passed quiz, achievements unlocked"
     else:
-        result['text'] = "User did not pass, not enough correct answers"
+        result['text'] = "User did not pass quiz, not enough correct answers"
 
     return result
 

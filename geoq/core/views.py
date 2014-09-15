@@ -104,6 +104,7 @@ class DetailedListView(ListView):
         cv['object'] = get_object_or_404(self.model, pk=self.kwargs.get('pk'))
         return cv
 
+
 class UserAllowedMixin(object):
 
     def check_user(self, user, pk):
@@ -133,6 +134,21 @@ class CreateFeaturesView(UserAllowedMixin, DetailView):
         is_admin = False
         if self.request.user.is_superuser or self.request.user.groups.filter(name='admin_group').count() > 0:
             is_admin = True
+
+        if not is_admin:
+            courses = aoi.job.required_courses.all()
+            if courses:
+                classes_passed = True
+                failed_names = []
+                for course in courses:
+                    if user not in course.users_completed.all():
+                        classes_passed = False
+                        url_name = "<a href='/training/"+course.id+"/' target='_blank'>"+course.name+"</a>"
+                        failed_names.append(url_name)
+                if not classes_passed:
+                    courses = ', '.join(failed_names)
+                    kwargs['error'] = "This Job has required training courses that you have not passed. Please take these quizes before editing this workcell: "+courses
+                    return False
 
         # logic for what we'll allow
         if aoi.status == 'Unassigned':
