@@ -6,7 +6,7 @@ from django.conf import settings
 from forms import SignupFormExtra
 
 from userena import views as userena_views
-from views import accept_terms_of_use
+from views import accept_terms_of_use, UserExpertiseView
 
 logout_page = getattr(settings, 'LOGOUT_URL', '/geoq')
 
@@ -82,7 +82,7 @@ urlpatterns = patterns('',
        name='userena_profile_edit' ),
     # View profiles
     url(r'^(?P<username>(?!signout|signup|signin)[\.\w-]+)/$',
-       userena_views.profile_detail,
+       userena_views.profile_detail, {'template_name': 'accounts/profile_detail.html'},
        name='userena_profile_detail'),
     #
     # # View profiles
@@ -97,6 +97,9 @@ urlpatterns = patterns('',
     #    point_to_404, name='userena_profile_list'),
 
     url(r'^accept_terms_of_use/?$', accept_terms_of_use, name='accept_terms_link'),
+    url(r'^(?P<username>[\.\w-]+)/expertise/$',
+        UserExpertiseView.as_view(),
+        name='user_expertise'),
 
 
     # If nothing overrides the urls, then load the default with userena.
