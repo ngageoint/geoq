@@ -6,7 +6,7 @@ from django.conf import settings
 from forms import SignupFormExtra
 
 from userena import views as userena_views
-from views import accept_terms_of_use
+from views import accept_terms_of_use, UserExpertiseView
 
 logout_page = getattr(settings, 'LOGOUT_URL', '/geoq')
 
