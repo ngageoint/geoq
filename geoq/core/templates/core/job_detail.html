@@ -152,6 +152,14 @@
 
         };
 
+    $(document).ready(function(){
+        var $att = $('#attribute-table');
+        var $map = $('#map');
+        var height = $att.height();
+        $map.height(height);
+        $att.css('marginBottom','20px');
+    });
+
     </script>
     <style>
         .nav.nav-tabs li a {
@@ -189,6 +197,11 @@
             </p>
 
             <div class="row body" style="height:250px; margin-top:25px; margin-left:5px;">
+                <div class="span4 thumbnail" id="map" style="height:290px; margin-left: 0px; width: 400px;">
+                {% leaflet_map "map" creatediv=False%}
+                </div>
+                <div class="span6" id="attribute-table" style="float:left">
+
                 {% if 'core.change_aoi' in request.base_perms %}
                 <div class="btn-group pull-right">
                     <a class="btn btn-mini" href="{{ object.get_update_url }}">
@@ -216,11 +229,8 @@
                     </ul>
                 </div>
                 {% endif %}
-                <div class="span4 thumbnail" id="map" style="height:290px; margin-left: 0px; width: 400px;">
-                {% leaflet_map "map" creatediv=False%}
-                </div>
-                <div class="span6" id="attribute-table" style="float:left">
-                    <table>
+
+                    <table style="clear: both">
                         <tr>
                             <th style="min-width: 100px"></th>
                             <th></th>

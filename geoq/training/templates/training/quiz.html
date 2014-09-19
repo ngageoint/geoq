@@ -1,0 +1,43 @@
+{% extends "core/templates/core/base.html" %}
+{% block title %}GeoQ: Quiz for {{ object.name }}{% endblock %}
+
+{% block container %}
+
+    <div class="row span12">
+        <span class="list-view-header">Quiz for <b>{{ object.name }}</b></span><br/>
+        <a href="/training">Return to Training Page</a>
+        <br/>
+        {{ object.description }}
+
+        <form action="" method="post" id="quiz">
+            {% csrf_token %}
+
+            <hr/>
+            {% autoescape off %}{{ quiz_html }}{% endautoescape %}
+            <hr/>
+
+            <input type="hidden" id="answers" name="answers" value='{"items":"default"}' />
+            <input type="submit" value="OK">
+        </form>
+    </div>
+    <script language="JavaScript">
+        $(document).ready(function(){
+            $('#quiz')
+                    .on('click',build_answers);
+        });
+
+        function build_answers(){
+            var serials = $('#quiz').serializeArray();
+            var answers = [];
+            _.each(serials,function(serial){
+                if (serial.name != "csrfmiddlewaretoken") {
+                    answers.push({"question":serial.name,"answer":serial.value});
+                }
+            });
+            var answer_text = JSON.stringify(answers);
+            $('#answers').val(answer_text)
+
+        }
+    </script>
+
+{% endblock %}

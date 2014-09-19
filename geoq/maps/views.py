@@ -119,7 +119,8 @@ class EditFeatures(View):
 
         return HttpResponse("{}", mimetype="application/json")
 
-def feature_delete(request,pk):
+
+def feature_delete(request, pk):
     try:
         feature = Feature.objects.get(pk=pk)
         feature.delete()

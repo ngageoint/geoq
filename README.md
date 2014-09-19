@@ -14,7 +14,7 @@ Software source code previously released under an open source license and then m
 ###In the News
 NGA Director Letitia Long talks about NGA's GitHub initiative and our first offering, GeoQ, at the GEOINT Symposium.  Her comments start at 40 minutes and 40 seconds in the [video clip] (http://geointv.com/archive/geoint-2013-keynote-letitia-a-long/).  
 
-NGA Leaders speak at the 2014 White House Innovation for Disaster Response and Recovery Demo Day about GeoQ. [GeoQ Overview] (https://www.youtube.com/watch?v=X8eiXjbhfOc#t=26m13s)
+NGA Leaders speak at the 2014 White House Innovation for Disaster Response and Recovery Demo Day about [GeoQ] (https://www.youtube.com/watch?v=X8eiXjbhfOc#t=26m13s).
 
 ### Screenshots
 ![GeoQ Main page](https://cloud.githubusercontent.com/assets/147580/3464387/e58da414-024b-11e4-9a02-f9074f26047e.png)

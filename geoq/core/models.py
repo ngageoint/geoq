@@ -15,19 +15,23 @@ from managers import AOIManager
 from jsonfield import JSONField
 from collections import defaultdict
 from django.db.models import Q
+from geoq.training.models import Training
 
 TRUE_FALSE = [(0, 'False'), (1, 'True')]
 STATUS_VALUES_LIST = ['Unassigned', 'Assigned', 'In work', 'Awaiting review', 'In review', 'Completed']
 
+
 class AssigneeType:
-    USER, GROUP = range(1,3)
+    USER, GROUP = range(1, 3)
+
 
 class Setting(models.Model):
     """
     Model for site-wide settings.
     """
     name = models.CharField(max_length=200, help_text="Name of site-wide variable")
-    value = JSONField(null=True, blank=True, help_text="Value of site-wide variable that scripts can reference - must be valid JSON")
+    value = JSONField(null=True, blank=True,
+                      help_text="Value of site-wide variable that scripts can reference - must be valid JSON")
 
     def __unicode__(self):
         return self.name
@@ -39,7 +43,7 @@ class Assignment(models.Model):
     """
     assignee_type = models.ForeignKey(ContentType, null=True)
     assignee_id = models.PositiveIntegerField(null=True)
-    content_object = generic.GenericForeignKey('assignee_type','assignee_id')
+    content_object = generic.GenericForeignKey('assignee_type', 'assignee_id')
 
     class Meta:
         abstract = True
@@ -55,7 +59,8 @@ class GeoQBase(models.Model):
     name = models.CharField(max_length=200)
     description = models.TextField()
     updated_at = models.DateTimeField(auto_now=True)
-    properties = JSONField(null=True, blank=True, help_text='JSON key/value pairs associated with this object, e.g. {"usng":"18 S TJ 87308 14549", "favorite":"true"}')
+    properties = JSONField(null=True, blank=True,
+                           help_text='JSON key/value pairs associated with this object, e.g. {"usng":"18 S TJ 87308 14549", "favorite":"true"}')
 
     def __unicode__(self):
         return self.name
@@ -83,7 +88,7 @@ class Project(GeoQBase):
         ("Exercise", "Exercise"),
         ("Special Event", "Special Event"),
         ("Training", "Training"),
-        ]
+    ]
 
     project_type = models.CharField(max_length=50, choices=PROJECT_TYPES)
     private = models.BooleanField(default=False, help_text='Make this project available to all users.')
@@ -96,7 +101,8 @@ class Project(GeoQBase):
 
     class Meta:
         permissions = (
-            ('open_project','Open Project'),('close_project','Close Project'),('archive_project','Archive Project'),
+            ('open_project', 'Open Project'), ('close_project', 'Close Project'),
+            ('archive_project', 'Archive Project'),
         )
         ordering = ('-created_at',)
 
@@ -133,7 +139,8 @@ class Project(GeoQBase):
                 envelope_string = job_envelope.json
                 if envelope_string:
                     job_poly = json.loads(envelope_string)
-                    job_poly['properties'] = {"job_id": str(job.id), "link": str(job.get_absolute_url()), "name": str(job.name)}
+                    job_poly['properties'] = {"job_id": str(job.id), "link": str(job.get_absolute_url()),
+                                              "name": str(job.name)}
                     jobs.append(job_poly)
         return json.dumps(jobs, ensure_ascii=True)
 
@@ -157,11 +164,13 @@ class Job(GeoQBase, Assignment):
     reviewers = models.ManyToManyField(User, blank=True, null=True, related_name="reviewers")
     progress = models.SmallIntegerField(max_length=2, blank=True, null=True)
     project = models.ForeignKey(Project, related_name="project")
-    grid = models.CharField(max_length=5, choices=GRID_SERVICE_CHOICES, default=GRID_SERVICE_VALUES[0], help_text='Select usng for Jobs inside the US, otherwise use mgrs')
+    grid = models.CharField(max_length=5, choices=GRID_SERVICE_CHOICES, default=GRID_SERVICE_VALUES[0],
+                            help_text='Select usng for Jobs inside the US, otherwise use mgrs')
     tags = models.CharField(max_length=50, blank=True, null=True, help_text='Useful tags to search social media with')
 
     map = models.ForeignKey('maps.Map', blank=True, null=True)
     feature_types = models.ManyToManyField('maps.FeatureType', blank=True, null=True)
+    required_courses = models.ManyToManyField(Training, blank=True, null=True, help_text="Courses that must be passed to open these cells")
 
     class Meta:
         permissions = (
@@ -193,7 +202,7 @@ class Job(GeoQBase, Assignment):
         for cell in AOI.objects.filter(job__id=self.id):
             count[cell.status] += 1
 
-        return str(', '.join("%s: <b>%r</b>" % (key,val) for (key,val) in count.iteritems()))
+        return str(', '.join("%s: <b>%r</b>" % (key, val) for (key, val) in count.iteritems()))
 
     @property
     def user_count(self):
@@ -217,19 +226,19 @@ class Job(GeoQBase, Assignment):
 
             header = "<th><i>Feature Counts</i></th>"
             for (featuretype, status_obj) in counts.iteritems():
-                header = header + "<th><b>"+featuretype+"</b></th>"
-            output += "<tr>"+header+"</tr>"
+                header = header + "<th><b>" + featuretype + "</b></th>"
+            output += "<tr>" + header + "</tr>"
 
             for status in STATUS_VALUES_LIST:
                 status = str(status)
-                row = "<td><b>"+status+"</b></td>"
+                row = "<td><b>" + status + "</b></td>"
                 for (featuretype, status_obj) in counts.iteritems():
                     if status in status_obj:
                         val = status_obj[status]
                     else:
                         val = 0
                     row += "<td>" + str(val) + "</td>"
-                output += "<tr>"+row+"</tr>"
+                output += "<tr>" + row + "</tr>"
             output += "</table>"
         else:
             output = ""
@@ -310,7 +319,7 @@ class AOI(GeoQBase, Assignment):
 
     class Meta:
         permissions = (
-            ('assign_workcells','Assign Workcells'),('certify_workcells','Certify Workcells'),
+            ('assign_workcells', 'Assign Workcells'), ('certify_workcells', 'Certify Workcells'),
         )
 
     def __unicode__(self):

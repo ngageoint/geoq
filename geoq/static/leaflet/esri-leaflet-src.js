@@ -1935,8 +1935,9 @@ L.esri.DynamicMapLayer = L.Class.extend({
     format: 'png24',
     transparent: true,
     f: 'image',
-    bboxSR: 3875,
-    imageSR: 3875,
+    bboxSR: 4326,
+    imageSR: 4326,
+    outSR: 4326,
     layers: '',
     layerDefs: ''
   },

@@ -1,0 +1,42 @@
+{% extends "core/templates/core/base.html" %}
+{% block title %}GeoQ: Training and Quized{% endblock %}
+
+{% block container %}
+
+    <div class="row-fluid container-narrow">
+        <div class="span12">
+            <span class="list-view-header">GeoQ Training Courses</span>
+            {% if admin %}
+            <span><a class="btn btn-small pull-right" href="{% url 'map-create' %}">Add New</a></span>
+            {% endif %}
+
+        </div>
+        <div class="row"><span class="span6"/></div>
+        <div>
+
+            <ul class="projectlist">
+                {% for object in object_list %}
+                    <li>
+
+                    <h3>
+                        <i class="icon-edit icon-1x pull-left list-icon"></i>
+                        <span class="title">{{ object.name }}</span>
+                    </h3>
+
+                    <p class="body project-description">
+                        {{ object.description }}
+                        {% if object.category %}<i> Category: <b>{{ object.category }}</b></i>{% endif %}
+                        {% if object.content_link %}<br/>- <a href="{{ object.content_link }}" target="_blank">View Training</a>{% endif %}
+                        {% if object.quiz_data %}<br/>- <a href="{{ object.id }}/quiz">Take Quiz</a>{% endif %}
+                    </p>
+
+                    <p class="body muted timestamp">{{ object.updated_at }}</p>
+                    </li>
+                {% endfor %}
+            </ul>
+
+
+        </div>
+
+    </div>
+{% endblock %}

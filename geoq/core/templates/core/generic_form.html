@@ -6,7 +6,7 @@
         <div class="row-fluid">
 
             <div class="span12">
-                <h3> {% if object %}Edit{% else %}Create New {% endif %}{{ form.Meta.model|object_class|title }}</h3>
+                <h3> {% if object %}Edit {% else %}Create New {% endif %}{{ form.Meta.model|object_class|title }}</h3>
                  {% include custom_form|default:"core/_generic_form_twocol.html" %}
             </div>
         </div>

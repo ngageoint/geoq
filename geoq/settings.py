@@ -29,8 +29,6 @@ DATABASES = {
     }
 }
 
-AUTH_PROFILE_MODULE = 'accounts.UserProfile'
-
 # Use this to change the base bootstrap library
 BOOTSTRAP_BASE_URL = '/static/bootstrap/'
 
@@ -234,6 +232,8 @@ INSTALLED_APPS = (
     'geoq.feedback',
     'geoq.proxy',
     'geoq.locations',
+    'geoq.training',
+
 )
 
 # A sample logging configuration. The only tangible logging
