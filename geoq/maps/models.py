@@ -457,7 +457,7 @@ class FeatureType(models.Model):
 
         if self.type == "Point":
             html = "<img src='"+src+"' style='"+style_html+"vertical-align:initial;' />"
-        elif self.type == "Line":
+        elif self.type == "LineString":
             style_html = style_html + "background-color:"+bgColor+"; "
             html = "<span style='"+style_html+"border-radius:4px; display:inline-block; opacity:"+opacity+"; width:5px; margin-left:3px; margin-right:5px;'> &nbsp; </span>"
         else:
