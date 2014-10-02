@@ -22,6 +22,7 @@ aoi_feature_edit.drawnItems = new L.FeatureGroup();
 aoi_feature_edit.options = {};
 aoi_feature_edit.all_polygons = [];
 aoi_feature_edit.all_markers = [];
+aoi_feature_edit.all_polylines = [];
 aoi_feature_edit.available_icons = [];
 aoi_feature_edit.MapIcon = null;
 
@@ -558,6 +559,8 @@ aoi_feature_edit.map_init = function (map, bounds) {
         } else if (ftype.type == 'Point') {
             var point = aoi_feature_edit.createPointOptions(ftype);
             if (point) aoi_feature_edit.all_markers.push(point);
+        } else if (ftype.type == 'LineString') {
+            aoi_feature_edit.all_polylines.push(aoi_feature_edit.createPolylineOptions(ftype));
         } else {
             log.error("Item should be drawn, but not a Polygon or Point object.")
         }
@@ -852,12 +855,12 @@ aoi_feature_edit.buildDrawingControl = function (drawnItems) {
         position: "topleft",
 
         draw: {
-            polyline: false,
             circle: false,
             rectangle: false,
 
             markers: aoi_feature_edit.all_markers,
-            polygons: aoi_feature_edit.all_polygons
+            polygons: aoi_feature_edit.all_polygons,
+            polylines: aoi_feature_edit.all_polylines
         },
         edit: {
             featureGroup: drawnItems,
@@ -1126,6 +1129,20 @@ aoi_feature_edit.createPolygonOptions = function (opts) {
 
     return options;
 };
+
+aoi_feature_edit.createPolylineOptions = function (opts) {
+    var options = {};
+
+    if (opts.name) {
+        options.title = opts.name;
+    }
+
+    options.allowIntersection = true;
+    options.shapeOptions = opts.style || {borderColor: "black"};
+    options.id = opts.id;
+
+    return options;
+}
 
 aoi_feature_edit.createPointOptions = function (opts) {
     var options = {};
