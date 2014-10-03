@@ -98,7 +98,7 @@ leaflet_helper.constructors.identifyParser = function(result, outputLayer){
 
         parser = leaflet_helper.parsers.basicJson;
         parserName = "Basic JSON";
-    } else if (result && result.geonames && result.geonames.length && false) {
+    } else if (result && result.geonames && result.geonames.length && false) { //TODO: Why not turned on?
 
         parser = leaflet_helper.parsers.geoNameWikiData;
         parserName = "GeoName Lookup";
@@ -107,6 +107,12 @@ leaflet_helper.constructors.identifyParser = function(result, outputLayer){
 
         parser = leaflet_helper.parsers.webDataLink;
         parserName = "Web Data Lookup";
+    } else if (result && result[0] && result[0].key && result[0].skey && result[0].clon!==undefined
+        && result[0].clat!==undefined && result[0].location!==undefined && result[0].ca!==undefined
+        && result[0].cd!==undefined && result[0].image_url!==undefined) {
+
+        parser = leaflet_helper.parsers.mapillaryImages;
+        parserName = "Mapillary Images";
     }
     //ADD new parser detectors here
 
@@ -998,5 +1004,72 @@ leaflet_helper.parsers.webDataLink = function (result, map, outputLayer) {
     } catch (ex) {
         log.error("Problem parsing a Web Data Link: "+outputLayer.name);
     }
+    return outputLayer;
+};
+
+leaflet_helper.parsers.mapillaryImages = function (result, map, outputLayer) {
+    var jsonObjects = [];
+    var formatName = "Mapillary";
+
+    if (!outputLayer.options) { outputLayer.options = {}}
+    if (!outputLayer.options.items) { outputLayer.options.items = []}
+
+    $(result).each(function () {
+        var feature = $(this)[0];
+        var id=feature.key;
+
+        var itemFound = false;
+        _.each(outputLayer.options.items,function(item){
+           if (item.id == id) itemFound = true;
+        });
+        if (!itemFound) {
+            outputLayer.options.items.push(feature);
+
+            var title=feature.location || "";
+            var id=feature.key;
+            var imageURL= feature.image_url;
+            var thumbnailURL='';
+
+            var thumbs = feature.map_image_versions;
+            if (thumbs && thumbs[0] && thumbs[0].url) {
+                thumbnailURL = thumbs[0].url;
+            }
+
+            var center = map.getCenter();
+            var popupContent = "<h5>"+formatName+" Picture</h5>";
+            popupContent += "Posted at: "+title+"<br/>";
+            popupContent += "<a href='" + imageURL + "' target='_new'><img style='width:320px' src='" + thumbnailURL + "' /></a>";
+            popupContent += leaflet_helper.addLinksToPopup(outputLayer.name, id, true, true);
+
+            var lat = feature.lat || center.lat;
+            var lng = feature.lon || center.lng;
+
+            var json = {
+                type: "Feature",
+                properties: {
+                    id: id,
+                    name: title,
+                    source: formatName,
+                    image: imageURL,
+                    thumbnail: thumbnailURL,
+                    popupContent: popupContent,
+                    tags: aoi_feature_edit.tags || formatName
+                },
+                geometry: {
+                    type: "Point",
+                    coordinates: [lng, lat]
+                }
+            };
+            jsonObjects.push(json);
+        }
+    });
+
+    outputLayer.addData(jsonObjects);
+    if (jsonObjects && jsonObjects.length) {
+        log.info("A "+formatName+" Photos layer was loaded, with "+ jsonObjects.length+" features");
+    } else {
+        log.info("An "+formatName+" Photos response was returned, but with no features.");
+    }
+
     return outputLayer;
 };
