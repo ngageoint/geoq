@@ -279,6 +279,22 @@ create_aois.init = function(){
     });
 
     create_aois.initializeFileUploads();
+
+    create_aois.map_updates();
+};
+
+create_aois.map_updates = function(){
+    var layers = _.filter(map_layers.layers,function(l){return l.type=="WMS"});
+
+    _.each(layers, function(layer){
+        var mywms = L.tileLayer.wms(layer.url, {
+            layers: layer.layer,
+            format: layer.format,
+            transparent: layer.transparent,
+            attribution: layer.attribution
+        });
+        mywms.addTo(map);
+    });
 };
 
 create_aois.addLocatorControl = function(map){
