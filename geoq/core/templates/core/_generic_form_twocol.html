@@ -11,18 +11,18 @@
                 {% if field.errors %}
                     <div class="control-group error">
                         <div class="controls">
-                            <dt><label><b>{{ field.label }}</b></label>  {{ field }}</dt>
+                            <dt><label><b>{{ field.label }}</b></label>  {{ field|default:"Field" }}</dt>
 
                             <span class="help-inline">{{ field.errors }}</span>
                         </div>
                     </div>
                 {% else %}
                     <dt>
-                        <label>{{ field.label }}  {{ field }}</label>
+                        <label>{{ field.label|default:"Field" }}  {{ field|default:"Field" }}</label>
                     </dt>
                     <dd>
                           <span class="help-block muted">
-                              <small>{{ field.help_text }}</small>
+                              <small>{{ field.help_text|default:"" }}</small>
                           </span>
                     </dd>
                 {% endif %}
@@ -31,18 +31,18 @@
 
 
                 <dt>
-                    <label>{{ field.label }}</label>
+                    <label>{{ field.label|default:"" }}</label>
                 </dt>
                 <dd>
                     {% if field.errors %}
                         <div class="control-group error">
                             <div class="controls">
-                                {{ field }}
-                                <span class="help-inline">{{ field.errors }}</span>
+                                {{ field|default:"Field" }}
+                                <span class="help-inline">{{ field.errors|default:"" }}</span>
                             </div>
                         </div>
                     {% else %}
-                        {{ field }}<span class="help-block muted"><small>{{ field.help_text }}</small></span>
+                        {{ field|default:"Field" }}<span class="help-block muted"><small>{{ field.help_text|default:"" }}</small></span>
                     {% endif %}
                 </dd>
             {% endif %}

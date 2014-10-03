@@ -1,11 +1,34 @@
 //TODO: Show Leaderboard
 //TODO: Save badge json to user model
 
+/*
+Gamification-server include script, version 0.1, 3 Oct 2014
+Source: https://github.com/ngageoint/gamification-server/
+
+Usage: Within a page that includes this file, use JQuery to initialize a call to the gamificaiton server and
+ show results within a DIV object on the page. Other options can be set, but the 4 below are required.  Feel
+ free to tweak and update this file, it is mostly to be used as a placeholder.
+
+<script src="/static/gamification-server-request.js"></script>
+<script>
+    $(document).ready(function() {
+        gamification.init({
+            server_url:"http://gamification-server.com/,
+            project_names:"my_app,overall_game",
+            user_name: "{{ request.user.username }}",
+            $badge_container: $('#badge-container')
+        });
+    });
+</script>
+
+ */
+
 var gamification = {};
-gamification.server_url = "";
-gamification.project_names = "geoq";
-gamification.user_name = "";
-gamification.proxy_url = "/geoq/proxy/";
+gamification.server_url = ""; //This should contain the name of the gamification server
+gamification.project_names = ""; //Replace this with the name of the "Project" that is on the gamificaiton server, or a comma-seperated list of projects
+gamification.user_name = ""; //This should contain the user that you are requesting information about
+gamification.proxy_url = "/geoq/proxy/"; //Replace this with your local proxy that the JSON will be requested through
+
 gamification.$badge_container = null;
 gamification.no_badges_message = "No badges yet";
 gamification.badges_to_show_max = 8;
