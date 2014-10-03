@@ -99,7 +99,6 @@ class ShpResponder(object):
         # we must close the file for GDAL to be able to open and write to it
         tmp.close()
         args = tmp.name, self.job_pk, content_type
-        import pdb; pdb.set_trace()
         self.write_geoq_shape(*args)
 
         return tmp.name
@@ -194,8 +193,6 @@ class ShpResponder(object):
             elif f.the_geom.geom_type == 'Polygon':
                 features_polys.append(f)
 
-        import pdb; pdb.set_trace()
-
         # This builds the array twice. It's duplicative, but works
         if content_type == 'points':
             self.add_features_subset_to_shapefile(ds, features_points, "lyr")
@@ -215,7 +212,6 @@ class ShpResponder(object):
         native_srs = SpatialReference(geo_field.srid)
 
         # create the Feature layer
-        import pdb; pdb.set_trace()
         layer = lgdal.OGR_DS_CreateLayer(ds, layer_name, native_srs._ptr, ogr_type, None)
 
         # Create the fields that each feature will have
