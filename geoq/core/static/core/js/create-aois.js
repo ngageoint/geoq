@@ -299,7 +299,9 @@ create_aois.map_updates = function(){
         overlayMaps[layer.name] = mywms;
     });
 
-    L.control.layers(overlayMaps).addTo(create_aois.map_object);
+    if (layers && layers.length) {
+        L.control.layers(overlayMaps).addTo(create_aois.map_object);
+    }
 };
 
 create_aois.addLocatorControl = function(map){
