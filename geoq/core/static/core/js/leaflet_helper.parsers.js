@@ -1038,7 +1038,7 @@ leaflet_helper.parsers.mapillaryImages = function (result, map, outputLayer) {
             var center = map.getCenter();
             var popupContent = "<h5>"+formatName+" Picture</h5>";
             popupContent += "Posted at: "+title+"<br/>";
-            popupContent += "<a href='" + imageURL + "' target='_new'><img style='width:320px' src='" + thumbnailURL + "' /></a>";
+            popupContent += "<a href='" + imageURL + "' target='_new'><img style='width:256px' src='" + thumbnailURL + "' /></a>";
             popupContent += leaflet_helper.addLinksToPopup(outputLayer.name, id, true, true);
 
             var lat = feature.lat || center.lat;
