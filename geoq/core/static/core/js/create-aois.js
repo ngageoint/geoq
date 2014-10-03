@@ -48,7 +48,8 @@ function mapInit(map) {
     $('div.leaflet-left div.leaflet-draw.leaflet-control').find('a').popover({trigger:"hover",placement:"right"});
     $('div.leaflet-right div.leaflet-draw.leaflet-control').find('a').popover({trigger:"hover",placement:"left"});
 
-};
+    create_aois.map_updates();
+}
 
 create_aois.init = function(){
     var $usng = $('#option_usng').click(function () {
@@ -279,12 +280,14 @@ create_aois.init = function(){
     });
 
     create_aois.initializeFileUploads();
-
-    create_aois.map_updates();
 };
 
 create_aois.map_updates = function(){
     var layers = _.filter(map_layers.layers,function(l){return l.type=="WMS"});
+
+    var overlayMaps = {
+        "No Overlays": L.layerGroup([])
+    };
 
     _.each(layers, function(layer){
         var mywms = L.tileLayer.wms(layer.url, {
@@ -293,8 +296,10 @@ create_aois.map_updates = function(){
             transparent: layer.transparent,
             attribution: layer.attribution
         });
-        mywms.addTo(map);
+        overlayMaps[layer.name] = mywms;
     });
+
+    L.control.layers(overlayMaps).addTo(create_aois.map_object);
 };
 
 create_aois.addLocatorControl = function(map){
