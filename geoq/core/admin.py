@@ -7,7 +7,7 @@ from django.contrib.gis import admin
 from django.shortcuts import render
 from django.http import HttpResponseRedirect
 from django import forms
-from models import Project, Job, AOI, Setting
+from models import Project, Job, AOI, Setting, Organization
 from guardian.admin import GuardedModelAdmin
 
 
@@ -69,3 +69,4 @@ admin.site.register(Setting, SettingAdmin)
 admin.site.register(Project, ProjectAdmin)
 admin.site.register(Job, JobAdmin)
 admin.site.register(AOI, AOIAdmin)
+admin.site.register(Organization)

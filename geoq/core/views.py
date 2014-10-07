@@ -17,9 +17,10 @@ from django.shortcuts import get_object_or_404, redirect, render
 from django.views.generic import DetailView, ListView, TemplateView, View, DeleteView, CreateView, UpdateView
 from datetime import datetime
 
-from models import Project, Job, AOI, Comment, AssigneeType
+from models import Project, Job, AOI, Comment, AssigneeType, Organization
 from geoq.maps.models import *
 from utils import send_assignment_email
+from geoq.training.models import Training
 
 from geoq.mgrs.utils import Grid, GridException, GeoConvertException
 from geoq.core.utils import send_aoi_create_event
@@ -43,6 +44,11 @@ class Dashboard(TemplateView):
         cv['projects_exercise'] = []
         cv['projects_private'] = []
 
+        cv['count_users'] = User.objects.count()
+        cv['count_jobs'] = Job.objects.count()
+        cv['count_workcells_total'] = AOI.objects.count()
+        cv['count_training'] = Training.objects.count()
+
         for project in all_projects:
             if project.private:
                 if (self.request.user in project.project_admins.all()) or (self.request.user in project.contributors.all()):
@@ -54,6 +60,12 @@ class Dashboard(TemplateView):
                 cv['projects_exercise'].append(project)
             else:
                 cv['projects'].append(project)
+
+        cv['count_projects_active'] = len(cv['projects'])
+        cv['count_projects_archived'] = len(cv['projects_archived'])
+        cv['count_projects_exercise'] = len(cv['projects_exercise'])
+
+        cv['orgs'] = Organization.objects.filter(show_on_front=True)
 
         return cv
 

@@ -435,3 +435,20 @@ class Comment(models.Model):
         format = "%D %H:%M:%S"
         o = {'user': self.user.username, 'timestamp': self.created_at.strftime(format), 'text': self.text}
         return o
+
+
+class Organization(models.Model):
+    """
+    Organizations and Agencies that we work with.
+    """
+    name = models.CharField(max_length=200, unique=True, help_text="Short name of this organization")
+    url = models.CharField(max_length=600, blank=True, null=True, help_text="Link that users should be directed to if icon is clicked")
+    icon = models.ImageField(upload_to="static/organizations/", blank=True, null=True, help_text="Upload an icon of the organization here")
+    show_on_front = models.BooleanField(default=False, help_text="Show on the front of the GeoQ App")
+
+    def __unicode__(self):
+        return self.name
+
+    class Meta:
+        verbose_name_plural = 'Organizations'
+        ordering = ['name']
