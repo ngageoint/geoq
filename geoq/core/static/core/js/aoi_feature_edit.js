@@ -62,6 +62,9 @@ aoi_feature_edit.init = function () {
                 aoi_feature_edit.icons[ftype.id].title = ftype.name;
                 aoi_feature_edit.icons[ftype.id].text = ftype.name;
             }
+            if (ftype.icon) {
+                aoi_feature_edit.icon_style[ftype.id].iconUrl = ftype.icon;
+            }
         }
 
         var featureLayer = L.geoJson(null, {
@@ -205,6 +208,10 @@ aoi_feature_edit.buildCustomIcon = function (feature, featureType) {
     feature.properties = feature.properties || {};
     var featureTypeID = feature.properties.template;
     var style_obj = featureType.style;
+    if (featureType.icon) {
+        style_obj.iconUrl = featureType.icon;
+    }
+
     var icon;
 
     //The feature has mapText, so draw a rectangle to hold the text
@@ -887,7 +894,7 @@ aoi_feature_edit.buildDrawingControl = function (drawnItems) {
         var setColorBG = true;
         if ($icon) {
             var bg_color = ftype.style.color;
-            var bg_image = ftype.style.iconUrl || ftype.style.icon;
+            var bg_image = ftype.icon || ftype.style.iconUrl || ftype.style.icon;
 
             if (ftype.style.type=="maki"){
                 $icon
@@ -1142,7 +1149,7 @@ aoi_feature_edit.createPolylineOptions = function (opts) {
     options.id = opts.id;
 
     return options;
-}
+};
 
 aoi_feature_edit.createPointOptions = function (opts) {
     var options = {};

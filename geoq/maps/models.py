@@ -406,15 +406,20 @@ class FeatureType(models.Model):
     order = models.IntegerField(default=0, null=True, blank=True, help_text='Optionally specify the order features should appear on the edit menu. Lower numbers appear sooner.')
     properties = JSONField(load_kwargs={}, blank=True, null=True, help_text='Metadata added to properties of individual features. Should be in JSON format, e.g. {"severity":"high", "mapText":"Text to Show instead of icon"}')
     style = JSONField(load_kwargs={}, blank=True, null=True, help_text='Any special CSS style that features of this types should have. e.g. {"opacity":0.7, "color":"red", "backgroundColor":"white", "mapTextStyle":"white_overlay", "iconUrl":"path/to/icon.png"}')
+    icon = models.ImageField(upload_to="static/featuretypes/", blank=True, null=True, help_text="Upload an icon (now only in Admin menu) of the FeatureType here, will override style iconUrl if set")
 
     def to_json(self):
+        icon = ""
+        if self.icon:
+            icon = "/images/"+str(self.icon)
         return json.dumps(dict(id=self.id,
                                properties=self.properties,
                                category=self.category,
                                order=self.order,
                                name=self.name,
                                type=self.type,
-                               style=self.style))
+                               style=self.style,
+                               icon=icon))
 
     def style_to_geojson(self):
         local_style = self.style
@@ -442,8 +447,11 @@ class FeatureType(models.Model):
         opacity = "1"
 
         style = self.style or {}
-        if style.has_key('iconUrl'):
+        if self.icon:
+            src = str("/images/"+str(self.icon))
+        elif style.has_key('iconUrl'):
             src = str(style['iconUrl'])
+
         if style.has_key('weight'):
             style_html = style_html + "border-width:"+str(style['weight'])+"px; "
         if style.has_key('color'):
