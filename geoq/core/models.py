@@ -54,7 +54,7 @@ class GeoQBase(models.Model):
     A generic model for GeoQ objects.
     """
 
-    active = models.BooleanField(default=True, help_text="Make projects visible to all users")
+    active = models.BooleanField(default=True, help_text="Check to make project 'Active' and visible to all users. Uncheck this to 'Archive' the project")
     created_at = models.DateTimeField(auto_now_add=True)
     name = models.CharField(max_length=200)
     description = models.TextField()
@@ -91,7 +91,7 @@ class Project(GeoQBase):
     ]
 
     project_type = models.CharField(max_length=50, choices=PROJECT_TYPES)
-    private = models.BooleanField(default=False, help_text='Make this project available to all users.')
+    private = models.BooleanField(default=False, help_text="Check this to make this project 'Private' and available only to users assigned to it.")
     project_admins = models.ManyToManyField(
         User, blank=True, null=True,
         related_name="project_admins", help_text='User that has admin rights to project.')
