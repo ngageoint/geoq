@@ -445,10 +445,11 @@ class Organization(models.Model):
     url = models.CharField(max_length=600, blank=True, null=True, help_text="Link that users should be directed to if icon is clicked")
     icon = models.ImageField(upload_to="static/organizations/", blank=True, null=True, help_text="Upload an icon of the organization here")
     show_on_front = models.BooleanField(default=False, help_text="Show on the front of the GeoQ App")
+    order = models.IntegerField(default=0, null=True, blank=True, help_text='Optionally specify the order orgs should appear on the front page. Lower numbers appear sooner.')
 
     def __unicode__(self):
         return self.name
 
     class Meta:
         verbose_name_plural = 'Organizations'
-        ordering = ['name']
+        ordering = ['order', 'name']
