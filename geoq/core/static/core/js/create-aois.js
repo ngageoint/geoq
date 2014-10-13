@@ -136,7 +136,7 @@ create_aois.init = function(){
 
         if (num>0) {
             if (create_aois.last_polygon_workcells) {
-                create_aois.map_object.removeLayer(create_aois.last_polygon_workcells);
+                create_aois.removeFeatures(create_aois.last_polygon_workcells);
             }
             var geoJSON = create_aois.splitPolygonsIntoSections(create_aois.last_polygon_drawn, num, splitIntoSized);
 
@@ -280,6 +280,12 @@ create_aois.init = function(){
     });
 
     create_aois.initializeFileUploads();
+};
+
+create_aois.removeFeatures = function(e){
+    _.each(e._layers,function(layer){
+        create_aois.removeFeature(layer);
+    });
 };
 
 create_aois.map_updates = function(){
@@ -515,7 +521,7 @@ create_aois.somethingWasDrawn = function (e){
         //User drew with delete control
         var func = function(cell){
             create_aois.removeWorkcell(cell);
-        }
+        };
         create_aois.doSomethingWithOverlappingPolys(layer,func);
     } else if (_.str.startsWith(type,"polygon-pri_")) {
         var num = parseInt(type.split("_")[1]);
@@ -902,14 +908,21 @@ create_aois.resetHighlight = function(e) {
 
 create_aois.removeFeature = function(e) {
     for (var key in create_aois.aois._layers) {
-        if (create_aois.aois._layers[key]._layers[e.target._leaflet_id]) {
-            create_aois.aois._layers[key].removeLayer(e.target);
+        var layer = create_aois.aois._layers[key];
+        if (e.target) {
+            if (layer._layers[e.target._leaflet_id]) {
+                layer.removeLayer(e.target);
+            }
+        } else if (e._leaflet_id){
+            if (layer._layers[e._leaflet_id]) {
+                layer.removeLayer(e);
+            }
         }
     }
     create_aois.updateCellCount();
 };
 create_aois.splitFeature = function(e) {
-    var layerParent
+    var layerParent;
     var layer = e.target;
 
     for (var key in create_aois.aois._layers) {
@@ -923,8 +936,7 @@ create_aois.splitFeature = function(e) {
         var layers = create_aois.splitPolygonsIntoSections(simplerLayer,4);
         var properties = layer.feature.properties || {};
         var priority = properties.priority || create_aois.priority_to_use || 5;
-        var newPriority = priority>1 ? priority-1 : 1;
-        properties.priority = newPriority;
+        properties.priority = priority>1 ? priority-1 : 1;
 
         _.each(layers,function(l){
             l.properties = properties;
