@@ -198,6 +198,7 @@
             //Reapply the transparencies
             imageData = ctx.getImageData(0, 0, w, h);
             data = imageData.data;
+            //TODO: This can run slow especially on IE. Speed it up
             for(var p = 0, len = data.length; p < len; p+=4) {
                 data[p+3] = alphas[p+3];
             }
