@@ -142,8 +142,8 @@ aoi_feature_edit.addFeatureTable = function(feature, ftype){
         _.each(fields,function(field){
             field = _.str.trim(field);
             if (field){
-                var val = props[field] || "";
-                if (val) {
+                var val = props[field];
+                if (val !== undefined) {
                     field = _.str.capitalize(field);
                     field = field.replace(/_/g," ");
                     html+=leaflet_layer_control.parsers.textIfExists({name: val, title:field});

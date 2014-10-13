@@ -452,7 +452,14 @@ leaflet_layer_control.show_feature_info = function (feature) {
                         type   : schemaSettings.type,
                         submit : 'OK',
                         style  : 'inherit',
-                        tooltip: 'Click to change this value'
+                        tooltip: 'Click to change this value',
+                        callback:function(newText,settings){
+                            var property_name = this.id;
+                            if (feature.properties) {
+                                feature.properties[property_name] = newText;
+                            }
+                        }
+
                     });
             }
         }
@@ -611,7 +618,7 @@ leaflet_layer_control.parsers.infoFromFolder = function (obj){
 };
 leaflet_layer_control.parsers.textIfExists = function(options) {
     options = options || {};
-    var obj = options.name || "";
+    var obj = options.name;
     var title = options.title || "";
     var noBold = options.noBold;
     var noBreak = options.noBreak;
