@@ -540,6 +540,9 @@ aoi_feature_edit.map_init = function (map, bounds) {
         });
         _.each(layers, function (layer_data) {
             var built_layer = leaflet_helper.layer_conversion(layer_data, map);
+
+            //TODO: If not shown, don't check it
+
             if (built_layer !== undefined) {
                 if (layer_data.isBaseLayer) {
                     baseLayers[layer_data.name] = built_layer;
