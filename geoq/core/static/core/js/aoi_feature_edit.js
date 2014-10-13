@@ -433,6 +433,7 @@ aoi_feature_edit.layer_oversight = {
   failing: []
 };
 aoi_feature_edit.watch_layer = function(layer, watch) {
+    //TODO: Clean this up
     oversight = aoi_feature_edit.layer_oversight;
     name = layer.name;
     pending = oversight.pending;
@@ -532,6 +533,8 @@ aoi_feature_edit.map_init = function (map, bounds) {
     aoi_feature_edit.map.fitBounds(aoi_extents.getBounds());
     aoi_feature_edit.map.setZoom(aoi_feature_edit.map.getZoom()+1);
 
+    var layers_to_show = store.get('leaflet_layer_control.layers');
+    layers_to_show = layers_to_show ? layers_to_show.split(",") : undefined;
 
     //Build layers, parse them, and add them to the map and to memory
     if (custom_map.layers) {
@@ -541,7 +544,14 @@ aoi_feature_edit.map_init = function (map, bounds) {
         _.each(layers, function (layer_data) {
             var built_layer = leaflet_helper.layer_conversion(layer_data, map);
 
-            //TODO: If not shown, don't check it
+            var shouldBeShown;
+            if (layers_to_show) {
+                shouldBeShown = _.indexOf(layers_to_show, built_layer.config.id+"");
+                shouldBeShown = shouldBeShown >= 0;
+            } else {
+                shouldBeShown = built_layer.config.shown;
+            }
+            built_layer.shown = shouldBeShown;
 
             if (built_layer !== undefined) {
                 if (layer_data.isBaseLayer) {
@@ -557,6 +567,9 @@ aoi_feature_edit.map_init = function (map, bounds) {
             if (built_layer) {
                 aoi_feature_edit.watch_layer(built_layer, true);
                 aoi_feature_edit.map.addLayer(built_layer);
+                var shownAmount = shouldBeShown ? built_layer.options.opacity || 1 : 0;
+
+                leaflet_layer_control.setLayerOpacity(built_layer, shownAmount, true);
             }
         });
     }

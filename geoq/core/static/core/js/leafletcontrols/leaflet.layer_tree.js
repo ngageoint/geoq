@@ -860,28 +860,28 @@ leaflet_layer_control.setLayerOpacity = function (layer, amount, doNotMoveToTop)
         layer.options.oldOpacity = amount;
     }
 
-        if (layer.setStyle){
-            layer.setStyle({opacity:amount, fillOpacity:amount});
-        } else if (layer.setOpacity){
+    if (layer.setStyle){
+        layer.setStyle({opacity:amount, fillOpacity:amount});
+    } else if (layer.setOpacity){
+        try {
+            layer.setOpacity(amount);
+        } catch(err) {
+            //For ESRI Dynamic Layers, sometimes not tracking layer correctly
+            var reset = false;
             try {
-                layer.setOpacity(amount);
-            } catch(err) {
-                //For ESRI Dynamic Layers, sometimes not tracking layer correctly
-                var reset = false;
-                try {
-                    var main_layer = _.find(_.flatten(aoi_feature_edit.layers),function(l){return l.name==layer.name});
-                    if (main_layer && main_layer.setOpacity) {
-                        main_layer.setOpacity(amount);
-                        reset = true;
-                    }
-                } catch(err){
-                    reset = false;
+                var main_layer = _.find(_.flatten(aoi_feature_edit.layers),function(l){return l.name==layer.name});
+                if (main_layer && main_layer.setOpacity) {
+                    main_layer.setOpacity(amount);
+                    reset = true;
                 }
-                if (!reset) {
-                    log.error("Error while changing opacity for layer "+layer.name, err);
-                }
+            } catch(err){
+                reset = false;
+            }
+            if (!reset) {
+                log.error("Error while changing opacity for layer "+layer.name, err);
             }
         }
+    }
 
     if (amount==0){
         if (layer._layers) {
