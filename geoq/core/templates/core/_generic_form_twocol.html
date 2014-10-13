@@ -66,10 +66,19 @@
         var $first_column = $('#first_column');
         var $second_column = $('#second_column');
 
-        //Select the newest map by default
+        //Select the newest map by default if none is selected
         var $map = $('[name="map"]');
         if ($map.length) {
-            $map.children().last().attr('selected',true);
+            var mapSelected = false;
+            _.each($map.children(),function(map_item){
+                if ($(map_item).attr('selected') == "selected") {
+                    mapSelected = true;
+                }
+            });
+
+            if (!mapSelected) {
+                $map.children().last().attr('selected', true);
+            }
         }
 
         $('input, select, textarea').css('width','80%');
