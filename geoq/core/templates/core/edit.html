@@ -27,7 +27,7 @@
 	<script src="{{ STATIC_URL }}core/js/jsmaptools/jsmaptools.js"></script>
 	<script src="{{ STATIC_URL }}core/js/jsmaptools/jsmaptools_polygons.js"></script>
 	<script src="{{ STATIC_URL }}bootstrap/js/bootstrap-dialog.js"></script>
-	<script src="{{ STATIC_URL }}core/js/jquery.cookie.js"></script>
+	<script src="{{ STATIC_URL }}core/js/store.min.js"></script>
     <script src="{{ STATIC_URL }}core/js/jquery.tancolor.js"></script>
     <script src="{{ STATIC_URL }}core/js/maths.js"></script>
 
@@ -41,12 +41,14 @@
 
         leaflet_helper.proxy_path = "{% url 'proxy' %}" + "/"; //TODO: Standardize expression of proxy locations
 
-        //TODO: Pulling out each feature type as an object is a bit cumbersome, this should be streamlined
-        var feature_types = {};
-        var geometry_types = [];
+        aoi_feature_edit.feature_types = [];
         {% for feature_type in feature_types %}
-                feature_types[{{ feature_type.id }}] = {{ feature_type.to_json|safe }};
-                geometry_types.push("{{ feature_type.type }}");
+            aoi_feature_edit.feature_types[{{ feature_type.id }}] = {{ feature_type.to_json|safe }};
+        {% endfor %}
+
+        aoi_feature_edit.feature_types_all = [];
+        {% for feature_type in feature_types_all %}
+            aoi_feature_edit.feature_types_all[{{ feature_type.id }}] = {{ feature_type.to_json|safe }};
         {% endfor %}
 
         var inreview_status_url = "{% url 'aoi-update-status' object.id 'In review' %}";
@@ -80,7 +82,6 @@
         aoi_feature_edit.csrf = '{{ csrf_token }}';
 
         aoi_feature_edit.job_features_geojson = {{ object.job.features_geoJSON|safe }};
-        aoi_feature_edit.feature_types = feature_types;
         aoi_feature_edit.create_feature_url = "{% url 'feature-create' %}";
         aoi_feature_edit.edit_feature_url = "{% url 'feature-edit' %}";
         aoi_feature_edit.next_aoi_url = "{% url 'job-next-aoi' object.job.id %}";

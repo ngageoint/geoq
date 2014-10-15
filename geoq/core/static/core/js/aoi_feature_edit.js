@@ -206,10 +206,22 @@ aoi_feature_edit.getMapTextDivSize = function(text){
 };
 aoi_feature_edit.buildCustomIcon = function (feature, featureType) {
     feature.properties = feature.properties || {};
-    var featureTypeID = feature.properties.template;
-    var style_obj = featureType.style;
+    var featureTypeID = parseInt(feature.properties.template);
+
+    if (featureType==undefined) {
+        featureType = aoi_feature_edit.feature_types[featureTypeID] || aoi_feature_edit.feature_types_all[featureTypeID] || {};
+    }
+
+    var style_obj = featureType.style || {};
     if (featureType.icon) {
         style_obj.iconUrl = featureType.icon;
+    }
+
+    if (style_obj) {
+        style_obj.iconUrl = style_obj.iconUrl || style_obj.iconURL || style_obj.iconurl ||  aoi_feature_edit.static_root +"/leaflet/images/red-marker-icon.png";
+    } else {
+        style_obj = {};
+        style_obj.iconUrl = aoi_feature_edit.static_root +"/leaflet/images/red-marker-icon.png";
     }
 
     var icon;
@@ -232,12 +244,19 @@ aoi_feature_edit.buildCustomIcon = function (feature, featureType) {
         });
 
     } else {
-        var iconLoader = aoi_feature_edit.icons[featureTypeID];
+        var iconLoader = aoi_feature_edit.icons[featureTypeID] || aoi_feature_edit.MapIcon;
         icon = new iconLoader(style_obj);
     }
     return icon;
 };
 aoi_feature_edit.featureLayer_pointToLayer = function (feature, latlng, featureLayer, featureType) {
+    if (featureType==undefined) {
+        featureType = {};
+        if (feature.properties.template) {
+            var template_id = parseInt(feature.properties.template);
+            featureType = aoi_feature_edit.feature_types[template_id] || aoi_feature_edit.feature_types_all[template_id] || {};
+        }
+    }
     var style_obj = featureType.style;
     var iconW,iconH,iconAnchorW,iconAnchorH;
 
@@ -335,7 +354,7 @@ aoi_feature_edit.colorIconFromStyle = function ($icon,style_obj){
     $icon.tancolor(color_options);
 };
 
-aoi_feature_edit.featureLayer_onEachFeature = function (feature, layer, featureLayer) {
+aoi_feature_edit.featureLayer_onEachFeature = function (feature, layer, featureLayer, dontAddDelete) {
     if (feature.properties) {
         var id = feature.properties.id;
         feature_manager.addAtId(id,{layerGroup: featureLayer, layer: layer});
@@ -346,8 +365,10 @@ aoi_feature_edit.featureLayer_onEachFeature = function (feature, layer, featureL
         }
         var template;
         if (feature.properties.template) {
-            template = aoi_feature_edit.feature_types[parseInt(feature.properties.template)];
-            popupContent += '<b>' + template.name + '</b><br/>';
+            var template_id = parseInt(feature.properties.template);
+            template = aoi_feature_edit.feature_types[template_id] || aoi_feature_edit.feature_types_all[template_id] || {};
+
+            if (template.name) popupContent += '<b>' + template.name + '</b><br/>';
         }
         if (feature.properties.analyst){
             popupContent += '<b>Analyst:</b> ' + feature.properties.analyst;
@@ -370,10 +391,10 @@ aoi_feature_edit.featureLayer_onEachFeature = function (feature, layer, featureL
             popupContent += aoi_feature_edit.addFeatureTable(feature, template);
         }
 
-        if (id){
+        if (id && !dontAddDelete) {
             popupContent += '<br/><a onclick="javascript:aoi_feature_edit.deleteFeature(\'' + id + '\', \'/geoq/features/delete/' + id + '\');">Delete Feature</a>';
+            popupContent += leaflet_helper.addLinksToPopup(featureLayer.name, id, false, false, true);
         }
-        popupContent += leaflet_helper.addLinksToPopup(featureLayer.name, id, false, false, true);
 
         layer.bindPopup(popupContent);
         feature.layer = layer;
@@ -433,6 +454,7 @@ aoi_feature_edit.layer_oversight = {
   failing: []
 };
 aoi_feature_edit.watch_layer = function(layer, watch) {
+    //TODO: Clean this up
     oversight = aoi_feature_edit.layer_oversight;
     name = layer.name;
     pending = oversight.pending;
@@ -532,6 +554,8 @@ aoi_feature_edit.map_init = function (map, bounds) {
     aoi_feature_edit.map.fitBounds(aoi_extents.getBounds());
     aoi_feature_edit.map.setZoom(aoi_feature_edit.map.getZoom()+1);
 
+    var layers_to_show = store.get('leaflet_layer_control.layers');
+    layers_to_show = layers_to_show ? layers_to_show.split(",") : undefined;
 
     //Build layers, parse them, and add them to the map and to memory
     if (custom_map.layers) {
@@ -540,6 +564,16 @@ aoi_feature_edit.map_init = function (map, bounds) {
         });
         _.each(layers, function (layer_data) {
             var built_layer = leaflet_helper.layer_conversion(layer_data, map);
+
+            var shouldBeShown;
+            if (layers_to_show) {
+                shouldBeShown = _.indexOf(layers_to_show, built_layer.config.id+"");
+                shouldBeShown = shouldBeShown >= 0;
+            } else {
+                shouldBeShown = built_layer.config.shown;
+            }
+            built_layer.shown = shouldBeShown;
+
             if (built_layer !== undefined) {
                 if (layer_data.isBaseLayer) {
                     baseLayers[layer_data.name] = built_layer;
@@ -554,6 +588,9 @@ aoi_feature_edit.map_init = function (map, bounds) {
             if (built_layer) {
                 aoi_feature_edit.watch_layer(built_layer, true);
                 aoi_feature_edit.map.addLayer(built_layer);
+                var shownAmount = shouldBeShown ? built_layer.options.opacity || 1 : 0;
+
+                leaflet_layer_control.setLayerOpacity(built_layer, shownAmount, true);
             }
         });
     }

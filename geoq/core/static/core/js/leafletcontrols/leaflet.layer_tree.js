@@ -50,7 +50,7 @@ leaflet_layer_control.initDrawer = function(){
 };
 
 leaflet_layer_control.addPreferenceListener = function($accordion){
-    var lastOpened = $.cookie('leaflet_layer_control.layer_accordion');
+    var lastOpened = store.get('leaflet_layer_control.layer_accordion');
     if (lastOpened) {
         $('#'+lastOpened).collapse('toggle');
     } else {
@@ -60,7 +60,7 @@ leaflet_layer_control.addPreferenceListener = function($accordion){
 
     //Use a cookie to remember last accordion window opened
     $accordion.on("shown",function(event){
-        $.cookie('leaflet_layer_control.layer_accordion',event.target.id);
+        store.set('leaflet_layer_control.layer_accordion',event.target.id);
     });
 };
 
@@ -728,7 +728,7 @@ leaflet_layer_control.layerDataList = function (options) {
 
     var layerGroups = options.layers;
 
-    var previouslyLookedAtLayers = $.cookie('leaflet_layer_control.layers') || "";
+    var previouslyLookedAtLayers = store.get('leaflet_layer_control.layers') || "";
     previouslyLookedAtLayers = previouslyLookedAtLayers.split(",");
 
     //For each layer group
@@ -860,28 +860,28 @@ leaflet_layer_control.setLayerOpacity = function (layer, amount, doNotMoveToTop)
         layer.options.oldOpacity = amount;
     }
 
-        if (layer.setStyle){
-            layer.setStyle({opacity:amount, fillOpacity:amount});
-        } else if (layer.setOpacity){
+    if (layer.setStyle){
+        layer.setStyle({opacity:amount, fillOpacity:amount});
+    } else if (layer.setOpacity){
+        try {
+            layer.setOpacity(amount);
+        } catch(err) {
+            //For ESRI Dynamic Layers, sometimes not tracking layer correctly
+            var reset = false;
             try {
-                layer.setOpacity(amount);
-            } catch(err) {
-                //For ESRI Dynamic Layers, sometimes not tracking layer correctly
-                var reset = false;
-                try {
-                    var main_layer = _.find(_.flatten(aoi_feature_edit.layers),function(l){return l.name==layer.name});
-                    if (main_layer && main_layer.setOpacity) {
-                        main_layer.setOpacity(amount);
-                        reset = true;
-                    }
-                } catch(err){
-                    reset = false;
+                var main_layer = _.find(_.flatten(aoi_feature_edit.layers),function(l){return l.name==layer.name});
+                if (main_layer && main_layer.setOpacity) {
+                    main_layer.setOpacity(amount);
+                    reset = true;
                 }
-                if (!reset) {
-                    log.error("Error while changing opacity for layer "+layer.name, err);
-                }
+            } catch(err){
+                reset = false;
+            }
+            if (!reset) {
+                log.error("Error while changing opacity for layer "+layer.name, err);
             }
         }
+    }
 
     if (amount==0){
         if (layer._layers) {
@@ -1003,7 +1003,7 @@ leaflet_layer_control.addLayerControl = function (map, options, $accordion) {
     leaflet_layer_control.addLayerControlInfoPanel($content);
 
     //If it was open last time, open it again
-    if ($.cookie('leaflet_layer_control.drawer')) {
+    if (store.get('leaflet_layer_control.drawer')) {
         leaflet_layer_control.toggleDrawer();
     }
 };
@@ -1104,7 +1104,7 @@ leaflet_layer_control.drawEachLayer=function(data,map,doNotMoveToTop){
         }
     });
     var checkedIDs_str = checkedIDs.join(",");
-    $.cookie('leaflet_layer_control.layers', checkedIDs_str);
+    store.set('leaflet_layer_control.layers', checkedIDs_str);
 };
 
 leaflet_layer_control.toggleZooming=function($control){
@@ -1153,13 +1153,13 @@ leaflet_layer_control.openDrawer = function() {
                 height: "easeOutBack"
             }
         });
-    $.cookie('leaflet_layer_control.drawer', 'open');
+    store.set('leaflet_layer_control.drawer', 'open');
 };
 leaflet_layer_control.closeDrawer = function() {
     leaflet_layer_control.$map.animate({marginLeft: "0px"}, 300);
     leaflet_layer_control.$map.css("overflow", "auto");
     leaflet_layer_control.$drawer.animate({marginLeft: "-300px"}, 300);
-    $.cookie('leaflet_layer_control.drawer', '');
+    store.set('leaflet_layer_control.drawer', '');
 };
 leaflet_layer_control.toggleDrawer = function() {
     if(leaflet_layer_control.drawerIsOpen) {
