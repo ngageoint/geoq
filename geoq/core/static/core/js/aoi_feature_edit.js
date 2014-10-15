@@ -708,6 +708,11 @@ aoi_feature_edit.map_init = function (map, bounds) {
         var layers = e.layers;
         layers.eachLayer(function (layer) {
             var geojson = layer.toGeoJSON();
+            // delete the pointer to layer within geojson so that we can stringify
+            if (geojson.layer) {
+                delete geojson.layer;
+            }
+
             geojson = JSON.stringify(geojson);
 
             $.ajax({
