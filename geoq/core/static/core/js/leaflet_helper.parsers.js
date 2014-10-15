@@ -94,6 +94,22 @@ leaflet_helper.constructors.identifyParser = function(result, outputLayer){
 
         parser = leaflet_helper.parsers.youTube;
         parserName = "YouTube Videos";
+    } else if (result && result.type && result.type=="FeatureCollection" && result.features && result.features[0] &&
+        result.features[0].properties && result.features[0].properties.status && result.features[0].properties.created_at &&
+        result.features[0].properties.analyst && result.features[0].properties.updated_at ) {
+
+        parser = leaflet_helper.parsers.geoq_exported_json;
+        parserName = "GeoQ GeoJSON";
+
+    } else if (result && result.type && result.type=="FeatureCollection" && result.features && result.features[0] &&
+        result.features[0].properties && result.features[0].properties.fulcrum_id && result.features[0].properties.created_at &&
+        result.features[0].properties.system_created_at && result.features[0].properties.updated_at ) {
+
+        parser = leaflet_helper.parsers.fulcrum_exported_json;
+        parserName = "Fulcrum GeoJSON";
+
+
+
     } else if (result && result.type && result.type=="FeatureCollection" && result.features) {
 
         parser = leaflet_helper.parsers.basicJson;
@@ -422,14 +438,24 @@ leaflet_helper.update_tree_title = function(outputLayer) {
 leaflet_helper.parsers = {};
 leaflet_helper.parsers.basicJson = function (geojson, map, outputLayer) {
     if (outputLayer) {
+        outputLayer.options.onEachFeature = function(feature, layer) {
+            leaflet_helper.parsers.standard_onEachFeature(feature, layer, outputLayer);
+        };
+        outputLayer.options.pointToLayer = function(feature, latlng) {
+            leaflet_helper.constructors.iconBuilderCallback(feature, latlng, outputLayer);
+        };
+
         outputLayer.addData(geojson);
     } else {
         outputLayer = L.geoJson(geojson,{
-            onEachFeature: function(feature, layer) {leaflet_helper.parsers.standard_onEachFeature(feature, layer, outputLayer); },
+            onEachFeature: function(feature, layer) {
+                leaflet_helper.parsers.standard_onEachFeature(feature, layer, outputLayer);
+            },
             style: leaflet_helper.constructors.polygonStyleBuilderCallback,
-            pointToLayer: function(feature, latlng) { leaflet_helper.constructors.iconBuilderCallback(feature, latlng, outputLayer); }
+            pointToLayer: function(feature, latlng) {
+                leaflet_helper.constructors.iconBuilderCallback(feature, latlng, outputLayer);
             }
-        ).addTo(map);
+        }).addTo(map);
     }
 
     if (outputLayer) {
@@ -438,7 +464,77 @@ leaflet_helper.parsers.basicJson = function (geojson, map, outputLayer) {
     if (outputLayer && !outputLayer.options) {
         outputLayer.options = {};
     }
-    outputLayer.options.opacity = 1;
+    outputLayer.options.opacity = outputLayer.options.opacity || 1;
+
+    return outputLayer;
+};
+leaflet_helper.parsers.fulcrum_exported_json = function (geojson, map, outputLayer) {
+    if (outputLayer) {
+        outputLayer.options.onEachFeature = function(feature, layer) {
+            aoi_feature_edit.featureLayer_onEachFeature(feature, layer, outputLayer, true);
+        };
+        outputLayer.addData(geojson);
+
+    } else {
+        outputLayer = L.geoJson(geojson,{
+            style: leaflet_helper.constructors.polygonStyleBuilderCallback,
+            onEachFeature: function(feature, layer) {
+                aoi_feature_edit.featureLayer_onEachFeature(feature, layer, outputLayer, true);
+            }
+        }).addTo(map);
+        outputLayer.on('click', function(e){
+            if (typeof leaflet_layer_control!="undefined"){
+                leaflet_layer_control.show_feature_info(e.layer.feature);
+            }
+        });
+    }
+
+    if (outputLayer) {
+        leaflet_helper.update_tree_title(outputLayer);
+    }
+    if (outputLayer && !outputLayer.options) {
+        outputLayer.options = {};
+    }
+    outputLayer.options.opacity = outputLayer.options.opacity || 1;
+
+    return outputLayer;
+};
+leaflet_helper.parsers.geoq_exported_json = function (geojson, map, outputLayer) {
+    if (outputLayer) {
+        outputLayer.options.onEachFeature = function(feature, layer) {
+            aoi_feature_edit.featureLayer_onEachFeature(feature, layer, outputLayer, true);
+        };
+        outputLayer.options.pointToLayer = function(feature, latlng) {
+                return aoi_feature_edit.featureLayer_pointToLayer(feature, latlng, outputLayer, undefined);
+        };
+
+        outputLayer.addData(geojson);
+    } else {
+        outputLayer = L.geoJson(geojson,{
+            style: leaflet_helper.constructors.polygonStyleBuilderCallback,
+            onEachFeature: function(feature, layer) {
+                aoi_feature_edit.featureLayer_onEachFeature(feature, layer, outputLayer, true);
+            },
+
+            pointToLayer: function(feature, latlng) {
+                return aoi_feature_edit.featureLayer_pointToLayer(feature, latlng, outputLayer, undefined);
+            }
+
+        }).addTo(map);
+        outputLayer.on('click', function(e){
+            if (typeof leaflet_layer_control!="undefined"){
+                leaflet_layer_control.show_feature_info(e.layer.feature);
+            }
+        });
+    }
+
+    if (outputLayer) {
+        leaflet_helper.update_tree_title(outputLayer);
+    }
+    if (outputLayer && !outputLayer.options) {
+        outputLayer.options = {};
+    }
+    outputLayer.options.opacity = outputLayer.options.opacity || 1;
 
     return outputLayer;
 };

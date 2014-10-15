@@ -206,6 +206,7 @@ class CreateFeaturesView(UserAllowedMixin, DetailView):
 
         cv['map'] = self.object.job.map
         cv['feature_types'] = self.object.job.feature_types.all() #.order_by('name').order_by('order').order_by('-category')
+        cv['feature_types_all'] = FeatureType.objects.all()
 
         Comment(user=cv['aoi'].analyst, aoi=cv['aoi'], text="Workcell opened").save()
         return cv
