@@ -81,10 +81,7 @@ class JobKML(ListView):
 
         for feature in feature_types:
             output += '    <Style id="geoq_'+str(feature.id)+'">\n'
-            if feature.style.has_key('weight'):
-                output += '      <LineStyle>\n'
-                output += '        <width>'+str(feature.style['weight'])+'</width>\n'
-                output += '      </LineStyle>\n'
+            out_color = '7f0066ff'
 
             if feature.style.has_key('color'):
                 color = feature.style['color']
@@ -104,6 +101,13 @@ class JobKML(ListView):
                 output += '        <fill>1</fill>\n'
                 output += '        <outline>1</outline>\n'
                 output += '      </PolyStyle>\n'
+
+            if feature.style.has_key('weight'):
+                output += '      <LineStyle>\n'
+                output += '        <width>'+str(feature.style['weight'])+'</width>\n'
+                if feature.style.has_key('color'):
+                    output += '        <color>'+out_color+'</color>\n'
+                output += '      </LineStyle>\n'
 
             if feature.style.has_key('iconUrl'):
                 icon_url = str(feature.style['iconUrl'])
