@@ -101,7 +101,10 @@ class JobForm(StyledModelForm):
         if 'data' in kwargs:
             self.fields['analysts'].initial = kwargs['data'].getlist('analysts',None)
         else:
-            self.fields['analysts'].initial = kwargs['instance'].analysts.all().values_list('id', flat=True)
+            if hasattr(kwargs['instance'],'analysts'):
+                self.fields['analysts'].initial = kwargs['instance'].analysts.all().values_list('id', flat=True)
+            else:
+                self.fields['analysts'].initial = []
 
 
 class ProjectForm(StyledModelForm):
