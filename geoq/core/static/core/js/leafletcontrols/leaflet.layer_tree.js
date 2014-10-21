@@ -569,7 +569,7 @@ leaflet_layer_control.parsers.infoFromLayer = function (obj){
 
         var number_by_analyst = 0;
         _.each (features,function(feature){
-            var properties = feature.feature.properties || {};
+            var properties = feature.feature ? feature.feature.properties || {} : {};
             if (properties.analyst == aoi_feature_edit.analyst_name) {
                 number_by_analyst++;
             }
