@@ -908,7 +908,7 @@ aoi_feature_edit.buildDrawingControl = function (drawnItems) {
             circle: false,
             rectangle: false,
 
-            markers: aoi_feature_edit.all_markers,
+            //markers: aoi_feature_edit.all_markers,
             geomarkers: aoi_feature_edit.all_markers,
             polygons: aoi_feature_edit.all_polygons,
             polylines: aoi_feature_edit.all_polylines
