@@ -22,6 +22,7 @@ aoi_feature_edit.drawnItems = new L.FeatureGroup();
 aoi_feature_edit.options = {};
 aoi_feature_edit.all_polygons = [];
 aoi_feature_edit.all_markers = [];
+aoi_feature_edit.all_geomarkers = [];
 aoi_feature_edit.all_polylines = [];
 aoi_feature_edit.available_icons = [];
 aoi_feature_edit.MapIcon = null;
@@ -908,6 +909,7 @@ aoi_feature_edit.buildDrawingControl = function (drawnItems) {
             rectangle: false,
 
             markers: aoi_feature_edit.all_markers,
+            geomarkers: aoi_feature_edit.all_markers,
             polygons: aoi_feature_edit.all_polygons,
             polylines: aoi_feature_edit.all_polylines
         },

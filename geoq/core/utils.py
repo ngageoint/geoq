@@ -12,6 +12,9 @@ from django.contrib.auth.models import Group
 from datetime import datetime
 import requests
 import json
+import statsd
+
+statsd_client = statsd.StatsClient('localhost',8125)
 
 
 def send_aoi_create_event(user, aoi_id, aoi_feature_count):
@@ -58,6 +61,9 @@ def send_assignment_email(user_or_group, job, request):
     sender = "geoq@%s" % Site.objects.get_current().domain
 
     send_mail(subject, message, sender, recipients, fail_silently=True)
+
+def increment_metric(counter):
+    statsd_client.incr(counter)
 
 
 
