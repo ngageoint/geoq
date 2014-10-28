@@ -603,7 +603,13 @@ aoi_feature_edit.map_init = function (map, bounds) {
             aoi_feature_edit.all_polygons.push(aoi_feature_edit.createPolygonOptions(ftype));
         } else if (ftype.type == 'Point') {
             var point = aoi_feature_edit.createPointOptions(ftype);
-            if (point) aoi_feature_edit.all_markers.push(point);
+            if (point) {
+                if (ftype.properties.type && (ftype.properties.type == 'geomarker')) {
+                    aoi_feature_edit.all_geomarkers.push(point);
+                } else {
+                    aoi_feature_edit.all_markers.push(point);
+                }
+            }
         } else if (ftype.type == 'LineString') {
             aoi_feature_edit.all_polylines.push(aoi_feature_edit.createPolylineOptions(ftype));
         } else {
@@ -894,7 +900,13 @@ aoi_feature_edit.buildDrawingControl = function (drawnItems) {
 
     _.each(aoi_feature_edit.all_markers,function(marker){
         if (marker.title && marker.icon && marker.icon.options) {
-            marker.icon.options.text = marker.title
+            marker.icon.options.text = marker.title;
+        }
+    });
+
+    _.each(aoi_feature_edit.all_geomarkers, function(marker){
+        if (marker.title && marker.icon && marker.icon.options) {
+            marker.icon.options.text = marker.title;
         }
     });
 
@@ -908,8 +920,8 @@ aoi_feature_edit.buildDrawingControl = function (drawnItems) {
             circle: false,
             rectangle: false,
 
-            //markers: aoi_feature_edit.all_markers,
-            geomarkers: aoi_feature_edit.all_markers,
+            markers: aoi_feature_edit.all_markers,
+            geomarkers: aoi_feature_edit.all_geomarkers,
             polygons: aoi_feature_edit.all_polygons,
             polylines: aoi_feature_edit.all_polylines
         },
