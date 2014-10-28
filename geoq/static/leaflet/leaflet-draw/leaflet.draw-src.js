@@ -1684,6 +1684,7 @@ L.Draw.GeoMarkers = L.Draw.Feature.extend({
     foundLoc: function(position, self, icon) {
         var marker = new L.Marker(new L.latLng(position.coords.latitude, position.coords.longitude), { icon: icon });
         L.Draw.Feature.prototype._fireCreatedEvent.call(self, marker);
+        self.disable();
 //        L.Draw.Feature.prototype.removeHooks.call(self);
     }
 });

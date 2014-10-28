@@ -680,7 +680,21 @@ aoi_feature_edit.map_init = function (map, bounds) {
         'toggleStatus': false
     });
 
+    function draw_and_center_location() {
+        map.locate({setView: true, maxZoom: 16});
+    }
+
     help_control.addTo(map, {'position':'topleft'});
+
+    var location_control = new L.Control.Button({
+        'iconUrl': aoi_feature_edit.static_root + 'images/bullseye.png',
+        'onClick': draw_and_center_location,
+        'hideText': true,
+        'doToggle': false,
+        'toggleStatus': false
+    });
+
+    location_control.addTo(map, {'position': 'topleft'});
 
     function onSuccess(data, textStatus, jqXHR) {
         var feature = data[0];
@@ -859,6 +873,19 @@ aoi_feature_edit.map_init = function (map, bounds) {
         }
 
 
+    });
+
+    map.on('locationfound', function(e) {
+        var radius = e.accuracy / 2;
+
+        L.marker(e.latlng).addTo(map)
+            .bindPopup("Accuracy: " + radius + " meters");
+
+        L.circle(e.latlng, radius).addTo(map);
+    });
+
+    map.on('locationerror', function(e) {
+        alert('Sorry, but we are not able to determine your location');
     });
 
     $('div.leaflet-draw.leaflet-control').find('a').popover({trigger:"hover",placement:"right"});
