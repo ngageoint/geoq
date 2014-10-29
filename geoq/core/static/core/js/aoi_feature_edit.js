@@ -27,6 +27,10 @@ aoi_feature_edit.all_polylines = [];
 aoi_feature_edit.available_icons = [];
 aoi_feature_edit.MapIcon = null;
 
+aoi_feature_edit.findMePoint = null;
+aoi_feature_edit.findMeCircle = null;
+aoi_feature_edit.showMyLocation = false;
+
 aoi_feature_edit.init = function () {
     aoi_feature_edit.drawcontrol = null;
     aoi_feature_edit.featureLayers = [];
@@ -690,7 +694,7 @@ aoi_feature_edit.map_init = function (map, bounds) {
         'iconUrl': aoi_feature_edit.static_root + 'images/bullseye.png',
         'onClick': draw_and_center_location,
         'hideText': true,
-        'doToggle': false,
+        'doToggle': true,
         'toggleStatus': false
     });
 
@@ -876,12 +880,20 @@ aoi_feature_edit.map_init = function (map, bounds) {
     });
 
     map.on('locationfound', function(e) {
-        var radius = e.accuracy / 2;
+        aoi_feature_edit.showMyLocation = !aoi_feature_edit.showMyLocation;
 
-        L.marker(e.latlng).addTo(map)
-            .bindPopup("Accuracy: " + radius + " meters");
+        if (aoi_feature_edit.showMyLocation) {
+            var radius = e.accuracy / 2;
 
-        L.circle(e.latlng, radius).addTo(map);
+            aoi_feature_edit.findMePoint = L.marker(e.latlng, {icon: new L.Icon({iconUrl: aoi_feature_edit.static_root + 'images/dot.png'})}).addTo(map)
+                .bindPopup("Accuracy: " + radius + " meters");
+
+            aoi_feature_edit.findMeCircle = L.circle(e.latlng, radius).addTo(map);
+        } else {
+            map.removeLayer(aoi_feature_edit.findMePoint);
+            map.removeLayer(aoi_feature_edit.findMeCircle);
+        }
+
     });
 
     map.on('locationerror', function(e) {
