@@ -16,7 +16,8 @@ from datetime import datetime
 #Set up Server URL setting
 SERVER_URL = '/'
 try:
-    main_server = Setting.objects.filter(name="main_server")
+    #main_server = Setting.objects.filter(name="main_server")
+    main_server = []
     if len(main_server) > 0:
         main_server = main_server[0].value
         if main_server.__contains__('name'):
