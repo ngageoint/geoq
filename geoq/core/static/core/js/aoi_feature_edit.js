@@ -608,7 +608,7 @@ aoi_feature_edit.map_init = function (map, bounds) {
         } else if (ftype.type == 'Point') {
             var point = aoi_feature_edit.createPointOptions(ftype);
             if (point) {
-                if (ftype.properties.type && (ftype.properties.type == 'geomarker')) {
+                if (ftype.properties && ftype.properties.type && (ftype.properties.type == 'geomarker')) {
                     aoi_feature_edit.all_geomarkers.push(point);
                 } else {
                     aoi_feature_edit.all_markers.push(point);
