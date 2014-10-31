@@ -325,7 +325,8 @@ class Feature(models.Model):
                           created_at=datetime.strftime(self.created_at, '%Y-%m-%dT%H:%M:%S%Z'),
                           updated_at=datetime.strftime(self.updated_at, '%Y-%m-%dT%H:%M:%S%Z'),
                           )
-        properties = dict(properties_built.items() + properties_main.items())
+        properties_template = self.template.properties or {}
+        properties = dict(properties_built.items() + properties_main.items() + properties_template.items())
 
         feature_type = FeatureType.objects.get(id=self.template.id)
 
@@ -394,7 +395,7 @@ class FeatureType(models.Model):
 
     FEATURE_TYPES = (
         ('Point', 'Point'),
-        ('LineString', 'Line'),  #TODO: Support Lines somehow
+        ('LineString', 'Line'),
         ('Polygon', 'Polygon'),
         # ('Text', 'Text'),
         # ('Overlay', 'Overlay'),  #TODO: Support overlay images. Should these be features?
