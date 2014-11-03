@@ -155,7 +155,7 @@ class CreateFeaturesView(UserAllowedMixin, DetailView):
                 for course in courses:
                     if user not in course.users_completed.all():
                         classes_passed = False
-                        url_name = "<a href='/training/"+course.id+"/' target='_blank'>"+course.name+"</a>"
+                        url_name = "<a href='"+reverse_lazy('course_view_information', pk=course.id)+"' target='_blank'>"+course.name+"</a>"
                         failed_names.append(url_name)
                 if not classes_passed:
                     courses = ', '.join(failed_names)

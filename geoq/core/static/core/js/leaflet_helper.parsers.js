@@ -413,7 +413,18 @@ leaflet_helper.addLinksToPopup = function (layerName,id,useMove,useHide,useDrop)
 
 };
 leaflet_helper.update_tree_title = function(outputLayer) {
-    var treeNodes = leaflet_layer_control.$tree.fancytree('getTree').rootNode;
+    var treeNodes;
+    if (leaflet_layer_control && leaflet_layer_control.$tree && leaflet_layer_control.$tree.fancytree) {
+        treeNodes = leaflet_layer_control.$tree.fancytree('getTree');
+        if (treeNodes) {
+            treeNodes = treeNodes.rootNode;
+        } else {
+            return;
+        }
+    } else {
+        return;
+    }
+
 
     var layerName = outputLayer.name;
     var treeItem = null;
