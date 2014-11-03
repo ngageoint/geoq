@@ -25,7 +25,8 @@ L.drawLocal = {
 				polygon: 'Draw a polygon',
 				rectangle: 'Draw a rectangle',
 				circle: 'Draw a circle',
-				marker: 'Draw a marker'
+				marker: 'Draw a marker',
+                geomarkers: 'Drop a marker at current location'
 			}
 		},
 		handlers: {
@@ -39,6 +40,11 @@ L.drawLocal = {
 					start: 'Click map to place marker.'
 				}
 			},
+            geomarkers: {
+                tooltip: {
+                    start: 'Drop a marker point'
+                }
+            },
 			polygon: {
 				tooltip: {
 					start: 'Click to start drawing shape.',
@@ -1555,6 +1561,134 @@ L.Draw.Markers = L.Draw.Feature.extend({
 	}
 });
 
+L.Draw.GeoMarkers = L.Draw.Feature.extend({
+	statics: {
+		TYPE: 'geomarkers',
+        CLASS: 'geomarkers'
+	},
+
+	options: {
+		icon: new L.Icon.Default(),
+        text: 'Draw a Marker',
+		repeatMode: false,
+		zIndexOffset: 2000 // This should be > than the highest z-index any markers
+	},
+
+	initialize: function (map, options, n) {
+		// Save the type so super can fire, need to do this as cannot do this.TYPE :(
+		this.type = L.Draw.GeoMarkers.TYPE + "-" + n;
+        this.clasz = L.Draw.GeoMarkers.CLASS;
+        L.setOptions(this,options);
+		L.Draw.Feature.prototype.initialize.call(this, map, options);
+	},
+
+	addHooks: function () {
+        // instead of initiating the click add process, determine the user's geolocation
+        // and attempt to draw a point there
+        if (navigator.geolocation) {
+            this.getGeoLoc(this.options.icon);
+        } else {
+            window.alert("Unable to determine current location");
+        }
+//		L.Draw.Feature.prototype.addHooks.call(this);
+//
+//		if (this._map) {
+//			this._tooltip.updateContent({ text: L.drawLocal.draw.handlers.marker.tooltip.start });
+//
+//			// Same mouseMarker as in Draw.Polyline
+//			if (!this._mouseMarker) {
+//				this._mouseMarker = L.marker(this._map.getCenter(), {
+//					icon: L.divIcon({
+//						className: 'leaflet-mouse-marker',
+//						iconAnchor: [20, 20],
+//						iconSize: [40, 40]
+//					}),
+//					opacity: 0,
+//					zIndexOffset: this.options.zIndexOffset
+//				});
+//			}
+//
+//			this._mouseMarker
+//				.on('click', this._onClick, this)
+//				.addTo(this._map);
+//
+//			this._map.on('mousemove', this._onMouseMove, this);
+//		}
+	},
+
+	removeHooks: function () {
+		//L.Draw.Feature.prototype.removeHooks.call(this);
+
+//		if (this._map) {
+//			if (this._marker) {
+//				this._marker.off('click', this._onClick, this);
+//				this._map
+//					.off('click', this._onClick, this)
+//					.removeLayer(this._marker);
+//				delete this._marker;
+//			}
+//
+//			this._mouseMarker.off('click', this._onClick, this);
+//			this._map.removeLayer(this._mouseMarker);
+//			delete this._mouseMarker;
+//
+//			this._map.off('mousemove', this._onMouseMove, this);
+//		}
+	},
+
+	_onMouseMove: function (e) {
+//		var latlng = e.latlng;
+//
+//		this._tooltip.updatePosition(latlng);
+//		this._mouseMarker.setLatLng(latlng);
+//
+//		if (!this._marker) {
+//			this._marker = new L.Marker(latlng, {
+//				icon: this.options.icon,
+//				zIndexOffset: this.options.zIndexOffset
+//			});
+//			// Bind to both marker and map to make sure we get the click event.
+//			this._marker.on('click', this._onClick, this);
+//			this._map
+//				.on('click', this._onClick, this)
+//				.addLayer(this._marker);
+//		}
+//		else {
+//			this._marker.setLatLng(latlng);
+//		}
+	},
+
+	_onClick: function () {
+//		this._fireCreatedEvent();
+//
+//		this.disable();
+//		if (this.options.repeatMode) {
+//			this.enable();
+//		}
+	},
+
+	_fireCreatedEvent: function (position) {
+		var marker = new L.Marker(new L.latLng(position.coords.latitude, position.coords.longitude), { icon: this.options.icon });
+		L.Draw.Feature.prototype._fireCreatedEvent.call(this, marker);
+	},
+
+    getGeoLoc: function (icon) {
+        var self = this;
+        navigator.geolocation.getCurrentPosition(function(position) {
+            //var icon = self.options.icon;
+            console.log('got geolocation. plotting');
+            self.foundLoc(position, self, icon);
+        }, function error(e) {window.alert(e);});
+    },
+
+    foundLoc: function(position, self, icon) {
+        var marker = new L.Marker(new L.latLng(position.coords.latitude, position.coords.longitude), { icon: icon });
+        L.Draw.Feature.prototype._fireCreatedEvent.call(self, marker);
+        self.disable();
+//        L.Draw.Feature.prototype.removeHooks.call(self);
+    }
+});
+
 L.Edit = L.Edit || {};
 
 /*
@@ -2740,6 +2874,10 @@ L.DrawToolbar = L.Toolbar.extend({
             this.options.markers = options.markers;
         }
 
+        if (options.geomarkers) {
+            this.options.geomarkers = options.geomarkers;
+        }
+
 		L.Toolbar.prototype.initialize.call(this, options);
 	},
 
@@ -2826,6 +2964,20 @@ L.DrawToolbar = L.Toolbar.extend({
                 }
             }
 		}
+
+        if (this.options.geomarkers) {
+            for (var n = 0; n < this.options.geomarkers.length; n++) {
+                var gopts = L.extend({}, this.options.marker, this.options.geomarkers[n]);
+                var gmarker = new L.Draw.GeoMarkers(map, gopts, gopts.id);
+                this._initModeHandler(
+                    gmarker,
+                    this._toolbarContainer,
+                    buttonIndex++,
+                    buttonClassPrefix,
+                    this.options.geomarkers[n].icon.options.text
+                );
+            }
+        }
 
 		// Save button index of the last button, -1 as we would have ++ after the last button
 		this._lastButtonIndex = --buttonIndex;
