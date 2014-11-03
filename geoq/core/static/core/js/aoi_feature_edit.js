@@ -22,9 +22,14 @@ aoi_feature_edit.drawnItems = new L.FeatureGroup();
 aoi_feature_edit.options = {};
 aoi_feature_edit.all_polygons = [];
 aoi_feature_edit.all_markers = [];
+aoi_feature_edit.all_geomarkers = [];
 aoi_feature_edit.all_polylines = [];
 aoi_feature_edit.available_icons = [];
 aoi_feature_edit.MapIcon = null;
+
+aoi_feature_edit.findMePoint = null;
+aoi_feature_edit.findMeCircle = null;
+aoi_feature_edit.showMyLocation = false;
 
 aoi_feature_edit.init = function () {
     aoi_feature_edit.drawcontrol = null;
@@ -602,7 +607,13 @@ aoi_feature_edit.map_init = function (map, bounds) {
             aoi_feature_edit.all_polygons.push(aoi_feature_edit.createPolygonOptions(ftype));
         } else if (ftype.type == 'Point') {
             var point = aoi_feature_edit.createPointOptions(ftype);
-            if (point) aoi_feature_edit.all_markers.push(point);
+            if (point) {
+                if (ftype && ftype.properties && ftype.properties.type && (ftype.properties.type == 'geomarker')) {
+                    aoi_feature_edit.all_geomarkers.push(point);
+                } else {
+                    aoi_feature_edit.all_markers.push(point);
+                }
+            }
         } else if (ftype.type == 'LineString') {
             aoi_feature_edit.all_polylines.push(aoi_feature_edit.createPolylineOptions(ftype));
         } else {
@@ -673,7 +684,21 @@ aoi_feature_edit.map_init = function (map, bounds) {
         'toggleStatus': false
     });
 
+    function draw_and_center_location() {
+        map.locate({setView: true, maxZoom: 16});
+    }
+
     help_control.addTo(map, {'position':'topleft'});
+
+    var location_control = new L.Control.Button({
+        'iconUrl': aoi_feature_edit.static_root + 'images/bullseye.png',
+        'onClick': draw_and_center_location,
+        'hideText': true,
+        'doToggle': false,
+        'toggleStatus': false
+    });
+
+    location_control.addTo(map, {'position': 'topleft'});
 
     function onSuccess(data, textStatus, jqXHR) {
         var feature = data[0];
@@ -854,6 +879,27 @@ aoi_feature_edit.map_init = function (map, bounds) {
 
     });
 
+    map.on('locationfound', function(e) {
+        aoi_feature_edit.showMyLocation = !aoi_feature_edit.showMyLocation;
+
+        if (aoi_feature_edit.showMyLocation) {
+            var radius = e.accuracy / 2;
+
+            aoi_feature_edit.findMePoint = L.marker(e.latlng, {icon: new L.Icon({iconUrl: aoi_feature_edit.static_root + 'images/dot.png'})}).addTo(map)
+                .bindPopup("Accuracy: " + radius + " meters");
+
+            aoi_feature_edit.findMeCircle = L.circle(e.latlng, radius).addTo(map);
+        } else {
+            map.removeLayer(aoi_feature_edit.findMePoint);
+            map.removeLayer(aoi_feature_edit.findMeCircle);
+        }
+
+    });
+
+    map.on('locationerror', function(e) {
+        alert('Sorry, but we are not able to determine your location');
+    });
+
     $('div.leaflet-draw.leaflet-control').find('a').popover({trigger:"hover",placement:"right"});
 
     //Resize the map
@@ -893,7 +939,13 @@ aoi_feature_edit.buildDrawingControl = function (drawnItems) {
 
     _.each(aoi_feature_edit.all_markers,function(marker){
         if (marker.title && marker.icon && marker.icon.options) {
-            marker.icon.options.text = marker.title
+            marker.icon.options.text = marker.title;
+        }
+    });
+
+    _.each(aoi_feature_edit.all_geomarkers, function(marker){
+        if (marker.title && marker.icon && marker.icon.options) {
+            marker.icon.options.text = marker.title;
         }
     });
 
@@ -908,6 +960,7 @@ aoi_feature_edit.buildDrawingControl = function (drawnItems) {
             rectangle: false,
 
             markers: aoi_feature_edit.all_markers,
+            geomarkers: aoi_feature_edit.all_geomarkers,
             polygons: aoi_feature_edit.all_polygons,
             polylines: aoi_feature_edit.all_polylines
         },

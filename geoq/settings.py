@@ -113,7 +113,7 @@ LEAFLET_CONFIG = {
     'PLUGINS': {
         'draw': {
             'css': LEAFLET_CSS,
-            'js': STATIC_URL + 'leaflet/leaflet-draw/leaflet.draw.js',
+            'js': STATIC_URL + 'leaflet/leaflet-draw/leaflet.draw-src.js',
             'repo': 'https://github.com/Leaflet/Leaflet.draw'
         },
         'esri': {

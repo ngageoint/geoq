@@ -19,7 +19,7 @@ from datetime import datetime
 
 from models import Project, Job, AOI, Comment, AssigneeType, Organization
 from geoq.maps.models import *
-from utils import send_assignment_email
+from utils import send_assignment_email, increment_metric
 from geoq.training.models import Training
 
 from geoq.mgrs.utils import Grid, GridException, GeoConvertException
@@ -29,7 +29,6 @@ from geoq.mgrs.exceptions import ProgramException
 from guardian.decorators import permission_required
 from kml_view import *
 from shape_view import *
-
 
 class Dashboard(TemplateView):
 
@@ -155,7 +154,7 @@ class CreateFeaturesView(UserAllowedMixin, DetailView):
                 for course in courses:
                     if user not in course.users_completed.all():
                         classes_passed = False
-                        url_name = "<a href='/training/"+course.id+"/' target='_blank'>"+course.name+"</a>"
+                        url_name = "<a href='"+reverse_lazy('course_view_information', pk=course.id)+"' target='_blank'>"+course.name+"</a>"
                         failed_names.append(url_name)
                 if not classes_passed:
                     courses = ', '.join(failed_names)
@@ -181,6 +180,7 @@ class CreateFeaturesView(UserAllowedMixin, DetailView):
                 aoi.status = 'In review'
                 aoi.reviewers.add(self.request.user)
                 aoi.save()
+                increment_metric('workcell_analyzed')
                 return True
             else:
                 kwargs['error'] = "Sorry, you have not been assigned as a reviewer for this workcell"
