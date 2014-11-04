@@ -262,7 +262,7 @@ aoi_feature_edit.featureLayer_pointToLayer = function (feature, latlng, featureL
             featureType = aoi_feature_edit.feature_types[template_id] || aoi_feature_edit.feature_types_all[template_id] || {};
         }
     }
-    var style_obj = featureType.style;
+    var style_obj = featureType.style || {};
     var iconW,iconH,iconAnchorW,iconAnchorH;
 
     if (style_obj.iconSize && typeof style_obj.iconSize != "object") {
