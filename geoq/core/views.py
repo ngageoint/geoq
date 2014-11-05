@@ -30,6 +30,7 @@ from guardian.decorators import permission_required
 from kml_view import *
 from shape_view import *
 
+
 class Dashboard(TemplateView):
 
     template_name = 'core/dashboard.html'
@@ -207,6 +208,26 @@ class CreateFeaturesView(UserAllowedMixin, DetailView):
         cv['map'] = self.object.job.map
         cv['feature_types'] = self.object.job.feature_types.all() #.order_by('name').order_by('order').order_by('-category')
         cv['feature_types_all'] = FeatureType.objects.all()
+        layers = self.object.job.map.to_object()
+
+        for job in self.object.job.project.jobs:
+            if not job.id == self.object.job.id:
+                description = "Job #" + str(job.id) + " - " + str(job.name) + ". From Project #" + str(self.object.job.project.id)
+                url = "http://geo-q.com"+reverse('json-job-grid', args=[job.id])
+                layer_name = "Workcells: " + job.name
+                layer = dict(attribution="GeoQ Job Workcells", description=description, id=int(10000+job.id),
+                             layer=layer_name, name=layer_name, opacity=0.3, refreshrate=300, shown=False,
+                             spatialReference="EPSG:4326", transparent=True, type="GeoJSON", url=url, job=job.id)
+                layers['layers'].append(layer)
+
+                url = "http://geo-q.com"+reverse('json-job-features', args=[job.id])
+                layer_name = "Features: " + job.name
+                layer = dict(attribution="GeoQ Job Features", description=description, id=int(20000+job.id),
+                             layer=layer_name, name=layer_name, opacity=0.8, refreshrate=300, shown=False,
+                             spatialReference="EPSG:4326", transparent=True, type="GeoJSON", url=url, job=job.id)
+                layers['layers'].append(layer)
+#TODO: Add Job specific layers, and add these here
+        cv['layers_on_map'] = json.dumps(layers)
 
         Comment(user=cv['aoi'].analyst, aoi=cv['aoi'], text="Workcell opened").save()
         return cv

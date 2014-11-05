@@ -281,8 +281,17 @@ leaflet_helper.constructors.geojson = function(layerConfig, map, useLayerInstead
     if (outputLayer && !outputLayer.options) {
         outputLayer.options = {};
     }
-    outputLayer.options.opacity = 1;
+
+    var opacity = 1;
+    if (outputLayer.config) {
+        opacity = outputLayer.config.shown ? outputLayer.config.opacity : 0;
+    }
+
     outputLayer.options = $.extend(outputLayer.options, layerConfig.layerParams);
+
+    outputLayer.options.opacity = opacity;
+    outputLayer.options.style = outputLayer.options.style || {};
+    outputLayer.options.style.opacity = opacity;
 
     url = leaflet_helper.constructors.urlTemplater(url, map, layerConfig.layerParams);
     var proxiedURL = leaflet_helper.proxify(url);
