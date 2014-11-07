@@ -16,7 +16,7 @@
 //            feature.properties.mapText = "Whatever"
 
 var aoi_feature_edit = {};
-aoi_feature_edit.layers = {features:[], base:[], overlays:[]};
+aoi_feature_edit.layers = {features:[], base:[], overlays:[], jobs:[]};
 
 aoi_feature_edit.drawnItems = new L.FeatureGroup();
 aoi_feature_edit.options = {};
@@ -529,6 +529,7 @@ aoi_feature_edit.map_init = function (map, bounds) {
 
     aoi_feature_edit.layers.base = [];
     aoi_feature_edit.layers.overlays = [];
+    aoi_feature_edit.layers.jobs = [];
 
     //Add the Base OSM Layer
     var baselayer = _.toArray(aoi_feature_edit.map._layers);
@@ -584,8 +585,13 @@ aoi_feature_edit.map_init = function (map, bounds) {
                     baseLayers[layer_data.name] = built_layer;
                     aoi_feature_edit.layers.base.push(built_layer);
                 } else {
-                    layerSwitcher[layer_data.name] = built_layer;
-                    aoi_feature_edit.layers.overlays.push(built_layer);
+                    if (layer_data.job) {
+                        layerSwitcher[layer_data.name] = built_layer;
+                        aoi_feature_edit.layers.jobs.push(built_layer);
+                    } else {
+                        layerSwitcher[layer_data.name] = built_layer;
+                        aoi_feature_edit.layers.overlays.push(built_layer);
+                    }
                 }
             } else {
                 log.error("Tried to add a layer, but didn't work: "+layer_data.url)
@@ -593,7 +599,12 @@ aoi_feature_edit.map_init = function (map, bounds) {
             if (built_layer) {
                 aoi_feature_edit.watch_layer(built_layer, true);
                 aoi_feature_edit.map.addLayer(built_layer);
-                var shownAmount = shouldBeShown ? built_layer.options.opacity || 1 : 0;
+                var shownAmount = shouldBeShown ? built_layer.options.opacity || 0.8 : 0;
+
+                //TODO: Some layers are showing even when unchecked.  Find out why
+
+                built_layer.options.toShowOnLoad = shownAmount;
+                built_layer.options.setInitialOpacity = false;
 
                 leaflet_layer_control.setLayerOpacity(built_layer, shownAmount, true);
             }
@@ -1129,6 +1140,9 @@ aoi_feature_edit.buildTreeLayers = function(){
 
     options.titles.push('Other Base Maps');
     options.layers.push(layers_only_non_transparent(aoi_feature_edit.layers.base));
+
+    options.titles.push('Tasks/Jobs in this Project');
+    options.layers.push(aoi_feature_edit.layers.jobs);
 
     options.titles.push('Features');
     options.layers.push(aoi_feature_edit.layers.features);

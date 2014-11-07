@@ -254,15 +254,19 @@ class Map(models.Model):
                 map_services.append(layer.layer_json())
         return json.dumps(map_services)
 
+    def to_object(self):
+        return {
+                    "center_x": self.center_x or 0,
+                    "center_y": self.center_y or 0,
+                    "zoom": self.zoom or 15,
+                    "projection": self.projection or "EPSG:4326",
+                    "layers": self.map_layers_json(),
+                    "all_layers": self.all_map_layers_json()
+                }
+
     def to_json(self):
-        return json.dumps({
-            "center_x": self.center_x or 0,
-            "center_y": self.center_y or 0,
-            "zoom": self.zoom or 15,
-            "projection": self.projection or "EPSG:4326",
-            "layers": self.map_layers_json(),
-            "all_layers": self.all_map_layers_json()
-        })
+        obj = self.to_object()
+        return json.dumps(obj)
 
     def get_absolute_url(self):
         return reverse('map-update', args=[self.id])

@@ -68,7 +68,7 @@
         aoi_feature_edit.tags = "{{ object.job.tags }}";
         aoi_feature_edit.analyst_name = "{{ request.user.username }}";
 
-        aoi_feature_edit.aoi_map_json = {{ map.to_json|safe|default:"{}" }};
+        aoi_feature_edit.aoi_map_json = {{ layers_on_map|safe|default:"{}" }}; //This lists all the custom layers for the map
         aoi_feature_edit.aoi_extents_geojson = {{ object.polygon.json|safe }};
         aoi_feature_edit.aoi_properties = {{ object.properties_json|safe }};
         aoi_feature_edit.priority = {{ object.priority|default:5 }}

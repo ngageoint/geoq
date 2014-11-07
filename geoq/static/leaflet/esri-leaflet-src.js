@@ -1960,7 +1960,7 @@ L.esri.DynamicMapLayer = L.Class.extend({
     this._getMetadata();
 
     if(!this._layerParams.transparent) {
-      this.options.opacity = 1;
+      this.options.opacity = this.options.opacity || 1;
     }
   },
 
@@ -1991,18 +1991,26 @@ L.esri.DynamicMapLayer = L.Class.extend({
 
   setOpacity: function(opacity){
     this.options.opacity = opacity;
-    this._currentImage.setOpacity(opacity);
+    if (this._currentImage && this._currentImage.setOpacity) {
+        this._currentImage.setOpacity(opacity);
+    } else {
+//        console.log("ESRI Layer not yet loaded to set _currentImage Opacity");
+    }
   },
 
   bringToFront: function(){
     this.options.position = 'front';
-    this._currentImage.bringToFront();
+    if (this._currentImage && this._currentImage.bringToFront) {
+        this._currentImage.bringToFront();
+    }
     return this;
   },
 
   bringToBack: function(){
     this.options.position = 'back';
-    this._currentImage.bringToBack();
+    if (this._currentImage && this._currentImage.bringToBack) {
+        this._currentImage.bringToBack();
+    }
     return this;
   },
 
@@ -2116,6 +2124,15 @@ L.esri.DynamicMapLayer = L.Class.extend({
     }).addTo(this._map);
 
     image.on('load', function(e){
+        //The first time an image is loaded, check if the layer should be hidden or not
+        if (!this.options.setInitialOpacity && this.options.toShowOnLoad != undefined) {
+            var showAmount = this.options.toShowOnLoad;
+            if (typeof leaflet_layer_control != "undefined" && leaflet_layer_control.setLayerOpacity) {
+                leaflet_layer_control.setLayerOpacity(this, showAmount, true);
+            }
+            this.options.setInitialOpacity = true;
+        }
+
       var newImage = e.target;
       var oldImage = this._currentImage;
 

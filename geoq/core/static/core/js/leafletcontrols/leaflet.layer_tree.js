@@ -1031,8 +1031,11 @@ leaflet_layer_control.drawEachLayer=function(data,map,doNotMoveToTop){
 
             if (layer._map && layer._initHooksCalled) {
                 //It's a layer that's been already built
-                var oldOpacity = layer.options? layer.options.opacity||layer.options.oldOpacity||1 : 1;
-                leaflet_layer_control.setLayerOpacity(layer,oldOpacity,doNotMoveToTop);
+                var opacity = layer.options ? layer.options.opacity||layer.options.oldOpacity : 0;
+                if (!opacity) {
+                    opacity = layer.config ? layer.config.opacity : 1;
+                }
+                leaflet_layer_control.setLayerOpacity(layer,opacity,doNotMoveToTop);
 
                 if (leaflet_layer_control.likelyHasFeatures(layer)) {
                     leaflet_helper.constructors.geojson(layer.config, map);
@@ -1047,7 +1050,7 @@ leaflet_layer_control.drawEachLayer=function(data,map,doNotMoveToTop){
                 if (newLayer) {
                     aoi_feature_edit.map.addLayer(newLayer);
                     leaflet_layer_control.setLayerOpacity(newLayer,1,doNotMoveToTop);
-                    //TODO: Rethink if this should become a sub-item of the object
+
                     layer_obj.data = newLayer;
 
                     //Replace the old object list with the new layer
@@ -1062,7 +1065,7 @@ leaflet_layer_control.drawEachLayer=function(data,map,doNotMoveToTop){
 
                     //TODO: This should be consolidated into one move event
                     //TODO: The 'refresh layer json' should be a function added to the layer
-                    if (layer.type == "Social Networking Link" || layer.type == "Web Data Link") {
+                    if (layer.type == "Social Networking Link" || layer.type == "Web Data Link" || (layer.config && layer.config.job)) {
 
                         if (layer.type == "Social Networking Link") {
                             leaflet_filter_bar.showInputTags();
