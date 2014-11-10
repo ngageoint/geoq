@@ -213,16 +213,15 @@ class CreateFeaturesView(UserAllowedMixin, DetailView):
         for job in self.object.job.project.jobs:
             if not job.id == self.object.job.id:
                 description = "Job #" + str(job.id) + " - " + str(job.name) + ". From Project #" + str(self.object.job.project.id)
-                #TODO: Don't hardcode Servername
 
-                url = "http://geo-q.com"+reverse('json-job-grid', args=[job.id])
+                url = self.request.build_absolute_uri(reverse('json-job-grid', args=[job.id]))
                 layer_name = "Workcells: " + job.name
                 layer = dict(attribution="GeoQ Job Workcells", description=description, id=int(10000+job.id),
                              layer=layer_name, name=layer_name, opacity=0.3, refreshrate=300, shown=False,
                              spatialReference="EPSG:4326", transparent=True, type="GeoJSON", url=url, job=job.id)
                 layers['layers'].append(layer)
 
-                url = "http://geo-q.com"+reverse('json-job-features', args=[job.id])
+                url = self.request.build_absolute_uri(reverse('json-job-features', args=[job.id]))
                 layer_name = "Features: " + job.name
                 layer = dict(attribution="GeoQ Job Features", description=description, id=int(20000+job.id),
                              layer=layer_name, name=layer_name, opacity=0.8, refreshrate=300, shown=False,
