@@ -23,9 +23,15 @@ def menu(active=None, request_path=None, request_user=None):
         help_dropdown['View Feedback'] = {'index':3, 'url': reverse_lazy('feedback-list'), 'active': False}
 
     users_dropdown = {
-        'Users': {'index': 1, 'url': reverse_lazy('userena_profile_list'), 'active': False},
-        'Messages': {'index': 2, 'url': '/messages/', 'active': False},
+        'Messages': {'index': 3, 'url': '/messages/', 'active': False},
     }
+
+    if request_user.id is not None:
+        users_dropdown['My User'] = {'index': 1, 'url': reverse_lazy('userena_profile_detail', kwargs={'username': request_user.username}), 'active': True}
+
+    if request_user.has_perm('accounts.view_profile'):
+        users_dropdown['All Users'] = {'index':2, 'url': reverse_lazy('userena_profile_list'), 'active':False}
+
     menu_users = {'Users': {'index': 5, 'url': '#', 'active': False, 'dropdown' : order_dict(users_dropdown, sort_key)}}
 
     maps_dropdown = {

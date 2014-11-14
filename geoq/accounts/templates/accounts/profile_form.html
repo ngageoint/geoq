@@ -15,9 +15,9 @@
 
 <form action="" enctype="multipart/form-data" method="post">
   <ul id="box-nav">
-    <li class="first"><a href="{% url 'userena_profile_detail' user.username %}"><span>{% trans 'View profile' %}</span></a></li>
-    <li class="selected"><a href="{% url 'userena_profile_edit' user.username %}">{% trans "Edit profile" %}</a></li>
-    <li><a href="{% url 'userena_password_change' user.username %}">{% trans "Change password" %}</a></li>
+    <li class="first"><a href="{% url 'userena_profile_detail' profile.user.username %}"><span>{% trans 'View profile' %}</span></a></li>
+    <li class="selected"><a href="{% url 'userena_profile_edit' profile.user.username %}">{% trans "Edit profile" %}</a></li>
+    <li><a href="{% url 'userena_password_change' profile.user.username %}">{% trans "Change password" %}</a></li>
   </ul>
   {% csrf_token %}
   <fieldset>
@@ -44,6 +44,11 @@
 {#        {{ form.organization.value }}#}
 {#    </div>#}
     <div class="fieldWrapper">
+        {{ form.openbadge_id.errors }}
+        <label for="id_openbadge_id">Mozilla Backpack login:</label>
+        {{ form.openbadge_id }}
+    </div>
+    <div class="fieldWrapper">
         <label for="id_points_myself">Points:</label>
         {{ form.score.value }}
     </div>
@@ -51,12 +56,12 @@
     <div class="fieldWrapper">
         <label for="id_mugshot">Your Picture:</label><br/>
         {% if user.get_profile.get_mugshot_url %}
-        <img src='{{ user.get_profile.get_mugshot_url }}' /><br/>
+        <img src='{{ profile.user.get_profile.get_mugshot_url }}' /><br/>
         {% endif %}
         <input id="id_mugshot" name="mugshot" type="file"/>
     </div>
   </fieldset>
 
-  <input type="submit" value="{% trans "Update your user data" %}" />
+  <input type="submit" value="{% trans "Update user data" %}" />
 </form>
 {% endblock %}
