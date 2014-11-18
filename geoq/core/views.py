@@ -184,20 +184,20 @@ class CreateFeaturesView(UserAllowedMixin, DetailView):
                 increment_metric('workcell_analyzed')
                 return True
             else:
-                kwargs['error'] = "Sorry, you have not been assigned as a reviewer for this workcell"
+                kwargs['error'] = "Sorry, you have not been assigned as a reviewer for this workcell and are not allowed to edit it."
                 return False
         elif aoi.status == 'In review':
             # if this user previously reviewed this workcell, allow them in
             if self.request.user in aoi.reviewers.all() or is_admin:
                 return True
             else:
-                kwargs['error'] = "Sorry, only reviewers who previously reviewed this workcell may have access"
+                kwargs['error'] = "Sorry, only reviewers who previously reviewed this workcell may have access. You are not allowed to edit it while it is in review."
                 return False
         elif is_admin:
             return True
         else:
             # Can't open a completed workcell
-            kwargs['error'] = "Sorry, this workcell has been completed and can no longer be edited"
+            kwargs['error'] = "Sorry, this workcell has been completed and can no longer be edited."
             return False
 
     def get_context_data(self, **kwargs):
@@ -213,20 +213,23 @@ class CreateFeaturesView(UserAllowedMixin, DetailView):
         for job in self.object.job.project.jobs:
             if not job.id == self.object.job.id:
                 description = "Job #" + str(job.id) + " - " + str(job.name) + ". From Project #" + str(self.object.job.project.id)
-                url = "http://geo-q.com"+reverse('json-job-grid', args=[job.id])
+
+                url = self.request.build_absolute_uri(reverse('json-job-grid', args=[job.id]))
                 layer_name = "Workcells: " + job.name
                 layer = dict(attribution="GeoQ Job Workcells", description=description, id=int(10000+job.id),
                              layer=layer_name, name=layer_name, opacity=0.3, refreshrate=300, shown=False,
                              spatialReference="EPSG:4326", transparent=True, type="GeoJSON", url=url, job=job.id)
                 layers['layers'].append(layer)
 
-                url = "http://geo-q.com"+reverse('json-job-features', args=[job.id])
+                url = self.request.build_absolute_uri(reverse('json-job-features', args=[job.id]))
                 layer_name = "Features: " + job.name
                 layer = dict(attribution="GeoQ Job Features", description=description, id=int(20000+job.id),
                              layer=layer_name, name=layer_name, opacity=0.8, refreshrate=300, shown=False,
                              spatialReference="EPSG:4326", transparent=True, type="GeoJSON", url=url, job=job.id)
                 layers['layers'].append(layer)
+
 #TODO: Add Job specific layers, and add these here
+
         cv['layers_on_map'] = json.dumps(layers)
 
         Comment(user=cv['aoi'].analyst, aoi=cv['aoi'], text="Workcell opened").save()
