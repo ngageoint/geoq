@@ -13,18 +13,22 @@ from django.utils.datastructures import SortedDict
 from django.core.urlresolvers import reverse
 from jsonfield import JSONField
 from datetime import datetime
+import sys
+
+MIGRATING = reduce(lambda x, y: x or y, ['syncdb' in sys.argv, 'migrate' in sys.argv], False)
 
 #Set up Server URL setting
 SERVER_URL = '/'
-try:
-    #main_server = Setting.objects.filter(name="main_server")
-    main_server = []
-    if len(main_server) > 0:
-        main_server = main_server[0].value
-        if main_server.__contains__('name'):
-            SERVER_URL = str(main_server['name'])
-except:
-    SERVER_URL = '/'
+if not MIGRATING:
+    try:
+        #main_server = Setting.objects.filter(name="main_server")
+        main_server = []
+        if len(main_server) > 0:
+            main_server = main_server[0].value
+            if main_server.__contains__('name'):
+                SERVER_URL = str(main_server['name'])
+    except:
+        SERVER_URL = '/'
 
 
 IMAGE_FORMATS = (
