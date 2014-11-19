@@ -224,6 +224,7 @@ INSTALLED_APPS = (
     'jsonfield',
     'crispy_forms',
     'django_extensions',
+    'debug_toolbar',
 
     'geoq.accounts',
     'geoq.core',

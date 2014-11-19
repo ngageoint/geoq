@@ -25,7 +25,8 @@ def accept_terms_of_use(request, *args, **kwargs):
     except UserAuthorization.DoesNotExist:
         user_auth = UserAuthorization.objects.create(user=user)
 
-    return HttpResponse({"ok":"ok"})
+    return HttpResponse({"ok": "ok"})
+
 
 class UserExpertiseView(TemplateView):
     http_method_names = ['get']
