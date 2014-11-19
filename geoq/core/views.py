@@ -205,10 +205,14 @@ class CreateFeaturesView(UserAllowedMixin, DetailView):
         cv['reviewers'] = kwargs['object'].job.reviewers.all()
         cv['admin'] = self.request.user.is_superuser or self.request.user.groups.filter(name='admin_group').count() > 0
 
-        cv['map'] = self.object.job.map
+        if self.object.job.map:
+            cv['map'] = self.object.job.map
+        else:
+            cv['map'] = Map.objects.all()[0]
+
         cv['feature_types'] = self.object.job.feature_types.all() #.order_by('name').order_by('order').order_by('-category')
         cv['feature_types_all'] = FeatureType.objects.all()
-        layers = self.object.job.map.to_object()
+        layers = cv['map'].to_object()
 
         for job in self.object.job.project.jobs:
             if not job.id == self.object.job.id:
