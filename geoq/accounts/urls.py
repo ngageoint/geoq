@@ -82,7 +82,7 @@ urlpatterns = patterns('',
        name='userena_profile_edit' ),
     # View profiles
     url(r'^(?P<username>(?!signout|signup|signin)[\.@\w-]+)/$',
-       userena_views.profile_detail,
+       userena_views.profile_detail, {'template_name': 'accounts/profile_detail.html'},
        name='userena_profile_detail'),
     #
     # # View profiles

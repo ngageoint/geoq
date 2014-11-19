@@ -55,6 +55,9 @@ class UserProfile(UserenaBaseProfile):
     defaultScore = 1
     score = models.IntegerField(default=defaultScore)
 
+    # OpenBadge id
+    openbadge_id = models.CharField(max_length=250, null=True, blank=True)
+
     def __str__(self):
         return "%s, %s, %s" % (self.user, self.organization, self.email)
 

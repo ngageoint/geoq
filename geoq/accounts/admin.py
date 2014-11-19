@@ -27,7 +27,7 @@ class OrganizationAdmin(ObjectAdmin):
 # Unregister userena's admin to add to it.
 admin.site.unregister(UserProfile)
 class UserProfileAdmin(ObjectAdmin):
-    list_display = ('user', 'organization', 'score')
+    list_display = ('user', 'organization', 'score', 'openbadge_id')
     readonly_fields = ('email',)
 
     def __unicode__(self):

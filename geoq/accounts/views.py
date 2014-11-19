@@ -11,6 +11,7 @@ from django.http import Http404, HttpResponse, HttpResponseRedirect, HttpRespons
 from django.views.generic import TemplateView
 from datetime import datetime
 from models import UserAuthorization
+from utils import get_openbadges_ids
 
 
 @login_required
@@ -32,5 +33,6 @@ class UserExpertiseView(TemplateView):
 
     def get_context_data(self, **kwargs):
         cv = super(UserExpertiseView, self).get_context_data(**kwargs)
-        cv['user'] = get_object_or_404(User, username=self.kwargs.get('username'))
+        cv['profile_user'] = get_object_or_404(User, username=self.kwargs.get('username'))
+        cv['ids'] = get_openbadges_ids(cv['profile_user'])
         return cv

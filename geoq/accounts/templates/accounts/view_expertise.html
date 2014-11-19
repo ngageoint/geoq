@@ -7,6 +7,8 @@
 
     <script>
         function retrieve_badges(id,gid) {
+            if (id < 0 || gid < 0) return;
+
             var url = "http://backpack.openbadges.org/displayer/" + id + "/group/" + gid + ".json";
             var badge_list = $('#badge_list');
 
@@ -35,7 +37,7 @@
         }
 
         $(document).ready(function() {
-            retrieve_badges(84958, 37225);
+            retrieve_badges({{ ids.userid }}, {{ ids.groupid }});
         });
 
     </script>
@@ -43,7 +45,7 @@
     <div class="row-fluid container-narrow">
 
         <div class="span12">
-            <div class="list-view-header">Open Badges List for {{ user.username }}</div>
+            <div class="list-view-header">Expertise List for {{ profile_user.username }}</div>
             <ul class="nav nav-tabs">
                 <li class="active">
                     <a href="#">Badges</a>
