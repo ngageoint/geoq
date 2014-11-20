@@ -2,7 +2,7 @@
 # is subject to the Rights in Technical Data-Noncommercial Items clause at DFARS 252.227-7013 (FEB 2012)
 
 from django.contrib.auth.decorators import login_required
-from django.views.decorators.cache import patch_cache_control
+from django.views.decorators.cache import patch_cache_control, cache_page
 from django.http import HttpResponse
 import json
 import mimetypes
@@ -14,6 +14,7 @@ logger = logging.getLogger(__name__)
 
 
 @login_required
+@cache_page(60 * 5)
 def proxy_to(request, path, target_url):
     url = '%s%s' % (target_url, path)
 
@@ -38,7 +39,7 @@ def proxy_to(request, path, target_url):
             status_code = 200
             mimetype = 'text/plain'
         else:
-            proxied_request = urllib2.urlopen(url, timeout=10)
+            proxied_request = urllib2.urlopen(url, timeout=120)
             status_code = proxied_request.code
             mimetype = proxied_request.headers.typeheader or mimetypes.guess_type(url)
             content = proxied_request.read()
