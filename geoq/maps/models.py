@@ -2,6 +2,7 @@
 # This technical data was produced for the U. S. Government under Contract No. W15P7T-13-C-F600, and
 # is subject to the Rights in Technical Data-Noncommercial Items clause at DFARS 252.227-7013 (FEB 2012)
 
+import types
 import json
 from geoq.core.models import AOI, Job, Project, Setting
 from geoq.locations.models import Counties
@@ -12,17 +13,22 @@ from django.utils.datastructures import SortedDict
 from django.core.urlresolvers import reverse
 from jsonfield import JSONField
 from datetime import datetime
+import sys
+
+MIGRATING = reduce(lambda x, y: x or y, ['syncdb' in sys.argv, 'migrate' in sys.argv], False)
 
 #Set up Server URL setting
 SERVER_URL = '/'
-try:
-    main_server = Setting.objects.filter(name="main_server")
-    if len(main_server) > 0:
-        main_server = main_server[0].value
-        if main_server.__contains__('name'):
-            SERVER_URL = str(main_server['name'])
-except:
-    SERVER_URL = '/'
+if not MIGRATING:
+    try:
+        #main_server = Setting.objects.filter(name="main_server")
+        main_server = []
+        if len(main_server) > 0:
+            main_server = main_server[0].value
+            if main_server.__contains__('name'):
+                SERVER_URL = str(main_server['name'])
+    except:
+        SERVER_URL = '/'
 
 
 IMAGE_FORMATS = (
@@ -330,6 +336,11 @@ class Feature(models.Model):
                           updated_at=datetime.strftime(self.updated_at, '%Y-%m-%dT%H:%M:%S%Z'),
                           )
         properties_template = self.template.properties or {}
+        
+        # properties_template can return a list from it's backing model, make sure we get the Dict
+        if type(properties_template) == types.ListType:
+            properties_template = properties_template[0]
+            
         properties = dict(properties_built.items() + properties_main.items() + properties_template.items())
 
         feature_type = FeatureType.objects.get(id=self.template.id)
