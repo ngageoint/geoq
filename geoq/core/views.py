@@ -208,7 +208,13 @@ class CreateFeaturesView(UserAllowedMixin, DetailView):
         if self.object.job.map:
             cv['map'] = self.object.job.map
         else:
-            cv['map'] = Map.objects.all()[0]
+            maps = Map.objects.all()
+            if maps and len(maps):
+                cv['map'] = maps[0]
+            else:
+                new_default_map = Map(name="Default Map", description="Default Map that should have the layers you want on most maps")
+                new_default_map.save()
+                cv['map'] = new_default_map
 
         cv['feature_types'] = self.object.job.feature_types.all() #.order_by('name').order_by('order').order_by('-category')
         cv['feature_types_all'] = FeatureType.objects.all()
@@ -537,6 +543,7 @@ class AssignWorkcellsView(TemplateView):
             return HttpResponse('{"status":"ok"}', status=200)
         else:
             return HttpResponse('{"status":"required field missing"}', status=500)
+
 
 def usng(request):
     """
