@@ -55,8 +55,9 @@ urlpatterns = patterns('',
     #     point_to_404, name='userena_activate_retry'),
     #
     # # Change email and confirm it
-    # url(r'^(?P<username>[\.\w-]+)/email/$',
-    #    point_to_404, name='userena_email_change'),
+    url(r'^(?P<username>[\.\w-]+)/email/$',
+        userena_views.email_change, {'template_name': 'accounts/email_form.html'},
+               name='userena_email_change' ),
     # url(r'^(?P<username>[\.\w-]+)/email/complete/$',
     #    point_to_404, name='userena_email_change_complete'),
     # url(r'^(?P<username>[\.\w-]+)/confirm-email/complete/$',
@@ -69,8 +70,9 @@ urlpatterns = patterns('',
     #    point_to_404, name='userena_disabled'),
     #
     # # Change password
-    # url(r'^(?P<username>[\.\w-]+)/password/$',
-    #    point_to_404, name='userena_password_change'),
+    url(r'^(?P<username>[\.\w-]+)/password/$',
+        userena_views.password_change, {'template_name': 'accounts/password_form.html'},
+               name='userena_password_change' ),
     # url(r'^(?P<username>[\.\w-]+)/password/complete/$',
     #    point_to_404, name='userena_password_change_complete'),
     #
