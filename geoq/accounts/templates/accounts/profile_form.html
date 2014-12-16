@@ -21,7 +21,7 @@
   </ul>
   {% csrf_token %}
   <fieldset>
-    <legend>{% trans "Edit Profile" %}</legend>
+    <legend>{% trans "Edit Profile" %} for {{ profile.user.username }}</legend>
 
     {{ form.non_field_errors }}
     <div class="fieldWrapper">
@@ -60,6 +60,8 @@
         {% endif %}
         <input id="id_mugshot" name="mugshot" type="file"/>
     </div>
+    <input id="id_score" name="score" type="hidden" value="{{ user.get_profile.score }}">
+    <input id="id_privacy" name="privacy" type="hidden" value="{{ user.get_profile.privacy }}">
   </fieldset>
 
   <input type="submit" value="{% trans "Update user data" %}" />
