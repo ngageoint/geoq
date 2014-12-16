@@ -22,6 +22,8 @@ class JobKML(ListView):
         aoi_complete = job.complete_count()
         aoi_work = job.in_work_count()
 
+        cookie_url_trailer = get_cookie_trailer(request)
+
         description = 'Job #'+str(job.id)+': '+str(job.name)+'\n'+str(job.project.name)+'\n'
 
         if aoi_count == 0:
@@ -113,6 +115,8 @@ class JobKML(ListView):
                 icon_url = str(feature.style['iconUrl'])
                 if not icon_url.startswith("http"):
                     icon_url = request.build_absolute_uri(icon_url)
+                else:
+                    icon_url += cookie_url_trailer
 
                 output += '      <IconStyle>\n'
                 output += '        <Icon>\n'
@@ -200,6 +204,19 @@ class JobKML(ListView):
         return HttpResponse(output, mimetype="application/vnd.google-earth.kml+xml", status=200)
 
 
+def get_cookie_trailer(request):
+
+    cookies_to_look_for = ['iPlanetDirectoryPro'] #TODO: Pull this from an admin setting
+    cookie_url_trailer = ''
+    for cook in cookies_to_look_for:
+        cookie = request.COOKIES.get(cook, None)
+        if cookie:
+            cookie_url_trailer += cook + "=" + cookie
+    if cookie_url_trailer:
+        cookie_url_trailer = "?" + cookie_url_trailer
+    return cookie_url_trailer
+
+
 class JobKMLNetworkLink(ListView):
 
     model = Job
@@ -208,7 +225,12 @@ class JobKMLNetworkLink(ListView):
         id = self.kwargs.get('pk')
         job = get_object_or_404(Job, pk=id)
 
-        url = request.build_absolute_uri('/geoq/api/job/'+id+'.kml')
+        setting_zoom_auto = True #TODO: Pull from settings
+        settings_refresh_every = 90 #TODO: Pull from settings
+
+        cookie_url_trailer = get_cookie_trailer(request)
+
+        url = request.build_absolute_uri('/geoq/api/job/'+id+'.kml' + cookie_url_trailer)
 
         aoi_count = job.total_count()
         aoi_complete = job.complete_count()
@@ -236,10 +258,12 @@ class JobKMLNetworkLink(ListView):
         output += '      <open>1</open>\n'
         output += '      <description>'+description+'</description>\n'
         output += '      <refreshVisibility>0</refreshVisibility>\n'
-        output += '      <flyToView>1</flyToView>\n'
+        if setting_zoom_auto:
+            output += '      <flyToView>1</flyToView>\n'
         output += '      <Link>\n'
         output += '        <href>'+url+'</href>\n'
-        output += '        <refreshInterval>90</refreshInterval>\n'  # Refresh every 1.5 min
+        if settings_refresh_every:
+            output += '        <refreshInterval>'+str(settings_refresh_every)+'</refreshInterval>\n'  # Refresh every n seconds
         output += '        <refreshMode>onInterval</refreshMode>\n'
         output += '        <viewRefreshTime>5</viewRefreshTime>\n'   # Also refresh after viewscreen movement
         output += '        <viewRefreshMode>onStop</viewRefreshMode>\n'
