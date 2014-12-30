@@ -96,11 +96,17 @@ leaflet_helper.constructors.identifyParser = function(result, outputLayer){
         parserName = "YouTube Videos";
     } else if (result && result.type && result.type=="FeatureCollection" && result.features && result.features[0] &&
         result.features[0].properties && result.features[0].properties.status && result.features[0].properties.created_at &&
-        result.features[0].properties.analyst && result.features[0].properties.updated_at ) {
+        result.features[0].properties.analyst && result.features[0].properties.updated_at && result.features[0].properties.template ) {
 
         parser = leaflet_helper.parsers.geoq_exported_json;
         parserName = "GeoQ GeoJSON";
 
+    } else if (result && result.type && result.type=="FeatureCollection" && result.features && result.features[0] &&
+        result.features[0].properties && result.features[0].properties.status && result.features[0].properties.created_at &&
+        result.features[0].properties.analyst && result.features[0].properties.updated_at && result.features[0].style) {
+
+        parser = leaflet_helper.parsers.leaflet_geojson;
+        parserName = "Leaflet GeoJSON";
     } else if (result && result.type && result.type=="FeatureCollection" && result.features && result.features[0] &&
         result.features[0].properties && result.features[0].properties.fulcrum_id && result.features[0].properties.created_at &&
         result.features[0].properties.system_created_at && result.features[0].properties.updated_at ) {
@@ -271,7 +277,7 @@ leaflet_helper.constructors.geojson = function(layerConfig, map, useLayerInstead
 
     var outputLayer = useLayerInstead || new L.geoJson(undefined,{
         onEachFeature: function(feature, layer) {leaflet_helper.parsers.standard_onEachFeature(feature, layer, layerConfig); },
-        style: leaflet_helper.constructors.polygonStyleBuilderCallback,
+        style: leaflet_helper.constructors.keepStyleBuilderCallback,
         pointToLayer: iconCallback
     });
     if (outputLayer.geojson_layer_count == undefined) {
@@ -345,6 +351,23 @@ leaflet_helper.constructors.polygonStyleBuilderCallback =function(feature) {
         style.color = 'orange';
         style.dashArray = '3';
     }
+    return style;
+};
+
+leaflet_helper.constructors.keepStyleBuilderCallback = function(feature) {
+    var style;
+    if (feature.style) {
+        style = feature.style;
+    } else {
+        style = {
+            weight: 2,
+            opacity: 1,
+            color: 'white',
+            fillOpacity: 0.1,
+            fillColor: '#ff0000'
+        };
+    }
+
     return style;
 };
 
@@ -532,6 +555,72 @@ leaflet_helper.parsers.geoq_exported_json = function (geojson, map, outputLayer)
     } else {
         outputLayer = L.geoJson(geojson,{
             style: leaflet_helper.constructors.polygonStyleBuilderCallback,
+            onEachFeature: function(feature, layer) {
+                aoi_feature_edit.featureLayer_onEachFeature(feature, layer, outputLayer, true);
+            },
+
+            pointToLayer: function(feature, latlng) {
+                return aoi_feature_edit.featureLayer_pointToLayer(feature, latlng, outputLayer, undefined);
+            }
+
+        }).addTo(map);
+        outputLayer.on('click', function(e){
+            if (typeof leaflet_layer_control!="undefined"){
+                leaflet_layer_control.show_feature_info(e.layer.feature);
+            }
+        });
+    }
+
+    if (outputLayer) {
+        leaflet_helper.update_tree_title(outputLayer);
+    }
+    if (outputLayer && !outputLayer.options) {
+        outputLayer.options = {};
+    }
+    outputLayer.options.opacity = outputLayer.options.opacity || 1;
+
+    return outputLayer;
+};
+leaflet_helper.parsers.leaflet_geojson = function (geojson, map, outputLayer) {
+    if (outputLayer) {
+        outputLayer.options.onEachFeature = function(feature, layer) {
+            aoi_feature_edit.featureLayer_onEachFeature(feature, layer, outputLayer, true);
+        };
+        outputLayer.options.pointToLayer = function(feature, latlng) {
+//            return aoi_feature_edit.featureLayer_pointToLayer(feature, latlng, outputLayer, undefined);
+            var style = feature.style || {"type":"image"};
+            var icon;
+            var marker;
+            if (style.type == 'maki') {
+                icon = L.MakiMarkers.Icon;
+                icon.type = 'maki';
+            }
+            else {
+                icon = aoi_feature_edit.MapIcon;
+            }
+            if (feature.name) {
+                icon.title = ftype.name;
+                icon.text = ftype.name;
+            }
+            if (feature.icon) {
+                style.iconUrl = feature.icon;
+            }
+
+            if (style) {
+                style.iconUrl = style.iconUrl || style.iconURL || style.iconurl ||  aoi_feature_edit.static_root +"/leaflet/images/red-marker-icon.png";
+            } else {
+                style.iconUrl = aoi_feature_edit.static_root +"/leaflet/images/red-marker-icon.png";
+            }
+
+            return new L.Marker(latlng, {
+                icon: new icon(style)
+            });
+        };
+
+        outputLayer.addData(geojson);
+    } else {
+        outputLayer = L.geoJson(geojson,{
+            style: leaflet_helper.constructors.keepStyleBuilderCallback,
             onEachFeature: function(feature, layer) {
                 aoi_feature_edit.featureLayer_onEachFeature(feature, layer, outputLayer, true);
             },
