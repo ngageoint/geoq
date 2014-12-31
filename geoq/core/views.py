@@ -231,7 +231,7 @@ class CreateFeaturesView(UserAllowedMixin, DetailView):
                              spatialReference="EPSG:4326", transparent=True, type="GeoJSON", url=url, job=job.id)
                 layers['layers'].append(layer)
 
-                url = self.request.build_absolute_uri(reverse('json-job-features', args=[job.id]))
+                url = self.request.build_absolute_uri(reverse('geojson-job-features', args=[job.id]))
                 layer_name = "Features: " + job.name
                 layer = dict(attribution="GeoQ Job Features", description=description, id=int(20000+job.id),
                              layer=layer_name, name=layer_name, opacity=0.8, refreshrate=300, shown=False,
@@ -821,6 +821,15 @@ class JobGeoJSON(ListView):
     def get(self, request, *args, **kwargs):
         job = get_object_or_404(Job, pk=self.kwargs.get('pk'))
         geojson = job.features_geoJSON()
+
+        return HttpResponse(geojson, mimetype="application/json", status=200)
+
+class JobStyledGeoJSON(ListView):
+    model = Job
+
+    def get(self, request, *args, **kwargs):
+        job = get_object_or_404(Job, pk=self.kwargs.get('pk'))
+        geojson = job.features_geoJSON(using_style_template=False)
 
         return HttpResponse(geojson, mimetype="application/json", status=200)
 

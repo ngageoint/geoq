@@ -277,12 +277,12 @@ class Job(GeoQBase, Assignment):
 
         return json.dumps(geojson) if as_json else geojson
 
-    def features_geoJSON(self, as_json=True):
+    def features_geoJSON(self, as_json=True, using_style_template=True):
 
         geojson = SortedDict()
         geojson["type"] = "FeatureCollection"
         geojson["properties"] = dict(id=self.id)
-        geojson["features"] = [n.geoJSON(as_json=False) for n in self.feature_set.all()]
+        geojson["features"] = [n.geoJSON(as_json=False, using_style_template=using_style_template) for n in self.feature_set.all()]
 
         return json.dumps(geojson, indent=2) if as_json else geojson
 

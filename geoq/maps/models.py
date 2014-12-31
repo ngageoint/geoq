@@ -322,14 +322,13 @@ class Feature(models.Model):
     #Try this vs having individual models
     the_geom = models.GeometryField(blank=True, null=True)
 
-    def geoJSON(self, as_json=True):
+    def geoJSON(self, as_json=True, using_style_template=True):
         """
         Returns geoJSON of the feature.
         Try to conform to https://github.com/mapbox/simplestyle-spec/tree/master/1.0.0
         """
         properties_main = self.properties or {}
         properties_built = dict(id=self.id,
-                          template=self.template.id if hasattr(self.template, "id") else None,
                           status=self.status,
                           analyst=self.analyst.username,
                           created_at=datetime.strftime(self.created_at, '%Y-%m-%dT%H:%M:%S%Z'),
@@ -340,6 +339,12 @@ class Feature(models.Model):
         # properties_template can return a list from it's backing model, make sure we get the Dict
         if type(properties_template) == types.ListType:
             properties_template = properties_template[0]
+
+        # srj: if using_style_template set, we're styling object from its feature id, else we'll
+        #      just use the style properties (which should already be included if defined for feature)
+        #      (we may want to set some defaults later on to make sure)
+        if using_style_template:
+            properties_built['template'] = self.template.id if hasattr(self.template, "id") else None
             
         properties = dict(properties_built.items() + properties_main.items() + properties_template.items())
 
@@ -350,8 +355,10 @@ class Feature(models.Model):
         geojson["properties"] = properties
         geojson["geometry"] = json.loads(self.the_geom.json)
 
-        if feature_type:
+        if feature_type and using_style_template:
             geojson["style"] = feature_type.style_to_geojson()
+        else:
+            geojson["style"] = feature_type.style
 
         return json.dumps(geojson) if as_json else geojson
 
