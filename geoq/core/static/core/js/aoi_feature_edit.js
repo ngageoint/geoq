@@ -1156,8 +1156,8 @@ aoi_feature_edit.buildTreeLayers = function(){
     options.titles.push('GeoJump Data Lookups');
     options.layers.push(aoi_feature_edit.layersOfType("Web Data Link",'weblinks'));
 
-    options = removeEmptyParents(options);
 
+    options = removeEmptyParents(options);
     return options;
 };
 

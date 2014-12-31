@@ -939,6 +939,31 @@ leaflet_layer_control.addLayerControlInfoPanel = function($content){
     $drawer_tray.html("Click a layer above to see more information.");
 };
 
+leaflet_layer_control.handleDrag = function(result, fileHandler) {
+  console.debug("leaflet_layer_control.handleDrag", result, fileHandler);
+  if(fileHandler.type && fileHandler.type.match("kml")) {
+    var parser = new DOMParser();
+    var kmlDOM = parser.parseFromString(result, "text/xml");
+    var kmlLayers = L.KML.parseKML(kmlDOM);
+    if(kmlLayers) {
+        var name = fileHandler.name;
+        for(var i=0; i<kmlLayers.length; i++) {
+            var layerName = name;
+            if(i > 0) layerName = layerName + "-" (i+1);
+            var layer = kmlLayers[i];
+            if(layer.options)
+              layer.options.name = layerName;
+            layer.addTo(aoi_feature_edit.map);
+            leaflet_layer_control.importNode.addChildren({title:layerName, folder:false, data:layer, selected:true});
+
+        }
+    } else {
+        alert("Sorry, I couldn't find anything to import.");
+    }
+  } else {
+    alert("Sorry, only KML files are supported at the moment.");
+  }
+};
 leaflet_layer_control.addLayerControl = function (map, options, $accordion) {
 
     //Hide the existing layer control
@@ -991,16 +1016,24 @@ leaflet_layer_control.addLayerControl = function (map, options, $accordion) {
 
     leaflet_layer_control.$tree = $tree;
     leaflet_layer_control.lastSelectedNodes = $tree.fancytree("getTree").getSelectedNodes();
-
     var $content = leaflet_layer_control.buildAccordionPanel($accordion,"Geo Layers for Map");
 
     $tree.appendTo($content);
+    leaflet_layer_control.importNode = $("#layers_tree_control").fancytree("getRootNode").addChildren({title:"Imports", key:"imports", folder:true, selected:true});
+
+
+    $('<div id="importDragTarget" title="Drag KML files here" style="text-align: center;border: solid;border-width: thin;">Drag & Drop Import</div>')
+        .appendTo($content);
 
     //TODO: Replace this with a form later to allow user to quick-add layers
     $('<a id="add_layer_button" href="/maps/layers/create" target="_new" class="btn">Add A Layer</a>')
         .appendTo($content);
 
     leaflet_layer_control.addLayerControlInfoPanel($content);
+
+    var idt = document.getElementById("importDragTarget");
+    fileDragHelper.stopWindowDrop();
+    fileDragHelper.watchFor(idt, leaflet_layer_control.handleDrag);
 
     //If it was open last time, open it again
     if (store.get('leaflet_layer_control.drawer')) {
