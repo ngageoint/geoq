@@ -939,30 +939,68 @@ leaflet_layer_control.addLayerControlInfoPanel = function($content){
     $drawer_tray.html("Click a layer above to see more information.");
 };
 
-leaflet_layer_control.handleDrag = function(result, fileHandler) {
-  console.debug("leaflet_layer_control.handleDrag", result, fileHandler);
-  if(fileHandler.type && fileHandler.type.match("kml")) {
-    var parser = new DOMParser();
-    var kmlDOM = parser.parseFromString(result, "text/xml");
-    var kmlLayers = L.KML.parseKML(kmlDOM);
-    if(kmlLayers) {
-        var name = fileHandler.name;
-        for(var i=0; i<kmlLayers.length; i++) {
-            var layerName = name;
-            if(i > 0) layerName = layerName + "-" (i+1);
-            var layer = kmlLayers[i];
-            if(layer.options)
-              layer.options.name = layerName;
-            layer.addTo(aoi_feature_edit.map);
-            leaflet_layer_control.importNode.addChildren({title:layerName, folder:false, data:layer, selected:true});
+leaflet_layer_control.filetypeHelper = function(fileHandle, mimes,fileSuffix) {
+    var ft = fileHandle.type;
+    var fn = fileHandle.name;
+    if(typeof(mimes) === "string") { mimes = [mimes] };
+    for(var i=0; i<mimes.length; i++) {
+        if(ft.match(mimes[i])) return true;
+    }
+    if(fileSuffix)  {
+        var split = fn.split(".");
+        if(split.length > 0)
+            if(fileSuffix === split[split.length -1])
+                return true;
+    }
 
-        }
+    return false;
+};
+leaflet_layer_control.handleDrop = function(result, fileHandle) {
+  var foundLayers = [];
+  if(leaflet_layer_control.filetypeHelper(fileHandle, "kml", "kml")) {
+
+    // we are making assumptions about the kml encoding
+    // introspect the file encoding for i18n.
+    var kmlString = "";
+
+    if(window.TextDecoder) {
+        var dv = new DataView(result);
+        var decoder = new TextDecoder("utf-8");
+        kmlString = decoder.decode(dv);
+    } else {
+        kmlString = String.fromCharCode.apply(null, new Uint8Array(result));
+    }
+    var parser = new DOMParser();
+    var kmlDOM = parser.parseFromString(kmlString, "text/xml");
+    var foundLayers = L.KML.parseKML(kmlDOM);
+  } else if(leaflet_layer_control.filetypeHelper(fileHandle, [], "zip")) {
+
+    foundLayers = L.shapefile(result); // we'll get an unpopulated geojson layer even if this ISN'T a shape file
+    if(foundLayers && foundLayers.getLayers && foundLayers.getLayers().length == 0)
+    foundLayers = null;
+  } else {
+
+    alert("Sorry, only KML and shapefile zip archives are supported at the moment.");
+  }
+  if(foundLayers !== null && !(foundLayers instanceof Array))
+    foundLayers = [foundLayers];
+  if(foundLayers !== null) {
+    var name =  fileHandle.name;
+    for(var i=0; i<foundLayers.length; i++) {
+        var layerName = name;
+        if(i > 0) layerName = layerName + "-" (i+1);
+        var layer = foundLayers[i];
+        if(layer.options)
+          layer.options.name = layerName;
+        layer.addTo(aoi_feature_edit.map);
+        leaflet_layer_control.importNode.addChildren({title:layerName, folder:false, data:layer, selected:true});
+
+    }
     } else {
         alert("Sorry, I couldn't find anything to import.");
     }
-  } else {
-    alert("Sorry, only KML files are supported at the moment.");
-  }
+
+
 };
 leaflet_layer_control.addLayerControl = function (map, options, $accordion) {
 
@@ -1033,7 +1071,7 @@ leaflet_layer_control.addLayerControl = function (map, options, $accordion) {
 
     var idt = document.getElementById("importDragTarget");
     fileDragHelper.stopWindowDrop();
-    fileDragHelper.watchFor(idt, leaflet_layer_control.handleDrag);
+    fileDragHelper.watchFor(idt, leaflet_layer_control.handleDrop, true);
 
     //If it was open last time, open it again
     if (store.get('leaflet_layer_control.drawer')) {
