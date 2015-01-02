@@ -1060,7 +1060,7 @@ leaflet_layer_control.addLayerControl = function (map, options, $accordion) {
     leaflet_layer_control.importNode = $("#layers_tree_control").fancytree("getRootNode").addChildren({title:"Imports", key:"imports", folder:true, selected:true});
 
 
-    $('<div id="importDragTarget" title="Drag KML files here" style="text-align: center;border: solid;border-width: thin;">Drag & Drop Import</div>')
+    $('<div id="importDragTarget" title="Drag KML files or Shapefile zip archives here" style="text-align: center;border: solid;border-width: thin;">Drag & Drop Import</div>')
         .appendTo($content);
 
     //TODO: Replace this with a form later to allow user to quick-add layers
