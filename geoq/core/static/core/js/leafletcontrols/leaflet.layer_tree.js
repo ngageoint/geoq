@@ -955,21 +955,28 @@ leaflet_layer_control.filetypeHelper = function(fileHandle, mimes,fileSuffix) {
 
     return false;
 };
+
+leaflet_layer_control.stringHelper = function(binary, encoding) {
+    var converted = null;
+    if(window.TextDecoder) {
+        var dv = new DataView(binary);
+        var decoder = new TextDecoder(encoding);
+        converted = decoder.decode(dv);
+    } else {
+        converted = String.fromCharCode.apply(null, new Uint8Array(binary));
+    }
+
+    return converted;
+
+}
 leaflet_layer_control.handleDrop = function(result, fileHandle) {
   var foundLayers = [];
   if(leaflet_layer_control.filetypeHelper(fileHandle, "kml", "kml")) {
 
     // we are making assumptions about the kml encoding
     // introspect the file encoding for i18n.
-    var kmlString = "";
+    var kmlString = leaflet_layer_control.stringHelper(result, "utf-8");
 
-    if(window.TextDecoder) {
-        var dv = new DataView(result);
-        var decoder = new TextDecoder("utf-8");
-        kmlString = decoder.decode(dv);
-    } else {
-        kmlString = String.fromCharCode.apply(null, new Uint8Array(result));
-    }
     var parser = new DOMParser();
     var kmlDOM = parser.parseFromString(kmlString, "text/xml");
     var foundLayers = L.KML.parseKML(kmlDOM);
@@ -978,9 +985,14 @@ leaflet_layer_control.handleDrop = function(result, fileHandle) {
     foundLayers = L.shapefile(result); // we'll get an unpopulated geojson layer even if this ISN'T a shape file
     if(foundLayers && foundLayers.getLayers && foundLayers.getLayers().length == 0)
     foundLayers = null;
+  } else  if(leaflet_layer_control.filetypeHelper(fileHandle, ["geojson", "json"], "json")) {
+    var jsonString = leaflet_layer_control.stringHelper(result, "utf-8");
+    var json = JSON.parse(jsonString);
+    foundLayers = L.geoJson(json);
+
   } else {
 
-    alert("Sorry, only KML and shapefile zip archives are supported at the moment.");
+    alert("Sorry, only GeoSJON, KML, and shapefile zip archives are supported at the moment.");
   }
   if(foundLayers !== null && !(foundLayers instanceof Array))
     foundLayers = [foundLayers];
@@ -1060,7 +1072,7 @@ leaflet_layer_control.addLayerControl = function (map, options, $accordion) {
     leaflet_layer_control.importNode = $("#layers_tree_control").fancytree("getRootNode").addChildren({title:"Imports", key:"imports", folder:true, selected:true});
 
 
-    $('<div id="importDragTarget" title="Drag KML files or Shapefile zip archives here" style="text-align: center;border: solid;border-width: thin;">Drag & Drop Import</div>')
+    $('<div id="importDragTarget" title="Drag GeoJSON and KML files or Shapefile zip archives here" style="text-align: center;border: solid;border-width: thin;">Drag & Drop Import</div>')
         .appendTo($content);
 
     //TODO: Replace this with a form later to allow user to quick-add layers
