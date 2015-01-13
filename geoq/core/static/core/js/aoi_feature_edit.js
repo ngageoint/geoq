@@ -750,9 +750,17 @@ aoi_feature_edit.map_init = function (map, bounds) {
         var headers = {};
         geojson.properties.template = aoi_feature_edit.current_feature_type_id || 1;
         if(geojson.geometry.type === "Point") {
+            icon = null;
             var tmpId = Math.uuidCompact();
             headers = { "Temp-Point-Id": tmpId};
-            var layer = L.marker([geojson.geometry.coordinates[1], geojson.geometry.coordinates[0]]);
+            if(aoi_feature_edit.feature_types[geojson.properties.template]) {
+                var ft = aoi_feature_edit.feature_types[geojson.properties.template];
+                var style = ft.style;
+                if(!$.isEmptyObject(style)) icon = new aoi_feature_edit.MapIcon(style);
+            }
+            var layer = L.marker([geojson.geometry.coordinates[1], geojson.geometry.coordinates[0]], {
+                icon: icon, opacity: .5});
+
             aoi_feature_edit._pendingPoints[tmpId] = layer;
             aoi_feature_edit.map.addLayer(layer);
          }
