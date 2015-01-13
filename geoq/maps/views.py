@@ -35,6 +35,7 @@ class CreateFeatures(View):
 
     def post(self, request, *args, **kwargs):
         feature = None
+        tpi = request.META.get('HTTP_TEMP_POINT_ID', "none")
         aoi = request.POST.get('aoi')
         geometry = request.POST.get('geometry')
         geojson = json.loads(geometry)
@@ -74,14 +75,17 @@ class CreateFeatures(View):
 
             feature.save()
         except ValidationError as e:
-            return HttpResponse(content=json.dumps(dict(errors=e.messages)), mimetype="application/json", status=400)
-
+            response =  HttpResponse(content=json.dumps(dict(errors=e.messages)), mimetype="application/json", status=400)
+            response['Temp-Point-Id'] = tpi
+            return response
         # This feels a bit ugly but it does get the GeoJSON into the response
         feature_json = serializers.serialize('json', [feature,])
         feature_list = json.loads(feature_json)
         feature_list[0]['geojson'] = feature.geoJSON(True)
 
-        return HttpResponse(json.dumps(feature_list), mimetype="application/json")
+        response = HttpResponse(json.dumps(feature_list), mimetype="application/json")
+        response['Temp-Point-Id'] = tpi
+        return response
 
 
 class EditFeatures(View):

@@ -505,6 +505,7 @@ aoi_feature_edit.watch_layer = function(layer, watch) {
     }
 };
 
+aoi_feature_edit._pendingPoints = {};
 aoi_feature_edit.map_init = function (map, bounds) {
 
     map.on("layer_add", function(e) {
@@ -711,7 +712,14 @@ aoi_feature_edit.map_init = function (map, bounds) {
 
     location_control.addTo(map, {'position': 'topleft'});
 
+    function pruneTemp(jqXHR) {
+        var tmpId = jqXHR.getResponseHeader("Temp-Point-Id");
+        var tmpLayer = aoi_feature_edit._pendingPoints[tmpId];
+        if(tmpLayer) aoi_feature_edit.map.removeLayer(tmpLayer);
+        delete aoi_feature_edit._pendingPoints[tmpId];
+    }
     function onSuccess(data, textStatus, jqXHR) {
+        pruneTemp(jqXHR);
         var feature = data[0];
         if (feature && feature.geojson) {
             var tnum = feature.fields.template;
@@ -730,6 +738,7 @@ aoi_feature_edit.map_init = function (map, bounds) {
     }
 
     function onError(jqXHR, textStatus, errorThrown) {
+        pruneTemp(jqXHR);
         log.error("Error while adding feature: " + errorThrown);
     }
 
@@ -738,18 +747,25 @@ aoi_feature_edit.map_init = function (map, bounds) {
         var layer = e.layer;
 
         var geojson = e.layer.toGeoJSON();
+        var headers = {};
         geojson.properties.template = aoi_feature_edit.current_feature_type_id || 1;
+        if(geojson.geometry.type === "Point") {
+            var tmpId = Math.uuidCompact();
+            headers = { "Temp-Point-Id": tmpId};
+            var layer = L.marker([geojson.geometry.coordinates[1], geojson.geometry.coordinates[0]]);
+            aoi_feature_edit._pendingPoints[tmpId] = layer;
+            aoi_feature_edit.map.addLayer(layer);
+         }
         geojson = JSON.stringify(geojson);
-
+        var data = { aoi: aoi_feature_edit.aoi_id, geometry: geojson }
         $.ajax({
             type: "POST",
             url: aoi_feature_edit.create_feature_url,
-            data: { aoi: aoi_feature_edit.aoi_id,
-                geometry: geojson
-            },
+            data: data,
             success: onSuccess,
             error: onError,
-            dataType: "json"
+            dataType: "json",
+            headers: headers
         });
     });
 
