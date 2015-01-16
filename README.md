@@ -67,7 +67,7 @@ Mac OSX Development Build Instructions::
 
 2. (Optional) Install a Geoserver (we recommend the OGC Geoserver at [https://github.com/geoserver](https://github.com/geoserver))
 
-3. Make sure Python, Virtualenv, and Git are installed
+3. Make sure Python, Virtualenv, npm, and Git are installed
 
         % Note that some distros (Debian) might need additional libraries:
         % sudo apt-get build-dep python-psycopg2
