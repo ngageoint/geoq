@@ -544,10 +544,12 @@ leaflet_layer_control.show_info = function (objToShow, node) {
     }
 
     //Clear the tray and add each html object generated from above
-    leaflet_layer_control.$drawer_tray.empty();
-    _.each(html_objects,function(html){
-        leaflet_layer_control.$drawer_tray.append(html);
-    });
+    if (leaflet_layer_control.$drawer_tray) {
+        leaflet_layer_control.$drawer_tray.empty();
+        _.each(html_objects, function (html) {
+            leaflet_layer_control.$drawer_tray.append(html);
+        });
+    }
 };
 //=========================================
 
@@ -983,8 +985,9 @@ leaflet_layer_control.handleDrop = function(result, fileHandle) {
   } else if(leaflet_layer_control.filetypeHelper(fileHandle, [], "zip")) {
 
     foundLayers = L.shapefile(result); // we'll get an unpopulated geojson layer even if this ISN'T a shape file
-    if(foundLayers && foundLayers.getLayers && foundLayers.getLayers().length == 0)
-    foundLayers = null;
+    if(foundLayers && foundLayers.getLayers && foundLayers.getLayers().length == 0) {
+        foundLayers = null;
+    }
   } else  if(leaflet_layer_control.filetypeHelper(fileHandle, ["geojson", "json"], "json")) {
     var jsonString = leaflet_layer_control.stringHelper(result, "utf-8");
     var json = JSON.parse(jsonString);
@@ -1000,7 +1003,7 @@ leaflet_layer_control.handleDrop = function(result, fileHandle) {
     var name =  fileHandle.name;
     for(var i=0; i<foundLayers.length; i++) {
         var layerName = name;
-        if(i > 0) layerName = layerName + "-" (i+1);
+        if(i > 0) layerName = layerName + "-" + (i+1);
         var layer = foundLayers[i];
         if(layer.options)
           layer.options.name = layerName;
