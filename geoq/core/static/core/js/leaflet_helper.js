@@ -61,6 +61,12 @@ leaflet_helper.layer_conversion = function (lyr, map) {
     } else if (lyr.type == 'ESRI Tiled Map Service' && esriPluginInstalled) {
         outputLayer = new L.esri.tiledMapLayer(lyr.url, layerOptions);
     } else if (lyr.type == 'ESRI Dynamic Map Layer' && esriPluginInstalled) {
+        // SRJ - DynamicMapLayer looking for an array passed in
+        try {
+            layerOptions.layers = JSON.parse(layerOptions.layers);
+        } catch (err) {
+            layerOptions.layers = [];
+        }
         outputLayer = new L.esri.dynamicMapLayer(lyr.url, layerOptions);
     } else if (lyr.type == 'ESRI Feature Layer' && esriPluginInstalled) {
         outputLayer = new L.esri.featureLayer(lyr.url, layerOptions);
@@ -170,20 +176,24 @@ leaflet_helper.addLocatorControl = function(map){
     };
     var infoButton = new L.Control.Button(infoButtonOptions).addTo(map);
 
-    map.on('mousemove click', function(e) {
-        var ll = e.latlng;
+    // ugly fix to get map to work correctly on iPad. Need to lose the location box
+    var userAgent = navigator.userAgent;
 
-        var pt = maptools.locationInfoString({lat:ll.lat, lng:ll.lng, separator:"<br/>", boldTitles:true});
+    if (! userAgent.match(/iPad/i)) {
+        map.on('mousemove click', function (e) {
+            var ll = e.latlng;
 
-        //Build text output to show in info box
-        var country = pt.country.name_long || pt.country.name || "";
-        var text = pt.usngCoords.usngString + "<br/><b>Lat:</b> "+ pt.lat + "<br/><b>Lon:</b> " + pt.lng;
-        if (country) text += "<br/>" + country;
-        if (pt.state && pt.state.name) text += "<br/>" + pt.state.name;
+            var pt = maptools.locationInfoString({lat: ll.lat, lng: ll.lng, separator: "<br/>", boldTitles: true});
 
-        $map_move_info_update.html(text);
-    });
+            //Build text output to show in info box
+            var country = pt.country.name_long || pt.country.name || "";
+            var text = pt.usngCoords.usngString + "<br/><b>Lat:</b> " + pt.lat + "<br/><b>Lon:</b> " + pt.lng;
+            if (country) text += "<br/>" + country;
+            if (pt.state && pt.state.name) text += "<br/>" + pt.state.name;
 
+            $map_move_info_update.html(text);
+        });
+    }
 };
 
 //TODO: Add MULTIPOLYGON support and commit back to https://gist.github.com/bmcbride/4248238
