@@ -178,9 +178,8 @@ leaflet_helper.addLocatorControl = function(map){
 
     // ugly fix to get map to work correctly on iPad. Need to lose the location box
     var userAgent = navigator.userAgent;
-
     if (! userAgent.match(/iPad/i)) {
-        map.on('mousemove click', function (e) {
+        map.on('mousemove', function (e) {
             var ll = e.latlng;
 
             var pt = maptools.locationInfoString({lat: ll.lat, lng: ll.lng, separator: "<br/>", boldTitles: true});
