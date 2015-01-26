@@ -12,7 +12,7 @@ If you'd like to contribute to this project, please make a pull request. We'll r
 Software source code previously released under an open source license and then modified by NGA staff is considered a "joint work" (see 17 USC § 101); it is partially copyrighted, partially public domain, and as a whole is protected by the copyrights of the non-government authors and must be released according to the terms of the original open source license.
 
 ###In the News
-NGA Director Letitia Long talks about NGA's GitHub initiative and our first offering, GeoQ, at the GEOINT Symposium.  Her comments start at 40 minutes and 40 seconds in the [video clip] (http://geointv.com/archive/geoint-2013-keynote-letitia-a-long/).  
+Former NGA Director Letitia Long talks about NGA's GitHub initiative and our first offering, GeoQ, at the GEOINT Symposium.  Her comments start at 40 minutes and 40 seconds in the [video clip] (http://geointv.com/archive/geoint-2013-keynote-letitia-a-long/).  
 
 NGA Leaders speak at the 2014 White House Innovation for Disaster Response and Recovery Demo Day about [GeoQ] (https://www.youtube.com/watch?v=X8eiXjbhfOc#t=26m13s).
 
