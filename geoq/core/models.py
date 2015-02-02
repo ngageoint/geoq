@@ -3,6 +3,7 @@
 # is subject to the Rights in Technical Data-Noncommercial Items clause at DFARS 252.227-7013 (FEB 2012)
 
 import json
+import cgi
 
 from django.contrib.auth.models import User, Group
 from django.contrib.gis.db import models
@@ -226,7 +227,7 @@ class Job(GeoQBase, Assignment):
 
             header = "<th><i>Feature Counts</i></th>"
             for (featuretype, status_obj) in counts.iteritems():
-                header = header + "<th><b>" + featuretype + "</b></th>"
+                header = header + "<th><b>" + cgi.encode(featuretype) + "</b></th>"
             output += "<tr>" + header + "</tr>"
 
             for status in STATUS_VALUES_LIST:
