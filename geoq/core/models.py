@@ -227,7 +227,7 @@ class Job(GeoQBase, Assignment):
 
             header = "<th><i>Feature Counts</i></th>"
             for (featuretype, status_obj) in counts.iteritems():
-                header = header + "<th><b>" + cgi.encode(featuretype) + "</b></th>"
+                header = header + "<th><b>" + cgi.escape(featuretype) + "</b></th>"
             output += "<tr>" + header + "</tr>"
 
             for status in STATUS_VALUES_LIST:
@@ -238,7 +238,7 @@ class Job(GeoQBase, Assignment):
                         val = status_obj[status]
                     else:
                         val = 0
-                    row += "<td>" + str(val) + "</td>"
+                    row += "<td>" + cgi.escape(str(val)) + "</td>"
                 output += "<tr>" + row + "</tr>"
             output += "</table>"
         else:
