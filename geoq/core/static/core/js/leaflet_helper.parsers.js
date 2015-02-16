@@ -309,9 +309,7 @@ leaflet_helper.constructors.geojson = function(layerConfig, map, useLayerInstead
         success: function(data){
             leaflet_helper.constructors.geojson_success(data, proxiedURL, map, outputLayer);
             // try to set correct opacity
-            if (outputLayer && outputLayer.options && outputLayer.options.toShowOnLoad) {
                 leaflet_layer_control.setLayerOpacity(outputLayer, outputLayer.options.toShowOnLoad, true);
-            }
         },
         error: leaflet_helper.constructors.geojson_error
     });
