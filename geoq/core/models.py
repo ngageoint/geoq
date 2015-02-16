@@ -16,6 +16,7 @@ from jsonfield import JSONField
 from collections import defaultdict
 from django.db.models import Q
 from geoq.training.models import Training
+from geoq.core.utils import clean_dumps
 
 TRUE_FALSE = [(0, 'False'), (1, 'True')]
 STATUS_VALUES_LIST = ['Unassigned', 'Assigned', 'In work', 'Awaiting review', 'In review', 'Completed']
@@ -142,7 +143,7 @@ class Project(GeoQBase):
                     job_poly['properties'] = {"job_id": str(job.id), "link": str(job.get_absolute_url()),
                                               "name": str(job.name)}
                     jobs.append(job_poly)
-        return json.dumps(jobs, ensure_ascii=True)
+        return clean_dumps(jobs, ensure_ascii=True)
 
     def get_absolute_url(self):
         return reverse('project-detail', args=[self.id])
@@ -275,16 +276,23 @@ class Job(GeoQBase, Assignment):
         geojson["type"] = "FeatureCollection"
         geojson["features"] = [json.loads(aoi.geoJSON()) for aoi in self.aois.all()]
 
-        return json.dumps(geojson) if as_json else geojson
+        return clean_dumps(geojson) if as_json else geojson
 
     def features_geoJSON(self, as_json=True, using_style_template=True):
 
         geojson = SortedDict()
         geojson["type"] = "FeatureCollection"
         geojson["properties"] = dict(id=self.id)
+        properties = geojson["properties"]
+        for key in properties:
+            if isinstance(properties[key],str) or isinstance(properties[key], unicode):
+                properties[key] = properties[key].replace('<', '&ltl').replace('>', '&gt;').replace("javascript:", "j_script-")
+        return geojson
+
+
         geojson["features"] = [n.geoJSON(as_json=False, using_style_template=using_style_template) for n in self.feature_set.all()]
 
-        return json.dumps(geojson, indent=2) if as_json else geojson
+        return clean_dumps(geojson, indent=2) if as_json else geojson
 
     def grid_geoJSON(self, as_json=True):
         """
@@ -295,7 +303,7 @@ class Job(GeoQBase, Assignment):
         geojson["type"] = "FeatureCollection"
         geojson["features"] = [json.loads(aoi.grid_geoJSON()) for aoi in self.aois.all()]
 
-        return json.dumps(geojson) if as_json else geojson
+        return clean_dumps(geojson) if as_json else geojson
 
 
 class AOI(GeoQBase, Assignment):
@@ -368,7 +376,7 @@ class AOI(GeoQBase, Assignment):
             delete_url=reverse('aoi-deleter', args=[self.id]))
         geojson["geometry"] = json.loads(self.polygon.json)
 
-        return json.dumps(geojson)
+        return clean_dumps(geojson)
 
     def logJSON(self):
         return [ob.to_dict() for ob in self.log]
@@ -388,7 +396,7 @@ class AOI(GeoQBase, Assignment):
             priority=self.priority)
         prop_json = dict(properties_built.items() + properties_main.items())
 
-        return json.dumps(prop_json)
+        return clean_dumps(prop_json)
 
     def grid_geoJSON(self):
         """
@@ -405,7 +413,7 @@ class AOI(GeoQBase, Assignment):
             priority=self.priority)
         geojson["geometry"] = json.loads(self.polygon.json)
 
-        return json.dumps(geojson)
+        return clean_dumps(geojson)
 
     def user_can_complete(self, user):
         """

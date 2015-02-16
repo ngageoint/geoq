@@ -13,6 +13,8 @@ from django.utils.datastructures import SortedDict
 from django.core.urlresolvers import reverse
 from jsonfield import JSONField
 from datetime import datetime
+from geoq.core.utils import clean_dumps
+
 import sys
 
 MIGRATING = reduce(lambda x, y: x or y, ['syncdb' in sys.argv, 'migrate' in sys.argv], False)
@@ -256,7 +258,7 @@ class Map(models.Model):
         for layer in Layer.objects.all():
             if not layer.disabled:
                 map_services.append(layer.layer_json())
-        return json.dumps(map_services)
+        return clean_dumps(map_services)
 
     def to_object(self):
         return {
@@ -270,7 +272,7 @@ class Map(models.Model):
 
     def to_json(self):
         obj = self.to_object()
-        return json.dumps(obj)
+        return clean_dumps(obj)
 
     def get_absolute_url(self):
         return reverse('map-update', args=[self.id])
@@ -335,7 +337,7 @@ class Feature(models.Model):
                           updated_at=datetime.strftime(self.updated_at, '%Y-%m-%dT%H:%M:%S%Z'),
                           )
         properties_template = self.template.properties or {}
-        
+
         # properties_template can return a list from it's backing model, make sure we get the Dict
         if type(properties_template) == types.ListType:
             properties_template = properties_template[0]
@@ -345,7 +347,7 @@ class Feature(models.Model):
         #      (we may want to set some defaults later on to make sure)
         if using_style_template:
             properties_built['template'] = self.template.id if hasattr(self.template, "id") else None
-            
+
         properties = dict(properties_built.items() + properties_main.items() + properties_template.items())
 
         feature_type = FeatureType.objects.get(id=self.template.id)
@@ -360,7 +362,13 @@ class Feature(models.Model):
         else:
             geojson["style"] = feature_type.style
 
-        return json.dumps(geojson) if as_json else geojson
+        if(as_json):
+            return clean_dumps(geojson)
+        else:
+            for key in properties:
+                if isinstance(properties[key],str) or isinstance(properties[key], unicode):
+                    properties[key] = properties[key].replace('<', '&ltl').replace('>', '&gt;').replace("javascript:", "j_script-")
+            return geojson
 
     def json_item(self, show_detailed_properties=False):
         properties_main = self.properties or {}
@@ -435,7 +443,7 @@ class FeatureType(models.Model):
         icon = ""
         if self.icon:
             icon = "/images/"+str(self.icon)
-        return json.dumps(dict(id=self.id,
+        return clean_dumps(dict(id=self.id,
                                properties=self.properties,
                                category=self.category,
                                order=self.order,
@@ -498,7 +506,7 @@ class FeatureType(models.Model):
         return html
 
     def style_json(self):
-        return json.dumps(self.style)
+        return clean_dumps(self.style)
 
     def featuretypes(self):
         return FeatureType.objects.all()
