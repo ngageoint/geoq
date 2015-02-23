@@ -893,7 +893,7 @@ leaflet_layer_control.setLayerOpacity = function (layer, amount, doNotMoveToTop)
                     $(f._shadow).hide();
                 }
                 // SRJ: do this for kml files with ground overlays
-                if (f._image.style.opacity) {
+                if (f._image && f._image.style) {
                     f._image.style.opacity = amount;
                 }
             });
@@ -913,7 +913,7 @@ leaflet_layer_control.setLayerOpacity = function (layer, amount, doNotMoveToTop)
                     $(f._shadow).show().css({opacity:amount});
                 }
                 // SRJ: do this for kml files with ground overlays
-                if (f._image.style.opacity) {
+                if (f._image && f._image.style) {
                     f._image.style.opacity = amount;
                 }
             });
