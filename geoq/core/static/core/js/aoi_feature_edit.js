@@ -515,7 +515,7 @@ aoi_feature_edit.map_init = function (map, bounds) {
         aoi_feature_edit.watch_layer(e.layer, false);
     });
 
-    map.options.maxZoom = 19;
+    // map.options.maxZoom = 19;
 
     var custom_map = aoi_feature_edit.aoi_map_json || {};
     aoi_feature_edit.map = map;

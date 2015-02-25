@@ -110,6 +110,7 @@ LEAFLET_CSS = [
 
 LEAFLET_CONFIG = {
     'RESET_VIEW' : False,
+    'MAX_ZOOM' : 22,
     'PLUGINS': {
         'draw': {
             'css': LEAFLET_CSS,
