@@ -411,7 +411,8 @@ class AOI(GeoQBase, Assignment):
         geojson["type"] = "Feature"
         geojson["properties"] = dict(
             id=self.id,
-            priority=self.priority)
+            priority=self.priority,
+            status=self.status)
         geojson["geometry"] = json.loads(self.polygon.json)
 
         return clean_dumps(geojson)
