@@ -340,12 +340,19 @@ leaflet_helper.constructors.iconBuilderCallback = function(feature, latlng, laye
 };
 
 leaflet_helper.constructors.polygonStyleBuilderCallback =function(feature) {
+//
+    var polyFillColor = '#ff0000';
+//    if (feature.properties && feature.properties.status) {
+//        var status = feature.properties.status.toLowerCase().replace(" ","_");
+//        polyFillColor = leaflet_helper.styles[status].fillColor;
+//    }
+
     var style = {
         weight: 2,
         opacity: 1,
         color: 'white',
         fillOpacity: 0.1,
-        fillColor: '#ff0000'};
+        fillColor: polyFillColor};
     if (feature.properties.layer_type == "Aerial Oblique Line") {
         style.color = 'green';
         style.dashArray = '3';
@@ -516,7 +523,7 @@ leaflet_helper.parsers.basicJson = function (geojson, map, outputLayer) {
 leaflet_helper.parsers.fulcrum_exported_json = function (geojson, map, outputLayer) {
     if (outputLayer) {
         outputLayer.options.onEachFeature = function(feature, layer) {
-            aoi_feature_edit.featureLayer_onEachFeature(feature, layer, outputLayer, true);
+            aoi_feature_edit.fulcrumfeatureLayer_onEachFeature(feature, layer, outputLayer, true);
         };
         outputLayer.addData(geojson);
 
@@ -524,7 +531,7 @@ leaflet_helper.parsers.fulcrum_exported_json = function (geojson, map, outputLay
         outputLayer = L.geoJson(geojson,{
             style: leaflet_helper.constructors.polygonStyleBuilderCallback,
             onEachFeature: function(feature, layer) {
-                aoi_feature_edit.featureLayer_onEachFeature(feature, layer, outputLayer, true);
+                aoi_feature_edit.fulcrumfeatureLayer_onEachFeature(feature, layer, outputLayer, true);
             }
         }).addTo(map);
         outputLayer.on('click', function(e){
