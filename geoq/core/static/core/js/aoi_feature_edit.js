@@ -405,6 +405,61 @@ aoi_feature_edit.featureLayer_onEachFeature = function (feature, layer, featureL
         feature.layer = layer;
     }
 };
+aoi_feature_edit.fulcrumfeatureLayer_onEachFeature = function (feature, layer, featureLayer, dontAddDelete) {
+    if (feature.properties) {
+        var id = feature.properties.id;
+        feature_manager.addAtId(id,{layerGroup: featureLayer, layer: layer});
+
+        var popupContent = "<h5>Fulcrum Feature</h5>";
+        if (feature.properties.owner_name){
+            popupContent += '<b>Owner: </b>' + feature.properties.owner_name + '<br/>';
+        }
+        if (feature.properties.occupancy_id) {
+            popupContent += '<b>Occupancy: </b>' + feature.properties.occupancy_id + '<br/>';
+        }
+        if (feature.properties.streethighway) {
+            popupContent += '<b>Address: </b><br/>';
+            popupContent += '     ' + feature.properties.streethighway + '<br/>';
+            popupContent += '     ' + feature.properties.city + ',' + feature.properties.state + '<br/>';
+        }
+        if (feature.properties.response_district){
+            popupContent += '<b>Resp. District: </b> ' + feature.properties.response_district + '<br/>';
+        }
+        if (feature.properties.station_subdistricts){
+            popupContent += '<b>Station Subdist: </b> ' + feature.properties.response_district + '<br/>';
+        }
+        if (feature.properties.email_address){
+            popupContent += '<b>Email: </b> ' + feature.properties.email_address + '<br/>';
+        }
+        if (feature.properties.total_area_square_feet) {
+            popupContent += '<b>Area: </b>' + feature.properties.total_area_square_feet + '<br/>';
+        }
+        if (feature.properties.specific_property_use) {
+            popupContent += '<b>Use: </b>' + feature.properties.specific_property_use + '<br/>';
+        }
+        if (feature.properties.property_ownership) {
+            popupContent += '<b>Owner: </b>' + feature.properties.propery_ownership + '<br/>';
+        }
+        if (feature.properties.construction_type_check_one_other) {
+            popupContent += '<b>Construct Type: </b>' + feature.properties.construction_type_check_one_other + '<br/>';
+        }
+        if (feature.properties.knox_box_location) {
+            popupContent += '<b>Knox Box: </b>' + feature.properties.knox_box_location + '<br/>';
+        }
+        if (feature.properties.created_at){
+            var datetime = feature.properties.created_at;
+            datetime = datetime.replace("UTC", "").trim();
+            var dtg = moment(datetime);
+
+            if (dtg.isValid()){
+                popupContent += '<b>Created:</b> ' + dtg.calendar() + '<br/>';
+            }
+        }
+
+        layer.bindPopup(popupContent);
+        feature.layer = layer;
+    }
+};
 aoi_feature_edit.deleteFeature = function(id, delete_url) {
     var confirmText = 'Delete feature #' + id + '?';
     var confirmFunction = function(result) {
