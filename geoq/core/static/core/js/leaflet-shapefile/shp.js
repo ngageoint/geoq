@@ -1929,7 +1929,7 @@ exports.arrayBuffer2Blob = function(buffer) {
         }
         catch (e) {
 
-            // well, fuck ?!
+            // well, **** ?!
             throw new Error("Bug : can't construct the Blob.");
         }
     }
