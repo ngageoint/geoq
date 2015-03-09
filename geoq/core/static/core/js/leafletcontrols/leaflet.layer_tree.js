@@ -41,6 +41,7 @@ leaflet_layer_control.initDrawer = function(){
 
     //Build an accordion row to view workcell log
     leaflet_layer_control.addLogInfo($accordion);
+    leaflet_layer_control.addLayerComparison($accordion);
 
     //The Layer Controls should also be built and added later in another script, something like:
     // var options = aoi_feature_edit.buildTreeLayers();
@@ -70,6 +71,70 @@ leaflet_layer_control.addFeatureInfo = function($accordion){
         .html("Click a feature on the map to see an information associated with it")
         .appendTo($content);
 };
+
+leaflet_layer_control.addLayerComparison = function($accordion) {
+
+    var c = leaflet_layer_control.buildAccordionPanel($accordion,"Layer Comparison");
+
+    var chtml = "<div>" +
+        "<div style='text-align: center'>" +
+        "    <select id='comparisonLayer1'></select>" +
+        "    <span id='comparisonLayerStatus1'></span><br />" +
+        "    <select id='comparisonLayer2'></select>"+
+        "    <span id='comparisonLayerStatus1'></span>"+
+        "</div>"+
+        " <div style='text-align: center'>"+
+        "    <input id='comparisonSlider' style='display: none' type='range' min='-50' max='50' step='5' value='0' oninput='aoi_feature_edit.handleComparisonSlide(this.value)' />"+
+        "    <br />"+
+        "    <button id='comparisonButton' onclick='aoi_feature_edit.startOrEndComparison(this)'>Start</button>"+
+        " </div>"+
+    "</div>";
+    var cdom = $(chtml);
+    cdom.appendTo(c);
+    var overlays = aoi_feature_edit.layers.overlays;
+    if(!overlays || overlays.length < 2) {
+        var cb = document.getElementById("comparisonButton");
+        cb.disabled = true;
+        cb.innerHTML = "Unavailable";
+    } else {
+        var optionHTML = "";
+        for(var i = 0; i<overlays.length; i++) {
+            optionHTML += "<option value='" + i + "'>" + overlays[i].name + "</option>";
+        }
+        $("#comparisonLayer1").html(optionHTML).prop("selectedIndex", 0);
+        $("#comparisonLayer2").html(optionHTML).prop("selectedIndex", 1);
+    }
+
+    aoi_feature_edit.startOrEndComparison = function(b) {
+        $("#comparisonSlider").toggle();
+        if(b.innerHTML === "Reset") {
+         b.innerHTML = "Start";
+         aoi_feature_edit.resetOverlays();
+        } else {
+            var overlay1 = overlays[$("#comparisonLayer1").val()];
+            var overlay2 = overlays[$("#comparisonLayer2").val()];
+            overlay1.setOpacity(.5);
+            overlay2.setOpacity(.5);
+            b.innerHTML = "Reset";
+        }
+    };
+    aoi_feature_edit.handleComparisonSlide = function(val) {
+        var v1 = (50-Number(val))/100.;
+        var v2 = (50+Number(val))/100.;
+
+        var overlay1 = overlays[$("#comparisonLayer1").val()];
+        var overlay2 = overlays[$("#comparisonLayer2").val()];
+        overlay1.setOpacity(v1);
+        overlay2.setOpacity(v2);
+    };
+    aoi_feature_edit.resetOverlays = function() {
+        for(var i=0; i<overlays.length; i++) {
+            var overlay = overlays[i];
+            if(overlay.config && overlay.config.opacity)
+                overlay.setOpacity(overlay.config.opacity);
+        }
+    };
+}
 
 leaflet_layer_control.addLogInfo = function($accordion) {
 
@@ -949,6 +1014,7 @@ leaflet_layer_control.addLayerControlInfoPanel = function($content){
     $drawer_tray.html("Click a layer above to see more information.");
 };
 
+
 leaflet_layer_control.filetypeHelper = function(fileHandle, mimes,fileSuffix) {
     var ft = fileHandle.type;
     var fn = fileHandle.name;
@@ -1095,6 +1161,7 @@ leaflet_layer_control.addLayerControl = function (map, options, $accordion) {
     var idt = document.getElementById("importDragTarget");
     fileDragHelper.stopWindowDrop();
     fileDragHelper.watchFor(idt, leaflet_layer_control.handleDrop, true);
+
 
     //If it was open last time, open it again
     if (store.get('leaflet_layer_control.drawer')) {
