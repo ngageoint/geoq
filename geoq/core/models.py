@@ -285,11 +285,6 @@ class Job(GeoQBase, Assignment):
         geojson["type"] = "FeatureCollection"
         geojson["properties"] = dict(id=self.id)
         properties = geojson["properties"]
-        for key in properties:
-            if isinstance(properties[key],str) or isinstance(properties[key], unicode):
-                properties[key] = properties[key].replace('<', '&ltl').replace('>', '&gt;').replace("javascript:", "j_script-")
-        return geojson
-
 
         geojson["features"] = [n.geoJSON(as_json=False, using_style_template=using_style_template) for n in self.feature_set.all()]
 
