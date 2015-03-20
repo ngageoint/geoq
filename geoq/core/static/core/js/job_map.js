@@ -321,7 +321,7 @@ job_map.assignAOI = function(selected_workcells) {
                     action: function (dialogItself) {
                         var data = {};
                         data.workcells = selected_workcells;
-                        data.email = true;
+                        data.email = $('#email-users').filter(':checked').length == 1;
                         data.user_type = $('#type-select option').filter(':selected').val();
                         data.user_data = $('#assign-choices option').filter(':selected').val();
 

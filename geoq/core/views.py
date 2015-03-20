@@ -400,9 +400,22 @@ class CreateJobView(CreateView):
         """
         If the form is valid, save the associated model and add the current user as a reviewer.
         """
+        import pdb; pdb.set_trace()
         self.object = form.save()
         self.object.reviewers.add(self.request.user)
+
+        # Create a new map for each job
+        map = Map(**{'title': self.object.name + ' Map', 'description': 'map for %s project' % self.object.name})
+        map.save()
+        n = 2
+        for layer in form.cleaned_data['layers']:
+            map_layer = MapLayer(**{'map':map, 'layer':layer, 'stack_order':n})
+            map_layer.save()
+            n += 1
+
+        self.object.map = map
         self.object.save()
+
         return HttpResponseRedirect(self.get_success_url())
 
 
@@ -521,7 +534,7 @@ class AssignWorkcellsView(TemplateView):
         workcells = request.POST.getlist('workcells[]')
         utype = request.POST['user_type']
         id = request.POST['user_data']
-        send_email = request.POST['email']
+        send_email = request.POST['email'] in ["true","True"]
 
         if utype and id and workcells:
             Type = User if utype == 'user' else Group
