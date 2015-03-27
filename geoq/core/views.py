@@ -6,7 +6,7 @@ import json
 import requests
 
 from django.contrib.auth.decorators import login_required
-from django.contrib.auth.models import User, Group
+from django.contrib.auth.models import User, Group, Permission
 from django.contrib.gis.geos import GEOSGeometry
 from django.core.urlresolvers import reverse, reverse_lazy
 from django.core.exceptions import ObjectDoesNotExist
@@ -176,6 +176,16 @@ class CreateFeaturesView(UserAllowedMixin, DetailView):
                 return False
             else:
                 return True
+        elif aoi.status == 'Assigned':
+            if is_admin:
+                return True
+            elif aoi.assignee_type.model_class() is Permission and aoi.assignee_id == self.request.user.id:
+                return True
+            elif aoi.assignee_type.model_class() is Group and self.request.user.groups.filter(name=aoi.assignee_name).count() > 0:
+                return True
+            else:
+                kwargs['error'] = "Another analyst has been assigned that workcell. Please select another workcell"
+                return False
         elif aoi.status == 'Awaiting review':
             if self.request.user in aoi.job.reviewers.all() or is_admin:
                 aoi.status = 'In review'
