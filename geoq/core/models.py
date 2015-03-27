@@ -284,7 +284,6 @@ class Job(GeoQBase, Assignment):
         geojson = SortedDict()
         geojson["type"] = "FeatureCollection"
         geojson["properties"] = dict(id=self.id)
-        properties = geojson["properties"]
 
         geojson["features"] = [n.geoJSON(as_json=False, using_style_template=using_style_template) for n in self.feature_set.all()]
 
