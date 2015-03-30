@@ -9,6 +9,7 @@ from django.contrib.auth.models import User
 from django.utils.html import escape, conditional_escape
 from itertools import chain
 from models import AOI, Job, Project
+from maps.models import Layer
 
 no_style = [RadioInput, RadioSelect, CheckboxInput, CheckboxSelectMultiple]
 
@@ -34,10 +35,10 @@ class AOIForm(StyledModelForm):
                   'priority', 'status')
         model = AOI
 
-class AnalystSelectWidget(forms.SelectMultiple):
+class ItemSelectWidget(forms.SelectMultiple):
     def __init__(self, attrs=None, choices=(), option_title_field=''):
         self.option_title_field = option_title_field
-        super(AnalystSelectWidget, self).__init__(attrs, choices)
+        super(ItemSelectWidget, self).__init__(attrs, choices)
 
     def render_option(self, selected_choices, option_value, option_label, option_title=''):
         option_value = forms.util.force_text(option_value)
@@ -77,13 +78,17 @@ class AnalystSelectWidget(forms.SelectMultiple):
 class JobForm(StyledModelForm):
     analysts = forms.ModelMultipleChoiceField(
         queryset = User.objects.all(),
-        widget = AnalystSelectWidget(option_title_field='email')
+        widget = ItemSelectWidget(option_title_field='email')
+    )
+    layers = forms.ModelMultipleChoiceField(
+        queryset = Layer.objects.all(),
+        widget = ItemSelectWidget()
     )
 
     class Meta:
 
         fields = ('name', 'description', 'project', 'analysts',
-                  'teams', 'reviewers', 'feature_types', 'required_courses', 'map', 'tags')
+                  'teams', 'reviewers', 'feature_types', 'required_courses', 'tags', 'layers')
         model = Job
 
     def __init__(self, project, *args, **kwargs):
@@ -105,6 +110,9 @@ class JobForm(StyledModelForm):
                 self.fields['analysts'].initial = kwargs['instance'].analysts.all().values_list('id', flat=True)
             else:
                 self.fields['analysts'].initial = []
+
+            if hasattr(kwargs['instance'],'map'):
+                self.fields['layers'].initial = [x.layer_id for x in kwargs['instance'].map.layers]
 
 
 class ProjectForm(StyledModelForm):

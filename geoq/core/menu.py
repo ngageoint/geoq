@@ -35,11 +35,10 @@ def menu(active=None, request_path=None, request_user=None):
     menu_users = {'Users': {'index': 5, 'url': '#', 'active': False, 'dropdown' : order_dict(users_dropdown, sort_key)}}
 
     maps_dropdown = {
-        'Maps': {'index': 1, 'url': reverse_lazy('map-list'), 'active': False},
         'Layers': {'index': 2, 'url': reverse_lazy('layer-list'), 'active': False},
         'Feature Types': {'index': 2, 'url': reverse_lazy('feature-type-list'), 'active': False}
     }
-    menu_maps = {'Maps':  {'index': 4, 'url': '#', 'active': False, 'dropdown': order_dict(maps_dropdown, sort_key)}}
+    menu_maps = {'Map Items':  {'index': 4, 'url': '#', 'active': False, 'dropdown': order_dict(maps_dropdown, sort_key)}}
     menu_help = {'Help': {'index': 6, 'url': '#', 'active': False, 'dropdown' : order_dict(help_dropdown, sort_key)}}
     menu_items = {
         'Projects': {'index': 2, 'url': reverse_lazy('project-list'), 'active': False},

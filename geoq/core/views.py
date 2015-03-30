@@ -410,7 +410,6 @@ class CreateJobView(CreateView):
         """
         If the form is valid, save the associated model and add the current user as a reviewer.
         """
-        import pdb; pdb.set_trace()
         self.object = form.save()
         self.object.reviewers.add(self.request.user)
 
