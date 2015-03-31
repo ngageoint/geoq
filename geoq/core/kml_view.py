@@ -85,6 +85,10 @@ class JobKML(ListView):
             output += '    <Style id="geoq_'+str(feature.id)+'">\n'
             out_color = '7f0066ff'
 
+            if feature.style == None:
+                output += '    </Style>\n'
+                continue
+
             if feature.style.has_key('color'):
                 color = feature.style['color']
 
