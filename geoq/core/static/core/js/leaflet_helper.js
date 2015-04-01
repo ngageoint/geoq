@@ -22,7 +22,6 @@ leaflet_helper.styles = {
 };
 
 leaflet_helper.proxy_path = "/geoq/proxy/";
-leaflet_helper.home_url = "{% url 'home' %}";
 
 leaflet_helper.proxify = function (url) {
     //TODO: Don't add if string already starts with proxy
