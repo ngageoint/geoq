@@ -45,6 +45,7 @@
     <script type="text/javascript">
 
         leaflet_helper.proxy_path = "{% url 'proxy' %}" + "/"; //TODO: Standardize expression of proxy locations
+        leaflet_helper.home_url = "{% url 'home' %}";
 
         aoi_feature_edit.feature_types = [];
         {% for feature_type in feature_types %}
