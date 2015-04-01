@@ -397,7 +397,7 @@ aoi_feature_edit.featureLayer_onEachFeature = function (feature, layer, featureL
         }
 
         if (id && !dontAddDelete) {
-            popupContent += '<br/><a onclick="javascript:aoi_feature_edit.deleteFeature(\'' + id + '\', \'/geoq/features/delete/' + id + '\');">Delete Feature</a>';
+            popupContent += '<br/><a onclick="aoi_feature_edit.deleteFeature(\'' + id + '\', \'' + leaflet_helper.home_url + 'features/delete/' + id + '\');">Delete Feature</a>';
             popupContent += leaflet_helper.addLinksToPopup(featureLayer.name, id, false, false, true);
         }
 
@@ -929,7 +929,7 @@ aoi_feature_edit.map_init = function (map, bounds) {
 
                         var json = JSON.stringify(props);
 
-                        var editableUrl = '/geoq/api/feature/update/'+feature_id;
+                        var editableUrl = leaflet_helper.home_url + 'api/feature/update/'+feature_id;
                         $.ajax({
                             type: "POST",
                             url: editableUrl,
