@@ -3,6 +3,8 @@
 import zipfile
 import tempfile
 import json
+import platform
+from ctypes import c_void_p, c_uint64, c_char_p, c_int
 from django.http import HttpResponse
 from django.utils.encoding import smart_str
 from django.views.generic import ListView
@@ -14,6 +16,26 @@ from cStringIO import StringIO
 from django.contrib.gis.gdal.libgdal import lgdal
 from django.contrib.gis.gdal import Driver, OGRGeometry, OGRGeomType, SpatialReference, check_err
 
+# Function signatures for running on x86_64
+if platform.architecture()[0] == '64bit':
+    lgdal.OGR_Dr_CreateDataSource.restype = c_uint64
+    lgdal.OGR_DS_Destroy.argtypes = [c_uint64]
+    lgdal.OGR_DS_CreateLayer.argtypes = [c_uint64, c_char_p, c_void_p, c_int, c_void_p]
+    lgdal.OGR_DS_CreateLayer.restype = c_uint64
+    lgdal.OGR_Fld_Create.argtypes = [c_char_p, c_int]
+    lgdal.OGR_Fld_Create.restype = c_uint64
+    lgdal.OGR_L_CreateField.argtypes = [c_uint64, c_uint64, c_int]
+    lgdal.OGR_L_CreateField.restype = c_int
+    lgdal.OGR_L_GetLayerDefn.argtypes = [c_uint64]
+    lgdal.OGR_L_GetLayerDefn.restype = c_void_p
+    lgdal.OGR_F_Create.argtypes = [c_void_p]
+    lgdal.OGR_F_Create.restype = c_uint64
+    lgdal.OGR_F_SetFieldString.argtypes = [c_uint64, c_int, c_char_p]
+    lgdal.OGR_F_SetGeometry.argtypes = [c_uint64, c_void_p]
+    lgdal.OGR_F_SetGeometry.restype = c_uint64
+    lgdal.OGR_L_CreateFeature.argtypes = [c_uint64, c_uint64]
+    lgdal.OGR_L_CreateFeature.restype = c_uint64
+    lgdal.OGR_L_SyncToDisk.argtypes = [c_uint64]
 
 class JobAsShape(ListView):
     model = Job
