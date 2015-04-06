@@ -91,7 +91,9 @@ leaflet_layer_control.addLayerComparison = function($accordion) {
     "</div>";
     var cdom = $(chtml);
     cdom.appendTo(c);
-    var overlays = aoi_feature_edit.layers.overlays;
+    var overlays = aoi_feature_edit.layers.base.concat(aoi_feature_edit.layers.overlays);
+
+
     if(!overlays || overlays.length < 2) {
         var cb = document.getElementById("comparisonButton");
         cb.disabled = true;
