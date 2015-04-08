@@ -627,6 +627,10 @@ aoi_feature_edit.map_init = function (map, bounds) {
         });
         _.each(layers, function (layer_data) {
             var built_layer = leaflet_helper.layer_conversion(layer_data, map);
+            if (! built_layer) {
+                // skip this layer and go to next
+                return true;
+            }
 
             var shouldBeShown;
             if (layers_to_show) {
