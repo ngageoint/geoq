@@ -658,16 +658,21 @@ aoi_feature_edit.map_init = function (map, bounds) {
                 log.error("Tried to add a layer, but didn't work: "+layer_data.url)
             }
             if (built_layer) {
-                aoi_feature_edit.watch_layer(built_layer, true);
-                aoi_feature_edit.map.addLayer(built_layer);
-                var shownAmount = shouldBeShown ? built_layer.options.opacity || 0.8 : 0;
+                // we see errors here on bad layers. try to catch
+                try {
+                    aoi_feature_edit.watch_layer(built_layer, true);
+                    aoi_feature_edit.map.addLayer(built_layer);
+                    var shownAmount = shouldBeShown ? built_layer.options.opacity || 0.8 : 0;
 
-                //TODO: Some layers are showing even when unchecked.  Find out why
+                    //TODO: Some layers are showing even when unchecked.  Find out why
 
-                built_layer.options.toShowOnLoad = shownAmount;
-                built_layer.options.setInitialOpacity = false;
+                    built_layer.options.toShowOnLoad = shownAmount;
+                    built_layer.options.setInitialOpacity = false;
 
-                leaflet_layer_control.setLayerOpacity(built_layer, shownAmount, true);
+                    leaflet_layer_control.setLayerOpacity(built_layer, shownAmount, true);
+                } catch (e) {
+                    log.warn("Error trying to add layer: " + built_layer.name);
+                }
             }
         });
     }
