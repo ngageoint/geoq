@@ -27,7 +27,8 @@
                     <span class="icon-bar"></span>
                     <span class="icon-bar"></span>
                 </a>
-                <a class="brand" href="{%url 'home' %}">{% block brand %}GeoQ{% endblock %}</a>
+
+                <a class="brand" href="{%url 'home' %}">{% block brand %}<img id="menu-logo" src="{% static 'images/GeoQ-Logo.png' %}"/>GeoQ{% endblock %}</a>
                 <div class="btn-group pull-right">
                     <a class="btn dropdown-toggle" data-toggle="dropdown" href="#">
                         <i class="icon-user"></i> {{request.user.username}}
@@ -65,8 +66,17 @@
                                         {%for k,v in value.dropdown.items%}
                                             {% if k == "break" %}
                                                 <li class="divider"></li>
-                                            {% else %}
+                                            {% elif not v.submenu %}
                                                 <li><a href="{{v.url}}" target="{% if v.target %}{{ v.target }}{% else %}_new{% endif %}">{{k}}</a></li>
+                                            {% else %}
+                                                <li class="dropdown-submenu">
+                                                    <a tabindex="-1" href="#">{{ k }}</a>
+                                                    <ul class="dropdown-menu">
+                                                        {% for sk,sv in v.submenu.items %}
+                                                            <li><a href="{{sv.url}}" target="{% if sv.target %}{{ sv.target }}{% else %}_new{% endif %}">{{sk}}</a></li>
+                                                        {% endfor %}
+                                                    </ul>
+                                                </li>
                                             {% endif %}
                                         {%endfor%}
                                     </ul>

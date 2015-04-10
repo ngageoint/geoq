@@ -22,6 +22,13 @@ def menu(active=None, request_path=None, request_user=None):
     if(request_user.groups.filter(name='admin_group') or request_user.is_superuser):
         help_dropdown['View Feedback'] = {'index':3, 'url': reverse_lazy('feedback-list'), 'active': False}
 
+    if request_user.is_superuser:
+        external_links = {'Google Analytics': {'index': 8, 'url': 'https://www.google.com/analytics/web/?hl=en#dashboard/nuBEqz4gT6CeIo0pLUR_tA/a61113494w95763421p99845429/', 'active': False, 'target':'_blank'},
+            'GeoQ Heatmap': {'index':9, 'url':'http://jrvis.com/red-dwarf/?user=ngageoint&repo=geoq', 'active':False, 'target':'_blank'}
+        }
+        menu_links = {'External Links': {'index':4, 'url': '#', 'active':False, 'submenu': order_dict(external_links, sort_key)}}
+        help_dropdown.update(menu_links)
+
     users_dropdown = {
         'Messages': {'index': 3, 'url': '/messages/', 'active': False},
     }
