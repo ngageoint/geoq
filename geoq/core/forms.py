@@ -7,9 +7,10 @@ from django.forms.widgets import (RadioInput, RadioSelect, CheckboxInput,
     CheckboxSelectMultiple)
 from django.contrib.auth.models import User
 from django.utils.html import escape, conditional_escape
+from django.db.models import Max
 from itertools import chain
 from models import AOI, Job, Project
-from maps.models import Layer
+from maps.models import Layer, MapLayer
 
 no_style = [RadioInput, RadioSelect, CheckboxInput, CheckboxSelectMultiple]
 
@@ -105,6 +106,27 @@ class JobForm(StyledModelForm):
 
         if 'data' in kwargs:
             self.fields['analysts'].initial = kwargs['data'].getlist('analysts',None)
+            # must be a better way, but figure out the layers to display
+            layers_selected = set(kwargs['data'].getlist('layers',None))
+            layers_current_int = MapLayer.objects.filter(map=self.instance.map.id).values_list('layer_id', flat=True)
+            layers_current = set([unicode(i) for i in layers_current_int])
+
+            if layers_selected != layers_current:
+                # resolve differences
+                # first take out ones we want to remove
+                for x in layers_current - layers_selected:
+                    MapLayer.objects.filter(map=self.instance.map.id,layer_id=x).delete()
+                # now add in new ones
+                layers = MapLayer.objects.filter(map=self.instance.map.id)
+                if layers.count() > 0:
+                    max_stack_order = layers.aggregate(Max('stack_order')).values()[0]
+                else:
+                    max_stack_order = 0
+
+                for x in layers_selected - layers_current:
+                    max_stack_order+=1
+                    ml = MapLayer.objects.create(map=self.instance.map,layer_id=int(x),stack_order=max_stack_order)
+                    ml.save()
         else:
             if hasattr(kwargs['instance'],'analysts'):
                 self.fields['analysts'].initial = kwargs['instance'].analysts.all().values_list('id', flat=True)
