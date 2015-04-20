@@ -21,5 +21,6 @@
      "spatialRel":"esriSpatialRelIntersects"
     }
     ```
-7. Save your layer
+8. Save your layer
 9. You can now add your layer to a map and test for functionality
+
