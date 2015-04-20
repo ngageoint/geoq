@@ -105,6 +105,10 @@ class JobForm(StyledModelForm):
         self.fields['project'].initial = project
 
         if 'data' in kwargs:
+            # If we're creating Job, we don't have a map
+            if self.instance.map == None:
+                return;
+
             self.fields['analysts'].initial = kwargs['data'].getlist('analysts',None)
             # must be a better way, but figure out the layers to display
             layers_selected = set(kwargs['data'].getlist('layers',None))
