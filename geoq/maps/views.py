@@ -263,7 +263,6 @@ class KMZLayerImport(ListView):
 
     def post(self, request, *args, **kwargs):
         form = UploadKMZForm(request.POST, request.FILES)
-        import pdb;pdb.set_trace()
         if form.is_valid():
             localdir = save_kmz_file(request.FILES['kmzfile'])
             uri = request.build_absolute_uri(localdir)
