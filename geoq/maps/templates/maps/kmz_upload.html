@@ -1,0 +1,21 @@
+{% extends "core/base.html" %}
+
+{% block container %}
+
+<div class="row-fluid container-narrow">
+
+    <form id="import_form" action="create-kml-layer" role="form" method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+
+        <fieldset style="margin: 15px;">
+            <legend>KML/KMZ File Import</legend>
+            <span>Select an appropriate KML or KMZ file, assign a name, then select 'Import'. A KML Layer will be created on the server using that file</span><br><br>
+            <label for="title">Layer name: <input type="text" name="title" id="title"></label>
+            <input type="file" id="kmzfile" name="kmzfile" accept="application/vnd.google-earth.kml+xml,application/vnd.google-earth.kmz">
+        </fieldset>
+
+        <input class="btn" type="submit" value="Import" data-role="button" />
+        <input class="btn" type="button" value="Clear" onclick="$('#import_form')[0].reset();">
+    </form>
+</div>
+{% endblock %}

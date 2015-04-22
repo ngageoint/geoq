@@ -6,7 +6,8 @@ from django.contrib.auth.decorators import login_required
 from django.conf.urls import patterns, url
 from django.views.generic import CreateView, UpdateView, ListView
 from forms import FeatureTypeForm, MapForm, LayerForm, MapLayerForm
-from views import CreateFeatures, EditFeatures, create_update_map, FeatureTypeListView, FeatureTypeDelete, MapListView, MapDelete, LayerListView, LayerDelete, LayerImport
+from views import CreateFeatures, EditFeatures, create_update_map, FeatureTypeListView, FeatureTypeDelete, MapListView,\
+ MapDelete, LayerListView, LayerDelete, LayerImport, KMZLayerImport
 from models import FeatureType, Map, Layer
 
 urlpatterns = patterns('',
@@ -91,4 +92,7 @@ urlpatterns = patterns('',
                            queryset=MapLayerForm.Meta.model.objects.all(),
                            form_class=MapLayerForm)),
         name='map-layer-update'),
+
+    # other urls
+    url(r'^api/map-layers[s ]?/create/create-kml-layer', KMZLayerImport.as_view(), name='create-kml-layer'),
 )

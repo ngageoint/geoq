@@ -14,12 +14,13 @@ from django.shortcuts import render_to_response
 from django.template import RequestContext
 from django.views.generic import ListView, View, DeleteView
 
-from forms import MapForm, MapInlineFormset
+from forms import MapForm, MapInlineFormset, UploadKMZForm
 
 from geoq.core.models import AOI
 from geoq.locations.models import Counties
 
 from models import Feature, FeatureType, Map, Layer, GeoeventsSource
+from kmz_handler import save_kmz_file
 
 import logging
 
@@ -250,3 +251,27 @@ class LayerDelete(DeleteView):
 
     def get_success_url(self):
         return reverse('layer-list')
+
+class KMZLayerImport(ListView):
+
+    model = Layer
+    template_name = "maps/kmz_upload.html"
+
+    def get_context_data(self, **kwargs):
+        context = super(KMZLayerImport, self).get_context_data(**kwargs)
+        return context
+
+    def post(self, request, *args, **kwargs):
+        form = UploadKMZForm(request.POST, request.FILES)
+        import pdb;pdb.set_trace()
+        if form.is_valid():
+            localdir = save_kmz_file(request.FILES['kmzfile'])
+            uri = request.build_absolute_uri(localdir)
+            if localdir != None:
+                layer = Layer.objects.create(name = request.POST['title'],type="KML",url=uri,layer="",styles="",description="")
+
+        return HttpResponseRedirect(reverse('layer-list'))
+
+
+
+
