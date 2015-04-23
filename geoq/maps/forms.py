@@ -73,4 +73,4 @@ class MapLayerForm(StyledModelForm):
     class Meta:
         model = MapLayer
 
-MapInlineFormset = inlineformset_factory(Map, MapLayer, extra=3, exclude=['display_in_layer_switcher'])
+MapInlineFormset = inlineformset_factory(Map, MapLayer, extra=3)
