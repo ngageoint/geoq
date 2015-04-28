@@ -42,6 +42,7 @@ leaflet_layer_control.initDrawer = function(){
     //Build an accordion row to view workcell log
     leaflet_layer_control.addLogInfo($accordion);
     leaflet_layer_control.addLayerComparison($accordion);
+    leaflet_layer_control.addGeoOverview($accordion);
 
     //The Layer Controls should also be built and added later in another script, something like:
     // var options = aoi_feature_edit.buildTreeLayers();
@@ -71,6 +72,57 @@ leaflet_layer_control.addFeatureInfo = function($accordion){
         .html("Click a feature on the map to see an information associated with it")
         .appendTo($content);
 };
+
+leaflet_layer_control.addGeoOverview = function($accordion) {
+    var go = leaflet_layer_control.buildAccordionPanel($accordion,"Geo Overview");
+    var ghtml = "<div id='goMap'></div><div id='goMapStatus' style='text-align:center; color:red;'></div>";
+    var godom = $(ghtml);
+    godom.appendTo(go);
+    $("#goMap").height(250);
+    var big = aoi_feature_edit.map;
+    var minimap = L.map("goMap", {
+        center: big.getCenter(),
+        zoom: big.getZoom(),
+        dragging: false,
+        touchZoom: false,
+        scrollWheelZoom: false,
+        doubleClickZoom: false,
+        boxZoom: false,
+        tap: false,
+        keyboard: false,
+        zoomControl :false,
+        attributionControl: false,
+
+    });
+    var osmAttr = '&copy; <a href="http://openstreetmap.org">OpenStreetMap</a> contributors, <a href="http://creativecommons.org/licenses/by-sa/2.0/">CC-BY-SA</a>';
+    var defaultLayer =L.tileLayer('http://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{attribution: osmAttr});
+    defaultLayer.addTo(minimap);
+    setTimeout(function() { minimap.fitBounds(big.getBounds());}, 500);
+    var aoi_extents = L.geoJson(aoi_feature_edit.aoi_extents_geojson,
+        {
+            style: leaflet_helper.styles.extentStyle_hollow,
+            zIndex: 1000,
+            name: "Bounds of this AOI"
+    });
+    aoi_extents.addTo(minimap);
+    var aoi_extentsBounds = aoi_extents.getBounds();
+    var bb = big.getBounds();
+    var viewRect = L.rectangle([bb.getNorthWest(), bb.getNorthEast(),
+        bb.getSouthEast(), bb.getSouthWest],
+        {"weight": 2, "color": "green", "opacity": 1, "fillOpacity":.25 }
+     );
+     viewRect.addTo(minimap);
+     big.on("moveend", function(evt) {
+        var bigBounds = big.getBounds();
+        viewRect.setBounds(bigBounds);
+        if(aoi_extentsBounds.intersects(bigBounds)) {
+            $("#goMapStatus").html("");
+        } else
+            $("#goMapStatus").html("AOI out of view");
+
+
+     });
+}
 
 leaflet_layer_control.addLayerComparison = function($accordion) {
 
