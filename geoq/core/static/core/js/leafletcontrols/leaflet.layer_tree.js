@@ -105,7 +105,8 @@ leaflet_layer_control.addGeoOverview = function($accordion) {
             name: "Bounds of this AOI"
     });
     aoi_extents.addTo(minimap);
-    var aoi_extentsBounds = aoi_extents.getBounds();
+    var aeb = aoi_extents.getBounds();
+    var asd = aeb.getSouthWest().distanceTo(aeb.getSouthEast());
     var bb = big.getBounds();
     var viewRect = L.rectangle([bb.getNorthWest(), bb.getNorthEast(),
         bb.getSouthEast(), bb.getSouthWest],
@@ -115,8 +116,11 @@ leaflet_layer_control.addGeoOverview = function($accordion) {
      big.on("moveend", function(evt) {
         var bigBounds = big.getBounds();
         viewRect.setBounds(bigBounds);
-        if(aoi_extentsBounds.intersects(bigBounds)) {
-            $("#goMapStatus").html("");
+        if(aeb.intersects(bigBounds)) {
+            var bsd = bigBounds.getSouthWest().distanceTo(bigBounds.getSouthEast());
+            if((bsd/asd) > 10 ) {
+                $("#goMapStatus").html("Zoom Warning")
+            } else $("#goMapStatus").html("");
         } else
             $("#goMapStatus").html("AOI out of view");
 
