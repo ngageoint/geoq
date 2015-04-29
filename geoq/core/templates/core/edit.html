@@ -1,6 +1,7 @@
 {% extends "core/base.html" %}
 {% load compress %}
 {% load leaflet_tags %}
+{% load geoq_leaflet_tags %}
 {% load django_select2_tags %}
 {% block title %}GeoQ: Workcell {{ object.id }}{% endblock %}
 {% block static_libraries %}
@@ -119,5 +120,5 @@
 {% endblock %}
 
 {% block container %}
-{% leaflet_map "map" callback="aoi_feature_edit.map_init"%}
+{% geoq_leaflet_map "map" callback="aoi_feature_edit.map_init" settings_overrides=base_layer %}
 {% endblock %}
