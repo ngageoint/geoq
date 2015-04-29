@@ -210,6 +210,15 @@ class Job(GeoQBase, Assignment):
     def user_count(self):
         return self.analysts.count()
 
+    @property
+    def base_layer(self):
+        layers = sorted([l for l in self.map.layers if l.is_base_layer], key = lambda x: x.stack_order)
+        if len(layers) > 0:
+            layer = layers[0].layer
+            return [layer.name, layer.url, layer.attribution]
+        else:
+            return []
+
     def features_table_html(self):
         counts = {}
 
@@ -299,6 +308,17 @@ class Job(GeoQBase, Assignment):
         geojson["features"] = [json.loads(aoi.grid_geoJSON()) for aoi in self.aois.all()]
 
         return clean_dumps(geojson) if as_json else geojson
+
+    def base_layer_object(self):
+        """
+        create base layer object that can override leaflet base OSM map
+        """
+
+        obj = {}
+        if len(self.base_layer) > 0:
+            obj["layers"] = [self.base_layer]
+
+        return obj
 
 
 class AOI(GeoQBase, Assignment):
