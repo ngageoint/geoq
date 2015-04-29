@@ -179,7 +179,7 @@ aoi_feature_edit.promptForUserAcceptance = function(){
                     label: 'Accept for all future workcells',
                     cssClass: 'btn-primary',
                     action: function(dialog) {
-                        $.post('/accounts/accept_terms_of_use');
+                        $.post(aoi_feature_edit.terms_acceptance_url);
                         dialog.close();
                     }
                 },{
