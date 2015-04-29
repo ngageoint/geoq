@@ -251,6 +251,7 @@ class CreateFeaturesView(UserAllowedMixin, DetailView):
 #TODO: Add Job specific layers, and add these here
 
         cv['layers_on_map'] = json.dumps(layers)
+        cv['base_layer'] = json.dumps(self.object.job.base_layer_object())
 
         Comment(user=cv['aoi'].analyst, aoi=cv['aoi'], text="Workcell opened").save()
         return cv
