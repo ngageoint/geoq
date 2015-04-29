@@ -7,8 +7,9 @@
     $(document).ready(function() {
         if (typeof site_settings!="undefined" && site_settings.gamification && site_settings.gamification.server) {
             gamification.init({
-                server_url:site_settings.gamification.server,
-                project_names:site_settings.gamification.project,
+                server_url: site_settings.gamification.server,
+                proxy_url: "{% url 'proxy' %}",
+                project_names: site_settings.gamification.project,
                 user_name: "{{ request.user.username }}",
                 $badge_container: $('#badge-container')
             });
