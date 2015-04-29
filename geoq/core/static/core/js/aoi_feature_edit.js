@@ -571,17 +571,19 @@ aoi_feature_edit.map_init = function (map, bounds) {
     });
 
     // for some reason nginx isn't keeping MAX_ZOOM defined in settings.py. TODO: Figure out why
-    map.options.maxZoom = 21;
+    // map.options.maxZoom = 21;
 
     var custom_map = aoi_feature_edit.aoi_map_json || {};
     aoi_feature_edit.map = map;
 
     var baseLayers = {};
     var layerSwitcher = {};
+
+    var baseLayerName = (map.options.djoptions.layers[0]) ? map.options.djoptions.layers[0][0] : "Base Layer";
     //var editableLayers = new L.FeatureGroup();
     // Only layer in here should be base OSM layer
     _.each(aoi_feature_edit.map._layers, function (l) {
-        baseLayers["OpenStreetMap"] = l;
+        baseLayers[baseLayerName] = l;
     });
 
     aoi_feature_edit.layers.base = [];
@@ -591,7 +593,7 @@ aoi_feature_edit.map_init = function (map, bounds) {
     //Add the Base OSM Layer
     var baselayer = _.toArray(aoi_feature_edit.map._layers);
     if (baselayer && baselayer[0]) {
-        baselayer[0].name="OpenStreetMap";
+        baselayer[0].name=baseLayerName;
         aoi_feature_edit.layers.base.push(baselayer[0]);
     }
 
