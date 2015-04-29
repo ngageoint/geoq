@@ -1042,12 +1042,22 @@ aoi_feature_edit.buildDrawingControl = function (drawnItems) {
     _.each(aoi_feature_edit.all_markers,function(marker){
         if (marker.title && marker.icon && marker.icon.options) {
             marker.icon.options.text = marker.title;
+        } else {
+            marker.icon = marker.icon || {};
+            marker.icon.options = marker.title.options || {};
+            marker.icon.options.text = marker.title || "Marker";
         }
+
+
     });
 
     _.each(aoi_feature_edit.all_geomarkers, function(marker){
         if (marker.title && marker.icon && marker.icon.options) {
             marker.icon.options.text = marker.title;
+        } else {
+            marker.icon = marker.icon || {};
+            marker.icon.options = marker.title.options || {};
+            marker.icon.options.text = marker.title || "Marker";
         }
     });
 
@@ -1370,6 +1380,13 @@ aoi_feature_edit.createPointOptions = function (opts) {
         if (!style_obj.iconUrl && icon_obj.type != 'maki') {
             style_obj.iconUrl = aoi_feature_edit.static_root +"/leaflet/images/red-marker-icon.png";
         }
+        options.icon = new icon_obj(style_obj);
+    }
+    if (!options.icon){
+        style_obj = {
+          "iconSize":15,
+          "iconUrl":"/static/images/markers/44circle_red_house.png"
+        };
         options.icon = new icon_obj(style_obj);
     }
 
