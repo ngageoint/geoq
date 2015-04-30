@@ -41,7 +41,7 @@
     <script src="{{ STATIC_URL }}leaflet/leaflet-plugins/layer/tile/leaflet-tilelayer-wmts.js"></script>
 
     {% for layer in object.job.map.layers %}{% if layer.layer.type == 'Google Maps' %}
-    <script src="http://maps.google.com/maps/api/js?v=3&sensor=false"></script>
+    <script src="{{ layer.layer.url }}maps/api/js?v=3&sensor=false"></script>
     {%  endif %}{% endfor %}
 
     <script type="text/javascript">
