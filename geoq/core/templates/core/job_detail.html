@@ -34,8 +34,10 @@
                 onEachFeature: function(feature, layer) {
 
                     job_properties = feature.properties;
+                    {% if user.is_authenticated %}
                     var popupContent = _.template('{% filter escapejs %}{% include "core/job_detail_aoi_popup.html" %}{% endfilter %}', job_properties);
                     layer.bindPopup(popupContent);
+                    {% endif %}
 
                     layer.on({
                         mouseover: highlightFeature,
