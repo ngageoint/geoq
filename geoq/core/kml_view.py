@@ -240,9 +240,9 @@ class JobKMLNetworkLink(ListView):
         aoi_complete = job.complete_count()
         aoi_work = job.in_work_count()
 
-        aoi_comp_pct = int(100 * float(aoi_complete)/float(aoi_count))
-        aoi_work_pct = int(100 * float(aoi_work)/float(aoi_count))
-        aoi_tot_pct = int(100 * float(aoi_work+aoi_complete)/float(aoi_count))
+        aoi_comp_pct = int(100 * float(aoi_complete)/float(aoi_count)) if aoi_count > 0 else 0
+        aoi_work_pct = int(100 * float(aoi_work)/float(aoi_count)) if aoi_count > 0 else 0
+        aoi_tot_pct = int(100 * float(aoi_work+aoi_complete)/float(aoi_count)) if aoi_count > 0 else 0
 
         doc_name = 'GeoQ C:'+str(aoi_complete)+', W:'+str(aoi_work)+', Tot:'+str(aoi_count)+' ['+str(aoi_tot_pct)+'%]'
 
