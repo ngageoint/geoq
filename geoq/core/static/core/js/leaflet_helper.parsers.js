@@ -55,13 +55,22 @@ leaflet_helper.constructors.identifyParser = function(result, outputLayer){
     result = result || {};
 
     if (result.results && result.results.length &&
-        result.results[0].layerName && result.results && result.results[0].attributes &&
+        result.results[0].layerName && result.results[0].attributes &&
         result.results[0].attributes.Latitude && result.results[0].attributes.ImageMissionId && result.results[0].attributes.ImageURL &&
         result.results[0].attributes.ThumbnailURL && result.results[0].attributes.Heading && result.results[0].geometryType) {
 
         //Parser is CAP imagery Format
         parser = leaflet_helper.parsers.addFEMAImageEventsData;
         parserName = "FEMA ImageEvents";
+
+    } else if (result.results && result.results.length &&
+            result.results[0].layerName && result.results[0].attributes &&
+            result.results[0].attributes.latitude && result.results[0].attributes.ProjectName && result.results[0].attributes.ImageURL &&
+            result.results[0].attributes.ThumbnailURL && result.results[0].attributes.ImageDirection && result.results[0].geometryType) {
+
+            //Parser is CAP imagery Format (but the new revised metadata)
+            parser = leaflet_helper.parsers.addDynamicCapimageData;
+            parserName = "CAP CapImages";
 
     } else if (result.results && result.results.length &&
                result.results[0].layerName && result.results && result.results[0].attributes &&
@@ -193,7 +202,7 @@ leaflet_helper.constructors.geojson = function(layerConfig, map, useLayerInstead
         if (_.str.endsWith(url,'/')) url = url.substr(0,url.length-1);
         if (_.str.endsWith(url,'/export')) url = url.substr(0,url.length-7) + '/identity';
         url += '?geometryType=esriGeometryEnvelope&geometry={{bbox}}&mapExtent={{bbox}}';
-        url += '&imageDisplay={{width}},{{height}},96&tolerance={{width}}&f=json&layers=visible:'+(layerConfig.layer||"all");
+        url += '&imageDisplay={{width}},{{height}},96&tolerance={{width}}&f=json&layers='+(layerConfig.layer||"all");
     }
 
     if (useLayerInstead && (useLayerInstead.geojson_layer_count !== undefined)) {
@@ -893,7 +902,10 @@ leaflet_helper.parsers.addDynamicCapimageData = function (result, map, outputLay
     if (!outputLayer.options.items) outputLayer.options.items = [];
 
     var jsonObjects = [];
-    $(result.features).each(function () {
+
+    var results = result.features || result.results;
+
+    $(results).each(function () {
         var feature = $(this)[0];
         var id = feature.attributes.ID;
 
