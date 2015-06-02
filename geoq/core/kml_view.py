@@ -165,7 +165,13 @@ class JobKML(ListView):
             #TODO: Add links to linked objects
 
             #Simplify polygons to reduce points in complex shapes
-            kml = str(loc.the_geom.simplify(0.0002).kml)
+            if loc.the_geom.num_coords > 0: #skip empty locations
+                simplegeom = loc.the_geom.simplify(0.0002)
+                if simplegeom.num_coords > 0:
+                    kml = str(loc.the_geom.simplify(0.0002).kml)
+                else:
+                    kml = str(loc.the_geom.kml)
+
             if '<Polygon><outerBoundaryIs><LinearRing><coordinates>' in kml:
                 add_text = '<altitudeMode>clampToGround</altitudeMode>'
                 kml = kml.replace('<coordinates>', add_text+'<coordinates>')

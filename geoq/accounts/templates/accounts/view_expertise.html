@@ -1,9 +1,10 @@
 {% extends "core/base.html" %}
+{% load staticfiles %}
 {% block title %}GeoQ Projects{% endblock %}
 
 {% block container %}
 
-    <link rel="stylesheet" href="/static/css/backpack.min.css">
+    <link rel="stylesheet" href="{% static 'css/backpack.min.css'%}">
 
     <script>
         function retrieve_badges(id,gid) {

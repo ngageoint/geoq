@@ -61,20 +61,20 @@
 
         <div class="span6 hero-header">
             <h3>This <a href="https://github.com/ngageoint/geoq" target="_blank">GeoQ server</a> currently supports:</h3>
-            <b>{{ count_projects_active|default:"0" }}</b> Active <a href="/geoq/projects/">Project{{ count_projects_active|pluralize }}</a>
+            <b>{{ count_projects_active|default:"0" }}</b> Active <a href="{% url 'project-list'%}">Project{{ count_projects_active|pluralize }}</a>
             (<b>{{ count_projects_archived|default:"0" }}</b> Archived,
             <b>{{ count_projects_exercise|default:"0" }}</b> Exercise,
             <i class="icon-list-alt"></i> <a href="{% url 'project-list' %}">View All</a>
             {% if 'accounts.add_project' in request.base_perms %}, <i class="icon-edit"></i> <a href="{% url 'project-create' %}">Create</a>{% endif %}
             )<br/>
-            <b>{{ count_jobs|default:"0" }}</b> <a href="/geoq/jobs/">Job{{ count_jobs|pluralize }}</a>
+            <b>{{ count_jobs|default:"0" }}</b> <a href="{% url 'job-list' %}">Job{{ count_jobs|pluralize }}</a>
                 (<i class="icon-list-alt"></i> <a href="{% url 'job-list' %}">View All</a>)
                 <br/>
             <b>{{ count_workcells_total|default:"0" }}</b> Total Workcell{{ count_workcells_total|pluralize }}<br/>
             <b>{{ count_users|default:"0" }}</b> User{{ count_users|pluralize }},
-            <b>{{ count_training|default:"0" }}</b> <a href="/training/">Training Cours{{ count_training|pluralize:"e,es" }}</a><br/>
+            <b>{{ count_training|default:"0" }}</b> <a href="{% url 'training:course_list' %}">Training Cours{{ count_training|pluralize:"e,es" }}</a><br/>
             <p></p>
-            <p>GeoQ uses <a href="/geoq/help#collapseFour" target="_blank">open APIs</a> to work with COTS software packages and other open source tools like:
+            <p>GeoQ uses <a href="{% url 'help_page'%}#collapseFour" target="_blank">open APIs</a> to work with COTS software packages and other open source tools like:
                 <a hreg="https://github.com/ngageoint/gamification-server" target="_blank">gamification</a> to promote tradecraft,
                 <a href="https://github.com/ngageoint/rfi-generator" target="_blank">RFI Tool</a> to track requests, and
                 <a href="https://github.com/ngageoint/geoevents" target="_blank">Event Pages</a> to visualize events.<br/>

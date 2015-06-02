@@ -3,6 +3,7 @@
 {% load compress %}
 {% load url from future %}
 {% load menu %}
+{% load staticfiles %}
 
 <html lang="en">
 <head>
@@ -15,7 +16,7 @@
             padding-top: 60px;
         }
     </style>
-
+    <link rel="icon" href="{% static '/images/geoqfavicon.ico'%}"></link>
     {% bootstrap_stylesheet_tag %}
     {% bootstrap_stylesheet_tag "responsive" %}
 

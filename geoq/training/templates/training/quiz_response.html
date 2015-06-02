@@ -5,7 +5,7 @@
 
     <div class="row span12">
         <span class="list-view-header">Quiz results for <b>{{ object.name }}</b></span><br/>
-        <a href="/training">Return to Training Page</a>
+        <a href="{% url 'training:course_list' %}">Return to Training Page</a>
         <br/>
         {{ object.description }}
 

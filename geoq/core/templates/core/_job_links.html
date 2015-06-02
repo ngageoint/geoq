@@ -1,7 +1,8 @@
+{% load staticfiles %}
 {% if object.required_courses.all %}
 <tr><td colspan="2" style="padding-top:20px;">
     {% for course in object.required_courses.all %}
-    <b>Required Course:</b> <a href="/training/{{ course.id }}" target="_blank">{{ course.name }}</a><br/>
+    <b>Required Course:</b> <a href="{% url 'training:course_view_information' course.id %}" target="_blank">{{ course.name }}</a><br/>
     {% endfor %}
 </td></tr>
 {% endif %}
@@ -9,7 +10,7 @@
 <tr><td colspan="2">
     <div class="job_link_item">
         <a href="{% url 'kml-networked-job' object.id %}" title="Refereshes every 2 min when viewed in Google Earth" target="_new">
-        <img src="/static/images/icons/kml_networked.png"/>
+        <img src="{% static 'images/icons/kml_networked.png'%}"/>
         <span><b>Continuous KML</b></span></a>
     </div>
 
