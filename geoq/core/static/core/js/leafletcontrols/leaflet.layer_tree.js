@@ -43,6 +43,8 @@ leaflet_layer_control.initDrawer = function(){
     leaflet_layer_control.addLogInfo($accordion);
     leaflet_layer_control.addLayerComparison($accordion);
     leaflet_layer_control.addGeoOverview($accordion);
+    leaflet_layer_control.addRotationHelper($accordion);
+
 
     //The Layer Controls should also be built and added later in another script, something like:
     // var options = aoi_feature_edit.buildTreeLayers();
@@ -73,9 +75,59 @@ leaflet_layer_control.addFeatureInfo = function($accordion){
         .appendTo($content);
 };
 
+leaflet_layer_control.pan = function(dir, amt) {
+    var map =  aoi_feature_edit.map;
+    var mapsize = map.getSize();
+    if(amt === null || amt === undefined) {
+        var ms = aoi_feature_edit.map.getSize();
+        if(dir === 0 || dir === 180)
+            amt = mapsize.y / 4;
+        else amt = mapsize.x / 4;
+    }
+    switch(dir) {
+        case 0: map.panBy([0, -1*amt]); break;
+        case 90: map.panBy([amt, 0]); break;
+        case 180: map.panBy([0, amt]); break;
+        case 270: map.panBy([-1*amt,0]); break;
+    }
+};
+leaflet_layer_control.rotateMap = function(deg) {
+    var map = document.getElementById("map");
+    var rh = document.getElementById("roseHolder");
+
+
+    map.style.webkitTransform = 'rotate('+deg+'deg)';
+    map.style.mozTransform    = 'rotate('+deg+'deg)';
+    map.style.msTransform     = 'rotate('+deg+'deg)';
+    map.style.oTransform      = 'rotate('+deg+'deg)';
+    map.style.transform       = 'rotate('+deg+'deg)';
+
+    rh.style.webkitTransform = 'rotate('+deg+'deg)';
+    rh.style.mozTransform    = 'rotate('+deg+'deg)';
+    rh.style.msTransform     = 'rotate('+deg+'deg)';
+    rh.style.oTransform      = 'rotate('+deg+'deg)';
+    rh.style.transform       = 'rotate('+deg+'deg)';
+
+};
+
+leaflet_layer_control.addRotationHelper = function($accordion) {
+     var rh = leaflet_layer_control.buildAccordionPanel($accordion,"Rotation Helper");
+     var rhHTML = '<div style="overflow:hidden;background-color: white;"><div id="roseHolder" >'+
+    '<div><span onclick="leaflet_layer_control.pan(0)">N</span></div>'+
+    '<div><span onclick="leaflet_layer_control.pan(270)">E</span>'+
+    '<img src="/static/images/200px-rose-bw.png " /><span onclick="leaflet_layer_control.pan(90)">W</span></div>'+
+    '<div><span onclick="leaflet_layer_control.pan(180)">S</span></div></div></div>'+
+    '<div id="roseSpinner" style="background-color: white;"><input id="roseSpinnerInput" type="range" min="-180" max="180" value="0" oninput="leaflet_layer_control.rotateMap(this.value)" />' +
+    '&nbsp;<button id="spinnerResetButton">Reset</button></div>';
+    var rhdom = $(rhHTML);
+    rhdom.appendTo(rh);
+    $("#spinnerResetButton").click(function(evt) { leaflet_layer_control.rotateMap(0); $("#roseSpinnerInput").val(0); });
+
+};
 leaflet_layer_control.addGeoOverview = function($accordion) {
     var go = leaflet_layer_control.buildAccordionPanel($accordion,"Geo Overview");
-    var ghtml = "<div id='goMap'></div><div id='goMapStatus' style='text-align:center; color:red;'></div>";
+    var ghtml = "<div id='goMap'></div><div id='goMapStatus' "
+        +"style='text-align:center; color:red;'></div>";
     var godom = $(ghtml);
     godom.appendTo(go);
     $("#goMap").height(250);
