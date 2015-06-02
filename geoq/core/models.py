@@ -212,10 +212,13 @@ class Job(GeoQBase, Assignment):
 
     @property
     def base_layer(self):
-        layers = sorted([l for l in self.map.layers if l.is_base_layer], key = lambda x: x.stack_order)
-        if len(layers) > 0:
-            layer = layers[0].layer
-            return [layer.name, layer.url, layer.attribution]
+        if self.map is not None and self.map.layers is not None:
+            layers = sorted([l for l in self.map.layers if l.is_base_layer], key = lambda x: x.stack_order)
+            if len(layers) > 0:
+                layer = layers[0].layer
+                return [layer.name, layer.url, layer.attribution]
+            else:
+                return []
         else:
             return []
 
