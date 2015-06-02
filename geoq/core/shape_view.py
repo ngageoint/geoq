@@ -51,6 +51,8 @@ class JobAsShape(ListView):
                 shape_out = shape_response.points()
             elif content_type == 'polygons':
                 shape_out = shape_response.polygons()
+            elif content_type == 'lines':
+                shape_out = shape_response.lines()
             else:
                 shape_out = shape_response.work_cells()
 
@@ -92,6 +94,11 @@ class ShpResponder(object):
     def polygons(self, *args, **kwargs):
         tmp = self.write_shapefile_to_tmp_file('polygons')
         file_name = smart_str('geoq_polygons_' + str(self.job_pk) + '_shapefile')
+        return self.zip_response(tmp, file_name, self.mimetype, self.readme)
+
+    def lines(self, *args, **kwargs):
+        tmp = self.write_shapefile_to_tmp_file('lines')
+        file_name = smart_str('geoq_lines_' + str(self.job_pk) + '_shapefile')
         return self.zip_response(tmp, file_name, self.mimetype, self.readme)
 
     def zip_response(self, shapefile_path, file_name, mimetype, readme=None):
@@ -208,17 +215,22 @@ class ShpResponder(object):
 
         features_points = []
         features_polys = []
+        features_lines = []
 
         for f in features:
             if f.the_geom.geom_type == 'Point':
                 features_points.append(f)
             elif f.the_geom.geom_type == 'Polygon':
                 features_polys.append(f)
+            elif f.the_geom.geom_type == 'Line':
+                features_lines.append(f)
 
         # This builds the array twice. It's duplicative, but works
         if content_type == 'points':
             self.add_features_subset_to_shapefile(ds, features_points, "lyr")
-        else:
+        elif content_type == 'lines':
+            self.add_features_subset_to_shapefile(ds, features_lines, "lyr")
+        else:  # Polygons
             self.add_features_subset_to_shapefile(ds, features_polys, "lyr")
 
     def add_features_subset_to_shapefile(self, ds, features, layer_name):
