@@ -98,6 +98,59 @@ class BatchCreateAOIS(TemplateView):
 
         return HttpResponse()
 
+class TabbedProjectListView(ListView):
+    projects = None
+
+    def get_queryset(self):
+        return Project.objects.all()
+
+    def get_context_data(self, **kwargs):
+        cv = super(TabbedProjectListView, self).get_context_data(**kwargs)
+
+        cv['active'] = []
+        cv['archived'] = []
+        cv['exercise'] = []
+        cv['private'] = []
+
+        for project in self.get_queryset():
+            if project.private:
+                if (self.request.user in project.project_admins.all()) or (self.request.user in project.contributors.all()):
+                    cv['private'].append(project)
+
+            elif not project.active:
+                cv['archived'].append(project)
+            elif project.project_type == 'Exercise':
+                cv['exercise'].append(project)
+            else:
+                cv['active'].append(project)
+        return cv
+
+class TabbedJobListView(ListView):
+    projects = None
+
+    def get_queryset(self):
+        return Job.objects.all()
+
+    def get_context_data(self, **kwargs):
+        cv = super(TabbedJobListView, self).get_context_data(**kwargs)
+
+        cv['active'] = []
+        cv['archived'] = []
+        cv['exercise'] = []
+        cv['private'] = []
+
+        for job in self.get_queryset():
+            if job.project.private:
+                if (self.request.user in job.project.project_admins.all()) or (self.request.user in job.project.contributors.all()):
+                    cv['private'].append(job)
+
+            elif not job.project.active:
+                cv['archived'].append(job)
+            elif job.project.project_type == 'Exercise':
+                cv['exercise'].append(job)
+            else:
+                cv['active'].append(job)
+        return cv
 
 #TODO: Abstract this
 class DetailedListView(ListView):

@@ -11,12 +11,47 @@
             <span><a class="btn btn-mini pull-right" href="{% url 'project-create' %}">Add New</a></span>
             {% endif %}
             <ul class="nav nav-tabs">
+                {% if active %}
                 <li class="active">
-                    <a href="#">Active Projects</a>
+                    <a href="#active" data-toggle="tab">Active Projects</a>
                 </li>
+                {% endif %}
+                {% if archived %}
+                <li>
+                    <a href="#archived" data-toggle="tab">Archived Projects</a>
+                </li>
+                {% endif %}
+                {% if exercise %}
+                <li>
+                    <a href="#exercise" data-toggle="tab">Exercises</a>
+                </li>
+                {% endif %}
+                {% if private %}
+                <li>
+                    <a href="#private" data-toggle="tab">Private Projects</a>
+                </li>
+                {% endif %}
+
             </ul>
 
-            {% include "core/_object_list.html" %}
+            <div class="tab-content">
+                <div id="active" class="tab-pane active">
+            {% include "core/_object_list.html" with object_list=active %}
+                </div>
+
+                <div id="exercise" class="tab-pane">
+            {% include "core/_object_list.html" with object_list=exercise %}
+                </div>
+
+                <div id="archived" class="tab-pane">
+            {% include "core/_object_list.html" with object_list=archived %}
+                </div>
+
+                <div id="private" class="tab-pane">
+            {% include "core/_object_list.html" with object_list=private %}
+                </div>
+
+            </div>
 
         </div>
 

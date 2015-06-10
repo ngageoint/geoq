@@ -9,13 +9,47 @@
             <div class="list-view-header">Jobs</div>
 
             <ul class="nav nav-tabs">
+                {% if active %}
                 <li class="active">
-                    <a href="#">Active Jobs</a>
+                    <a href="#active" data-toggle="tab">Active Jobs</a>
                 </li>
+                {% endif %}
+                {% if archived %}
+                <li>
+                    <a href="#archived" data-toggle="tab">Archived Jobs</a>
+                </li>
+                {% endif %}
+                {% if exercise %}
+                <li>
+                    <a href="#exercise" data-toggle="tab">Exercises</a>
+                </li>
+                {% endif %}
+                {% if private %}
+                <li>
+                    <a href="#private" data-toggle="tab">Private Jobs</a>
+                </li>
+                {% endif %}
+
             </ul>
 
-            {% include "core/_object_list.html" %}
+            <div class="tab-content">
+                <div id="active" class="tab-pane active">
+            {% include "core/_object_list.html" with object_list=active %}
+                </div>
 
+                <div id="exercise" class="tab-pane">
+            {% include "core/_object_list.html" with object_list=exercise %}
+                </div>
+
+                <div id="archived" class="tab-pane">
+            {% include "core/_object_list.html" with object_list=archived %}
+                </div>
+
+                <div id="private" class="tab-pane">
+            {% include "core/_object_list.html" with object_list=private %}
+                </div>
+
+            </div>
         </div>
 
     </div>
