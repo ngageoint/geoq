@@ -3,6 +3,7 @@
 # is subject to the Rights in Technical Data-Noncommercial Items clause at DFARS 252.227-7013 (FEB 2012)
 
 import json
+import re
 import requests
 
 from django.contrib.auth.decorators import login_required
@@ -99,10 +100,10 @@ class BatchCreateAOIS(TemplateView):
         return HttpResponse()
 
 class TabbedProjectListView(ListView):
-    projects = None
 
     def get_queryset(self):
-        return Project.objects.all()
+        search = self.request.GET.get('search', None)
+        return Project.objects.all() if search is None else Project.objects.filter(name__iregex=re.escape(search))
 
     def get_context_data(self, **kwargs):
         cv = super(TabbedProjectListView, self).get_context_data(**kwargs)
@@ -111,6 +112,7 @@ class TabbedProjectListView(ListView):
         cv['archived'] = []
         cv['exercise'] = []
         cv['private'] = []
+        cv['previous_search'] = self.request.GET.get('search', '')
 
         for project in self.get_queryset():
             if project.private:
@@ -123,13 +125,17 @@ class TabbedProjectListView(ListView):
                 cv['exercise'].append(project)
             else:
                 cv['active'].append(project)
+
+        cv['active_pane'] = 'active' if cv['active'] else 'archived' if cv['archived'] else 'exercise' if cv['exercise'] else 'private'
+
         return cv
 
 class TabbedJobListView(ListView):
     projects = None
 
     def get_queryset(self):
-        return Job.objects.all()
+        search = self.request.GET.get('search', None)
+        return Job.objects.all() if search is None else Job.objects.filter(name__iregex=re.escape(search))
 
     def get_context_data(self, **kwargs):
         cv = super(TabbedJobListView, self).get_context_data(**kwargs)
@@ -138,6 +144,7 @@ class TabbedJobListView(ListView):
         cv['archived'] = []
         cv['exercise'] = []
         cv['private'] = []
+        cv['previous_search'] = self.request.GET.get('search', '')
 
         for job in self.get_queryset():
             if job.project.private:
@@ -150,6 +157,9 @@ class TabbedJobListView(ListView):
                 cv['exercise'].append(job)
             else:
                 cv['active'].append(job)
+
+        cv['active_pane'] = 'active' if cv['active'] else 'archived' if cv['archived'] else 'exercise' if cv['exercise'] else 'private'
+
         return cv
 
 #TODO: Abstract this
