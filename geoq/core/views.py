@@ -325,10 +325,8 @@ class JobDetailedListView(ListView):
         cv['features_url'] = reverse('json-job-features', args=[job_id])
         #TODO: Add feature_count
 
-        if cv['object'].aoi_count() > 0:
-            cv['completed'] = (cv['object'].complete().count() * 100) / cv['workcell_count']
-        else:
-            cv['completed'] = 0
+        cv['completed'] = cv['object'].complete_percent()
+
         return cv
 
 

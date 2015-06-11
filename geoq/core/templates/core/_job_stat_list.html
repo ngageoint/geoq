@@ -19,4 +19,16 @@
 <ul class="statlist pull-right" style="clear:right">
     <li>{{ object.aoi_counts_html|safe }}</li>
 </ul>
-
+<ul class="statlist pull-right" style="clear:right; width:20%;">
+    <li style="padding:0">
+        <div class="progress progress-bar-striped" style="margin-bottom: 0px; width:auto;">
+            <div class="bar" role="progressbar"
+                 aria-valuenow="{{ object.complete_percent }}"
+                 aria-valuemin="0"
+                 aria-valuemax="100"
+                 style="width:{{ object.complete_percent }}%; color: white; text-shadow: black 0.1em 0.1em 0.2em;">
+            {{ object.complete_percent }}%
+            </div>
+        </div>
+    </li>
+</ul>
