@@ -122,3 +122,118 @@ Mac OSX Development Build Instructions::
 
         % paver start_django
         
+
+### Centos 6.6 Development Instructions ###
+
+  If you're installing this behind a proxy you will need to configure a few things.
+  Open /etc/yum.conf and add 'proxy=http://myproxy'
+
+  Note:
+
+		$ export http_proxy=http://myproxy
+        # All non-yum installation commands will require the sudo -E flag
+
+0. Add Repos to yum
+
+        $ sudo yum install epel-release
+        $ sudo -E rpm -Uvh http://yum.postgresql.org/9.4/redhat/rhel-6-x86_64/pgdg-redhat94-9.4-1.noarch.rpm
+
+1. Ensure you have at least Postgresql 9.x, if not uninstall it first, then install 9.x
+
+        $ psql --version
+        $ sudo yum erase postgresql
+        $ sudo yum install postgresql94 postgresql94-server postgresql94-devel
+        $ psql --version # This should be 9.x now
+
+	If your version of Postgresql is NOT 9.4, try adding the Postgresql to your $PATH
+
+        $ export PATH=/usr/pgsql-9.4/bin:$PATH
+        $ psql --version # This should ABSOLUTELY be 9.x now
+
+2. Install Postgis-2.x, check yum for packages to match your version of Postgresql
+
+  Example: Postgresql-9.4
+
+        # This will install all postgis dependencies
+        $ sudo yum install postgis2_94
+        $ sudo yum install postgis2_94-client
+
+3. Install Pip and Virtualenv
+        
+        $ python --version # ensure python is installed
+        $ sudo yum install -y python-pip
+        $ sudo yum install python-devel
+
+        # if you're behind a proxy
+        $ export https_proxy=https://myproxy
+		
+		$ sudo -E pip install virtualenv
+
+4. Initialize Postgresql
+
+        $ sudo service postgresql-9.4 initdb
+        $ sudo service postgresql-9.4 start
+
+        # Now you have edit a Postgresql config file
+        $ su
+        $ emacs /var/lib/pgsql/9.4/data/pg_hba.conf
+        # emacs > vi
+
+        # Change the METHOD column to trust
+        # Example:
+        # local   all     all                      trust
+        # host    all     all     127.0.0.1/32     trust
+        # host    all     all     ::1/128          trust
+
+        $ exit
+        $ sudo service postgresql-9.4 restart
+
+5. Environment Setup
+
+        $ mkdir -p ~/pyenv
+        $ git clone https://github.com/ngageoint/geoq
+        $ virtualenv --no-site-packages ~/pyenv/geoq
+        $ source ~/pyenv/geoq/bin/activate
+
+6. Installing and Using Paver
+
+        $ cd geoq
+        $ pip install paver
+        $ paver install_dependencies
+        # see common errors below
+        $ paver createdb
+        $ paver create_db_user
+        $ paver sync
+        
+	Common Error: "python setup.py egg_info failed" The problem is the pg_config file cannot be found
+	To solve add Postgresql to your $PATH (if you haven't already)
+         
+        $ export PATH=/usr/pgsql-9.4/bin:$PATH
+         
+	Common Error: 'ROLE username does not exist'
+	To solve this you have to log in as postgresql (the default user)
+	
+		$ export PGUSER=postgresql
+	
+	or add your username as a ROLE:
+
+		$ psql -U postgres # open postgres prompt (postgres is the default user)
+		postgres=# CREATE ROLE username WITH SUPERUSER;
+		postgres=# ALTER ROLE username WITH LOGIN;
+		postgres=# \q
+
+
+7. Installing Final Dependencies
+
+        $ sudo yum install nodejs-less
+        $ sudo -E easy_install BeautifulSoup
+
+8. Run Server
+
+        $ sudo mkdir /var/www
+        $ sudo mkdir /var/www/static
+        $ sudo chown username static
+        $ python manage.py collectstatic
+
+        $ paver start_django 
+        # point browser to localhost:8000
