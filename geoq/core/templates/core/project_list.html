@@ -12,18 +12,6 @@
             <span><a class="btn btn-mini pull-right" style="margin-top:10px" href="{% url 'project-create' %}">Add New</a></span>
             {% endif %}
             </div>
-            <div style="clear:both"></div>
-
-            <div class="pull-right">
-
-                <form method="get" action="" class="form-search">
-                    <div class="input-append">
-                        <input class="search-query input-medium" name="search" type="text" value="{{ previous_search }}"/>
-                        <button type="submit" class="btn btn-medium" type="button"><i class="icon-search"></i></button>
-                    </div>
-                </form>
-            </div>
-
 
             {% include "core/_status_tabbed_list.html" with list_title="Projects" %}
 

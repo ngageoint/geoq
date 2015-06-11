@@ -1,3 +1,15 @@
+<div style="clear:both"></div>
+
+<div class="pull-right">
+
+    <form method="get" action="" class="form-search">
+        <div class="input-append">
+            <input class="search-query input-medium" name="search" type="text" value="{{ previous_search }}"/>
+            <button type="submit" class="btn btn-medium" type="button"><i class="icon-search"></i></button>
+        </div>
+    </form>
+</div>
+
 {% if active or archived or exercise or private %}
 <ul class="nav nav-tabs">
     {% if active %}
