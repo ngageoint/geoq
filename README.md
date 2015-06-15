@@ -166,7 +166,8 @@ Centos 6.6 Development Build Instructions:
 
         # if you're behind a proxy
         $ export https_proxy=https://myprox
-	$ sudo -E pip install virtualenv
+        
+        $ sudo -E pip install virtualenv
 
 4. Initialize Postgresql
 
@@ -207,12 +208,12 @@ Centos 6.6 Development Build Instructions:
 	Common Error: "python setup.py egg_info failed" The problem is the pg_config file cannot be found
 	To solve add Postgresql to your $PATH (if you haven't already)
 	
-	$ export PATH=/usr/pgsql-9.4/bin:$PATH
+		$ export PATH=/usr/pgsql-9.4/bin:$PATH
          
 	Common Error: 'ROLE username does not exist'
 	To solve this you have to log in as postgresql (the default user)
 	
-	$ export PGUSER=postgresql
+		$ export PGUSER=postgresql
 	
 	or add your username as a ROLE:
 
