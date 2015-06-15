@@ -123,14 +123,14 @@ Mac OSX Development Build Instructions::
         % paver start_django
         
 
-### Centos 6.6 Development Instructions ###
+Centos 6.6 Development Build Instructions:
+
+  Note:
 
   If you're installing this behind a proxy you will need to configure a few things.
   Open /etc/yum.conf and add 'proxy=http://myproxy'
 
-  Note:
-
-		$ export http_proxy=http://myproxy
+	$ export http_proxy=http://myproxy
         # All non-yum installation commands will require the sudo -E flag
 
 0. Add Repos to yum
@@ -160,14 +160,13 @@ Mac OSX Development Build Instructions::
 
 3. Install Pip and Virtualenv
         
-        $ python --version # ensure python is installed
+        $ python --version	# ensure python is installed (version 2.6.6 will work)
         $ sudo yum install -y python-pip
         $ sudo yum install python-devel
 
         # if you're behind a proxy
-        $ export https_proxy=https://myproxy
-		
-		$ sudo -E pip install virtualenv
+        $ export https_proxy=https://myprox
+	$ sudo -E pip install virtualenv
 
 4. Initialize Postgresql
 
@@ -207,28 +206,45 @@ Mac OSX Development Build Instructions::
         
 	Common Error: "python setup.py egg_info failed" The problem is the pg_config file cannot be found
 	To solve add Postgresql to your $PATH (if you haven't already)
-         
-        $ export PATH=/usr/pgsql-9.4/bin:$PATH
+	
+	$ export PATH=/usr/pgsql-9.4/bin:$PATH
          
 	Common Error: 'ROLE username does not exist'
 	To solve this you have to log in as postgresql (the default user)
 	
-		$ export PGUSER=postgresql
+	$ export PGUSER=postgresql
 	
 	or add your username as a ROLE:
 
-		$ psql -U postgres # open postgres prompt (postgres is the default user)
-		postgres=# CREATE ROLE username WITH SUPERUSER;
-		postgres=# ALTER ROLE username WITH LOGIN;
-		postgres=# \q
+	$ psql -U postgres # open postgres prompt (postgres is the default user)
+	postgres=# CREATE ROLE username WITH SUPERUSER;
+	postgres=# ALTER ROLE username WITH LOGIN;
+	postgres=# \q
 
 
-7. Installing Final Dependencies
+7. Modify local settings (modify entries below based on your system settings):
+
+        % cd geoq
+        % cat > local_settings.py
+        
+          EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+          EMAIL_PORT = 25
+          EMAIL_HOST = "localhost"
+          DEFAULT_FROM_EMAIL = "geoq-alerts@server.com"
+          MEDIA_ROOT = '/opt/src/pyenv/geoq/geoq-django'
+          STATIC_URL_FOLDER = ''
+          STATIC_ROOT = '{0}{1}'.format('/usr/src/static/', STATIC_URL_FOLDER)
+          GAMIFICATION_SERVER = ''
+          GAMIFICATION_PROJECT = ''
+          GEOSERVER_WFS_JOB_LAYER = ''
+
+
+8. Installing Final Dependencies
 
         $ sudo yum install nodejs-less
         $ sudo -E easy_install BeautifulSoup
 
-8. Run Server
+9. Run Server
 
         $ sudo mkdir /var/www
         $ sudo mkdir /var/www/static
