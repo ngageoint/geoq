@@ -692,6 +692,7 @@ leaflet_layer_control.show_info = function (objToShow, node) {
             //Probably a Leaflet layer
             html_objects.push(leaflet_layer_control.parsers.infoFromLayer(objToShow));
             html_objects.push(leaflet_layer_control.parsers.opacityControls(objToShow));
+            html_objects.push(leaflet_layer_control.dynamic_params_control.html_render(objToShow));
 
             if (leaflet_layer_control.likelyHasFeatures(objToShow)) {
                 var $btn = $('<a href="#" class="btn">Refresh based on current map</a>')
@@ -1445,3 +1446,29 @@ leaflet_layer_control.toggleDrawer = function() {
     }
     setTimeout(aoi_feature_edit.mapResize, 400);
 };
+
+
+leaflet_layer_control.dynamic_params_control = {
+    html_render: function(layer) {
+        if (!layer || !layer.__geoq_dynamic_params) {
+            return undefined;
+        }
+
+        var dynamic_params_element = document.createElement("div");
+        var dynamic_params_title = document.createElement("span");
+        dynamic_params_title.textContent = "Dynamic Parameters";
+        dynamic_params_element.appendChild(dynamic_params_title);
+
+        for (var idx in layer.__geoq_dynamic_params) {
+            var param = layer.__geoq_dynamic_params[idx];
+            var p_param = document.createElement("p");
+            p_param.textContent = param;
+            dynamic_params_element.appendChild(p_param);
+        }
+
+        return dynamic_params_element;
+    },
+    set_dynamic_param: function(layer, param, setting) {
+
+    }
+}
