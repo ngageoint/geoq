@@ -59,6 +59,7 @@ class LayerForm(StyledModelForm):
                      'downloadableLink',
                      # 'spatial_reference',
                      'layer_params',
+                     'dynamic_params',
                      css_class='collapse',
                      css_id='more-options',
                      ),
