@@ -277,6 +277,11 @@ class Job(GeoQBase, Assignment):
     def complete_count(self):
         return self.complete().count()
 
+    def complete_percent(self):
+        if self.aois.count() > 0:
+            return round(float(self.complete().count() * 100) / self.aois.count(), 2)
+        return 0.0
+
     def total_count(self):
         return self.aois.count()
 

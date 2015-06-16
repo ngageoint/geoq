@@ -29,7 +29,7 @@
                     <span class="icon-bar"></span>
                 </a>
 
-                <a class="brand" href="{%url 'home' %}">{% block brand %}<img id="menu-logo" src="{% static 'images/GeoQ-Logo.png' %}"/>GeoQ{% endblock %}</a>
+                <a class="brand" style="padding:5px 20px" href="{%url 'home' %}">{% block brand %}<img id="menu-logo" src="{% static 'images/GeoQ-Logo.png' %}"/>GeoQ{% endblock %}</a>
                 <div class="btn-group pull-right">
                     <a class="btn dropdown-toggle" data-toggle="dropdown" href="#">
                         <i class="icon-user"></i> {{request.user.username}}
