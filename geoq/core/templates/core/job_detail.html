@@ -279,22 +279,6 @@
                                 {{ object.project.description }}
                             </td>
                         </tr>
-                        <tr>
-                            <td>
-                                <b>Completed:</b>
-                            </td>
-                            <td>
-                                <div class="progress progress-bar-striped" style="margin-bottom: 0px;">
-                                    <div class="bar" role="progressbar"
-                                         aria-valuenow="{{ completed }}"
-                                         aria-valuemin="0"
-                                         aria-valuemax="100"
-                                         style="width:{{ completed }}%; color: white; text-shadow: black 0.1em 0.1em 0.2em;">
-                                        {{ completed }}%
-                                    </div>
-                                </div>
-                            </td>
-                        </tr>
                         {% include 'core/_job_links.html' %}
                     </table>
                 </div>
