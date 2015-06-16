@@ -1,0 +1,60 @@
+<div style="clear:both"></div>
+
+<div class="pull-right">
+
+    <form method="get" action="" class="form-search">
+        <div class="input-append">
+            <input class="search-query input-medium" name="search" type="text" value="{{ previous_search }}"/>
+            <button type="submit" class="btn btn-medium" type="button"><i class="icon-search"></i></button>
+        </div>
+    </form>
+</div>
+
+{% if active or archived or exercise or private %}
+<ul class="nav nav-tabs">
+    {% if active %}
+    <li class="{% if active_pane == "active" %} active {% endif %}">
+        <a href="#active" data-toggle="tab">Active {{list_title}}</a>
+    </li>
+    {% endif %}
+    {% if archived %}
+    <li class="{% if active_pane == "archived" %} active {% endif %}">
+        <a href="#archived" data-toggle="tab">Archived {{list_title}}</a>
+    </li>
+    {% endif %}
+    {% if exercise %}
+    <li class="{% if active_pane == "exercise" %} active {% endif %}">
+        <a href="#exercise" data-toggle="tab">Exercises</a>
+    </li>
+    {% endif %}
+    {% if private %}
+    <li class="{% if active_pane == "private" %} active {% endif %}">
+        <a href="#private" data-toggle="tab">Private {{list_title}}</a>
+    </li>
+    {% endif %}
+
+</ul>
+
+<div class="tab-content">
+    <div id="active" class="tab-pane {% if active_pane == "active" %} active {% endif %}">
+        {% include "core/_object_list.html" with object_list=active %}
+    </div>
+
+    <div id="exercise" class="tab-pane {% if active_pane == "exercise" %} active {% endif %}">
+        {% include "core/_object_list.html" with object_list=exercise %}
+    </div>
+
+    <div id="archived" class="tab-pane {% if active_pane == "archived" %} active {% endif %}">
+        {% include "core/_object_list.html" with object_list=archived %}
+    </div>
+
+    <div id="private" class="tab-pane {% if active_pane == "private" %} active {% endif %}">
+        {% include "core/_object_list.html" with object_list=private %}
+    </div>
+
+</div>
+{% else %}
+<div class="span12">
+    <p>There were no results for your query. <a href="{{request.path}}">Go back?</a> </p>
+</div>
+{% endif %}
