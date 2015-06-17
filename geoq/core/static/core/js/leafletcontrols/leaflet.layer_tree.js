@@ -909,18 +909,44 @@ leaflet_layer_control.parsers.dynamicParamsControls = function(layer) {
 
     var dynamic_params_element = document.createElement("div");
     var dynamic_params_title = document.createElement("span");
-    dynamic_params_title.textContent = "Dynamic Parameters";
+    dynamic_params_title.textContent = "Dynamic Feed Parameters";
+    dynamic_params_element.className = "well well-small";
     dynamic_params_element.appendChild(dynamic_params_title);
+    window.test = layer;
 
     for (var idx in layer.__geoq_dynamic_params) {
         var param = layer.__geoq_dynamic_params[idx];
-        var p_param = document.createElement("p");
-        p_param.textContent = param;
-        dynamic_params_element.appendChild(p_param);
+        var e_param;
+        if (leaflet_layer_control.parsers.dynamic_param_parsers[param.type]) {
+            e_param = leaflet_layer_control.parsers.dynamic_param_parsers[param.type](layer, param);
+        } else {
+            e_param = leaflet_layer_control.parsers.dynamic_param_parsers.String(layer, param);
+        }
+        dynamic_params_element.appendChild(e_param);
     }
 
     return dynamic_params_element;
 };
+
+leaflet_layer_control.parsers.dynamic_param_parsers = {};
+
+leaflet_layer_control.parsers.dynamic_param_parsers.String = function(layer, param) {
+    var wrapper = document.createElement("div");
+    var label = document.createElement("span");
+    label.className = "input-group-addon";
+    label.textContent = param.name;
+    label.style = "display:inline-block;";
+    var input = document.createElement("input");
+    input.type = "text";
+    input.className = "textinput";
+    input.value = layer.options[param.name];
+    input.style = "display:inline-block;";
+
+    wrapper.appendChild(label);
+    wrapper.appendChild(input);
+
+    return wrapper;
+}
 
 //=========================================
 leaflet_layer_control.layerDataList = function (options) {
