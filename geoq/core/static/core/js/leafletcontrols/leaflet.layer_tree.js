@@ -912,7 +912,6 @@ leaflet_layer_control.parsers.dynamicParamsControls = function(layer) {
     dynamic_params_title.textContent = "Dynamic Feed Parameters";
     dynamic_params_element.className = "well well-small";
     dynamic_params_element.appendChild(dynamic_params_title);
-    window.test = layer;
 
     for (var idx in layer.__geoq_dynamic_params) {
         var param = layer.__geoq_dynamic_params[idx];
@@ -932,18 +931,31 @@ leaflet_layer_control.parsers.dynamic_param_parsers = {};
 
 leaflet_layer_control.parsers.dynamic_param_parsers.String = function(layer, param) {
     var wrapper = document.createElement("div");
+    wrapper.className = "input-append input-prepend";
+
+
     var label = document.createElement("span");
-    label.className = "input-group-addon";
+    label.className = "add-on";
     label.textContent = param.name;
-    label.style = "display:inline-block;";
+
     var input = document.createElement("input");
     input.type = "text";
-    input.className = "textinput";
-    input.value = layer.options[param.name];
-    input.style = "display:inline-block;";
+    input.className = "input-small";
+    input.value = layer.config.layerParams[param.name];
+
+    var button = document.createElement("button");
+    button.type = "submit";
+    button.className = "btn btn-primary";
+    button.textContent = "Change";
+    $(button).click((function(lyr, name, inp) {
+        return function() {
+            leaflet_layer_control.setDynamicParam(lyr, name, inp.value)
+        };
+    })(layer, param.name, input));
 
     wrapper.appendChild(label);
     wrapper.appendChild(input);
+    wrapper.appendChild(button);
 
     return wrapper;
 }
@@ -1165,7 +1177,8 @@ leaflet_layer_control.setLayerOpacity = function (layer, amount, doNotMoveToTop)
  * Sets a dynamic parameter for a layer (validating restrictions) and refreshes the layer.
  */
 leaflet_layer_control.setDynamicParam = function(layer, param, setting) {
-
+    console && console.log(param + " " + setting + " for " + layer);
+    layer.config.layerParams[param] = setting;
 };
 
 leaflet_layer_control.addLayerControlInfoPanel = function($content){
