@@ -911,7 +911,7 @@ leaflet_helper.parsers.addDynamicCapimageData = function (result, map, outputLay
 
         var itemFound = false;
         _.each(outputLayer.options.items,function(item){
-           if (item.id == id) itemFound = true;
+           if (item.attributes.ID == id) itemFound = true;
         });
         if (!itemFound) {
             outputLayer.options.items.push(feature);
