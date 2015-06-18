@@ -895,9 +895,15 @@ leaflet_helper.parsers.addFEMAImageEventsData = function (result, map, outputLay
 
     return outputLayer;
 };
-leaflet_helper.parsers.addDynamicCapimageData = function (result, map, outputLayer) {
-    //TODO: Handle de-dupes of all features returned
 
+/**
+ * Adds items from the resulting query. Assumes old data is invalid and clears it out.
+ * @param {[type]} result      [description]
+ * @param {[type]} map         [description]
+ * @param {[type]} outputLayer [description]
+ * @param {boolean} keepOld    true to keep old data (e.g. combinging paginated results)
+ */
+leaflet_helper.parsers.addDynamicCapimageData = function (result, map, outputLayer, keepOld) {
     if (!outputLayer.options) outputLayer.options = {};
     if (!outputLayer.options.items) outputLayer.options.items = [];
 
@@ -905,14 +911,21 @@ leaflet_helper.parsers.addDynamicCapimageData = function (result, map, outputLay
 
     var results = result.features || result.results;
 
+    if (!keepOld) {
+        outputLayer.options.items = [];
+        outputLayer.clearLayers();
+    }
+
     $(results).each(function () {
         var feature = $(this)[0];
         var id = feature.attributes.ID;
 
         var itemFound = false;
-        _.each(outputLayer.options.items,function(item){
-           if (item.attributes.ID == id) itemFound = true;
-        });
+        if (keepOld) {
+            _.each(outputLayer.options.items,function(item){
+               if (item.attributes.ID == id) itemFound = true;
+            });
+        }
         if (!itemFound) {
             outputLayer.options.items.push(feature);
 
