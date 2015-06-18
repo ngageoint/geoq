@@ -954,6 +954,31 @@ leaflet_layer_control.parsers.dynamic_param_parsers.__generic = function(layer, 
     return wrapper;
 }
 
+leaflet_layer_control.parsers.dynamic_param_parsers.__group_box = function(layer, param, input) {
+    var wrapper = document.createElement("div");
+    wrapper.className = "geoq-param-group clearfix";
+    
+    var label = document.createElement("label");
+    label.textContent = param.name;
+    label.className = "geoq-param-group-label";
+
+    var button = document.createElement("button");
+    button.type = "submit";
+    button.className = "btn btn-primary pull-right";
+    button.textContent = "Change";
+    $(button).click((function(lyr, name, inp) {
+        return function() {
+            leaflet_layer_control.setDynamicParam(lyr, name, inp.value)
+        };
+    })(layer, param.name, input));
+
+    wrapper.appendChild(label);
+    wrapper.appendChild(input);
+    wrapper.appendChild(button);
+
+    return wrapper;
+}
+
 leaflet_layer_control.parsers.dynamic_param_parsers.String = function(layer, param) {
     var input = document.createElement("input");
     input.type = "text";
@@ -963,33 +988,28 @@ leaflet_layer_control.parsers.dynamic_param_parsers.String = function(layer, par
     return leaflet_layer_control.parsers.dynamic_param_parsers.__generic(layer, param, input);
 };
 
+leaflet_layer_control.parsers.dynamic_param_parsers.Date = function(layer, param) {
+    var input = document.createElement("input");
+    input.type = "date";
+    input.className = "input-medium";
+    input.value = layer.config.layerParams[param.name];
+    
+    if (param.range) {
+        rangeFun = leaflet_layer_control.parsers.dynamic_param_ranges[param.range.type];
+        if (rangeFun) rangeFun(input, param.range);
+    }
+
+    return leaflet_layer_control.parsers.dynamic_param_parsers.__group_box(layer, param, input);
+};
+
 leaflet_layer_control.parsers.dynamic_param_parsers.Number = function(layer, param) {
     if (window.Slider && param.range) {
-        var wrapper = document.createElement("div");
-        wrapper.className = "geoq-param-group clearfix";
-        
-        var label = document.createElement("label");
-        label.textContent = param.name;
-        label.className = "geoq-param-group-label";
-
         var input = document.createElement("input");
         input.type = "number";
         input.className = "input-small";
         input.value = layer.config.layerParams[param.name];
 
-        var button = document.createElement("button");
-        button.type = "submit";
-        button.className = "btn btn-primary pull-right";
-        button.textContent = "Change";
-        $(button).click((function(lyr, name, inp) {
-            return function() {
-                leaflet_layer_control.setDynamicParam(lyr, name, inp.value)
-            };
-        })(layer, param.name, input));
-
-        wrapper.appendChild(label);
-        wrapper.appendChild(input);
-        wrapper.appendChild(button);
+        var wrapper = leaflet_layer_control.parsers.dynamic_param_parsers.__group_box(layer, param, input);
 
         if (param.range) {
             rangeFun = leaflet_layer_control.parsers.dynamic_param_ranges[param.range.type];
@@ -1021,7 +1041,7 @@ leaflet_layer_control.parsers.dynamic_param_parsers.Number = function(layer, par
 
 leaflet_layer_control.parsers.dynamic_param_ranges = {};
 
-leaflet_layer_control.parsers.dynamic_param_ranges.NumberFixedRange = function(numberInput, range, callback) {
+leaflet_layer_control.parsers.dynamic_param_ranges.FixedRange = function(numberInput, range, callback) {
     numberInput.min = range.start;
     numberInput.max = range.end;
     numberInput.step = range.step;
