@@ -1263,8 +1263,23 @@ leaflet_layer_control.setLayerOpacity = function (layer, amount, doNotMoveToTop)
 leaflet_layer_control.setDynamicParam = function(layer, param, setting, noRefresh) {
     console && console.log(param + " " + setting + " for " + layer);
     layer.config.layerParams[param] = setting;
-    if (!noRefresh) leaflet_helper.constructors.geojson(layer.config, aoi_feature_edit.map, layer);
+
+    if (!noRefresh) leaflet_layer_control.refreshLayer(layer);
 };
+
+leaflet_layer_control.refreshLayer = function(layer) {
+    window.test = layer;
+    switch (test.config.type) {
+        case "GeoJSON":
+            leaflet_helper.constructors.geojson(layer.config, aoi_feature_edit.map, layer);
+            break;
+        default:
+            layer.options = $.extend(layer.options, layer.config.layerParams);
+            layer.redraw();
+            break;
+    }
+    
+}
 
 leaflet_layer_control.addLayerControlInfoPanel = function($content){
     var $drawer_inner = $("<div>")
