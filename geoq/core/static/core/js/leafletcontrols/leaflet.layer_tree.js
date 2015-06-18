@@ -903,7 +903,7 @@ leaflet_layer_control.parsers.opacityControls = function(layer) {
  * HTML renderer for dynamic parameters controls in the side bar.
  */
 leaflet_layer_control.parsers.dynamicParamsControls = function(layer) {
-    if (!layer || !layer.__geoq_dynamic_params) {
+    if (!layer || !layer.config.dynamicParams) {
         return undefined;
     }
 
@@ -912,8 +912,8 @@ leaflet_layer_control.parsers.dynamicParamsControls = function(layer) {
     dynamic_params_title.textContent = "Dynamic Feed Parameters";
     dynamic_params_element.appendChild(dynamic_params_title);
 
-    for (var idx in layer.__geoq_dynamic_params) {
-        var param = layer.__geoq_dynamic_params[idx];
+    for (var idx in layer.config.dynamicParams) {
+        var param = layer.config.dynamicParams[idx];
         var e_param;
         if (leaflet_layer_control.parsers.dynamic_param_parsers[param.type]) {
             e_param = leaflet_layer_control.parsers.dynamic_param_parsers[param.type](layer, param);

@@ -131,8 +131,6 @@ leaflet_helper.layer_conversion = function (lyr, map) {
     if (lyr.name && outputLayer) outputLayer.name = lyr.name;
     if (outputLayer) outputLayer.config = lyr;
 
-    if (outputLayer) outputLayer.__geoq_dynamic_params = lyr.dynamicParams;
-
     return outputLayer;
 };
 
