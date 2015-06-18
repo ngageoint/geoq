@@ -910,7 +910,6 @@ leaflet_layer_control.parsers.dynamicParamsControls = function(layer) {
     var dynamic_params_element = document.createElement("div");
     var dynamic_params_title = document.createElement("span");
     dynamic_params_title.textContent = "Dynamic Feed Parameters";
-    dynamic_params_element.className = "well well-small";
     dynamic_params_element.appendChild(dynamic_params_title);
 
     for (var idx in layer.__geoq_dynamic_params) {
@@ -965,29 +964,72 @@ leaflet_layer_control.parsers.dynamic_param_parsers.String = function(layer, par
 };
 
 leaflet_layer_control.parsers.dynamic_param_parsers.Number = function(layer, param) {
-    var input = document.createElement("input");
-    input.type = "number";
-    input.className = "input-small";
-    input.value = layer.config.layerParams[param.name];
+    if (window.Slider && param.range) {
+        var wrapper = document.createElement("div");
+        wrapper.className = "geoq-param-group clearfix";
+        
+        var label = document.createElement("label");
+        label.textContent = param.name;
+        label.className = "geoq-param-group-label";
 
-    if (param.range) {
-        rangeFun = leaflet_layer_control.parsers.dynamic_param_ranges[param.range.type];
-        if (rangeFun) input = rangeFun(input, param.range);
+        var input = document.createElement("input");
+        input.type = "number";
+        input.className = "input-small";
+        input.value = layer.config.layerParams[param.name];
+
+        var button = document.createElement("button");
+        button.type = "submit";
+        button.className = "btn btn-primary pull-right";
+        button.textContent = "Change";
+        $(button).click((function(lyr, name, inp) {
+            return function() {
+                leaflet_layer_control.setDynamicParam(lyr, name, inp.value)
+            };
+        })(layer, param.name, input));
+
+        wrapper.appendChild(label);
+        wrapper.appendChild(input);
+        wrapper.appendChild(button);
+
+        if (param.range) {
+            rangeFun = leaflet_layer_control.parsers.dynamic_param_ranges[param.range.type];
+            if (rangeFun) rangeFun(input, param.range, function() {
+                new Slider(input, {
+                    min: parseInt(input.min),
+                    max: parseInt(input.max),
+                    step: parseInt(input.step),
+                    value: parseInt(input.value)
+                });
+            });
+        }
+
+        return wrapper;
+    } else {
+        var input = document.createElement("input");
+        input.type = "number";
+        input.className = "input-small";
+        input.value = layer.config.layerParams[param.name];
+
+        if (param.range) {
+            rangeFun = leaflet_layer_control.parsers.dynamic_param_ranges[param.range.type];
+            if (rangeFun) rangeFun(input, param.range);
+        }
+
+        return leaflet_layer_control.parsers.dynamic_param_parsers.__generic(layer, param, input);
     }
-
-    return leaflet_layer_control.parsers.dynamic_param_parsers.__generic(layer, param, input);
 };
 
 leaflet_layer_control.parsers.dynamic_param_ranges = {};
 
-leaflet_layer_control.parsers.dynamic_param_ranges.NumberFixedRange = function(numberInput, range) {
+leaflet_layer_control.parsers.dynamic_param_ranges.NumberFixedRange = function(numberInput, range, callback) {
     numberInput.min = range.start;
     numberInput.max = range.end;
     numberInput.step = range.step;
+    if (callback) callback();
     return numberInput;
 }
 
-leaflet_layer_control.parsers.dynamic_param_ranges.NumberCapIDRange = function(numberInput, range) {
+leaflet_layer_control.parsers.dynamic_param_ranges.NumberCapIDRange = function(numberInput, range, callback) {
     $.ajax({
             url: range.url,
             dataType: "json"
@@ -996,6 +1038,7 @@ leaflet_layer_control.parsers.dynamic_param_ranges.NumberCapIDRange = function(n
             numberInput.min = entries.objectIds[0];
             numberInput.max = entries.objectIds[entries.objectIds.length - 1];
             numberInput.step = range.step;
+            if (callback) callback();
         });
 
     return numberInput;

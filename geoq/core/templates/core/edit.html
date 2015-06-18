@@ -40,6 +40,8 @@
 	<script src="{{ STATIC_URL }}leaflet/leaflet-plugins/layer/tile/Google.js"></script>
     <script src="{{ STATIC_URL }}leaflet/leaflet-plugins/layer/tile/leaflet-tilelayer-wmts.js"></script>
 
+    <script src="{{ STATIC_URL }}core/js/bootstrap_slider/bootstrap-slider.js" type="text/javascript"></script>
+
     {% for layer in object.job.map.layers %}{% if layer.layer.type == 'Google Maps' %}
     <script src="{{ layer.layer.url }}maps/api/js?v=3&sensor=false"></script>
     {%  endif %}{% endfor %}
@@ -117,6 +119,7 @@
         <link rel="stylesheet" href="{{ STATIC_URL }}bootstrap/css/bootstrap.min.css" />
         <link rel="stylesheet" href="{{ STATIC_URL }}images/maki/maki-sprite.css" />
         <link rel="stylesheet" href="{{ STATIC_URL }}core/edit.css" />
+        <link href="{{ STATIC_URL }}core/css/bootstrap_slider/bootstrap-slider.css" rel="stylesheet" type="text/css">
 
     {% endcompress %}
 {% endblock %}
