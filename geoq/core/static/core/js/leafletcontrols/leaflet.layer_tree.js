@@ -1015,10 +1015,10 @@ leaflet_layer_control.parsers.dynamic_param_parsers.Number = function(layer, par
             rangeFun = leaflet_layer_control.parsers.dynamic_param_ranges[param.range.type];
             if (rangeFun) rangeFun(input, param.range, function() {
                 new Slider(input, {
-                    min: parseInt(input.min),
-                    max: parseInt(input.max),
-                    step: parseInt(input.step),
-                    value: parseInt(input.value)
+                    min: parseFloat(input.min),
+                    max: parseFloat(input.max),
+                    step: parseFloat(input.step),
+                    value: parseFloat(input.value)
                 });
             });
         }
