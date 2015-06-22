@@ -62,6 +62,11 @@ class LayerForm(StyledModelForm):
                      css_class='collapse',
                      css_id='more-options',
                      ),
+            # Works, but perhaps not a great solution
+            HTML('<br><script>$(document).ready( function() {' +
+                    'if ( $(\'fieldset#more-options span[id*="error_1_id_"]\').length ) {' +
+                        '$(\'p a[data-target="#more-options"]\').click();}' +
+                    '});</script>'),
             ButtonHolder(
                 HTML('<hr/><p></p>'),
                 Submit('Save', 'Save', css_class='button white btn'),
