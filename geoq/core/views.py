@@ -386,6 +386,11 @@ class JobDetailedListView(ListView):
         cv['metrics'] = self.metrics
         cv['metrics_url'] = reverse('job-metrics', args=[job_id])
         cv['features_url'] = reverse('json-job-features', args=[job_id])
+        temp_id = AOI.objects.filter(job_id=job_id).exclude(assignee_id=None).values_list('assignee_id', flat=True)
+        cv['assignees'] = []
+        for i in temp_id:
+            cv['assignees'].append(User.objects.filter(id=i).values_list('username', flat=True)[0])
+
         #TODO: Add feature_count
 
         cv['completed'] = cv['object'].complete_percent()

@@ -1,4 +1,19 @@
 <ul class="statlist pull-right">
+    <li>
+        <div class="btn-group">
+            <a class="btn btn-mini" >
+                <b> Assignees </b>
+            </a>
+            <button class="btn btn-mini dropdown-toggle" data-toggle="dropdown">
+                <span class="caret"></span>
+            </button>
+
+            <ul class="dropdown-menu">
+                {% for assignee in assignees %}
+                <li><a>{{assignee}}</a></li>
+                {% endfor %}
+            </ul>
+    </li>
     <li title="Contributors">
         <i class="icon-user"></i>
         {{ object.user_count|default:0 }}
