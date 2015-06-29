@@ -15,6 +15,12 @@
         $(document).ready(function(){
             $('select[multiple="multiple"]').parent().parent()
                 .css('height','200px');
+
+            /* GEOQ-14 Bug fix */
+            /* Expands additional options if error is detect */
+            if ( $('fieldset#more-options span[id*="error_1_id_"]').length ) {
+                $('p a[data-target="#more-options"]').click();
+            }
         });
         $('input, select, textarea').css('width','80%');
 
