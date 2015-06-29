@@ -1003,7 +1003,7 @@ leaflet_layer_control.parsers.dynamic_param_parsers.Date = function(layer, param
 };
 
 leaflet_layer_control.parsers.dynamic_param_parsers.Number = function(layer, param) {
-    if (window.Slider && param.range) {
+    if (window.Slider && param.range && param.range.start && param.range.end) {
         var input = document.createElement("input");
         input.type = "number";
         input.className = "input-small";
