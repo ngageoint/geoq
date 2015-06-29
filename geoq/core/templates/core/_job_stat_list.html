@@ -9,10 +9,19 @@
             </button>
 
             <ul class="dropdown-menu">
+                {% if assignees|length == 0 %}
+                <li> <a> There are no assignees on this job. </a> </li>
+                {% endif %}
                 {% for assignee in assignees %}
                 <li><a>{{assignee}}</a></li>
+                {% count += 1 %}
                 {% endfor %}
             </ul>
+        </div>
+    </li>
+    <li title = "Total Assignees">
+        <i class="icon-user"></i>
+        {{ "Some text" }}
     </li>
     <li title="Contributors">
         <i class="icon-user"></i>
