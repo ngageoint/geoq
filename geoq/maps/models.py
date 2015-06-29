@@ -117,6 +117,7 @@ class Layer(models.Model):
     fields_to_show = models.CharField(max_length=200, null=True, blank=True, help_text='Fields to show when someone uses the identify tool to click on the layer. Leave blank for all.')
     downloadableLink = models.URLField(max_length=400, null=True, blank=True, help_text='URL of link to supporting tool (such as a KML document that will be shown as a download button)')
     layer_params = JSONField(null=True, blank=True, help_text='JSON key/value pairs to be sent to the web service.  ex: {"crs":"urn:ogc:def:crs:EPSG::4326"}')
+    dynamic_params = JSONField(null=True, blank=True, help_text='URL Variables that may be modified by the analyst. ex: "date"')
     spatial_reference = models.CharField(max_length=32, blank=True, null=True, default="EPSG:4326", help_text='The spatial reference of the service.  Should be in ESPG:XXXX format.')
     constraints = models.TextField(null=True, blank=True, help_text='Constrain layer data displayed to certain feature types')
     disabled = models.BooleanField(default=False, blank=True, help_text="If unchecked, Don't show this layer when listing all layers")
@@ -161,6 +162,7 @@ class Layer(models.Model):
             "layer": self.layer,
             "transparent": self.transparent,
             "layerParams": self.layer_params,
+            "dynamicParams": self.dynamic_params,
             "refreshrate": self.refreshrate,
             "token": self.token,
             "attribution": self.attribution,
@@ -229,6 +231,7 @@ class Map(models.Model):
                 "transparent": map_layer.layer.transparent,
                 "opacity": map_layer.opacity,
                 "layerParams": map_layer.layer.get_layer_params(),
+                "dynamicParams": map_layer.layer.dynamic_params,
                 "isBaseLayer": map_layer.is_base_layer,
                 "displayInLayerSwitcher": map_layer.display_in_layer_switcher,
                 "refreshrate": map_layer.layer.refreshrate,
