@@ -1003,7 +1003,7 @@ leaflet_layer_control.parsers.dynamic_param_parsers.Date = function(layer, param
 };
 
 leaflet_layer_control.parsers.dynamic_param_parsers.Number = function(layer, param) {
-    if (window.Slider && param.range && param.range.start && param.range.end) {
+    if (window.Slider && param.range) {
         var input = document.createElement("input");
         input.type = "number";
         input.className = "input-small";
@@ -1014,12 +1014,14 @@ leaflet_layer_control.parsers.dynamic_param_parsers.Number = function(layer, par
         if (param.range) {
             rangeFun = leaflet_layer_control.parsers.dynamic_param_ranges[param.range.type];
             if (rangeFun) rangeFun(input, param.range, function() {
-                new Slider(input, {
-                    min: parseFloat(input.min),
-                    max: parseFloat(input.max),
-                    step: parseFloat(input.step),
-                    value: parseFloat(input.value)
-                });
+                if (input.min && input.max) { // Only create slider if we have a MIN and MAX
+                    new Slider(input, {
+                        min: parseFloat(input.min),
+                        max: parseFloat(input.max),
+                        step: parseFloat(input.step),
+                        value: parseFloat(input.value)
+                    });
+                }
             });
         }
 
