@@ -300,6 +300,15 @@ class MapLayer(models.Model):
     def __unicode__(self):
         return 'Layer {0}: {1}'.format(self.stack_order, self.layer)
 
+class MapLayerUserRememberedParams(models.Model):
+    """
+    Remembers the last options selected for a MapLayer with dynamic feed params.
+    """
+
+    maplayer = models.ForeignKey(MapLayer, related_name="user_saved_params_set")
+    user = models.ForeignKey(User, related_name="map_layer_saved_params_set")
+    values = JSONField(null=True, blank=True, help_text='URL Variables that may be modified by the analyst. ex: "date"')
+
 
 class Feature(models.Model):
     """
