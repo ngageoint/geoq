@@ -387,9 +387,20 @@ class JobDetailedListView(ListView):
         cv['metrics_url'] = reverse('job-metrics', args=[job_id])
         cv['features_url'] = reverse('json-job-features', args=[job_id])
         temp_id = AOI.objects.filter(job_id=job_id).exclude(assignee_id=None).values_list('assignee_id', flat=True)
-        cv['assignees'] = []
+       # cv['assignees'] = []
+        temp_assignee_set = []
+        #cv['assignee_workcell'] = []
+        temp_assignee_workcell = []
+        empty = []
+        cv['dict'] = {}
         for i in temp_id:
-            cv['assignees'].append(User.objects.filter(id=i).values_list('username', flat=True)[0])
+            #temp_assignee_set.append(User.objects.filter(id=i).values_list('username', flat=True)[0])
+            #temp_assignee_workcell.append(AOI.objects.filter(assignee_id=i, job_id=job_id).count())
+            key = User.objects.filter(id=i).values_list('username', flat=True)[0]
+            cv['dict'][key] = cv['dict'].get(key, 0) + 1
+        #cv['test'] = empty
+        #cv['test'] = zip( temp_assignee_set, temp_assignee_workcell)
+
 
         #TODO: Add feature_count
 
