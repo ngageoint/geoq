@@ -14,6 +14,7 @@ class Migration(SchemaMigration):
             ('maplayer', self.gf('django.db.models.fields.related.ForeignKey')(related_name='user_saved_params_set', to=orm['maps.MapLayer'])),
             ('user', self.gf('django.db.models.fields.related.ForeignKey')(related_name='map_layer_saved_params_set', to=orm['auth.User'])),
             ('values', self.gf('jsonfield.fields.JSONField')(null=True, blank=True)),
+            ('map', self.gf('django.db.models.fields.related.ForeignKey')(to=orm['maps.Map'], null=True, blank=True)),
         ))
         db.send_create_signal(u'maps', ['MapLayerUserRememberedParams'])
 
@@ -208,6 +209,7 @@ class Migration(SchemaMigration):
         u'maps.maplayeruserrememberedparams': {
             'Meta': {'object_name': 'MapLayerUserRememberedParams'},
             u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
+            'map': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['maps.Map']", 'null': 'True', 'blank': 'True'}),
             'maplayer': ('django.db.models.fields.related.ForeignKey', [], {'related_name': "'user_saved_params_set'", 'to': u"orm['maps.MapLayer']"}),
             'user': ('django.db.models.fields.related.ForeignKey', [], {'related_name': "'map_layer_saved_params_set'", 'to': u"orm['auth.User']"}),
             'values': ('jsonfield.fields.JSONField', [], {'null': 'True', 'blank': 'True'})
