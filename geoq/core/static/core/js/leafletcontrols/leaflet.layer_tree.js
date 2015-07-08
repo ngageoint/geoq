@@ -1299,8 +1299,6 @@ leaflet_layer_control.setDynamicParam = function(layer, param, setting, noRefres
             param: param,
             newValue: setting
         })
-    }).done(function(res){
-        if (console) console.log(res);
     }).fail(function(x, status, err) {
         if (console) console.log(status);
     });

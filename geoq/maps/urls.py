@@ -99,5 +99,5 @@ urlpatterns = patterns('',
         login_required(update_user_maplayer_param), name="update-user-maplayer-param"),
 
     # other urls
-    url(r'^api/map-layers[s ]?/create/create-kml-layer', KMZLayerImport.as_view(), name='create-kml-layer')
+    url(r'^api/map-layers[s ]?/create/create-kml-layer', KMZLayerImport.as_view(), name='create-kml-layer'),
 )
