@@ -158,6 +158,10 @@ STATIC_URL_FOLDER = ''
 STATIC_ROOT = '{0}{1}'.format('', STATIC_URL_FOLDER)
 EOF
 
-# Run using "paver start_django"
-# Login w/ admin/admin
+```
+
+All that's left is to create a super user account => `python manage.py createsuperuser` and then you're ready to start GEOQ!
+
+```bash
+paver start_django
 ```
