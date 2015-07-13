@@ -551,7 +551,6 @@ create_aois.somethingWasDrawn = function (e) {
             var data = {"type": "FeatureCollection", "features": geoJSON};
             create_aois.last_polygon_workcells = create_aois.createWorkCellsFromService(data, false, true);
 
-            $('#poly_split_button').attr('disabled', false);
             create_aois.splitWorkcell();
         } else {
             //Using USNG or MGRS
