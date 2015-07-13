@@ -14,6 +14,7 @@ from django.core.urlresolvers import reverse
 from jsonfield import JSONField
 from datetime import datetime
 from geoq.core.utils import clean_dumps
+from denorm import denormalized, depend_on_related
 
 import sys
 
@@ -221,6 +222,7 @@ class Map(models.Model):
         def layer_json(map_layer):
             return {
                 "id": map_layer.layer.id,
+                "maplayer_id": map_layer.id,
                 "name": map_layer.layer.name,
                 "format": map_layer.layer.image_format,
                 "type": map_layer.layer.type,
@@ -300,6 +302,19 @@ class MapLayer(models.Model):
     def __unicode__(self):
         return 'Layer {0}: {1}'.format(self.stack_order, self.layer)
 
+class MapLayerUserRememberedParams(models.Model):
+    """
+    Remembers the last options selected for a MapLayer with dynamic feed params.
+    """
+
+    maplayer = models.ForeignKey(MapLayer, related_name="user_saved_params_set")
+    user = models.ForeignKey(User, related_name="map_layer_saved_params_set")
+    values = JSONField(null=True, blank=True, help_text='URL Variables that may be modified by the analyst. ex: "date"')
+
+    @denormalized(models.ForeignKey, to=Map)
+    @depend_on_related(MapLayer)
+    def map(self):
+        return self.maplayer.map.pk
 
 class Feature(models.Model):
     """

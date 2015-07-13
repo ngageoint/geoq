@@ -47,6 +47,11 @@ leaflet_helper.layer_conversion = function (lyr, map) {
     };
 
     var layerParams = lyr.layerParams || {};
+
+    // Add in user saved parameters
+    var layerUserParams = aoi_feature_edit.aoi_user_remembered_params[lyr.maplayer_id];
+    $.extend(layerParams, layerUserParams); 
+
     var layerOptions;
     var outputLayer = undefined;
 
