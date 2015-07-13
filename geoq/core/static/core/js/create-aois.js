@@ -24,7 +24,7 @@ create_aois.data_fields = [];
 create_aois.highlightMode = 'delete';
 
 
-function mapInit(map) {
+/*function mapInit(map) {
     //Auto-called after leaflet map is initialized
     create_aois.map_object = map;
 
@@ -52,7 +52,7 @@ function mapInit(map) {
     $('div.leaflet-right div.leaflet-draw.leaflet-control').find('a').popover({trigger: "hover", placement: "left"});
 
     create_aois.map_updates();
-}
+}*/
 
 create_aois.init = function () {
     var $usng = $('#option_usng').click(function () {
@@ -87,6 +87,7 @@ create_aois.init = function () {
     });
     $('#option_polygon').click(function () {
         create_aois.draw_method = 'polygon';
+        create_aois.get_grids_url = '/geoq/api/geo/usng';
         $('#poly_split_holder').css('display', 'inline-block');
         $('#file_uploader_holder').hide();
         $('a.leaflet-draw-draw-polygon').show();
@@ -96,6 +97,7 @@ create_aois.init = function () {
 
     $('#option_shapefile').click(function () {
         create_aois.draw_method = 'polygon';
+        create_aois.get_grids_url = '/geoq/api/geo/usng';
         $('#file_uploader_holder').css('display', 'inline-block');
         $('a.leaflet-draw-draw-polygon').hide();
         $('a.leaflet-draw-draw-rectangle').hide();
@@ -296,7 +298,7 @@ create_aois.removeFeatures = function (e) {
 };
 
 create_aois.map_updates = function () {
-    var layers = _.filter(map_layers.layers, function (l) {
+    var layers = _.filter(map.layers, function (l) {
         return l.type == "WMS" || l.type == "KML";
     });
 
