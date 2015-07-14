@@ -53,13 +53,13 @@ The ``geoq/settings.py`` file contains installation-specific settings. The Datab
 
 ### GeoQ Installation ###
 
-Cloud Installation::
+**Cloud Installation::**
 
 1. You can optionally deploy GeoQ with all dependencies to a Virtual Machine or a cloud VM (such as an Amazon Web Services EC2 box) by using the chef installer at [https://github.com/ngageoint/geoq-chef-installer](https://github.com/ngageoint/geoq-chef-installer)
 
 2. Chef scripts are our preferred method of automating cloud builds
 
-Mac OSX Development Build Instructions::
+**Mac OSX Development Build Instructions::**
 
 1. Install PostGIS 2.0 using instructions at [https://docs.djangoproject.com/en/dev/ref/contrib/gis/install/#macosx](https://docs.djangoproject.com/en/dev/ref/contrib/gis/install/#macosx). There are several options there, but for most, the easiest option is to follow the Homebrew instructions. If you don't have Homebrew installed, you can either buid it securely yourself or follow the quick (yet not secure) one line instruction at [http://brew.sh](http://brew.sh).
 
@@ -121,4 +121,47 @@ Mac OSX Development Build Instructions::
 9. Start it up!
 
         % paver start_django
-        
+
+**CentOS Development build instructions (tested on CentOS 6.6)::**
+
+*Dependencies*
+
+* Python 2.6+
+* Postgres 9.X (stock pg_hba.conf configuration)
+* virtualenv
+* node / npm
+
+From a shell:
+
+```bash
+virtualenv ~/geoq
+cd ~/geoq
+source bin/activate
+git clone https://github.com/ngageoint/geoq.git
+cd geoq
+sudo -u postgres psql << EOF
+create role geoq login password 'geoq';
+create database geoq with owner geoq;
+\c geoq
+create extension postgis;
+create extension postgis_topology;
+EOF
+
+pip install paver
+paver install_dependencies
+paver sync
+paver install_dev_fixtures
+
+npm install -g less
+cat << EOF > geoq/local_settings.py
+STATIC_URL_FOLDER = ''
+STATIC_ROOT = '{0}{1}'.format('', STATIC_URL_FOLDER)
+EOF
+
+```
+
+All that's left is to create a super user account => `python manage.py createsuperuser` and then you're ready to start GEOQ!
+
+```bash
+paver start_django
+```
