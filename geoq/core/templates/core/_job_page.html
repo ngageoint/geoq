@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html>
+<head lang="en">
+    <meta charset="UTF-8">
+    <title></title>
+</head>
+<body>
+<ul class="statlist pull-right">
+    <li>
+       <div class="btn-group">
+            <a class="btn btn-mini" >
+                <b> Assignees </b>
+            </a>
+            <button class="btn btn-mini dropdown-toggle" data-toggle="dropdown">
+                <span class="caret"></span>
+            </button>
+
+
+            <ul class="dropdown-menu" id="assignee-list-dropdown">
+                {% if dict|length == 0 %}
+                    <li> <a> There are no assignees on this job. </a> </li>
+                {% endif %}
+                {% for k, v in dict.items %}
+                    <li class="assignee-item"">
+                        {{k}} ({{v}})
+                    </li>
+
+                {% endfor %}
+            </ul>
+        </div>
+   </li>
+    <li title = "Total Assignees">
+        <i class="icon-wrench"></i>
+        {{ dict|length }}
+    </li>
+    <li title="Contributors">
+        <i class="icon-user"></i>
+        {{ object.user_count|default:0 }}
+    </li>
+    <li title="Work Cells">
+        <i class="icon-th"></i>
+        {{ object.aoi_count|default:0 }}
+    </li>
+    <li title="This job is {{ object.active }}">
+        <i class="icon-check"></i>
+        {% if object.active %}
+            <span style="color:green">Active</span>
+        {% else %}
+            <span style="color:red">Archived</span>
+        {% endif %}
+    </li>
+</ul>
+<ul class="statlist pull-right" style="clear:right">
+    <li>{{ object.aoi_counts_html|safe }}</li>
+</ul>
+<ul class="statlist pull-right" style="clear:right; width:20%;">
+    <li style="padding:0">
+        <div class="progress progress-bar-striped" style="margin-bottom: 0px; width:auto;">
+            <div class="bar" role="progressbar"
+                 aria-valuenow="{{ object.complete_percent }}"
+                 aria-valuemin="0"
+                 aria-valuemax="100"
+                 style="width:{{ object.complete_percent }}%; color: white; text-shadow: black 0.1em 0.1em 0.2em;">
+            {{ object.complete_percent }}%
+            </div>
+        </div>
+    </li>
+</ul>
+</body>
+</html>
