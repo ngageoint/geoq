@@ -53,13 +53,13 @@ The ``geoq/settings.py`` file contains installation-specific settings. The Datab
 
 ### GeoQ Installation ###
 
-Cloud Installation::
+**Cloud Installation::**
 
 1. You can optionally deploy GeoQ with all dependencies to a Virtual Machine or a cloud VM (such as an Amazon Web Services EC2 box) by using the chef installer at [https://github.com/ngageoint/geoq-chef-installer](https://github.com/ngageoint/geoq-chef-installer)
 
 2. Chef scripts are our preferred method of automating cloud builds
 
-Mac OSX Development Build Instructions::
+**Mac OSX Development Build Instructions::**
 
 1. Install PostGIS 2.0 using instructions at [https://docs.djangoproject.com/en/dev/ref/contrib/gis/install/#macosx](https://docs.djangoproject.com/en/dev/ref/contrib/gis/install/#macosx). There are several options there, but for most, the easiest option is to follow the Homebrew instructions. If you don't have Homebrew installed, you can either buid it securely yourself or follow the quick (yet not secure) one line instruction at [http://brew.sh](http://brew.sh).
 
@@ -122,135 +122,46 @@ Mac OSX Development Build Instructions::
 
         % paver start_django
         
+**CentOS Development build instructions (tested on CentOS 6.6)::**
 
-Centos 6.6 Development Build Instructions:
+*Dependencies*
 
-  Note:
+* Python 2.6+
+* Postgres 9.X (stock pg_hba.conf configuration)
+* virtualenv
+* node / npm
 
-  If you're installing this behind a proxy you will need to configure a few things.
-  Open /etc/yum.conf and add 'proxy=http://myproxy'
+From a shell:
 
-	$ export http_proxy=http://myproxy
-        # All non-yum installation commands will require the sudo -E flag
+```bash
+virtualenv ~/geoq
+cd ~/geoq
+source bin/activate
+git clone https://github.com/ngageoint/geoq.git
+cd geoq
+sudo -u postgres psql << EOF
+create role geoq login password 'geoq';
+create database geoq with owner geoq;
+\c geoq
+create extension postgis;
+create extension postgis_topology;
+EOF
 
-0. Add Repos to yum
+pip install paver
+paver install_dependencies
+paver sync
+paver install_dev_fixtures
 
-        $ sudo yum install epel-release
-        $ sudo -E rpm -Uvh http://yum.postgresql.org/9.4/redhat/rhel-6-x86_64/pgdg-redhat94-9.4-1.noarch.rpm
+npm install -g less
+cat << EOF > geoq/local_settings.py
+STATIC_URL_FOLDER = ''
+STATIC_ROOT = '{0}{1}'.format('', STATIC_URL_FOLDER)
+EOF
 
-1. Ensure you have at least Postgresql 9.x, if not uninstall it first, then install 9.x
+```
 
-        $ psql --version
-        $ sudo yum erase postgresql
-        $ sudo yum install postgresql94 postgresql94-server postgresql94-devel
-        $ psql --version # This should be 9.x now
+All that's left is to create a super user account => `python manage.py createsuperuser` and then you're ready to start GEOQ!
 
-	If your version of Postgresql is NOT 9.4, try adding the Postgresql to your $PATH
-
-        $ export PATH=/usr/pgsql-9.4/bin:$PATH
-        $ psql --version # This should ABSOLUTELY be 9.x now
-
-2. Install Postgis-2.x, check yum for packages to match your version of Postgresql
-
-  Example: Postgresql-9.4
-
-        # This will install all postgis dependencies
-        $ sudo yum install postgis2_94
-        $ sudo yum install postgis2_94-client
-
-3. Install Pip and Virtualenv
-        
-        $ python --version	# ensure python is installed (version 2.6.6 will work)
-        $ sudo yum install -y python-pip
-        $ sudo yum install python-devel
-
-        # if you're behind a proxy
-        $ export https_proxy=https://myprox
-        
-        $ sudo -E pip install virtualenv
-
-4. Initialize Postgresql
-
-        $ sudo service postgresql-9.4 initdb
-        $ sudo service postgresql-9.4 start
-
-        # Now you have edit a Postgresql config file
-        $ su
-        $ emacs /var/lib/pgsql/9.4/data/pg_hba.conf
-        # emacs > vi
-
-        # Change the METHOD column to trust
-        # Example:
-        # local   all     all                      trust
-        # host    all     all     127.0.0.1/32     trust
-        # host    all     all     ::1/128          trust
-
-        $ exit
-        $ sudo service postgresql-9.4 restart
-
-5. Environment Setup
-
-        $ mkdir -p ~/pyenv
-        $ git clone https://github.com/ngageoint/geoq
-        $ virtualenv --no-site-packages ~/pyenv/geoq
-        $ source ~/pyenv/geoq/bin/activate
-
-6. Installing and Using Paver
-
-        $ cd geoq
-        $ pip install paver
-        $ paver install_dependencies
-        # see common errors below
-        $ paver createdb
-        $ paver create_db_user
-        $ paver sync
-        
-	Common Error: "python setup.py egg_info failed" The problem is the pg_config file cannot be found
-	To solve add Postgresql to your $PATH (if you haven't already)
-	
-		$ export PATH=/usr/pgsql-9.4/bin:$PATH
-         
-	Common Error: 'ROLE username does not exist'
-	To solve this you have to log in as postgresql (the default user)
-	
-		$ export PGUSER=postgresql
-	
-	or add your username as a ROLE:
-
-	$ psql -U postgres # open postgres prompt (postgres is the default user)
-	postgres=# CREATE ROLE username WITH SUPERUSER;
-	postgres=# ALTER ROLE username WITH LOGIN;
-	postgres=# \q
-
-
-7. Modify local settings (modify entries below based on your system settings):
-
-        % cd geoq
-        % cat > local_settings.py
-        
-          EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
-          EMAIL_PORT = 25
-          EMAIL_HOST = "localhost"
-          DEFAULT_FROM_EMAIL = "geoq-alerts@server.com"
-          MEDIA_ROOT = '/opt/src/pyenv/geoq/geoq-django'
-          STATIC_URL_FOLDER = ''
-          STATIC_ROOT = '{0}{1}'.format('/usr/src/static/', STATIC_URL_FOLDER)
-          GAMIFICATION_SERVER = ''
-          GAMIFICATION_PROJECT = ''
-          GEOSERVER_WFS_JOB_LAYER = ''
-
-
-8. Installing Final Dependencies
-
-        $ sudo yum install nodejs-less
-        $ sudo -E easy_install BeautifulSoup
-
-9. Run Server
-
-        $ sudo mkdir /var/www
-        $ sudo mkdir /var/www/static
-        $ sudo chown username static
-        $ python manage.py collectstatic
-
-        $ paver start_django 
-        # point browser to localhost:8000
+```bash
+paver start_django
+```

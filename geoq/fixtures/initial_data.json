@@ -1540,7 +1540,7 @@
         "user_permissions": [
 
         ], 
-        "password": "pbkdf2_sha256$10000$sAQ1D0P8lLOR$P2NYGVruL9P+BZiYvzbWwVAyAtBb2WzJMGppFa8Y98k=", 
+        "password": "pbkdf2_sha256$10000$1xIM69wJ2DIE$7P66WGhzjLhkHDcFaHmP+vDkLz6KxRh712h96IPjso0=", 
         "email": "admin@example.com", 
         "date_joined": "2013-07-23T13:44:15Z"
     }

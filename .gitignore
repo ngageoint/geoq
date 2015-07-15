@@ -14,3 +14,4 @@ dev-geoq-django
 dev-geoq-django/*
 *.DS_Store
 *.swp
+*~
