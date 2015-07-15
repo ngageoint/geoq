@@ -7,7 +7,7 @@ from django.conf.urls import patterns, url
 from django.views.generic import CreateView, UpdateView, ListView
 from forms import FeatureTypeForm, MapForm, LayerForm, MapLayerForm
 from views import CreateFeatures, EditFeatures, create_update_map, FeatureTypeListView, FeatureTypeDelete, MapListView,\
- MapDelete, LayerListView, LayerDelete, LayerImport, KMZLayerImport
+ MapDelete, LayerListView, LayerDelete, LayerImport, KMZLayerImport, update_user_maplayer_param
 from models import FeatureType, Map, Layer
 
 urlpatterns = patterns('',
@@ -92,6 +92,11 @@ urlpatterns = patterns('',
                            queryset=MapLayerForm.Meta.model.objects.all(),
                            form_class=MapLayerForm)),
         name='map-layer-update'),
+
+    # maplayeruserparams
+
+    url(r'^api/map-layers-params/?$',
+        login_required(update_user_maplayer_param), name="update-user-maplayer-param"),
 
     # other urls
     url(r'^api/map-layers[s ]?/create/create-kml-layer', KMZLayerImport.as_view(), name='create-kml-layer'),
