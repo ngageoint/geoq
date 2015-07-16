@@ -117,20 +117,63 @@
                 var status = _.find(status_colors,function(stat){return stat.name==feature.properties.status});
                 return (status && status.color) ? status.color : '#ffffff';
             },
-            onEachFeature: function(feature, layer) {
+            onEachFeature: function (feature, layer) {
+                var popupContent = "";
+                if (!feature.properties) {
+                    feature.properties = {};
+                }
+                if (_.isString(feature.properties.properties)) {
+                    try {
+                        var newProps = JSON.parse(feature.properties.properties);
+                        feature.properties = $.extend(feature.properties, newProps);
+                        delete(feature.properties.properties);
+                    } catch (ex) {
+                    }
+                }
+                feature.priority = feature.properties.priority = parseInt(feature.properties.priority) || create_aois.priority_to_use;
+                for (var k in feature.properties) {
+                    if (k != "priority") {
+                        popupContent += "<b>" + k + ":</b> " + feature.properties[k] + "<br/>";
 
-                job_properties = feature.properties;
-                {% if user.is_authenticated %}
-                var popupContent = _.template('{% filter escapejs %}{% include "core/job_detail_aoi_popup.html" %}{% endfilter %}', job_properties);
-                layer.bindPopup(popupContent);
-                {% endif %}
+                        //Add fields to search if they are numeric
+                        for (var key in feature.properties) {
+                            if ($.isNumeric(feature.properties[key])) {
+                                create_aois.data_fields_obj[key] = true;
+                            }
+                        }
+                    }
+                }
+
+                //Add Size information
+                if (layer.getBounds) {
+                    var bounds = layer.getBounds();
+                    bounds._northWest = new L.LatLng(bounds._northEast.lat, bounds._southWest.lng);
+                    var width_m = bounds._northEast.distanceTo(bounds._northWest);
+                    var height_m = bounds._southWest.distanceTo(bounds._northWest);
+                    popupContent += "<b>Width:</b>: " + L.GeometryUtil.readableDistance(width_m, true) + "<br/>";
+                    popupContent += "<b>Height:</b>: " + L.GeometryUtil.readableDistance(height_m, true) + "<br/>";
+                    try {
+                        var area = L.GeometryUtil.geodesicArea(layer.getLatLngs()[0]);
+                        if (area > 990) {
+                            area = area / 1000;
+                            popupContent += "<b>Area:</b>: " + L.GeometryUtil.readableDistance(area, true) + " sq<br/>";
+                        }
+                    } catch (ex) {
+                    }
+                }
+                layer.popupContent = popupContent;
 
                 layer.on({
                     mouseover: highlightFeature,
-                    mouseout: resetHighlight
+                    mouseout: resetHighlight,
+                    click: create_aois.splitOrRemove
                 });
             }
-        }).addTo(map);
+        });
+    if (aoi_extents) {
+        create_aois.aois.addLayer(aoi_extents);
+        create_aois.map_object.addLayer(create_aois.aois);
+    }
 
         // Map doesn't update without this delay.
         setTimeout(function(){
@@ -143,8 +186,8 @@
             }
         }, 1);
 
-        create_aois.drawnItems = new L.FeatureGroup();
-        map.addLayer(create_aois.drawnItems);
+        //create_aois.drawnItems = new L.FeatureGroup();
+        //map.addLayer(create_aois.drawnItems);
 
         map.on('zoomend', create_aois.mapWasZoomed);
         map.on('draw:created', create_aois.somethingWasDrawn);
@@ -248,7 +291,8 @@
         </select>
         <span id="poly_split_n_cells">approximately <input type="text" id="split_number" value="4" /> cells</span>
         <span id="poly_split_n_sized_cells" style="display: none;"><input type="text" id="split_sized" value="5000" />-sq-meter cells</span>
-        <button id="poly_split_button" class="btn btn-success" disabled="true">Split</button>
+        <button id="poly_split_button" class="btn btn-success" onclick="create_aois.removeOrSplit = false;">Split</button>
+        <button id="workcell_remove_button" class="btn btn-success" onclick="create_aois.removeOrSplit = true;">Remove</button>
     </div>
     <div style="display:none" id="file_uploader_holder">
         <div id="file_holder">Drag shapefile here</div>
