@@ -13,13 +13,14 @@ from django.http import HttpResponse, HttpResponseRedirect, Http404
 from django.shortcuts import render_to_response
 from django.template import RequestContext
 from django.views.generic import ListView, View, DeleteView
+from django.views.decorators.http import require_http_methods
 
 from forms import MapForm, MapInlineFormset, UploadKMZForm
 
 from geoq.core.models import AOI
 from geoq.locations.models import Counties
 
-from models import Feature, FeatureType, Map, Layer, GeoeventsSource
+from models import Feature, FeatureType, Map, Layer, MapLayerUserRememberedParams, MapLayer, GeoeventsSource
 from kmz_handler import save_kmz_file
 
 import logging
@@ -124,6 +125,33 @@ class EditFeatures(View):
 
         return HttpResponse("{}", mimetype="application/json")
 
+@login_required
+@require_http_methods(["POST"])
+def update_user_maplayer_param(request, *args, **kwargs):
+    user = request.user
+
+    try:
+        json_stuff = json.loads(request.body)
+    except ValueError:
+        return HttpResponse("{\"status\":\"Bad Request\"}", mimetype="application/json", status=400)
+
+    mlq = MapLayer.objects.filter(id=json_stuff['maplayer'])
+
+    if not mlq.exists():
+        return HttpResponse("{\"status:\":\"Bad Request\", \"reason\":\"MapLayer does not exist\"}", status=400)
+    else:
+        ml = mlq.get()
+        mlurpq = MapLayerUserRememberedParams.objects.filter(maplayer=ml, user=user)
+        if mlurpq.exists():
+            mlurp = mlurpq.get()
+        else:
+            mlurp = MapLayerUserRememberedParams(maplayer=ml, user=user, values={})
+
+        mlurp.values[json_stuff['param']] = json_stuff['newValue']
+
+        mlurp.save()
+
+    return HttpResponse(json.dumps(mlurp.values), mimetype="application/json", status=200)
 
 def feature_delete(request, pk):
     try:

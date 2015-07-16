@@ -1014,7 +1014,7 @@ leaflet_layer_control.parsers.dynamic_param_parsers.Number = function(layer, par
         if (param.range) {
             rangeFun = leaflet_layer_control.parsers.dynamic_param_ranges[param.range.type];
             if (rangeFun) rangeFun(input, param.range, function() {
-                if (input.min && input.max) { // Only create slider if we have a MIN and MAX
+                if (input.min && input.max) { // Only create slider if we have a MIN and max
                     new Slider(input, {
                         min: parseFloat(input.min),
                         max: parseFloat(input.max),
@@ -1287,6 +1287,21 @@ leaflet_layer_control.setDynamicParam = function(layer, param, setting, noRefres
     layer.config.layerParams[param] = setting;
 
     if (!noRefresh) leaflet_layer_control.refreshLayer(layer);
+    //debugger;
+
+    $.ajax({
+        url: aoi_feature_edit.api_url_user_param,
+        dataType:"json",
+        method:'POST',
+        contentType: "application/json; charset=utf-8",
+        data: JSON.stringify({
+            maplayer: layer.config.maplayer_id,
+            param: param,
+            newValue: setting
+        })
+    }).fail(function(x, status, err) {
+        if (console) console.log(status);
+    });
 };
 
 leaflet_layer_control.refreshLayer = function(layer) {

@@ -313,6 +313,9 @@ class CreateFeaturesView(UserAllowedMixin, DetailView):
 
 #TODO: Add Job specific layers, and add these here
 
+        cv['user_custom_params'] =\
+            json.dumps(dict((e['maplayer'], e['values']) for e in
+                            MapLayerUserRememberedParams.objects.filter(user=self.request.user, map=cv['map']).values('maplayer','values')))
         cv['layers_on_map'] = json.dumps(layers)
         cv['base_layer'] = json.dumps(self.object.job.base_layer_object())
 
