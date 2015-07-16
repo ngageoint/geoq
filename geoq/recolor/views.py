@@ -13,10 +13,7 @@ def tancolor_view(request):
     except IOError:
         image = Image.new('RGBA', (16, 16), (255, 0, 0, 255))
 
-    tinted_image = tint_image(image, {
-        'mode': request.GET.get('mode'),
-        'mode2': request.GET.get('mode2')
-    })
+    tinted_image = tint_image(image, request.GET.dict())
 
     res = HttpResponse(content_type="image/png")
     tinted_image.save(res, "PNG")

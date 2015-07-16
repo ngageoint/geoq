@@ -33,6 +33,11 @@ _default_options = {
 }
 
 def _process_options(options):
+    for num_keys in ['r_intensity', 'g_intensity', 'b_intensity', 'r_max', 'r_min', 'g_max', 'g_min', 'b_max', 'b_min',
+                     'r2_intensity', 'g2_intensity', 'b2_intensity', 'r2_max', 'r2_min', 'g2_max', 'g2_min', 'b2_max', 'b2_min',
+                     'blend_weight', 'r_weight', 'b_weight']:
+        if options.get(num_keys) is not None: options[num_keys] = float(options.get(num_keys))
+
     opts = _default_options.copy()
     opts.update(options)
 
