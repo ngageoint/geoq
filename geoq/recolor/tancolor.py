@@ -35,8 +35,9 @@ _default_options = {
 def _process_options(options):
     for num_keys in ['r_intensity', 'g_intensity', 'b_intensity', 'r_max', 'r_min', 'g_max', 'g_min', 'b_max', 'b_min',
                      'r2_intensity', 'g2_intensity', 'b2_intensity', 'r2_max', 'r2_min', 'g2_max', 'g2_min', 'b2_max', 'b2_min',
-                     'blend_weight', 'r_weight', 'b_weight']:
-        if options.get(num_keys) is not None: options[num_keys] = float(options.get(num_keys))
+                     'blend_weight', 'r_weight', 'b_weight', 'g_weight']:
+        if options.get(num_keys) is not None:
+            options[num_keys] = float(options.get(num_keys))
 
     opts = _default_options.copy()
     opts.update(options)
@@ -128,11 +129,11 @@ def blend_pixel(pixel, opts):
     g = pixel[1]
     b = pixel[2]
 
-    if (r>=opts['r_min'] and r<=opts['r_max']) and (g>=opts['g_min'] and g<=opts['g_max']) and (b>=opts['b_min'] and b<=opts['b_max']):
-        pixel = _do_blend(r,g,b,pixel[3], 1, opts['blend_weight'], opts['r_intensity'], opts['g_intensity'],opts['b_intensity'])
+    if (opts['r_min'] <= r <= opts['r_max']) and (opts['g_min'] <= g <= opts['g_max']) and (opts['b_min'] <= b <= opts['b_max']):
+        pixel = _do_blend(r, g, b, pixel[3], 1, opts['blend_weight'], opts['r_intensity'], opts['g_intensity'], opts['b_intensity'])
 
-    if (r>=opts['r2_min'] and r<=opts['r2_max']) and (g>=opts['g2_min'] and g<=opts['g2_max']) and (b>=opts['b2_min'] and b<=opts['b2_max']):
-        pixel = _do_blend(r,g,b,pixel[3], 1, opts['blend_weight'], opts['r2_intensity'], opts['g2_intensity'],opts['b2_intensity'])
+    if (opts['r2_min'] <= r <= opts['r2_max']) and (opts['g2_min'] <= g <= opts['g2_max']) and (opts['b2_min'] <= b <= opts['b2_max']):
+        pixel = _do_blend(r, g, b, pixel[3], 1, opts['blend_weight'], opts['r2_intensity'], opts['g2_intensity'], opts['b2_intensity'])
 
     return pixel
 
@@ -144,10 +145,10 @@ def replace_pixel(pixel, opts):
     g = pixel[1]
     b = pixel[2]
 
-    if (r>=opts['r_min'] and r<=opts['r_max']) and (g>=opts['g_min'] and g<=opts['g_max']) and (b>=opts['b_min'] and b<=opts['b_max']):
+    if (opts['r_min'] <= r <= opts['r_max']) and (opts['g_min'] <= g <= opts['g_max']) and (opts['b_min'] <= b <= opts['b_max']):
         pixel = round(opts['r_intensity']), round(opts['g_intensity']), round(opts['b_intensity']), pixel[3]
 
-    if (r>=opts['r2_min'] and r<=opts['r2_max']) and (g>=opts['g2_min'] and g<=opts['g2_max']) and (b>=opts['b2_min'] and b<=opts['b2_max']):
+    if (opts['r2_min'] <= r <= opts['r2_max']) and (opts['g2_min'] <= g <= opts['g2_max']) and (opts['b2_min'] <= b <= opts['b2_max']):
         pixel = round(opts['r2_intensity']), round(opts['g2_intensity']), round(opts['b2_intensity']), pixel[3]
 
     return pixel
