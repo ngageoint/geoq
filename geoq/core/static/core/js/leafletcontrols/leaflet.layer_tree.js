@@ -903,7 +903,7 @@ leaflet_layer_control.parsers.opacityControls = function(layer) {
  * HTML renderer for dynamic parameters controls in the side bar.
  */
 leaflet_layer_control.parsers.dynamicParamsControls = function(layer) {
-    if (!layer || !layer.config.dynamicParams) {
+    if (!layer || !layer.config || !layer.config.dynamicParams) {
         return undefined;
     }
 
