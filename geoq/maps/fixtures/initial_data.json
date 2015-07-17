@@ -269,7 +269,7 @@
         "analyst": 1,
         "project": 1,
         "job": 3,
-        "template": 1,
+        "template": 5,
         "the_geom": "POINT (-79.7903108596801616 34.1948009832628870)",
         "properties": null
     }
@@ -284,7 +284,7 @@
         "analyst": 1,
         "project": 1,
         "job": 3,
-        "template": 1,
+        "template": 5,
         "the_geom": "POINT (-79.7929716110229492 34.1949429696883342)",
         "properties": null
     }
@@ -299,7 +299,7 @@
         "analyst": 1,
         "project": 1,
         "job": 3,
-        "template": 1,
+        "template": 5,
         "the_geom": "POINT (-79.7891092300415039 34.1966822839969140)",
         "properties": null
     }
