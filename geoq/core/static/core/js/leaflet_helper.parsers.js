@@ -497,8 +497,12 @@ leaflet_helper.update_tree_title = function(outputLayer) {
 };
 
 leaflet_helper.parsers = {};
-leaflet_helper.parsers.basicJson = function (geojson, map, outputLayer) {
+leaflet_helper.parsers.basicJson = function (geojson, map, outputLayer, keepOld) {
     if (outputLayer) {
+        if (!keepOld) {
+            outputLayer.options.items = [];
+            outputLayer.clearLayers();
+        }
         outputLayer.options.onEachFeature = function(feature, layer) {
             leaflet_helper.parsers.standard_onEachFeature(feature, layer, outputLayer);
         };
