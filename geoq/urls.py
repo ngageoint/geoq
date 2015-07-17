@@ -19,7 +19,7 @@ urlpatterns = patterns('',
     url(r'^accounts/', include('geoq.accounts.urls')),
     url(r'^proxy/', include('geoq.proxy.urls', namespace="proxy")),
     url(r'^training/', include('geoq.training.urls', namespace="training")),
-
+    url(r'^recolor/', include('geoq.recolor.urls')),
     url(r'^messages/', include('userena.contrib.umessages.urls'), name='userena_messages'),
 
 ) + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
