@@ -497,13 +497,17 @@ leaflet_helper.update_tree_title = function(outputLayer) {
 };
 
 leaflet_helper.parsers = {};
-leaflet_helper.parsers.basicJson = function (geojson, map, outputLayer) {
+leaflet_helper.parsers.basicJson = function (geojson, map, outputLayer, keepOld) {
     if (outputLayer) {
+        if (!keepOld) {
+            outputLayer.options.items = [];
+            outputLayer.clearLayers();
+        }
         outputLayer.options.onEachFeature = function(feature, layer) {
             leaflet_helper.parsers.standard_onEachFeature(feature, layer, outputLayer);
         };
         outputLayer.options.pointToLayer = function(feature, latlng) {
-            leaflet_helper.constructors.iconBuilderCallback(feature, latlng, outputLayer);
+            return leaflet_helper.constructors.iconBuilderCallback(feature, latlng, outputLayer);
         };
 
         outputLayer.addData(geojson);
@@ -514,7 +518,7 @@ leaflet_helper.parsers.basicJson = function (geojson, map, outputLayer) {
             },
             style: leaflet_helper.constructors.polygonStyleBuilderCallback,
             pointToLayer: function(feature, latlng) {
-                leaflet_helper.constructors.iconBuilderCallback(feature, latlng, outputLayer);
+                return leaflet_helper.constructors.iconBuilderCallback(feature, latlng, outputLayer);
             }
         }).addTo(map);
     }
