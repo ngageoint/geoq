@@ -432,7 +432,7 @@ leaflet_helper.constructors.geojson_success = function (data, proxiedURL, map, o
     if (outputLayer && !outputLayer.options) {
         outputLayer.options = {};
     }
-    outputLayer.options.opacity = 1;
+    if (!outputLayer.options.opacity) leaflet_layer_control.setLayerOpacity(outputLayer, 1);
 
     return outputLayer;
 };
@@ -533,8 +533,12 @@ leaflet_helper.parsers.basicJson = function (geojson, map, outputLayer, keepOld)
 
     return outputLayer;
 };
-leaflet_helper.parsers.fulcrum_exported_json = function (geojson, map, outputLayer) {
+leaflet_helper.parsers.fulcrum_exported_json = function (geojson, map, outputLayer, keepOld) {
     if (outputLayer) {
+        if (!keepOld) {
+            outputLayer.options.items = [];
+            outputLayer.clearLayers();
+        }
         outputLayer.options.onEachFeature = function(feature, layer) {
             aoi_feature_edit.fulcrumfeatureLayer_onEachFeature(feature, layer, outputLayer, true);
         };
@@ -564,8 +568,12 @@ leaflet_helper.parsers.fulcrum_exported_json = function (geojson, map, outputLay
 
     return outputLayer;
 };
-leaflet_helper.parsers.geoq_exported_json = function (geojson, map, outputLayer) {
+leaflet_helper.parsers.geoq_exported_json = function (geojson, map, outputLayer, keepOld) {
     if (outputLayer) {
+        if (!keepOld) {
+            outputLayer.options.items = [];
+            outputLayer.clearLayers();
+        }
         outputLayer.options.onEachFeature = function(feature, layer) {
             aoi_feature_edit.featureLayer_onEachFeature(feature, layer, outputLayer, true);
         };
@@ -599,12 +607,16 @@ leaflet_helper.parsers.geoq_exported_json = function (geojson, map, outputLayer)
     if (outputLayer && !outputLayer.options) {
         outputLayer.options = {};
     }
-    outputLayer.options.opacity = outputLayer.options.opacity || 1;
+    if (!outputLayer.options.opacity) leaflet_layer_control.setLayerOpacity(outputLayer, 1);
 
     return outputLayer;
 };
-leaflet_helper.parsers.leaflet_geojson = function (geojson, map, outputLayer) {
+leaflet_helper.parsers.leaflet_geojson = function (geojson, map, outputLayer, keepOld) {
     if (outputLayer) {
+        if (!keepOld) {
+            outputLayer.options.items = [];
+            outputLayer.clearLayers();
+        }
         outputLayer.options.onEachFeature = function(feature, layer) {
             aoi_feature_edit.featureLayer_onEachFeature(feature, layer, outputLayer, true);
         };
@@ -665,7 +677,7 @@ leaflet_helper.parsers.leaflet_geojson = function (geojson, map, outputLayer) {
     if (outputLayer && !outputLayer.options) {
         outputLayer.options = {};
     }
-    outputLayer.options.opacity = outputLayer.options.opacity || 1;
+    if (!outputLayer.options.opacity) leaflet_layer_control.setLayerOpacity(outputLayer, 1);
 
     return outputLayer;
 };
