@@ -503,7 +503,7 @@ leaflet_helper.parsers.basicJson = function (geojson, map, outputLayer) {
             leaflet_helper.parsers.standard_onEachFeature(feature, layer, outputLayer);
         };
         outputLayer.options.pointToLayer = function(feature, latlng) {
-            leaflet_helper.constructors.iconBuilderCallback(feature, latlng, outputLayer);
+            return leaflet_helper.constructors.iconBuilderCallback(feature, latlng, outputLayer);
         };
 
         outputLayer.addData(geojson);
@@ -514,7 +514,7 @@ leaflet_helper.parsers.basicJson = function (geojson, map, outputLayer) {
             },
             style: leaflet_helper.constructors.polygonStyleBuilderCallback,
             pointToLayer: function(feature, latlng) {
-                leaflet_helper.constructors.iconBuilderCallback(feature, latlng, outputLayer);
+                return leaflet_helper.constructors.iconBuilderCallback(feature, latlng, outputLayer);
             }
         }).addTo(map);
     }
