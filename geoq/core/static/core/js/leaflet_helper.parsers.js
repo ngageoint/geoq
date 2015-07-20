@@ -681,6 +681,21 @@ leaflet_helper.parsers.leaflet_geojson = function (geojson, map, outputLayer, ke
 
     return outputLayer;
 };
+
+leaflet_helper.generic_popup_content = function (properties) {
+    var popupContent = document.createElement('div');
+    for (var idx in properties) {
+        if (idx[0] === '_') continue;
+        var entry = document.createElement('div');
+        var label = document.createElement('b');
+        label.appendChild(document.createTextNode(idx+": "));
+        entry.appendChild(label);
+        entry.appendChild(document.createTextNode(properties[idx]));
+        popupContent.appendChild(entry);
+    }
+    return popupContent;
+}
+
 leaflet_helper.parsers.standard_onEachFeature = function (feature, layer, layerConfig) {
     if (feature.properties) {
         var popupContent = "";
@@ -692,19 +707,24 @@ leaflet_helper.parsers.standard_onEachFeature = function (feature, layer, layerC
                 var link = leaflet_helper.clean(feature.properties.link); //Strip out any offending
                 popupContent = "<a href='"+link+"' target='_blank'>"+popupContent+"</a>";
             }
+        } else {
+            popupContent = leaflet_helper.generic_popup_content(feature.properties);
         }
-        if (popupContent && _.isString(popupContent)) {
-
-            if (!popupContent.indexOf("<span class='hide feature-id-hint'>")){
-                if (layerConfig && layerConfig.name) {
-                    if (!feature.properties.id) {
-                        feature.properties.id = leaflet_helper.id_count++;
+        if (popupContent) {
+            if (_.isString(popupContent)) {
+                if (!popupContent.indexOf("<span class='hide feature-id-hint'>")){
+                    if (layerConfig && layerConfig.name) {
+                        if (!feature.properties.id) {
+                            feature.properties.id = leaflet_helper.id_count++;
+                        }
+                        var id = feature.properties.id;
+                        popupContent += leaflet_helper.addLinksToPopup(layerConfig.name, id, true, false);
                     }
-                    var id = feature.properties.id;
-                    popupContent += leaflet_helper.addLinksToPopup(layerConfig.name, id, true, false);
                 }
+                layer.bindPopup(popupContent);
+            } else if (_.isElement(popupContent)) {
+                layer.bindPopup(popupContent);
             }
-            layer.bindPopup(popupContent);
         }
         if (feature.properties.heading && parseInt(feature.properties.heading) && layer.options){
             layer.options.angle = parseInt(feature.properties.heading);
