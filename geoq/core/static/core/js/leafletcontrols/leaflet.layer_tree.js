@@ -1508,6 +1508,22 @@ leaflet_layer_control.drawEachLayer=function(data,map,doNotMoveToTop){
         if (layer_obj && layer_obj.data && _.toArray(layer_obj.data).length) {
             var layer = layer_obj.data;
 
+            if (layer.config && layer.config.type === "ESRI Dynamic Map Layer") {
+                // FIXME - The layer control seems to lose 
+                // references to ESRI Dynamic Map Layers
+                // This finds it again.
+                
+                if (layer._currentImage === undefined) {
+                    layer = _.find(_.flatten(aoi_feature_edit.layers),function(l){return l.name==layer.name});
+
+                    if (layer == null) {
+                        log.error("Lost reference to ESRI Dynamic Map Layer!");
+                    } else {
+                        layer_obj.data = layer; // Save the reference
+                    }
+                }
+            }
+
             aoi_feature_edit.map.removeLayer(layer);
         } else if (layer_obj.children && layer_obj.children.length) {
             //A category was clicked
