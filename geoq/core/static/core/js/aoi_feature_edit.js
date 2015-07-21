@@ -664,14 +664,14 @@ aoi_feature_edit.map_init = function (map, bounds) {
                 try {
                     aoi_feature_edit.watch_layer(built_layer, true);
                     aoi_feature_edit.map.addLayer(built_layer);
-                    var shownAmount = shouldBeShown ? built_layer.options.opacity || 0.8 : 0;
+                    var shownAmount = built_layer.options.opacity;
 
                     //TODO: Some layers are showing even when unchecked.  Find out why
 
                     built_layer.options.toShowOnLoad = shownAmount;
                     built_layer.options.setInitialOpacity = false;
 
-                    leaflet_layer_control.setLayerOpacity(built_layer, shownAmount, true);
+                    leaflet_layer_control.setLayerOpacity(built_layer, shownAmount, true); // FIXME - if i comment this out, everything is selected always
                 } catch (e) {
                     log.warn("Error trying to add layer: " + built_layer.name);
                 }

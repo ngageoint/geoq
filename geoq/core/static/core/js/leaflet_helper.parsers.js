@@ -432,7 +432,7 @@ leaflet_helper.constructors.geojson_success = function (data, proxiedURL, map, o
     if (outputLayer && !outputLayer.options) {
         outputLayer.options = {};
     }
-    if (!outputLayer.options.opacity) leaflet_layer_control.setLayerOpacity(outputLayer, 1);
+    //if (!outputLayer.options.opacity) leaflet_layer_control.setLayerOpacity(outputLayer, 1);
 
     return outputLayer;
 };
@@ -529,7 +529,7 @@ leaflet_helper.parsers.basicJson = function (geojson, map, outputLayer, keepOld)
     if (outputLayer && !outputLayer.options) {
         outputLayer.options = {};
     }
-    outputLayer.options.opacity = outputLayer.options.opacity || 1;
+    //outputLayer.options.opacity = outputLayer.options.opacity || 1;
 
     return outputLayer;
 };
@@ -564,7 +564,7 @@ leaflet_helper.parsers.fulcrum_exported_json = function (geojson, map, outputLay
     if (outputLayer && !outputLayer.options) {
         outputLayer.options = {};
     }
-    outputLayer.options.opacity = outputLayer.options.opacity || 1;
+    //outputLayer.options.opacity = outputLayer.options.opacity || 1;
 
     return outputLayer;
 };
@@ -607,7 +607,7 @@ leaflet_helper.parsers.geoq_exported_json = function (geojson, map, outputLayer,
     if (outputLayer && !outputLayer.options) {
         outputLayer.options = {};
     }
-    if (!outputLayer.options.opacity) leaflet_layer_control.setLayerOpacity(outputLayer, 1);
+    //if (!outputLayer.options.opacity) leaflet_layer_control.setLayerOpacity(outputLayer, 1);
 
     return outputLayer;
 };
@@ -677,7 +677,7 @@ leaflet_helper.parsers.leaflet_geojson = function (geojson, map, outputLayer, ke
     if (outputLayer && !outputLayer.options) {
         outputLayer.options = {};
     }
-    if (!outputLayer.options.opacity) leaflet_layer_control.setLayerOpacity(outputLayer, 1);
+    //if (!outputLayer.options.opacity) leaflet_layer_control.setLayerOpacity(outputLayer, 1);
 
     return outputLayer;
 };
