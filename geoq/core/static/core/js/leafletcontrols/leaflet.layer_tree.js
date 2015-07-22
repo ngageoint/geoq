@@ -903,6 +903,7 @@ leaflet_layer_control.parsers.opacityControls = function(layer) {
  * HTML renderer for dynamic parameters controls in the side bar.
  */
 leaflet_layer_control.parsers.dynamicParamsControls = function(layer) {
+    "use strict";
     if (!layer || !layer.config || !layer.config.dynamicParams) {
         return undefined;
     }
@@ -929,6 +930,7 @@ leaflet_layer_control.parsers.dynamicParamsControls = function(layer) {
 leaflet_layer_control.parsers.dynamic_param_parsers = {};
 
 leaflet_layer_control.parsers.dynamic_param_parsers.__generic = function(layer, param, input) {
+    "use strict";
     var wrapper = document.createElement("div");
     wrapper.className = "input-append input-prepend";
 
@@ -955,6 +957,7 @@ leaflet_layer_control.parsers.dynamic_param_parsers.__generic = function(layer, 
 }
 
 leaflet_layer_control.parsers.dynamic_param_parsers.__group_box = function(layer, param, input) {
+    "use strict";
     var wrapper = document.createElement("div");
     wrapper.className = "geoq-param-group clearfix";
     
@@ -980,6 +983,7 @@ leaflet_layer_control.parsers.dynamic_param_parsers.__group_box = function(layer
 }
 
 leaflet_layer_control.parsers.dynamic_param_parsers.String = function(layer, param) {
+    "use strict";
     var input = document.createElement("input");
     input.type = "text";
     input.className = "input-small";
@@ -989,13 +993,14 @@ leaflet_layer_control.parsers.dynamic_param_parsers.String = function(layer, par
 };
 
 leaflet_layer_control.parsers.dynamic_param_parsers.Date = function(layer, param) {
+    "use strict";
     var input = document.createElement("input");
     input.type = "date";
     input.className = "input-medium";
     input.value = layer.config.layerParams[param.name];
     
     if (param.range) {
-        rangeFun = leaflet_layer_control.parsers.dynamic_param_ranges[param.range.type];
+        var rangeFun = leaflet_layer_control.parsers.dynamic_param_ranges[param.range.type];
         if (rangeFun) rangeFun(input, param.range);
     }
 
@@ -1003,6 +1008,7 @@ leaflet_layer_control.parsers.dynamic_param_parsers.Date = function(layer, param
 };
 
 leaflet_layer_control.parsers.dynamic_param_parsers.Number = function(layer, param) {
+    "use strict";
     if (window.Slider && param.range) {
         var input = document.createElement("input");
         input.type = "number";
@@ -1012,7 +1018,7 @@ leaflet_layer_control.parsers.dynamic_param_parsers.Number = function(layer, par
         var wrapper = leaflet_layer_control.parsers.dynamic_param_parsers.__group_box(layer, param, input);
 
         if (param.range) {
-            rangeFun = leaflet_layer_control.parsers.dynamic_param_ranges[param.range.type];
+            var rangeFun = leaflet_layer_control.parsers.dynamic_param_ranges[param.range.type];
             if (rangeFun) rangeFun(input, param.range, function() {
                 if (input.min && input.max) { // Only create slider if we have a MIN and max
                     new Slider(input, {
@@ -1033,7 +1039,7 @@ leaflet_layer_control.parsers.dynamic_param_parsers.Number = function(layer, par
         input.value = layer.config.layerParams[param.name];
 
         if (param.range) {
-            rangeFun = leaflet_layer_control.parsers.dynamic_param_ranges[param.range.type];
+            var rangeFun = leaflet_layer_control.parsers.dynamic_param_ranges[param.range.type];
             if (rangeFun) rangeFun(input, param.range);
         }
 
@@ -1044,6 +1050,7 @@ leaflet_layer_control.parsers.dynamic_param_parsers.Number = function(layer, par
 leaflet_layer_control.parsers.dynamic_param_ranges = {};
 
 leaflet_layer_control.parsers.dynamic_param_ranges.FixedRange = function(numberInput, range, callback) {
+    "use strict";
     numberInput.min = range.start;
     numberInput.max = range.end;
     numberInput.step = range.step;
@@ -1052,6 +1059,7 @@ leaflet_layer_control.parsers.dynamic_param_ranges.FixedRange = function(numberI
 }
 
 leaflet_layer_control.parsers.dynamic_param_ranges.NumberCapIDRange = function(numberInput, range, callback) {
+    "use strict";
     $.ajax({
             url: range.url,
             dataType: "json"

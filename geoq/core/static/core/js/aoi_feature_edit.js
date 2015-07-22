@@ -14,9 +14,10 @@
 //            style_obj.schema (array of {properties:options} and others)
 
 //            feature.properties.mapText = "Whatever"
+//            
 
 var aoi_feature_edit = {};
-aoi_feature_edit.layers = {features:[], base:[], overlays:[], jobs:[]};
+aoi_feature_edit.layers = {features: [], base: [], overlays: [], jobs: []};
 
 aoi_feature_edit.drawnItems = new L.FeatureGroup();
 aoi_feature_edit.options = {};
@@ -514,12 +515,13 @@ aoi_feature_edit.layer_oversight = {
   failing: []
 };
 aoi_feature_edit.watch_layer = function(layer, watch) {
+    "use strict";
     //TODO: Clean this up
-    oversight = aoi_feature_edit.layer_oversight;
-    name = layer.name;
-    pending = oversight.pending;
-    watched = oversight.watched;
-    failing = oversight.failing;
+    var oversight = aoi_feature_edit.layer_oversight;
+    var name = layer.name;
+    var pending = oversight.pending;
+    var watched = oversight.watched;
+    var failing = oversight.failing;
     if(watch) {
         if(watched.indexOf(name) < 0) watched[watched.length] = name;
         layer.on("loading", function () {
@@ -563,10 +565,10 @@ aoi_feature_edit.watch_layer = function(layer, watch) {
 aoi_feature_edit._pendingPoints = {};
 aoi_feature_edit.map_init = function (map, bounds) {
 
-    map.on("layer_add", function(e) {
+    map.on("layeradd", function(e) {
         aoi_feature_edit.watch_layer(e.layer, true);
     });
-    map.on("layer_remove", function(e) {
+    map.on("layerremove", function(e) {
         aoi_feature_edit.watch_layer(e.layer, false);
     });
 
@@ -662,18 +664,23 @@ aoi_feature_edit.map_init = function (map, bounds) {
             if (built_layer) {
                 // we see errors here on bad layers. try to catch
                 try {
-                    aoi_feature_edit.watch_layer(built_layer, true);
-                    aoi_feature_edit.map.addLayer(built_layer);
-                    var shownAmount = built_layer.options.opacity;
+                    // FIXME - adding layers here results in hidden impossible to remove layers that create background network requests
+                    // Removing this means only layers in the layer picker show up!
+                    //aoi_feature_edit.watch_layer(built_layer, true);
+                    //aoi_feature_edit.map.addLayer(built_layer);
+                    //var shownAmount = built_layer.options.opacity;
 
                     //TODO: Some layers are showing even when unchecked.  Find out why
 
-                    built_layer.options.toShowOnLoad = shownAmount;
-                    built_layer.options.setInitialOpacity = false;
+                    //built_layer.options.toShowOnLoad = shownAmount;
+                    //built_layer.options.setInitialOpacity = false;
 
-                    leaflet_layer_control.setLayerOpacity(built_layer, shownAmount, true); // FIXME - if i comment this out, everything is selected always
+                    //leaflet_layer_control.setLayerOpacity(built_layer, shownAmount, true); 
                 } catch (e) {
                     log.warn("Error trying to add layer: " + built_layer.name);
+                    if (console) {
+                        console.error(e);
+                    }
                 }
             }
         });
@@ -817,7 +824,7 @@ aoi_feature_edit.map_init = function (map, bounds) {
         var headers = {};
         geojson.properties.template = aoi_feature_edit.current_feature_type_id || 1;
         if(geojson.geometry.type === "Point") {
-            icon = null;
+            var icon = null;
             var tmpId = Math.uuidCompact();
             headers = { "Temp-Point-Id": tmpId};
             if(aoi_feature_edit.feature_types[geojson.properties.template]) {
