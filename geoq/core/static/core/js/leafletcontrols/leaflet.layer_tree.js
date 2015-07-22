@@ -1517,8 +1517,9 @@ leaflet_layer_control.drawEachLayer=function(data,map,doNotMoveToTop){
                     layer = _.find(_.flatten(aoi_feature_edit.layers),function(l){return l.name==layer.name});
 
                     if (layer == null) {
-                        log.error("Lost reference to ESRI Dynamic Map Layer!");
+                        log.error("Couldn't recover lost reference to ESRI Dynamic Map Layer!");
                     } else {
+                        log.warn("Recovered lost reference to ESRI Dynamic Map Layer!");
                         layer_obj.data = layer; // Save the reference
                     }
                 }
