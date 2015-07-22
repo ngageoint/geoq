@@ -1,0 +1,18 @@
+{% extends 'userena/base_userena.html' %}
+{% load i18n %}
+
+{% block title %}{% trans "Users online" %}{% endblock %}
+
+{%block content%}
+<div> Online Users:</div>
+<div>
+    {% if last_activity|length == 0 %}
+        <li>There are no users online.</li>
+    {% endif %}
+
+    {% for users in last_activity %}
+        <li>{{users}} is online.</li>
+    {% endfor %}
+</div>
+{% endblock %}
+
