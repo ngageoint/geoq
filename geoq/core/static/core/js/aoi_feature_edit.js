@@ -565,6 +565,7 @@ aoi_feature_edit.watch_layer = function(layer, watch) {
 aoi_feature_edit._pendingPoints = {};
 aoi_feature_edit.map_init = function (map, bounds) {
 
+    // Events to watch layers being added/loaded/etc.
     map.on("layeradd", function(e) {
         aoi_feature_edit.watch_layer(e.layer, true);
     });
@@ -577,16 +578,6 @@ aoi_feature_edit.map_init = function (map, bounds) {
 
     var custom_map = aoi_feature_edit.aoi_map_json || {};
     aoi_feature_edit.map = map;
-
-    var baseLayers = {};
-    var layerSwitcher = {};
-
-    var baseLayerName = (map.options.djoptions.layers[0]) ? map.options.djoptions.layers[0][0] : "Base Layer";
-    //var editableLayers = new L.FeatureGroup();
-    // Only layer in here should be base OSM layer
-    _.each(aoi_feature_edit.map._layers, function (l) {
-        baseLayers[baseLayerName] = l;
-    });
 
     aoi_feature_edit.layers.base = [];
     aoi_feature_edit.layers.overlays = [];
@@ -636,6 +627,7 @@ aoi_feature_edit.map_init = function (map, bounds) {
                 return true;
             }
 
+            // I think this can be removed FIXME
             var shouldBeShown;
             if (layers_to_show) {
                 shouldBeShown = _.indexOf(layers_to_show, built_layer.config.id+"");
@@ -644,23 +636,24 @@ aoi_feature_edit.map_init = function (map, bounds) {
                 shouldBeShown = built_layer.config.shown;
             }
             built_layer.shown = shouldBeShown;
+            // 
 
             if (built_layer !== undefined) {
                 if (layer_data.isBaseLayer) {
-                    baseLayers[layer_data.name] = built_layer;
                     aoi_feature_edit.layers.base.push(built_layer);
                 } else {
                     if (layer_data.job) {
-                        layerSwitcher[layer_data.name] = built_layer;
                         aoi_feature_edit.layers.jobs.push(built_layer);
                     } else {
-                        layerSwitcher[layer_data.name] = built_layer;
                         aoi_feature_edit.layers.overlays.push(built_layer);
                     }
                 }
             } else {
                 log.error("Tried to add a layer, but didn't work: "+layer_data.url)
             }
+
+            // I think all layers that are passed in here get added when we add them to the layer picker
+            /*
             if (built_layer) {
                 // we see errors here on bad layers. try to catch
                 try {
@@ -682,7 +675,7 @@ aoi_feature_edit.map_init = function (map, bounds) {
                         console.error(e);
                     }
                 }
-            }
+            }*/
         });
     }
 

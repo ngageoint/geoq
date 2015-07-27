@@ -1123,23 +1123,8 @@ leaflet_layer_control.layerDataList = function (options) {
                     showEvenIfNotInUS = false;
                 }
 
-                if (showEvenIfNotInUS || layerPreviouslyChosen) {// FIXME - this is what sets everything to checked!
-                    // if (layer.getLayers && layer.getLayers() && layer.getLayers()[0]) {
-                    //     var layerItem = layer.getLayers()[0];
-                    //     var options = layerItem._options || layerItem.options;
-                    //     if (options && options.style) {
-                    //         if (options.style.opacity == 1 || options.style.fillOpacity == 1){
-                    //             layer_obj.selected = true;
-                    //         }
-                    //     }
-                    //     if (options && options.opacity && options.opacity == 1) {
-                    //         layer_obj.selected = true;
-                    //     }
-                    // } else if (layer.options && layer.options.opacity){
-                    //     layer_obj.selected = true;
-                    // } else if (layer.options && layer.options.is_geoq_feature) {
-                    //     layer_obj.selected = true;
-                    // }
+                if (showEvenIfNotInUS || layerPreviouslyChosen) {
+                    // FIXME - doesn't work for Social Networking Feeds
                     if (layerPreviouslyChosen) layer_obj.selected = true;
                 }
                 // if (!layer_obj.selected) {
@@ -1456,7 +1441,7 @@ leaflet_layer_control.addLayerControl = function (map, options, $accordion) {
                 }
                 folders.shift();
             }
-            leaflet_layer_control.lastSelectedNodes = leafs;
+            //leaflet_layer_control.lastSelectedNodes = leafs; 
             leaflet_layer_control.drawEachLayer(data,map,true);
         },
         activate: function (event, data) {
