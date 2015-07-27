@@ -31,10 +31,10 @@ urlpatterns = patterns('',
         userena_views.signin,
         {'template_name': 'accounts/templates/accounts/signin_form.html'},
         name='userena_signin'),
-    # url(r'^signout/$',
-    #    userena_views.signout,
-    #    {'next_page': logout_page},
-    #    name='userena_signout'),
+    url(r'^signout/$',
+        userena_views.signout,
+        {'next_page': logout_page},
+        name='userena_signout'),
     #
     #
     # # Reset password
