@@ -131,6 +131,11 @@ LEAFLET_CONFIG = {
             'css': [],
             'js': [STATIC_URL + 'leaflet/Leaflet.MakiMarkers.js'],
             'repo': 'https://github.com/jseppi/Leaflet.MakiMarkers'
+        },
+        'MediaQ': {
+            'css': [],
+            'js': [STATIC_URL + 'leaflet/Leaflet.MediaQ.js'],
+            'repo': 'https://github.com/stephenrjones/Leaflet.MediaQ'
         }
     }
 }

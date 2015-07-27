@@ -130,6 +130,8 @@ leaflet_helper.layer_conversion = function (lyr, map) {
         outputLayer = leaflet_helper.constructors.geojson(lyr, map);
     } else if (lyr.type == 'Web Data Link') {
         outputLayer = leaflet_helper.constructors.geojson(lyr, map);
+    } else if (lyr.type == 'MediaQ') {
+        outputLayer = new L.MediaQLayer(true, map, layerOptions);
     }
 
     //Make sure the name is set for showing up in the layer menu

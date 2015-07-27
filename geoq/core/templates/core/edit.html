@@ -6,7 +6,7 @@
 {% block title %}GeoQ: Workcell {{ object.id }}{% endblock %}
 {% block static_libraries %}
 
-    {% leaflet_js plugins="draw, esri, esriCluster, MakiMarkers" %}
+    {% leaflet_js plugins="draw, esri, esriCluster, MakiMarkers, MediaQ" %}
     {% import_django_select2_js %}
     <script src="{{ STATIC_URL }}core/js/jquery-migrate-1.2.1.min.js"></script>
     <script src="{{ STATIC_URL }}core/js/leaflet_helper.js"></script>

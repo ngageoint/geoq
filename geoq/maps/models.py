@@ -81,7 +81,8 @@ SERVICE_TYPES = (
                 ('Bing', 'Bing'),
                 ('Google Maps', 'Google Maps'),
                 ('Yandex', 'Yandex'),
-                ('Leaflet Tile Layer', 'Leaflet Tile Layer')
+                ('Leaflet Tile Layer', 'Leaflet Tile Layer'),
+                ('MediaQ', 'MediaQ'),
                 #('MapBox', 'MapBox'),
                 #('TileServer','TileServer'),
                 #('GetCapabilities', 'GetCapabilities'),
