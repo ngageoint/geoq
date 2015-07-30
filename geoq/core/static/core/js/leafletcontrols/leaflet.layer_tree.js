@@ -1429,20 +1429,9 @@ leaflet_layer_control.addLayerControl = function (map, options, $accordion) {
         selectMode: 3, // Hierarchecal select mode
         source: treeData,
         init: function (event, data) {
-            var folders = [data.tree.rootNode];
-            var leafs = [];
-            while (folders[0] && folders[0].children) {
-                for (var i = 0; i < folders[0].children.length; i++) {
-                    if (folders[0].children[i].children) {
-                        folders.push(folders[0].children[i]);
-                    } else {
-                        leafs.push(folders[0].children[i]);
-                    }
-                }
-                folders.shift();
-            }
-            //leaflet_layer_control.lastSelectedNodes = leafs; 
-            leaflet_layer_control.drawEachLayer(data,map,true);
+            leaflet_layer_control.lastSelectedNodes = data.tree.getSelectedNodes();
+
+            
         },
         activate: function (event, data) {
             //Clicked on a treenode title

@@ -586,7 +586,7 @@ aoi_feature_edit.map_init = function (map, bounds) {
     //Add the Base OSM Layer
     var baselayer = _.toArray(aoi_feature_edit.map._layers);
     if (baselayer && baselayer[0]) {
-        baselayer[0].name=baseLayerName;
+        baselayer[0].name=(map.options.djoptions.layers[0]) ? map.options.djoptions.layers[0][0] : "Base Layer";
         aoi_feature_edit.layers.base.push(baselayer[0]);
     }
 
@@ -624,6 +624,7 @@ aoi_feature_edit.map_init = function (map, bounds) {
             var built_layer = leaflet_helper.layer_conversion(layer_data, map);
             if (! built_layer) {
                 // skip this layer and go to next
+                log.error("Tried to add a layer, but didn't work: "+layer_data.url)
                 return true;
             }
 
@@ -638,44 +639,15 @@ aoi_feature_edit.map_init = function (map, bounds) {
             built_layer.shown = shouldBeShown;
             // 
 
-            if (built_layer !== undefined) {
-                if (layer_data.isBaseLayer) {
-                    aoi_feature_edit.layers.base.push(built_layer);
-                } else {
-                    if (layer_data.job) {
-                        aoi_feature_edit.layers.jobs.push(built_layer);
-                    } else {
-                        aoi_feature_edit.layers.overlays.push(built_layer);
-                    }
-                }
+            if (layer_data.isBaseLayer) {
+                aoi_feature_edit.layers.base.push(built_layer);
             } else {
-                log.error("Tried to add a layer, but didn't work: "+layer_data.url)
-            }
-
-            // I think all layers that are passed in here get added when we add them to the layer picker
-            /*
-            if (built_layer) {
-                // we see errors here on bad layers. try to catch
-                try {
-                    // FIXME - adding layers here results in hidden impossible to remove layers that create background network requests
-                    // Removing this means only layers in the layer picker show up!
-                    //aoi_feature_edit.watch_layer(built_layer, true);
-                    //aoi_feature_edit.map.addLayer(built_layer);
-                    //var shownAmount = built_layer.options.opacity;
-
-                    //TODO: Some layers are showing even when unchecked.  Find out why
-
-                    //built_layer.options.toShowOnLoad = shownAmount;
-                    //built_layer.options.setInitialOpacity = false;
-
-                    //leaflet_layer_control.setLayerOpacity(built_layer, shownAmount, true); 
-                } catch (e) {
-                    log.warn("Error trying to add layer: " + built_layer.name);
-                    if (console) {
-                        console.error(e);
-                    }
+                if (layer_data.job) {
+                    aoi_feature_edit.layers.jobs.push(built_layer);
+                } else {
+                    aoi_feature_edit.layers.overlays.push(built_layer);
                 }
-            }*/
+            }
         });
     }
 
