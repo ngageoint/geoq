@@ -583,7 +583,12 @@ aoi_feature_edit.map_init = function (map, bounds) {
     aoi_feature_edit.layers.overlays = [];
     aoi_feature_edit.layers.jobs = [];
 
-    //Add the Base OSM Layer
+
+    
+    // aoi_feature_edit.map._layers - layers that have been added to the map already
+    // map.options.djoptions.layers - layer options that were passed to django
+    // Set the name for the base layer and add it to our layer map.
+    // (It seems like it's possible to have multiple base maps, but that's not handled here)
     var baselayer = _.toArray(aoi_feature_edit.map._layers);
     if (baselayer && baselayer[0]) {
         baselayer[0].name=(map.options.djoptions.layers[0]) ? map.options.djoptions.layers[0][0] : "Base Layer";
@@ -602,10 +607,11 @@ aoi_feature_edit.map_init = function (map, bounds) {
         });
     aoi_extents.addTo(aoi_feature_edit.map);
     aoi_feature_edit.layers.features.push(aoi_extents);
+
     //Build a reset button that zooms to the extents of the AOI
     function locateBounds() {
         return aoi_extents.getBounds();
-    }
+    };
     (new L.Control.ResetView(locateBounds)).addTo(aoi_feature_edit.map);
 
     //Zoom to the bounds of the Workcell, then one more level
@@ -640,6 +646,7 @@ aoi_feature_edit.map_init = function (map, bounds) {
             // 
 
             if (layer_data.isBaseLayer) {
+                // FIXME - custom base layers get duplicated here. (although they get skipped later, still not ideal)
                 aoi_feature_edit.layers.base.push(built_layer);
             } else {
                 if (layer_data.job) {
