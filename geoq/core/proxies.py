@@ -39,7 +39,12 @@ def proxy_to(request, path, target_url):
             status_code = 200
             mimetype = 'text/plain'
         else:
-            proxied_request = urllib2.urlopen(url, timeout=120)
+            headers = {}
+            if 'HTTP_X_API_KEY' in request.META:
+                headers['X-API-KEY'] = request.META['HTTP_X_API_KEY']
+
+            newrequest = urllib2.Request(url, headers = headers)
+            proxied_request = urllib2.urlopen(newrequest, timeout=120)
             status_code = proxied_request.code
             mimetype = proxied_request.headers.typeheader or mimetypes.guess_type(url)
             content = proxied_request.read()

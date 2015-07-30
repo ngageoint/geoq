@@ -1,8 +1,10 @@
 L.MediaQLayer = L.GeoJSON.extend({
     options: {
         debug: true,
-        url: "http://mediaq.usc.edu/MediaQ_MVC_V3/api/geoq/sample_videos",
-        query: "swlat={%SWLAT}&swlng={%SWLNG}&nelat={%NELAT}&nelng={%NELNG}&api={%KEY}",
+        url: "http://media1.usc.edu/MediaQ_MVC_V3/api/geoq/",
+        query_link: "rectangle_query?swlat={SWLAT}&swlng={SWLNG}&nelat={NELAT}&nelng={NELNG}",
+        metadata_link: "video_metadata?vid={VID}",
+        key: "8b51UFM2SlBltx3s6864eUO1zSoefeK5",
         icon: new L.Icon.Default(),
         pointToLayer: this.iconCallback
     },
@@ -11,6 +13,14 @@ L.MediaQLayer = L.GeoJSON.extend({
         L.Util.setOptions(this, options);
         this._layers = {};
         this._map = map;
+        if (this._map) {
+            this._bounds = map.getBounds();
+            var ourmap = this._map;
+            this.mediaqLayerGroup.addTo(this._map);
+            this._map.on('moveend', function() {
+                this._bounds = ourmap.getBounds();
+            });
+        }
 
         if (load) {
             this.addMediaQ(options);
@@ -20,15 +30,19 @@ L.MediaQLayer = L.GeoJSON.extend({
     loadMediaQ: function(cb, options) {
         if (options === undefined) options = this.options;
 
-        if (! options.url) {
+        if (! options.url ) {
             log.error("No url set for MediaQ server");
             return;
         }
-        var proxiedURL = leaflet_helper.proxify(options.url);
+
+        var proxiedURL = L.MediaQLayer.buildURL(this.options.url+this.options.query_link, this._bounds);
 
         $.ajax({
             type: 'GET',
             url: proxiedURL,
+            headers: {
+                'X-API-KEY': this.options.key
+            },
             dataType: 'json',
             success: cb,
             error: this.geojson_error
@@ -50,7 +64,10 @@ L.MediaQLayer = L.GeoJSON.extend({
 
     geojson_error: function (resultobj){
         log.error ("A JSON layer was requested, but no valid response was received from the server, result:", resultobj);
-    }
+    },
+
+    mediaqLayerGroup: L.layerGroup(),
+    layer_ids: {}
 
 });
 
@@ -70,7 +87,7 @@ L.Util.extend(L.MediaQLayer, {
         }
 
         layer.options.onEachFeature = function(feature, layer) {
-            L.MediaQLayer.onEachFeature(feature, layer, layer.options);
+            L.MediaQLayer.onEachFeature(feature, layer, layer.options, this);
         };
 
         // layer.options.style = leaflet_helper.constructors.polygonStyleBuilderCallback;
@@ -81,6 +98,28 @@ L.Util.extend(L.MediaQLayer, {
         layer.addData(data);
     },
 
+    buildURL: function( url, bounds ) {
+        if (! bounds) {
+            return undefined;
+        }
+
+        var sw = bounds.getSouthWest();
+        var ne = bounds.getNorthEast();
+
+        var params = {
+            "SWLAT" : sw.lat,
+            "SWLNG" : sw.lng,
+            "NELAT" : ne.lat,
+            "NELNG" : ne.lng
+        };
+
+        var url = url.replace(/{[^{}]+}/g, function(k) {
+            return params[k.replace(/[{}]+/g, "")] || "";
+        });
+
+        return leaflet_helper.proxify(url);
+    },
+
     iconBuilderCallback: function(feature, latlng, layerConfig){
         var iconX = 15;
         var iconY = 24;
@@ -88,8 +127,7 @@ L.Util.extend(L.MediaQLayer, {
 
         layerConfig = layerConfig || {geojson_layer_count:1, name:'MediaQ Layer'};
 
-        var layerNum = layerConfig.geojson_layer_count % aoi_feature_edit.available_icons.length;
-        var iconUrl = aoi_feature_edit.available_icons[layerNum];
+        var iconUrl = this.options.iconUrl || "";
 
         //Build the icon injects
         var iconData = {
@@ -117,7 +155,7 @@ L.Util.extend(L.MediaQLayer, {
         return style;
     },
 
-    onEachFeature: function (feature, layer, layerConfig) {
+    onEachFeature: function (feature, layer, layerConfig, mediaqOptions) {
         if (feature.properties) {
             var popupContent = "";
             if (feature.properties.popupContent) {
@@ -126,7 +164,12 @@ L.Util.extend(L.MediaQLayer, {
                 popupContent = L.MediaQLayer.clean("MediaQ Id: " + feature.properties.vid);
                 if (feature.properties.href){
                     var link = L.MediaQLayer.clean(feature.properties.href); //Strip out any offending
-                    popupContent = "<span><h5>MediaQ Video</h5></span><video width='320' height='240' controls><source src='"+link+"' type='video/mp4'></video>";
+                    popupContent = "<span><h5>MediaQ Video</h5>"+
+                        "</h5></span><video width='320' height='240' controls><source src='"+link+"' type='video/mp4'></video>"+
+                        "<br/><button type='button' class='btn btn-small' " +
+                        "onclick='L.MediaQLayer.displayHidePath(\"" + feature.properties.vid + "\", \"" +
+                        mediaqOptions.url + mediaqOptions.metadata_link + "\", \"" +
+                        mediaqOptions.key + "\");' >Display/Hide Path</button><br/>";
                 }
             }
             if (popupContent && _.isString(popupContent)) {
@@ -147,6 +190,56 @@ L.Util.extend(L.MediaQLayer, {
             }
         }
 
+    },
+
+    displayHidePath: function(vid, queryurl, key) {
+        var layer_ids = this.prototype.layer_ids;
+        var ourlayergroup = this.prototype.mediaqLayerGroup;
+
+
+        if (layer_ids[vid]) {
+            // remove layer from layer group
+            var layer = ourlayergroup.getLayer(layer_ids[vid]);
+            ourlayergroup.removeLayer(layer);
+            delete layer_ids[vid];
+            return;
+        }
+        var params = {'VID':vid};
+        var url = queryurl.replace(/{[^{}]+}/g, function(k) {
+            return params[k.replace(/[{}]+/g, "")] || "";
+        });
+
+        var cb = function(data) {
+            try {
+                var markerOptions = { radius: 4, fillColor: "#ff0000", color: "#f00", weight: 1, opacity: 1};
+                var newlayer = L.geoJson(data, {
+                    pointToLayer: function (feature, latlng) {
+                        return L.circleMarker(latlng, markerOptions);
+                    }
+                });
+                newlayer.addTo(ourlayergroup);
+                var id = ourlayergroup.getLayerId(newlayer);
+                layer_ids[vid] = id;
+            } catch (ex){
+                log.error("Error parsing JSON returned from server");
+                return;
+            }
+        };
+
+        var error = function(data) {
+            log.error("got error");
+        };
+
+        $.ajax({
+            type: 'GET',
+            url: leaflet_helper.proxify(url),
+            headers: {
+                'X-API-KEY': key
+            },
+            dataType: 'json',
+            success: cb,
+            error: error
+        });
     },
 
     addLinksToPopup: function (layerName,id,useMove,useHide,useDrop) {
@@ -227,7 +320,6 @@ L.MediaQIcon = L.Icon.extend({
         img.anchorType = this.options.iconAnchorType;
     }
 });
-
 
 L.MediaQMarker = L.Marker.extend({
     options: {
