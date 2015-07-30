@@ -4,7 +4,7 @@ L.MediaQLayer = L.GeoJSON.extend({
         url: "http://media1.usc.edu/MediaQ_MVC_V3/api/geoq/",
         query_link: "rectangle_query?swlat={SWLAT}&swlng={SWLNG}&nelat={NELAT}&nelng={NELNG}",
         metadata_link: "video_metadata?vid={VID}",
-        key: "PUT_KEY_HERE",
+        key: "8b51UFM2SlBltx3s6864eUO1zSoefeK5",
         icon: new L.Icon.Default(),
         pointToLayer: this.iconCallback
     },
