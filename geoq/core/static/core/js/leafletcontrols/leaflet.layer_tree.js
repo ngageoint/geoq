@@ -1620,8 +1620,12 @@ leaflet_layer_control._getLayerStorageID = function(layerTreeNode) {
 }
 
 leaflet_layer_control._uninit_getLayerStorageID = function(uninitTreeNode, uninitTreeGroup) {
+    // Get the layer id if it exists, otherwise get the folder it's in
     if (uninitTreeNode.data && uninitTreeNode.data.config && uninitTreeNode.data.config.id) {
         return uninitTreeNode.data.config.id;
+    } else if (uninitTreeNode.data && uninitTreeNode.data.id) {
+        // Social media feeds seem to have id set in data when uninitialized, then copied over to config after initialized.
+        return uninitTreeNode.data.id;
     } else {
         return 'root:' + uninitTreeGroup.title + ":" + uninitTreeNode.title;
     }
