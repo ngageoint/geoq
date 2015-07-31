@@ -618,8 +618,7 @@ aoi_feature_edit.map_init = function (map, bounds) {
     aoi_feature_edit.map.fitBounds(aoi_extents.getBounds());
     aoi_feature_edit.map.setZoom(aoi_feature_edit.map.getZoom()+1);
 
-    var layers_to_show = store.get('leaflet_layer_control.layers');
-    layers_to_show = layers_to_show ? layers_to_show.split(",") : undefined;
+    var layersToShow = store.get('leaflet_layer_control.selected_tree_nodes');
 
     //Build layers, parse them, and add them to the map and to memory
     if (custom_map.layers) {
@@ -634,20 +633,9 @@ aoi_feature_edit.map_init = function (map, bounds) {
                 return true;
             }
 
-            // I think this can be removed FIXME
-            var shouldBeShown;
-            if (layers_to_show) {
-                shouldBeShown = _.indexOf(layers_to_show, built_layer.config.id+"");
-                shouldBeShown = shouldBeShown >= 0;
-            } else {
-                shouldBeShown = built_layer.config.shown;
-            }
-            built_layer.shown = shouldBeShown;
-            // 
-
             if (layer_data.isBaseLayer) {
-                // FIXME - custom base layers get duplicated here. (although they get skipped later, still not ideal)
-                aoi_feature_edit.layers.base.push(built_layer);
+                // Don't add base layers here, we should assume that base layers are properly added to the map by django
+                // aoi_feature_edit.layers.base.push(built_layer);
             } else {
                 if (layer_data.job) {
                     aoi_feature_edit.layers.jobs.push(built_layer);

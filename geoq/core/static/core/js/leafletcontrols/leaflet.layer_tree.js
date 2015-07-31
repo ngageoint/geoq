@@ -1429,9 +1429,7 @@ leaflet_layer_control.addLayerControl = function (map, options, $accordion) {
         selectMode: 3, // Hierarchecal select mode
         source: treeData,
         init: function (event, data) {
-            leaflet_layer_control.lastSelectedNodes = data.tree.getSelectedNodes();
-
-            
+            leaflet_layer_control.drawEachLayer(data, map);
         },
         activate: function (event, data) {
             //Clicked on a treenode title
@@ -1525,11 +1523,11 @@ leaflet_layer_control.drawEachLayer=function(data,map,doNotMoveToTop){
             if (layer._initHooksCalled) {
                 //It's a layer that's been already built
                 
-                aoi_feature_edit.map.addLayer(layer);
-
                 if (leaflet_layer_control.likelyHasFeatures(layer)) {
-                    leaflet_helper.constructors.geojson(layer.config, map);
+                    leaflet_helper.constructors.geojson(layer.config, map, layer);
                 }
+                
+                aoi_feature_edit.map.addLayer(layer);
             } else {
                 //It's an object with layer info, not yet built - build the layer from the config data
                 var name = layer.name;
