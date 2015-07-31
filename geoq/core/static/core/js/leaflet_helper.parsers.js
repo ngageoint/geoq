@@ -298,9 +298,7 @@ leaflet_helper.constructors.geojson = function(layerConfig, map, useLayerInstead
     }
 
     var opacity = 1;
-    if (outputLayer.config) {
-        opacity = outputLayer.config.shown ? outputLayer.config.opacity : 0;
-    }
+    if (outputLayer.config) opacity = (outputLayer.config.opacity !== undefined) ? outputLayer.config.opacity : opacity;
 
     outputLayer.options = $.extend(outputLayer.options, layerConfig.layerParams);
 
@@ -318,7 +316,7 @@ leaflet_helper.constructors.geojson = function(layerConfig, map, useLayerInstead
         success: function(data){
             leaflet_helper.constructors.geojson_success(data, proxiedURL, map, outputLayer);
             // try to set correct opacity
-                leaflet_layer_control.setLayerOpacity(outputLayer, outputLayer.options.toShowOnLoad, true);
+                leaflet_layer_control.setLayerOpacity(outputLayer, outputLayer.options.opacity, true);
         },
         error: leaflet_helper.constructors.geojson_error
     });
@@ -432,7 +430,6 @@ leaflet_helper.constructors.geojson_success = function (data, proxiedURL, map, o
     if (outputLayer && !outputLayer.options) {
         outputLayer.options = {};
     }
-    //if (!outputLayer.options.opacity) leaflet_layer_control.setLayerOpacity(outputLayer, 1);
 
     return outputLayer;
 };
@@ -529,7 +526,6 @@ leaflet_helper.parsers.basicJson = function (geojson, map, outputLayer, keepOld)
     if (outputLayer && !outputLayer.options) {
         outputLayer.options = {};
     }
-    //outputLayer.options.opacity = outputLayer.options.opacity || 1;
 
     return outputLayer;
 };
@@ -564,7 +560,6 @@ leaflet_helper.parsers.fulcrum_exported_json = function (geojson, map, outputLay
     if (outputLayer && !outputLayer.options) {
         outputLayer.options = {};
     }
-    //outputLayer.options.opacity = outputLayer.options.opacity || 1;
 
     return outputLayer;
 };
@@ -607,7 +602,6 @@ leaflet_helper.parsers.geoq_exported_json = function (geojson, map, outputLayer,
     if (outputLayer && !outputLayer.options) {
         outputLayer.options = {};
     }
-    //if (!outputLayer.options.opacity) leaflet_layer_control.setLayerOpacity(outputLayer, 1);
 
     return outputLayer;
 };
@@ -677,7 +671,6 @@ leaflet_helper.parsers.leaflet_geojson = function (geojson, map, outputLayer, ke
     if (outputLayer && !outputLayer.options) {
         outputLayer.options = {};
     }
-    //if (!outputLayer.options.opacity) leaflet_layer_control.setLayerOpacity(outputLayer, 1);
 
     return outputLayer;
 };

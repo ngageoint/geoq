@@ -688,7 +688,7 @@ leaflet_layer_control.show_info = function (objToShow, node) {
     if (typeof objToShow == "string"){
         html_objects.push(objToShow);
     } else {
-        if (objToShow.options && objToShow._leaflet_id) {
+        if (objToShow.options) {
             //Probably a Leaflet layer
             html_objects.push(leaflet_layer_control.parsers.infoFromLayer(objToShow));
             html_objects.push(leaflet_layer_control.parsers.opacityControls(objToShow));
