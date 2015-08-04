@@ -1485,13 +1485,6 @@ leaflet_layer_control.drawEachLayer=function(data,map,doNotMoveToTop){
             var layer = layer_obj.data;
 
             aoi_feature_edit.map.removeLayer(layer);
-        } else if (layer_obj.children && layer_obj.children.length) {
-            //A category was clicked
-            
-            // we shouldn't need this in selectmode 3
-            // _.each(layer_obj.children, function(layer_obj_item){
-            //     layer_obj_item.setSelected(false);
-            // });
         }
     });
 
@@ -1557,11 +1550,7 @@ leaflet_layer_control.drawEachLayer=function(data,map,doNotMoveToTop){
             }
 
         } else if (layer_obj.children && layer_obj.children.length) {
-            //A category was clicked
-            //We shouldn't need this in selectmode 3
-            // _.each(layer_obj.children, function(layer_obj_item){
-            //     layer_obj_item.setSelected(true);
-            // });
+            // A category was clicked, do nothing. (Selectmode 3 will select children).
         } else {
             log.error("A layer with no data was clicked");
         }
