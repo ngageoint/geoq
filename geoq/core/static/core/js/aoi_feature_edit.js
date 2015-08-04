@@ -588,7 +588,7 @@ aoi_feature_edit.map_init = function (map, bounds) {
     // aoi_feature_edit.map._layers - layers that have been added to the map already
     // map.options.djoptions.layers - layer options that were passed to django
     // Set the name for the base layer and add it to our layer map.
-    // (It seems like it's possible to have multiple base maps, but that's not handled here)
+    // TODO: It seems like it's possible to have multiple base maps, but that's not handled here
     var baselayer = _.toArray(aoi_feature_edit.map._layers);
     if (baselayer && baselayer[0]) {
         baselayer[0].name=(map.options.djoptions.layers[0]) ? map.options.djoptions.layers[0][0] : "Base Layer";
