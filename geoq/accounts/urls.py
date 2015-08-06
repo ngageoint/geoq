@@ -2,9 +2,10 @@
 from django.conf.urls import patterns, include, url
 from django.views.generic import RedirectView
 from django.conf import settings
+from accounts.views import OnlineUserView
 
 from forms import SignupFormExtra
-
+from django.contrib.auth.decorators import login_required
 from userena import views as userena_views
 from views import accept_terms_of_use, UserExpertiseView
 
@@ -103,7 +104,11 @@ urlpatterns = patterns('',
         UserExpertiseView.as_view(),
         name='user_expertise'),
 
+    url(r'^users/online/?$', login_required(OnlineUserView.as_view()),
+        name='Online-check'),
 
     # If nothing overrides the urls, then load the default with userena.
-    url(r'^', include('userena.urls')),
-)
+    url(r'^', include('userena.urls'))
+
+    )
+

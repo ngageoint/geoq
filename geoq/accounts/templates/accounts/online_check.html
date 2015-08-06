@@ -4,15 +4,23 @@
 {% block title %}{% trans "Users online" %}{% endblock %}
 
 {%block content%}
-<div> Online Users:</div>
-<div>
-    {% if last_activity|length == 0 %}
-        <li>There are no users online.</li>
+<h2 style="margin-left: 200px"> Online Users</h2>
+<div style="margin-left: 200px">
+    <ul class="projectlist">
+
+     <li>  There are no users online. </li>
     {% endif %}
 
-    {% for users in last_activity %}
-        <li>{{users}} is online.</li>
+    {% for user in names %}
+
+     <li>
+         <h3>
+            <span> <i class="icon-user list-icon pull-left" style="margin-right: 5px"></i> <a>{{user.0}} {{user.1}}</a></span>
+         </h3>
+        <p class="body">{{user.2}}</p>
+     </li>
     {% endfor %}
+   </ul>
 </div>
 {% endblock %}
 

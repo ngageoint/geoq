@@ -7,7 +7,7 @@ from django.contrib.auth.models import User, Group
 from django.core.exceptions import ValidationError
 from django.utils.translation import ugettext as _
 from django.template.defaultfilters import slugify
-
+from django.utils import timezone
 from userena.models import UserenaBaseProfile
 
 
@@ -54,6 +54,8 @@ class UserProfile(UserenaBaseProfile):
     # Badge scores
     defaultScore = 1
     score = models.IntegerField(default=defaultScore)
+
+    last_activity = models.DateTimeField(default = timezone.now())
 
     # OpenBadge id
     openbadge_id = models.CharField(max_length=250, null=True, blank=True)
@@ -159,3 +161,4 @@ class UserAuthorization(models.Model):
         #     and self.authorized != user_presave.authorized:
 
         super(UserAuthorization, self).save()
+
