@@ -298,9 +298,7 @@ leaflet_helper.constructors.geojson = function(layerConfig, map, useLayerInstead
     }
 
     var opacity = 1;
-    if (outputLayer.config) {
-        opacity = outputLayer.config.shown ? outputLayer.config.opacity : 0;
-    }
+    if (outputLayer.config) opacity = (outputLayer.config.opacity !== undefined) ? outputLayer.config.opacity : opacity;
 
     outputLayer.options = $.extend(outputLayer.options, layerConfig.layerParams);
 
@@ -318,7 +316,7 @@ leaflet_helper.constructors.geojson = function(layerConfig, map, useLayerInstead
         success: function(data){
             leaflet_helper.constructors.geojson_success(data, proxiedURL, map, outputLayer);
             // try to set correct opacity
-                leaflet_layer_control.setLayerOpacity(outputLayer, outputLayer.options.toShowOnLoad, true);
+                leaflet_layer_control.setLayerOpacity(outputLayer, outputLayer.options.opacity, true);
         },
         error: leaflet_helper.constructors.geojson_error
     });
@@ -432,7 +430,6 @@ leaflet_helper.constructors.geojson_success = function (data, proxiedURL, map, o
     if (outputLayer && !outputLayer.options) {
         outputLayer.options = {};
     }
-    outputLayer.options.opacity = 1;
 
     return outputLayer;
 };
@@ -529,12 +526,15 @@ leaflet_helper.parsers.basicJson = function (geojson, map, outputLayer, keepOld)
     if (outputLayer && !outputLayer.options) {
         outputLayer.options = {};
     }
-    outputLayer.options.opacity = outputLayer.options.opacity || 1;
 
     return outputLayer;
 };
-leaflet_helper.parsers.fulcrum_exported_json = function (geojson, map, outputLayer) {
+leaflet_helper.parsers.fulcrum_exported_json = function (geojson, map, outputLayer, keepOld) {
     if (outputLayer) {
+        if (!keepOld) {
+            outputLayer.options.items = [];
+            outputLayer.clearLayers();
+        }
         outputLayer.options.onEachFeature = function(feature, layer) {
             aoi_feature_edit.fulcrumfeatureLayer_onEachFeature(feature, layer, outputLayer, true);
         };
@@ -560,12 +560,15 @@ leaflet_helper.parsers.fulcrum_exported_json = function (geojson, map, outputLay
     if (outputLayer && !outputLayer.options) {
         outputLayer.options = {};
     }
-    outputLayer.options.opacity = outputLayer.options.opacity || 1;
 
     return outputLayer;
 };
-leaflet_helper.parsers.geoq_exported_json = function (geojson, map, outputLayer) {
+leaflet_helper.parsers.geoq_exported_json = function (geojson, map, outputLayer, keepOld) {
     if (outputLayer) {
+        if (!keepOld) {
+            outputLayer.options.items = [];
+            outputLayer.clearLayers();
+        }
         outputLayer.options.onEachFeature = function(feature, layer) {
             aoi_feature_edit.featureLayer_onEachFeature(feature, layer, outputLayer, true);
         };
@@ -599,12 +602,15 @@ leaflet_helper.parsers.geoq_exported_json = function (geojson, map, outputLayer)
     if (outputLayer && !outputLayer.options) {
         outputLayer.options = {};
     }
-    outputLayer.options.opacity = outputLayer.options.opacity || 1;
 
     return outputLayer;
 };
-leaflet_helper.parsers.leaflet_geojson = function (geojson, map, outputLayer) {
+leaflet_helper.parsers.leaflet_geojson = function (geojson, map, outputLayer, keepOld) {
     if (outputLayer) {
+        if (!keepOld) {
+            outputLayer.options.items = [];
+            outputLayer.clearLayers();
+        }
         outputLayer.options.onEachFeature = function(feature, layer) {
             aoi_feature_edit.featureLayer_onEachFeature(feature, layer, outputLayer, true);
         };
@@ -665,10 +671,24 @@ leaflet_helper.parsers.leaflet_geojson = function (geojson, map, outputLayer) {
     if (outputLayer && !outputLayer.options) {
         outputLayer.options = {};
     }
-    outputLayer.options.opacity = outputLayer.options.opacity || 1;
 
     return outputLayer;
 };
+
+leaflet_helper.generic_popup_content = function (properties) {
+    var popupContent = document.createElement('div');
+    for (var idx in properties) {
+        if (idx[0] === '_') continue;
+        var entry = document.createElement('div');
+        var label = document.createElement('b');
+        label.appendChild(document.createTextNode(idx+": "));
+        entry.appendChild(label);
+        entry.appendChild(document.createTextNode(properties[idx]));
+        popupContent.appendChild(entry);
+    }
+    return popupContent;
+}
+
 leaflet_helper.parsers.standard_onEachFeature = function (feature, layer, layerConfig) {
     if (feature.properties) {
         var popupContent = "";
@@ -680,19 +700,24 @@ leaflet_helper.parsers.standard_onEachFeature = function (feature, layer, layerC
                 var link = leaflet_helper.clean(feature.properties.link); //Strip out any offending
                 popupContent = "<a href='"+link+"' target='_blank'>"+popupContent+"</a>";
             }
+        } else {
+            popupContent = leaflet_helper.generic_popup_content(feature.properties);
         }
-        if (popupContent && _.isString(popupContent)) {
-
-            if (!popupContent.indexOf("<span class='hide feature-id-hint'>")){
-                if (layerConfig && layerConfig.name) {
-                    if (!feature.properties.id) {
-                        feature.properties.id = leaflet_helper.id_count++;
+        if (popupContent) {
+            if (_.isString(popupContent)) {
+                if (!popupContent.indexOf("<span class='hide feature-id-hint'>")){
+                    if (layerConfig && layerConfig.name) {
+                        if (!feature.properties.id) {
+                            feature.properties.id = leaflet_helper.id_count++;
+                        }
+                        var id = feature.properties.id;
+                        popupContent += leaflet_helper.addLinksToPopup(layerConfig.name, id, true, false);
                     }
-                    var id = feature.properties.id;
-                    popupContent += leaflet_helper.addLinksToPopup(layerConfig.name, id, true, false);
                 }
+                layer.bindPopup(popupContent);
+            } else if (_.isElement(popupContent)) {
+                layer.bindPopup(popupContent);
             }
-            layer.bindPopup(popupContent);
         }
         if (feature.properties.heading && parseInt(feature.properties.heading) && layer.options){
             layer.options.angle = parseInt(feature.properties.heading);
