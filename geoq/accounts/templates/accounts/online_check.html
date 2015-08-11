@@ -7,9 +7,9 @@
 <h2 style="margin-left: 200px"> Online Users</h2>
 <div style="margin-left: 200px">
     <ul class="projectlist">
-
-     <li>  There are no users online. </li>
-    {% endif %}
+        {% if names|length == 0 %}
+        <li>  There are no users online. </li>
+        {% endif %}
 
     {% for user in names %}
 
