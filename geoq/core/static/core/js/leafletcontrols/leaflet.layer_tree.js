@@ -277,7 +277,7 @@ leaflet_layer_control.submitComment = function() {
             action: function(dialog) {
                 var text = dialog.getModalBody().find('input').val();
                 $.ajax({
-                    url: "/geoq/aois/work/" + aoi_feature_edit.aoi_id + "/comment",
+                    url: leaflet_helper.home_url+"aois/work/" + aoi_feature_edit.aoi_id + "/comment",
                     type: 'POST',
                     data: {
                         comment : text,
@@ -350,7 +350,7 @@ leaflet_layer_control.addWorkCellInfo = function($accordion) {
         return;
     }
 
-    var editableUrl = '/geoq/api/job/update/'+aoi_feature_edit.aoi_id;
+    var editableUrl = leaflet_helper.home_url+'api/job/update/'+aoi_feature_edit.aoi_id;
 
     var $content = leaflet_layer_control.buildAccordionPanel($accordion,"Work Cell Details");
     $content.attr({id:"drawer_tray_top"});
@@ -510,7 +510,7 @@ leaflet_layer_control.show_feature_info = function (feature) {
     }
     $content.empty();
 
-    var editableUrl = '/geoq/api/feature/update/'+feature.properties.id;
+    var editableUrl = leaflet_helper.home_url+'api/feature/update/'+feature.properties.id;
 
     var feature_note_original = "Click here to add a note to this feature";
     var feature_note = feature_note_original;
