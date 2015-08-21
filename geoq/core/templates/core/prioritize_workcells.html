@@ -5,7 +5,7 @@
 {% compress css %}
     <link href="{{ STATIC_URL }}core/less/geoq.less" media="all" rel="stylesheet" type="text/less" />
 {% endcompress %}
-    <script src="{{ STATIC_URL }}core/js/bootstrap-dialog.js"></script>
+    <script src="{{ STATIC_URL }}bootstrap/js/bootstrap-dialog.js"></script>
     <style>
         tbody {
             overflow-y: scroll;
@@ -25,21 +25,19 @@
     <script type="application/javascript">
 
         function updateValues(text) {
-            var lines = text.split('\n');
-            for (var i = 0; i < lines.length; i++ ) {
-                var input = lines[i].split(',');
-                if (input < 2) {
-                    continue;
-                }
-                var id = input[0].trim();
-                var priority = input[1].trim();
-
-                if ($('#priority-' + id)) {
-                    $('#priority-' + id).val(priority);
-                }
+            try {
+                var input = JSON.parse(text);
+                jQuery.each( input.features, function( i, feature) {
+                    var selem = $('#priority-'+feature.properties.id);
+                    if (selem.length) {
+                        selem.val(feature.properties.priority);
+                    }
+                });
+                BootstrapDialog.alert('Values from your file have been applied');
             }
-
-            BootstrapDialog.alert('Values from your file have been applied');
+            catch (e) {
+                BootstrapDialog.alert('Error updating values from file. Ensure file is in GeoJSON format');
+            }
         }
 
         function importFile(evt) {
