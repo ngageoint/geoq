@@ -263,7 +263,7 @@ class JobKMLNetworkLink(ListView):
         output += '    <visibility>1</visibility>\n'
         output += '    <open>1</open>\n'
         output += '    <description>Work progress from GeoQ</description>\n'
-        output += '    <NetworkLink>\n'
+        output += '    <NetworkLink id="GeoQ-'+id+'">\n'
         output += '      <name>'+doc_name+'</name>\n'
         output += '      <visibility>1</visibility>\n'
         output += '      <open>1</open>\n'
