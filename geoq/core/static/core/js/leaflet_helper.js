@@ -83,6 +83,11 @@ leaflet_helper.layer_conversion = function (lyr, map) {
         outputLayer = new L.esri.dynamicMapLayer(lyr.url, layerOptions);
     } else if (lyr.type == 'ESRI Feature Layer' && esriPluginInstalled) {
         outputLayer = new L.esri.featureLayer(lyr.url, layerOptions);
+        if (layerOptions.popupTemplate) {
+            outputLayer.bindPopup(function (feature, layerOptions) {
+                return L.Util.template(layerOptions.options.popupTemplate, feature.properties);
+            });
+        }
     } else if (lyr.type == 'ESRI Clustered Feature Layer' && esriPluginInstalled) {
         if (layerOptions.createMarker) {
             layerOptions.createMarker = leaflet_helper.createMarker[layerOptions.createMarker];
