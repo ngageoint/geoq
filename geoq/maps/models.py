@@ -88,6 +88,11 @@ SERVICE_TYPES = (
                 #('GetCapabilities', 'GetCapabilities'),
 )
 
+EDITABLE_LAYER_TYPES = (
+                        ('OSM','OSM'),
+                        ('OSM MapEdit','OSM MapEdit'),
+)
+
 INFO_FORMATS = [(n, n) for n in sorted(['application/vnd.ogc.wms_xml',
                                        'application/xml', 'text/html', 'text/plain'])]
 
@@ -316,6 +321,21 @@ class MapLayerUserRememberedParams(models.Model):
     @depend_on_related(MapLayer)
     def map(self):
         return self.maplayer.map.pk
+
+class EditableMapLayer(models.Model):
+    """
+    Built to support editable layers such as OSM
+    """
+    name = models.CharField(max_length=200, help_text='Name that will be displayed within GeoQ')
+    type = models.CharField(choices=EDITABLE_LAYER_TYPES, max_length=75)
+    view_url = models.CharField(help_text='URL of view service.', max_length=500)
+    edit_url = models.CharField(help_text='URL of service where changes can be pushed to. ', max_length=500)
+
+    class Meta:
+        ordering = ["name"]
+
+    def __unicode__(self):
+        return '{0} ({1})'.format(self.name, self.type)
 
 class Feature(models.Model):
     """
