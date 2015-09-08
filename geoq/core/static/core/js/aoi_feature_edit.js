@@ -14,9 +14,10 @@
 //            style_obj.schema (array of {properties:options} and others)
 
 //            feature.properties.mapText = "Whatever"
+//            
 
 var aoi_feature_edit = {};
-aoi_feature_edit.layers = {features:[], base:[], overlays:[], jobs:[]};
+aoi_feature_edit.layers = {features: [], base: [], overlays: [], jobs: []};
 
 aoi_feature_edit.drawnItems = new L.FeatureGroup();
 aoi_feature_edit.options = {};
@@ -514,12 +515,13 @@ aoi_feature_edit.layer_oversight = {
   failing: []
 };
 aoi_feature_edit.watch_layer = function(layer, watch) {
+    "use strict";
     //TODO: Clean this up
-    oversight = aoi_feature_edit.layer_oversight;
-    name = layer.name;
-    pending = oversight.pending;
-    watched = oversight.watched;
-    failing = oversight.failing;
+    var oversight = aoi_feature_edit.layer_oversight;
+    var name = layer.name;
+    var pending = oversight.pending;
+    var watched = oversight.watched;
+    var failing = oversight.failing;
     if(watch) {
         if(watched.indexOf(name) < 0) watched[watched.length] = name;
         layer.on("loading", function () {
@@ -563,10 +565,11 @@ aoi_feature_edit.watch_layer = function(layer, watch) {
 aoi_feature_edit._pendingPoints = {};
 aoi_feature_edit.map_init = function (map, bounds) {
 
-    map.on("layer_add", function(e) {
+    // Events to watch layers being added/loaded/etc.
+    map.on("layeradd", function(e) {
         aoi_feature_edit.watch_layer(e.layer, true);
     });
-    map.on("layer_remove", function(e) {
+    map.on("layerremove", function(e) {
         aoi_feature_edit.watch_layer(e.layer, false);
     });
 
@@ -576,24 +579,19 @@ aoi_feature_edit.map_init = function (map, bounds) {
     var custom_map = aoi_feature_edit.aoi_map_json || {};
     aoi_feature_edit.map = map;
 
-    var baseLayers = {};
-    var layerSwitcher = {};
-
-    var baseLayerName = (map.options.djoptions.layers[0]) ? map.options.djoptions.layers[0][0] : "Base Layer";
-    //var editableLayers = new L.FeatureGroup();
-    // Only layer in here should be base OSM layer
-    _.each(aoi_feature_edit.map._layers, function (l) {
-        baseLayers[baseLayerName] = l;
-    });
-
     aoi_feature_edit.layers.base = [];
     aoi_feature_edit.layers.overlays = [];
     aoi_feature_edit.layers.jobs = [];
 
-    //Add the Base OSM Layer
+
+    
+    // aoi_feature_edit.map._layers - layers that have been added to the map already
+    // map.options.djoptions.layers - layer options that were passed to django
+    // Set the name for the base layer and add it to our layer map.
+    // TODO: It seems like it's possible to have multiple base maps, but that's not handled here
     var baselayer = _.toArray(aoi_feature_edit.map._layers);
     if (baselayer && baselayer[0]) {
-        baselayer[0].name=baseLayerName;
+        baselayer[0].name=(map.options.djoptions.layers[0]) ? map.options.djoptions.layers[0][0] : "Base Layer";
         aoi_feature_edit.layers.base.push(baselayer[0]);
     }
 
@@ -609,18 +607,18 @@ aoi_feature_edit.map_init = function (map, bounds) {
         });
     aoi_extents.addTo(aoi_feature_edit.map);
     aoi_feature_edit.layers.features.push(aoi_extents);
+
     //Build a reset button that zooms to the extents of the AOI
     function locateBounds() {
         return aoi_extents.getBounds();
-    }
+    };
     (new L.Control.ResetView(locateBounds)).addTo(aoi_feature_edit.map);
 
     //Zoom to the bounds of the Workcell, then one more level
     aoi_feature_edit.map.fitBounds(aoi_extents.getBounds());
     aoi_feature_edit.map.setZoom(aoi_feature_edit.map.getZoom()+1);
 
-    var layers_to_show = store.get('leaflet_layer_control.layers');
-    layers_to_show = layers_to_show ? layers_to_show.split(",") : undefined;
+    var layersToShow = store.get('leaflet_layer_control.selected_tree_nodes');
 
     //Build layers, parse them, and add them to the map and to memory
     if (custom_map.layers) {
@@ -631,49 +629,18 @@ aoi_feature_edit.map_init = function (map, bounds) {
             var built_layer = leaflet_helper.layer_conversion(layer_data, map);
             if (! built_layer) {
                 // skip this layer and go to next
+                log.error("Tried to add a layer, but didn't work: "+layer_data.url)
                 return true;
             }
 
-            var shouldBeShown;
-            if (layers_to_show) {
-                shouldBeShown = _.indexOf(layers_to_show, built_layer.config.id+"");
-                shouldBeShown = shouldBeShown >= 0;
+            if (layer_data.isBaseLayer) {
+                // Don't add base layers here, we should assume that base layers are properly added to the map by django
+                // aoi_feature_edit.layers.base.push(built_layer);
             } else {
-                shouldBeShown = built_layer.config.shown;
-            }
-            built_layer.shown = shouldBeShown;
-
-            if (built_layer !== undefined) {
-                if (layer_data.isBaseLayer) {
-                    baseLayers[layer_data.name] = built_layer;
-                    aoi_feature_edit.layers.base.push(built_layer);
+                if (layer_data.job) {
+                    aoi_feature_edit.layers.jobs.push(built_layer);
                 } else {
-                    if (layer_data.job) {
-                        layerSwitcher[layer_data.name] = built_layer;
-                        aoi_feature_edit.layers.jobs.push(built_layer);
-                    } else {
-                        layerSwitcher[layer_data.name] = built_layer;
-                        aoi_feature_edit.layers.overlays.push(built_layer);
-                    }
-                }
-            } else {
-                log.error("Tried to add a layer, but didn't work: "+layer_data.url)
-            }
-            if (built_layer) {
-                // we see errors here on bad layers. try to catch
-                try {
-                    aoi_feature_edit.watch_layer(built_layer, true);
-                    aoi_feature_edit.map.addLayer(built_layer);
-                    var shownAmount = shouldBeShown ? built_layer.options.opacity || 0.8 : 0;
-
-                    //TODO: Some layers are showing even when unchecked.  Find out why
-
-                    built_layer.options.toShowOnLoad = shownAmount;
-                    built_layer.options.setInitialOpacity = false;
-
-                    leaflet_layer_control.setLayerOpacity(built_layer, shownAmount, true);
-                } catch (e) {
-                    log.warn("Error trying to add layer: " + built_layer.name);
+                    aoi_feature_edit.layers.overlays.push(built_layer);
                 }
             }
         });
@@ -817,7 +784,7 @@ aoi_feature_edit.map_init = function (map, bounds) {
         var headers = {};
         geojson.properties.template = aoi_feature_edit.current_feature_type_id || 1;
         if(geojson.geometry.type === "Point") {
-            icon = null;
+            var icon = null;
             var tmpId = Math.uuidCompact();
             headers = { "Temp-Point-Id": tmpId};
             if(aoi_feature_edit.feature_types[geojson.properties.template]) {

@@ -688,7 +688,7 @@ leaflet_layer_control.show_info = function (objToShow, node) {
     if (typeof objToShow == "string"){
         html_objects.push(objToShow);
     } else {
-        if (objToShow.options && objToShow._leaflet_id) {
+        if (objToShow.options) {
             //Probably a Leaflet layer
             html_objects.push(leaflet_layer_control.parsers.infoFromLayer(objToShow));
             html_objects.push(leaflet_layer_control.parsers.opacityControls(objToShow));
@@ -811,7 +811,7 @@ leaflet_layer_control.parsers.textIfExists = function(options) {
     var suffix = options.suffix;
 
     var html = "";
-    if (typeof obj != "undefined" && obj !== "") {
+    if (obj != undefined && obj !== "") {
         if (header) {
             html+="<h5>";
         }
@@ -903,6 +903,7 @@ leaflet_layer_control.parsers.opacityControls = function(layer) {
  * HTML renderer for dynamic parameters controls in the side bar.
  */
 leaflet_layer_control.parsers.dynamicParamsControls = function(layer) {
+    "use strict";
     if (!layer || !layer.config || !layer.config.dynamicParams) {
         return undefined;
     }
@@ -929,6 +930,7 @@ leaflet_layer_control.parsers.dynamicParamsControls = function(layer) {
 leaflet_layer_control.parsers.dynamic_param_parsers = {};
 
 leaflet_layer_control.parsers.dynamic_param_parsers.__generic = function(layer, param, input) {
+    "use strict";
     var wrapper = document.createElement("div");
     wrapper.className = "input-append input-prepend";
 
@@ -955,6 +957,7 @@ leaflet_layer_control.parsers.dynamic_param_parsers.__generic = function(layer, 
 }
 
 leaflet_layer_control.parsers.dynamic_param_parsers.__group_box = function(layer, param, input) {
+    "use strict";
     var wrapper = document.createElement("div");
     wrapper.className = "geoq-param-group clearfix";
     
@@ -980,6 +983,7 @@ leaflet_layer_control.parsers.dynamic_param_parsers.__group_box = function(layer
 }
 
 leaflet_layer_control.parsers.dynamic_param_parsers.String = function(layer, param) {
+    "use strict";
     var input = document.createElement("input");
     input.type = "text";
     input.className = "input-small";
@@ -989,13 +993,14 @@ leaflet_layer_control.parsers.dynamic_param_parsers.String = function(layer, par
 };
 
 leaflet_layer_control.parsers.dynamic_param_parsers.Date = function(layer, param) {
+    "use strict";
     var input = document.createElement("input");
     input.type = "date";
     input.className = "input-medium";
     input.value = layer.config.layerParams[param.name];
     
     if (param.range) {
-        rangeFun = leaflet_layer_control.parsers.dynamic_param_ranges[param.range.type];
+        var rangeFun = leaflet_layer_control.parsers.dynamic_param_ranges[param.range.type];
         if (rangeFun) rangeFun(input, param.range);
     }
 
@@ -1003,6 +1008,7 @@ leaflet_layer_control.parsers.dynamic_param_parsers.Date = function(layer, param
 };
 
 leaflet_layer_control.parsers.dynamic_param_parsers.Number = function(layer, param) {
+    "use strict";
     if (window.Slider && param.range) {
         var input = document.createElement("input");
         input.type = "number";
@@ -1012,7 +1018,7 @@ leaflet_layer_control.parsers.dynamic_param_parsers.Number = function(layer, par
         var wrapper = leaflet_layer_control.parsers.dynamic_param_parsers.__group_box(layer, param, input);
 
         if (param.range) {
-            rangeFun = leaflet_layer_control.parsers.dynamic_param_ranges[param.range.type];
+            var rangeFun = leaflet_layer_control.parsers.dynamic_param_ranges[param.range.type];
             if (rangeFun) rangeFun(input, param.range, function() {
                 if (input.min && input.max) { // Only create slider if we have a MIN and max
                     new Slider(input, {
@@ -1033,7 +1039,7 @@ leaflet_layer_control.parsers.dynamic_param_parsers.Number = function(layer, par
         input.value = layer.config.layerParams[param.name];
 
         if (param.range) {
-            rangeFun = leaflet_layer_control.parsers.dynamic_param_ranges[param.range.type];
+            var rangeFun = leaflet_layer_control.parsers.dynamic_param_ranges[param.range.type];
             if (rangeFun) rangeFun(input, param.range);
         }
 
@@ -1044,6 +1050,7 @@ leaflet_layer_control.parsers.dynamic_param_parsers.Number = function(layer, par
 leaflet_layer_control.parsers.dynamic_param_ranges = {};
 
 leaflet_layer_control.parsers.dynamic_param_ranges.FixedRange = function(numberInput, range, callback) {
+    "use strict";
     numberInput.min = range.start;
     numberInput.max = range.end;
     numberInput.step = range.step;
@@ -1052,6 +1059,7 @@ leaflet_layer_control.parsers.dynamic_param_ranges.FixedRange = function(numberI
 }
 
 leaflet_layer_control.parsers.dynamic_param_ranges.NumberCapIDRange = function(numberInput, range, callback) {
+    "use strict";
     $.ajax({
             url: range.url,
             dataType: "json"
@@ -1073,8 +1081,7 @@ leaflet_layer_control.layerDataList = function (options) {
 
     var layerGroups = options.layers;
 
-    var previouslyLookedAtLayers = store.get('leaflet_layer_control.layers') || "";
-    previouslyLookedAtLayers = previouslyLookedAtLayers.split(",");
+    var previouslyLookedAtLayers = store.get('leaflet_layer_control.selected_tree_nodes') || [];
 
     //For each layer group
     _.each(layerGroups,function(layerGroup,groupNum){
@@ -1103,9 +1110,7 @@ leaflet_layer_control.layerDataList = function (options) {
                 leaflet_layer_control.removeDuplicateLayers(layerGroups,layer);
 
                 //Check through cookie info to see if layer was previously selected
-                var layerID;
-                if (layer && layer.config && layer.config.id) layerID = layer.config.id+""; //NOTE: Convert it to string
-                if (layer && layer.id) layerID = layer.id+"";
+                var layerID = leaflet_layer_control._uninit_getLayerStorageID(layer_obj, treeData[groupNum]);
 
                 var layerPreviouslyChosen = false;
                 if (layerID && _.indexOf(previouslyLookedAtLayers,layerID) > -1) {
@@ -1119,26 +1124,7 @@ leaflet_layer_control.layerDataList = function (options) {
                 }
 
                 if (showEvenIfNotInUS || layerPreviouslyChosen) {
-                    if (layer.getLayers && layer.getLayers() && layer.getLayers()[0]) {
-                        var layerItem = layer.getLayers()[0];
-                        var options = layerItem._options || layerItem.options;
-                        if (options && options.style) {
-                            if (options.style.opacity == 1 || options.style.fillOpacity == 1){
-                                layer_obj.selected = true;
-                            }
-                        }
-                        if (options && options.opacity && options.opacity == 1) {
-                            layer_obj.selected = true;
-                        }
-                    } else if (layer.options && layer.options.opacity){
-                        layer_obj.selected = true;
-                    } else if (layer.options && layer.options.is_geoq_feature) {
-                        layer_obj.selected = true;
-                    }
                     if (layerPreviouslyChosen) layer_obj.selected = true;
-                }
-                if (!layer_obj.selected) {
-                    leaflet_layer_control.setLayerOpacity(layer,0);
                 }
 
                 //Add this to the json to build the treeview
@@ -1436,10 +1422,10 @@ leaflet_layer_control.addLayerControl = function (map, options, $accordion) {
         checkbox: true,
         autoScroll: true,
         debugLevel: 1,
-        selectMode: 2,
+        selectMode: 3, // Hierarchecal select mode
         source: treeData,
         init: function (event, data) {
-            leaflet_layer_control.drawEachLayer(data,map,true);
+            leaflet_layer_control.drawEachLayer(data, map);
         },
         activate: function (event, data) {
             //Clicked on a treenode title
@@ -1487,19 +1473,18 @@ leaflet_layer_control.addLayerControl = function (map, options, $accordion) {
 };
 leaflet_layer_control.drawEachLayer=function(data,map,doNotMoveToTop){
 
+    // All of the layers currently checked
     var selectedLayers = data.tree.getSelectedNodes();
+    // Layers that used to be checked, but are no longer
     var layersUnClicked = _.difference(leaflet_layer_control.lastSelectedNodes, selectedLayers);
+    // Layers that used to be unchecked, but now are.
     var layersClicked = _.difference(selectedLayers, leaflet_layer_control.lastSelectedNodes);
 
     _.each(layersUnClicked,function(layer_obj){
         if (layer_obj && layer_obj.data && _.toArray(layer_obj.data).length) {
             var layer = layer_obj.data;
-            leaflet_layer_control.setLayerOpacity(layer,0,doNotMoveToTop);
-        } else if (layer_obj.children && layer_obj.children.length) {
-            //A category was clicked
-            _.each(layer_obj.children, function(layer_obj_item){
-                layer_obj_item.setSelected(false);
-            });
+
+            aoi_feature_edit.map.removeLayer(layer);
         }
     });
 
@@ -1507,17 +1492,14 @@ leaflet_layer_control.drawEachLayer=function(data,map,doNotMoveToTop){
         if (layer_obj && layer_obj.data && _.toArray(layer_obj.data).length) {
             var layer = layer_obj.data;
 
-            if (layer._map && layer._initHooksCalled) {
+            if (layer._initHooksCalled) {
                 //It's a layer that's been already built
-                var opacity = layer.options ? layer.options.opacity||layer.options.oldOpacity : 0;
-                if (!opacity) {
-                    opacity = layer.config ? layer.config.opacity : 1;
-                }
-                leaflet_layer_control.setLayerOpacity(layer,opacity,doNotMoveToTop);
-
+                
                 if (leaflet_layer_control.likelyHasFeatures(layer)) {
-                    leaflet_helper.constructors.geojson(layer.config, map);
+                    leaflet_helper.constructors.geojson(layer.config, map, layer);
                 }
+                
+                aoi_feature_edit.map.addLayer(layer);
             } else {
                 //It's an object with layer info, not yet built - build the layer from the config data
                 var name = layer.name;
@@ -1568,10 +1550,7 @@ leaflet_layer_control.drawEachLayer=function(data,map,doNotMoveToTop){
             }
 
         } else if (layer_obj.children && layer_obj.children.length) {
-            //A category was clicked
-            _.each(layer_obj.children, function(layer_obj_item){
-                layer_obj_item.setSelected(true);
-            });
+            // A category was clicked, do nothing. (Selectmode 3 will select children).
         } else {
             log.error("A layer with no data was clicked");
         }
@@ -1579,14 +1558,46 @@ leaflet_layer_control.drawEachLayer=function(data,map,doNotMoveToTop){
 
     //Set a cookie with all viewed Layers
     var checkedIDs = [];
-    _.each(selectedLayers,function(layer_obj){
+    _.each(data.tree.getSelectedNodes(),function(layer_obj){ // Use data.tree.getSelectedNodes() because we updated recursively so selectedNodes is not up to date
         if (layer_obj.data && layer_obj.data.config && layer_obj.data.config.id && layer_obj.parent.title!="Features") {
             checkedIDs.push(layer_obj.data.config.id);
         }
     });
+
     var checkedIDs_str = checkedIDs.join(",");
     store.set('leaflet_layer_control.layers', checkedIDs_str);
+
+    store.set('leaflet_layer_control.selected_tree_nodes',_.map(data.tree.getSelectedNodes(), function(layer_obj) {
+        return leaflet_layer_control._getLayerStorageID(layer_obj);
+    }));
 };
+
+leaflet_layer_control._getLayerStorageID = function(layerTreeNode) {
+    if (layerTreeNode.data && layerTreeNode.data.config && layerTreeNode.data.config.id) {
+        return layerTreeNode.data.config.id;
+    } else {
+        var tree_objects = [layerTreeNode];
+        while (tree_objects[0].parent) {
+            tree_objects.unshift(tree_objects[0].parent);
+        }
+
+        return _.map(tree_objects, function(tree_obj) {
+            return tree_obj.title;
+        }).join(':');
+    }
+}
+
+leaflet_layer_control._uninit_getLayerStorageID = function(uninitTreeNode, uninitTreeGroup) {
+    // Get the layer id if it exists, otherwise get the folder it's in
+    if (uninitTreeNode.data && uninitTreeNode.data.config && uninitTreeNode.data.config.id) {
+        return uninitTreeNode.data.config.id;
+    } else if (uninitTreeNode.data && uninitTreeNode.data.id) {
+        // Social media feeds seem to have id set in data when uninitialized, then copied over to config after initialized.
+        return uninitTreeNode.data.id;
+    } else {
+        return 'root:' + uninitTreeGroup.title + ":" + uninitTreeNode.title;
+    }
+}
 
 leaflet_layer_control.toggleZooming=function($control){
     $control.on('mouseover',function(){
