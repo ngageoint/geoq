@@ -89,7 +89,8 @@ class JobForm(StyledModelForm):
     class Meta:
 
         fields = ('name', 'description', 'project', 'analysts',
-                  'teams', 'reviewers', 'feature_types', 'required_courses', 'tags', 'layers')
+                  'teams', 'reviewers', 'feature_types', 'required_courses', 'tags', 'layers', 'editor',
+                  'editable_layer')
         model = Job
 
     def __init__(self, project, *args, **kwargs):

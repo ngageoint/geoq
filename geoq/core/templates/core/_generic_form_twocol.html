@@ -129,4 +129,16 @@
        var match = RegExp('[?&]' + name + '=([^&]*)').exec(window.location.search);
        return match && decodeURIComponent(match[1].replace(/\+/g, ' '));
     }
+
+    // $(function() {
+        $('#id_editor').change( function() {
+            if ($('#id_editor option:selected').val() === 'geoq') {
+                $('#id_editable_layer').closest('dl').hide();
+            } else {
+                $('#id_editable_layer').closest('dl').show();
+            }
+        });
+
+    $('#id_editable_layer').closest('dl').hide();
+    // });
 </script>
