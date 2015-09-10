@@ -75,6 +75,7 @@ urlpatterns = patterns('',
 
     url(r'^aois/work/(?P<pk>\d+)/?$',login_required(CreateFeaturesView.as_view())),
     url(r'^workcells/work/(?P<pk>\d+)/?$',login_required(CreateFeaturesView.as_view()), name='aoi-work'),
+    url(r'^workcells/mapedit/(?P<pk>\d+)/?$', login_required(MapEditView.as_view()), name='aoi-mapedit'),
 
     url(r'^aois/work/(?P<pk>\d+)/comment/?$',
         add_workcell_comment, name='add-workcell-comment'),

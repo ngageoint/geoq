@@ -517,6 +517,18 @@ class UpdateJobView(UpdateView):
         kwargs['project'] = kwargs['instance'].project_id if hasattr(kwargs['instance'],'project_id') else 0
         return kwargs
 
+class MapEditView(DetailView):
+    http_method_names = ['get']
+    template_name = 'core/mapedit.html'
+    model = AOI
+
+    def get_context_data(self, **kwargs):
+        cv = super(MapEditView, self).get_context_data(**kwargs)
+        pk = self.kwargs.get('pk')
+        aoi = get_object_or_404(AOI, pk=pk)
+        cv['mapedit_url'] = aoi.job.editable_layer.edit_url + '?#map=' + aoi.map_detail() + '&geojson=' + aoi.grid_geoJSON()
+        return cv
+
 
 class ChangeAOIStatus(View):
     http_method_names = ['post','get']
