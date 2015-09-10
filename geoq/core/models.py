@@ -384,7 +384,7 @@ class AOI(GeoQBase, Assignment):
         if self.job.editable_layer_id is None:
             return reverse('aoi-work', args=[self.id])
         else:
-            return self.job.editable_layer.edit_url + '?#map=' + self.map_detail() + '&geojson=' + self.grid_geoJSON()
+            return reverse('aoi-mapedit', args=[self.id])
 
     def geoJSON(self):
         """

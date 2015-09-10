@@ -15,10 +15,10 @@
             </button>
             <ul class="dropdown-menu">
                 {% if 'core.change_aoi' in request.base_perms %}
-                <li><a href="#">Submit for Review</a></li>
+                <li><a href="{% url 'aoi-update-status' object.id 'Awaiting review' %}">Submit for Review</a></li>
                 {% endif %}
                 {% if 'core.certify_workcells' in request.base_perms %}
-                <li><a href="#">Certify as Complete</a></li>
+                <li><a href="{% url 'aoi-update-status' object.id 'Completed' %}">Certify as Complete</a></li>
                 {% endif %}
             </ul>
         </div>
