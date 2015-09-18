@@ -1,7 +1,7 @@
 var layer_geocoder = {};
 layer_geocoder.searchPhrase = "Search Google", layer_geocoder.map = null, layer_geocoder.lookupBoxID = "#address_lookup_box", layer_geocoder.$lookupBox = null, layer_geocoder.lookupButtonID = "#address_lookup_submit", layer_geocoder.$lookupButton = null, typeof String.prototype.trim != "function" && (String.prototype.trim = function () {
     return this.replace(/^\s+|\s+$/g, "")
-}), layer_geocoder.lookup_server = "http://maps.googleapis.com/maps/api/geocode/json?sensor=false&address=", layer_geocoder.setupMap = function () {
+}), layer_geocoder.lookup_server = "https://maps.googleapis.com/maps/api/geocode/json?sensor=false&address=", layer_geocoder.setupMap = function () {
     if (layer_geocoder.map)return;
     typeof GeoQ_map != "undefined" && (layer_geocoder.map = GeoQ_map), typeof map != "undefined" && map.zoomToExtent && (layer_geocoder.map = map), typeof incident_support != "undefined" && incident_support.map && incident_support.map.zoomToExtent && (layer_geocoder.map = incident_support.map)
 }, layer_geocoder.submitAddressLookup = function (e) {
