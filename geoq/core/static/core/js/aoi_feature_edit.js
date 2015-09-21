@@ -521,7 +521,7 @@ aoi_feature_edit.watch_layer = function(layer, watch) {
     var pending = oversight.pending;
     var watched = oversight.watched;
     var failing = oversight.failing;
-    if(watch) {
+    if(name && watch) {
         if(watched.indexOf(name) < 0) watched[watched.length] = name;
         layer.on("loading", function () {
             if(pending.indexOf(name) < 0) {
@@ -553,7 +553,7 @@ aoi_feature_edit.watch_layer = function(layer, watch) {
           toggleDrawer.tooltip();
         });
     } else {
-        if(watched.indexOf(name) > -1) {
+        if(name && watched.indexOf(name) > -1) {
             layer.off("loading");
             layer.off("load");
             layer.off("tileerror");
