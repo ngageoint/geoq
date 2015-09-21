@@ -1133,7 +1133,7 @@ aoi_feature_edit.buildDrawingControl = function (drawnItems) {
         });
 
         var setColorBG = true;
-        if ($icon) {
+        if ($icon && ftype && ftype.style) {
             var bg_color = ftype.style.color;
             var bg_image = ftype.icon || ftype.style.iconUrl || ftype.style.icon;
 
