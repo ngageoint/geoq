@@ -19,7 +19,7 @@ class Migration(SchemaMigration):
 
         # Adding field 'Feature.template'
         db.add_column(u'maps_feature', 'template',
-                      self.gf('django.db.models.fields.related.ForeignKey')(default=0, to=orm['maps.FeatureType'], on_delete=models.PROTECT),
+                      self.gf('django.db.models.fields.related.ForeignKey')(default=1, to=orm['maps.FeatureType'], on_delete=models.PROTECT),
                       keep_default=False)
 
         # Adding field 'Feature.properties'

@@ -10,7 +10,7 @@
 {% endcompress %}
     <link rel="stylesheet" href="{{ STATIC_URL }}/css/theme.blue.css" />
     <script src="{{ STATIC_URL }}core/js/leaflet_helper.js"></script>
-    <script src="{{ STATIC_URL }}core/js/bootstrap-dialog.js"></script>
+    <script src="{{ STATIC_URL }}bootstrap/js/bootstrap-dialog.js"></script>
     <script src="{{ STATIC_URL }}core/js/maths.js"></script>
     <script src="{{ STATIC_URL }}core/js/polygon.js"></script>
     <script src="{{ STATIC_URL }}js/jquery.tablesorter.min.js"></script>
@@ -102,6 +102,7 @@
                         <table class="tablesorter" id="workcell-list">
                             <colgroup>
                                 <col width="10" />
+                                <col width="10" />
                                 <col width="40" />
                                 <col width="60" />
                                 <col width="60" />
@@ -111,6 +112,7 @@
                             <tr>
                                 <th><input type="checkbox"></th>
                                 <th>ID</th>
+                                <th>Priority</th>
                                 <th>Status</th>
                                 <th>Assigned To</th>
                                 <th>Analyst</th>
@@ -129,7 +131,7 @@
             {% if 'accounts.add_job' in request.base_perms %}
                 <span><b>No workcells. Next step: </b> <a class="btn btn-large btn-success" href="{% url 'job-create-aois' job_pk=object.id %}">Create workcells</a></span>
             {% else %}
-                <span><b>This project doesn't have any jobs yet, please ask a supervisor to create one</b></span>
+                <span><b>This Job doesn't have any workcells yet, please ask a supervisor to create some</b></span>
             {% endif %}
             </div>
         {% endif %}

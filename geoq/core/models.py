@@ -3,6 +3,7 @@
 # is subject to the Rights in Technical Data-Noncommercial Items clause at DFARS 252.227-7013 (FEB 2012)
 
 import json
+import cgi
 
 from django.contrib.auth.models import User, Group
 from django.contrib.gis.db import models
@@ -15,19 +16,24 @@ from managers import AOIManager
 from jsonfield import JSONField
 from collections import defaultdict
 from django.db.models import Q
+from geoq.training.models import Training
+from geoq.core.utils import clean_dumps
 
 TRUE_FALSE = [(0, 'False'), (1, 'True')]
 STATUS_VALUES_LIST = ['Unassigned', 'Assigned', 'In work', 'Awaiting review', 'In review', 'Completed']
 
+
 class AssigneeType:
-    USER, GROUP = range(1,3)
+    USER, GROUP = range(1, 3)
+
 
 class Setting(models.Model):
     """
     Model for site-wide settings.
     """
     name = models.CharField(max_length=200, help_text="Name of site-wide variable")
-    value = JSONField(null=True, blank=True, help_text="Value of site-wide variable that scripts can reference - must be valid JSON")
+    value = JSONField(null=True, blank=True,
+                      help_text="Value of site-wide variable that scripts can reference - must be valid JSON")
 
     def __unicode__(self):
         return self.name
@@ -39,7 +45,7 @@ class Assignment(models.Model):
     """
     assignee_type = models.ForeignKey(ContentType, null=True)
     assignee_id = models.PositiveIntegerField(null=True)
-    content_object = generic.GenericForeignKey('assignee_type','assignee_id')
+    content_object = generic.GenericForeignKey('assignee_type', 'assignee_id')
 
     class Meta:
         abstract = True
@@ -50,12 +56,13 @@ class GeoQBase(models.Model):
     A generic model for GeoQ objects.
     """
 
-    active = models.BooleanField(default=True, help_text="Make projects visible to all users")
+    active = models.BooleanField(default=True, help_text="Check to make project 'Active' and visible to all users. Uncheck this to 'Archive' the project")
     created_at = models.DateTimeField(auto_now_add=True)
     name = models.CharField(max_length=200)
     description = models.TextField()
     updated_at = models.DateTimeField(auto_now=True)
-    properties = JSONField(null=True, blank=True, help_text='JSON key/value pairs associated with this object, e.g. {"usng":"18 S TJ 87308 14549", "favorite":"true"}')
+    properties = JSONField(null=True, blank=True,
+                           help_text='JSON key/value pairs associated with this object, e.g. {"usng":"18 S TJ 87308 14549", "favorite":"true"}')
 
     def __unicode__(self):
         return self.name
@@ -83,10 +90,10 @@ class Project(GeoQBase):
         ("Exercise", "Exercise"),
         ("Special Event", "Special Event"),
         ("Training", "Training"),
-        ]
+    ]
 
     project_type = models.CharField(max_length=50, choices=PROJECT_TYPES)
-    private = models.BooleanField(default=False, help_text='Make this project available to all users.')
+    private = models.BooleanField(default=False, help_text="Check this to make this project 'Private' and available only to users assigned to it.")
     project_admins = models.ManyToManyField(
         User, blank=True, null=True,
         related_name="project_admins", help_text='User that has admin rights to project.')
@@ -96,7 +103,8 @@ class Project(GeoQBase):
 
     class Meta:
         permissions = (
-            ('open_project','Open Project'),('close_project','Close Project'),('archive_project','Archive Project'),
+            ('open_project', 'Open Project'), ('close_project', 'Close Project'),
+            ('archive_project', 'Archive Project'),
         )
         ordering = ('-created_at',)
 
@@ -133,9 +141,10 @@ class Project(GeoQBase):
                 envelope_string = job_envelope.json
                 if envelope_string:
                     job_poly = json.loads(envelope_string)
-                    job_poly['properties'] = {"job_id": str(job.id), "link": str(job.get_absolute_url()), "name": str(job.name)}
+                    job_poly['properties'] = {"job_id": str(job.id), "link": str(job.get_absolute_url()),
+                                              "name": str(job.name)}
                     jobs.append(job_poly)
-        return json.dumps(jobs, ensure_ascii=True)
+        return clean_dumps(jobs, ensure_ascii=True)
 
     def get_absolute_url(self):
         return reverse('project-detail', args=[self.id])
@@ -151,21 +160,27 @@ class Job(GeoQBase, Assignment):
 
     GRID_SERVICE_VALUES = ['usng', 'mgrs']
     GRID_SERVICE_CHOICES = [(choice, choice) for choice in GRID_SERVICE_VALUES]
+    EDITORS = ['geoq','osm']
+    EDITOR_CHOICES = [(choice, choice) for choice in EDITORS]
 
     analysts = models.ManyToManyField(User, blank=True, null=True, related_name="analysts")
     teams = models.ManyToManyField(Group, blank=True, null=True, related_name="teams")
     reviewers = models.ManyToManyField(User, blank=True, null=True, related_name="reviewers")
     progress = models.SmallIntegerField(max_length=2, blank=True, null=True)
     project = models.ForeignKey(Project, related_name="project")
-    grid = models.CharField(max_length=5, choices=GRID_SERVICE_CHOICES, default=GRID_SERVICE_VALUES[0], help_text='Select usng for Jobs inside the US, otherwise use mgrs')
+    grid = models.CharField(max_length=5, choices=GRID_SERVICE_CHOICES, default=GRID_SERVICE_VALUES[0],
+                            help_text='Select usng for Jobs inside the US, otherwise use mgrs')
     tags = models.CharField(max_length=50, blank=True, null=True, help_text='Useful tags to search social media with')
+    editor = models.CharField(max_length=20, help_text='Editor to be used for creating features', choices=EDITOR_CHOICES, default=EDITOR_CHOICES[0])
+    editable_layer = models.ForeignKey( 'maps.EditableMapLayer', blank=True, null=True)
 
     map = models.ForeignKey('maps.Map', blank=True, null=True)
     feature_types = models.ManyToManyField('maps.FeatureType', blank=True, null=True)
+    required_courses = models.ManyToManyField(Training, blank=True, null=True, help_text="Courses that must be passed to open these cells")
 
     class Meta:
         permissions = (
-            ('assign_job', 'Assign Job'),
+
         )
         ordering = ('-created_at',)
 
@@ -193,11 +208,23 @@ class Job(GeoQBase, Assignment):
         for cell in AOI.objects.filter(job__id=self.id):
             count[cell.status] += 1
 
-        return str(', '.join("%s: <b>%r</b>" % (key,val) for (key,val) in count.iteritems()))
+        return str(', '.join("%s: <b>%r</b>" % (key, val) for (key, val) in count.iteritems()))
 
     @property
     def user_count(self):
         return self.analysts.count()
+
+    @property
+    def base_layer(self):
+        if self.map is not None and self.map.layers is not None:
+            layers = sorted([l for l in self.map.layers if l.is_base_layer], key = lambda x: x.stack_order)
+            if len(layers) > 0:
+                layer = layers[0].layer
+                return [layer.name, layer.url, layer.attribution]
+            else:
+                return []
+        else:
+            return []
 
     def features_table_html(self):
         counts = {}
@@ -217,19 +244,19 @@ class Job(GeoQBase, Assignment):
 
             header = "<th><i>Feature Counts</i></th>"
             for (featuretype, status_obj) in counts.iteritems():
-                header = header + "<th><b>"+featuretype+"</b></th>"
-            output += "<tr>"+header+"</tr>"
+                header = header + "<th><b>" + cgi.escape(featuretype) + "</b></th>"
+            output += "<tr>" + header + "</tr>"
 
             for status in STATUS_VALUES_LIST:
                 status = str(status)
-                row = "<td><b>"+status+"</b></td>"
+                row = "<td><b>" + status + "</b></td>"
                 for (featuretype, status_obj) in counts.iteritems():
                     if status in status_obj:
                         val = status_obj[status]
                     else:
                         val = 0
-                    row += "<td>" + str(val) + "</td>"
-                output += "<tr>"+row+"</tr>"
+                    row += "<td>" + cgi.escape(str(val)) + "</td>"
+                output += "<tr>" + row + "</tr>"
             output += "</table>"
         else:
             output = ""
@@ -254,6 +281,11 @@ class Job(GeoQBase, Assignment):
     def complete_count(self):
         return self.complete().count()
 
+    def complete_percent(self):
+        if self.aois.count() > 0:
+            return round(float(self.complete().count() * 100) / self.aois.count(), 2)
+        return 0.0
+
     def total_count(self):
         return self.aois.count()
 
@@ -266,16 +298,17 @@ class Job(GeoQBase, Assignment):
         geojson["type"] = "FeatureCollection"
         geojson["features"] = [json.loads(aoi.geoJSON()) for aoi in self.aois.all()]
 
-        return json.dumps(geojson) if as_json else geojson
+        return clean_dumps(geojson) if as_json else geojson
 
-    def features_geoJSON(self, as_json=True):
+    def features_geoJSON(self, as_json=True, using_style_template=True):
 
         geojson = SortedDict()
         geojson["type"] = "FeatureCollection"
         geojson["properties"] = dict(id=self.id)
-        geojson["features"] = [n.geoJSON(as_json=False) for n in self.feature_set.all()]
 
-        return json.dumps(geojson, indent=2) if as_json else geojson
+        geojson["features"] = [n.geoJSON(as_json=False, using_style_template=using_style_template) for n in self.feature_set.all()]
+
+        return clean_dumps(geojson, indent=2) if as_json else geojson
 
     def grid_geoJSON(self, as_json=True):
         """
@@ -286,7 +319,18 @@ class Job(GeoQBase, Assignment):
         geojson["type"] = "FeatureCollection"
         geojson["features"] = [json.loads(aoi.grid_geoJSON()) for aoi in self.aois.all()]
 
-        return json.dumps(geojson) if as_json else geojson
+        return clean_dumps(geojson) if as_json else geojson
+
+    def base_layer_object(self):
+        """
+        create base layer object that can override leaflet base OSM map
+        """
+
+        obj = {}
+        if len(self.base_layer) > 0:
+            obj["layers"] = [self.base_layer]
+
+        return obj
 
 
 class AOI(GeoQBase, Assignment):
@@ -310,7 +354,7 @@ class AOI(GeoQBase, Assignment):
 
     class Meta:
         permissions = (
-            ('assign_workcells','Assign Workcells'),('certify_workcells','Certify Workcells'),
+            ('assign_workcells', 'Assign Workcells'), ('certify_workcells', 'Certify Workcells'),
         )
 
     def __unicode__(self):
@@ -337,7 +381,10 @@ class AOI(GeoQBase, Assignment):
     # -- Afterwards -- check how this will work with the views.
 
     def get_absolute_url(self):
-        return reverse('aoi-work', args=[self.id])
+        if self.job.editable_layer_id is None:
+            return reverse('aoi-work', args=[self.id])
+        else:
+            return reverse('aoi-mapedit', args=[self.id])
 
     def geoJSON(self):
         """
@@ -355,11 +402,12 @@ class AOI(GeoQBase, Assignment):
             analyst=(self.analyst.username if self.analyst is not None else 'None'),
             assignee=self.assignee_name,
             priority=self.priority,
-            absolute_url=reverse('aoi-work', args=[self.id]),
             delete_url=reverse('aoi-deleter', args=[self.id]))
         geojson["geometry"] = json.loads(self.polygon.json)
 
-        return json.dumps(geojson)
+        geojson["properties"]["absolute_url"] = self.get_absolute_url()
+
+        return clean_dumps(geojson)
 
     def logJSON(self):
         return [ob.to_dict() for ob in self.log]
@@ -379,7 +427,15 @@ class AOI(GeoQBase, Assignment):
             priority=self.priority)
         prop_json = dict(properties_built.items() + properties_main.items())
 
-        return json.dumps(prop_json)
+        return clean_dumps(prop_json)
+
+
+    def map_detail(self):
+        """
+        Get map coordinates for MapEdit
+        """
+        center = self.polygon.centroid
+        return "15/%f/%f" % (center.y, center.x)
 
     def grid_geoJSON(self):
         """
@@ -393,10 +449,11 @@ class AOI(GeoQBase, Assignment):
         geojson["type"] = "Feature"
         geojson["properties"] = dict(
             id=self.id,
-            priority=self.priority)
+            priority=self.priority,
+            status=self.status)
         geojson["geometry"] = json.loads(self.polygon.json)
 
-        return json.dumps(geojson)
+        return clean_dumps(geojson)
 
     def user_can_complete(self, user):
         """
@@ -426,3 +483,21 @@ class Comment(models.Model):
         format = "%D %H:%M:%S"
         o = {'user': self.user.username, 'timestamp': self.created_at.strftime(format), 'text': self.text}
         return o
+
+
+class Organization(models.Model):
+    """
+    Organizations and Agencies that we work with.
+    """
+    name = models.CharField(max_length=200, unique=True, help_text="Short name of this organization")
+    url = models.CharField(max_length=600, blank=True, null=True, help_text="Link that users should be directed to if icon is clicked")
+    icon = models.ImageField(upload_to="static/organizations/", blank=True, null=True, help_text="Upload an icon of the organization here")
+    show_on_front = models.BooleanField(default=False, help_text="Show on the front of the GeoQ App")
+    order = models.IntegerField(default=0, null=True, blank=True, help_text='Optionally specify the order orgs should appear on the front page. Lower numbers appear sooner.')
+
+    def __unicode__(self):
+        return self.name
+
+    class Meta:
+        verbose_name_plural = 'Organizations'
+        ordering = ['order', 'name']

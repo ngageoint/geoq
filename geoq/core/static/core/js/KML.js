@@ -1,5 +1,3 @@
-/*global L: true */
-
 L.KML = L.FeatureGroup.extend({
 	options: {
 		async: true
@@ -16,8 +14,8 @@ L.KML = L.FeatureGroup.extend({
 	},
 
 	loadXML: function(url, cb, options, async) {
-		if (async == undefined) async = this.options.async;
-		if (options == undefined) options = this.options;
+		if (async === undefined) async = this.options.async;
+		if (options === undefined) options = this.options;
 
 		var req = new window.XMLHttpRequest();
 		req.open('GET', url, async);
@@ -25,30 +23,29 @@ L.KML = L.FeatureGroup.extend({
 			req.overrideMimeType('text/xml'); // unsupported by IE
 		} catch(e) {}
 		req.onreadystatechange = function() {
-			if (req.readyState != 4) return;
-			if(req.status == 200 && req.responseXML) cb(req.responseXML, options);
+			if (req.readyState !== 4) return;
+			if (req.status === 200) cb(req.responseXML, options);
 		};
 		req.send(null);
 	},
 
 	addKML: function(url, options, async) {
 		var _this = this;
-		var cb = function(gpx, options) { _this._addKML(gpx, options) };
+		var cb = function(gpx, options) { _this._addKML(gpx, options); };
 		this.loadXML(url, cb, options, async);
 	},
 
 	_addKML: function(xml, options) {
 		var layers = L.KML.parseKML(xml);
 		if (!layers || !layers.length) return;
-		for (var i = 0; i < layers.length; i++)
-		{
+		for (var i = 0; i < layers.length; i++) {
 			this.fire('addlayer', {
 				layer: layers[i]
 			});
 			this.addLayer(layers[i]);
 		}
 		this.latLngs = L.KML.getLatLngs(xml);
-		this.fire("loaded");
+		this.fire('loaded');
 	},
 
 	latLngs: []
@@ -59,7 +56,7 @@ L.Util.extend(L.KML, {
 	parseKML: function (xml) {
 		var style = this.parseStyle(xml);
 		this.parseStyleMap(xml, style);
-		var el = xml.getElementsByTagName("Folder");
+		var el = xml.getElementsByTagName('Folder');
 		var layers = [], l;
 		for (var i = 0; i < el.length; i++) {
 			if (!this._check_folder(el[i])) { continue; }
@@ -72,6 +69,11 @@ L.Util.extend(L.KML, {
 			l = this.parsePlacemark(el[j], xml, style);
 			if (l) { layers.push(l); }
 		}
+		el = xml.getElementsByTagName('GroundOverlay');
+		for (var k = 0; k < el.length; k++) {
+			l = this.parseGroundOverlay(el[k]);
+			if (l) { layers.push(l); }
+		}
 		return layers;
 	},
 
@@ -79,7 +81,7 @@ L.Util.extend(L.KML, {
 	// - returns true if no parent Folders
 	_check_folder: function (e, folder) {
 		e = e.parentElement;
-		while (e && e.tagName !== "Folder")
+		while (e && e.tagName !== 'Folder')
 		{
 			e = e.parentElement;
 		}
@@ -88,7 +90,7 @@ L.Util.extend(L.KML, {
 
 	parseStyle: function (xml) {
 		var style = {};
-		var sl = xml.getElementsByTagName("Style");
+		var sl = xml.getElementsByTagName('Style');
 
 		//for (var i = 0; i < sl.length; i++) {
 		var attributes = {color: true, width: true, Icon: true, href: true,
@@ -109,7 +111,7 @@ L.Util.extend(L.KML, {
 					var value = e.childNodes[0].nodeValue;
 					if (key === 'color') {
 						options.opacity = parseInt(value.substring(0, 2), 16) / 255.0;
-						options.color = "#" + value.substring(6, 8) + value.substring(4, 6) + value.substring(2, 4);
+						options.color = '#' + value.substring(6, 8) + value.substring(4, 6) + value.substring(2, 4);
 					} else if (key === 'width') {
 						options.weight = value;
 					} else if (key === 'Icon') {
@@ -126,13 +128,13 @@ L.Util.extend(L.KML, {
 		for (var i = 0; i < sl.length; i++) {
 			var e = sl[i], el;
 			var options = {}, poptions = {}, ioptions = {};
-			el = e.getElementsByTagName("LineStyle");
+			el = e.getElementsByTagName('LineStyle');
 			if (el && el[0]) { options = _parse(el[0]); }
-			el = e.getElementsByTagName("PolyStyle");
+			el = e.getElementsByTagName('PolyStyle');
 			if (el && el[0]) { poptions = _parse(el[0]); }
 			if (poptions.color) { options.fillColor = poptions.color; }
 			if (poptions.opacity) { options.fillOpacity = poptions.opacity; }
-			el = e.getElementsByTagName("IconStyle");
+			el = e.getElementsByTagName('IconStyle');
 			if (el && el[0]) { ioptions = _parse(el[0]); }
 			if (ioptions.href) {
 				// save anchor info until the image is loaded
@@ -149,18 +151,18 @@ L.Util.extend(L.KML, {
 	},
 	
 	parseStyleMap: function (xml, existingStyles) {
-		var sl = xml.getElementsByTagName("StyleMap");
+		var sl = xml.getElementsByTagName('StyleMap');
 		
 		for (var i = 0; i < sl.length; i++) {
 			var e = sl[i], el;
 			var smKey, smStyleUrl;
 			
-			el = e.getElementsByTagName("key");
+			el = e.getElementsByTagName('key');
 			if (el && el[0]) { smKey = el[0].textContent; }
-			el = e.getElementsByTagName("styleUrl");
+			el = e.getElementsByTagName('styleUrl');
 			if (el && el[0]) { smStyleUrl = el[0].textContent; }
 			
-			if (smKey=='normal')
+			if (smKey === 'normal')
 			{
 				existingStyles['#' + e.getAttribute('id')] = existingStyles[smStyleUrl];
 			}
@@ -183,6 +185,12 @@ L.Util.extend(L.KML, {
 			l = this.parsePlacemark(el[j], xml, style);
 			if (l) { layers.push(l); }
 		}
+		el = xml.getElementsByTagName('GroundOverlay');
+		for (var k = 0; k < el.length; k++) {
+			if (!this._check_folder(el[k], xml)) { continue; }
+			l = this.parseGroundOverlay(el[k]);
+			if (l) { layers.push(l); }
+		}
 		if (!layers.length) { return; }
 		if (layers.length === 1) { return layers[0]; }
 		return new L.FeatureGroup(layers);
@@ -193,13 +201,8 @@ L.Util.extend(L.KML, {
 		el = place.getElementsByTagName('styleUrl');
 		for (i = 0; i < el.length; i++) {
 			var url = el[i].childNodes[0].nodeValue;
-			for (var a in style[url])
-			{
-				// for jshint
-				if (true)
-				{
-					options[a] = style[url][a];
-				}
+			for (var a in style[url]) {
+				options[a] = style[url][a];
 			}
 		}
 		var layers = [];
@@ -212,7 +215,7 @@ L.Util.extend(L.KML, {
 				var tag = parse[j];
 				el = place.getElementsByTagName(tag);
 				for (i = 0; i < el.length; i++) {
-					var l = this["parse" + tag](el[i], xml, options);
+					var l = this['parse' + tag](el[i], xml, options);
 					if (l) { layers.push(l); }
 				}
 			}
@@ -226,7 +229,7 @@ L.Util.extend(L.KML, {
 			layer = new L.FeatureGroup(layers);
 		}
 
-		var name, descr = "";
+		var name, descr = '';
 		el = place.getElementsByTagName('name');
 		if (el.length && el[0].childNodes.length) {
 			name = el[0].childNodes[0].nodeValue;
@@ -239,7 +242,7 @@ L.Util.extend(L.KML, {
 		}
 
 		if (name) {
-			layer.bindPopup("<h2>" + name + "</h2>" + descr);
+			layer.bindPopup('<h2>' + name + '</h2>' + descr);
 		}
 
 		return layer;
@@ -304,7 +307,7 @@ L.Util.extend(L.KML, {
 	},
 
 	_read_coords: function (el) {
-		var text = "", coords = [], i;
+		var text = '', coords = [], i;
 		for (i = 0; i < el.childNodes.length; i++) {
 			text = text + el.childNodes[i].nodeValue;
 		}
@@ -317,6 +320,47 @@ L.Util.extend(L.KML, {
 			coords.push(new L.LatLng(ll[1], ll[0]));
 		}
 		return coords;
+	},
+
+	parseGroundOverlay: function (xml) {
+		var latlonbox = xml.getElementsByTagName('LatLonBox')[0];
+		var bounds = new L.LatLngBounds(
+			[
+				latlonbox.getElementsByTagName('south')[0].childNodes[0].nodeValue,
+				latlonbox.getElementsByTagName('west')[0].childNodes[0].nodeValue
+			],
+			[
+				latlonbox.getElementsByTagName('north')[0].childNodes[0].nodeValue,
+				latlonbox.getElementsByTagName('east')[0].childNodes[0].nodeValue
+			]
+		);
+		var attributes = {Icon: true, href: true, color: true};
+		function _parse(xml) {
+			var options = {}, ioptions = {};
+			for (var i = 0; i < xml.childNodes.length; i++) {
+				var e = xml.childNodes[i];
+				var key = e.tagName;
+				if (!attributes[key]) { continue; }
+				var value = e.childNodes[0].nodeValue;
+				if (key === 'Icon') {
+					ioptions = _parse(e);
+					if (ioptions.href) { options.href = ioptions.href; }
+				} else if (key === 'href') {
+					options.href = value;
+				} else if (key === 'color') {
+					options.opacity = parseInt(value.substring(0, 2), 16) / 255.0;
+					options.color = '#' + value.substring(6, 8) + value.substring(4, 6) + value.substring(2, 4);
+				}
+			}
+			return options;
+		}
+		var options = {};
+		options = _parse(xml);
+		if (latlonbox.getElementsByTagName('rotation')[0] !== undefined) {
+			var rotation = latlonbox.getElementsByTagName('rotation')[0].childNodes[0].nodeValue;
+			options.rotation = parseFloat(rotation);
+		}
+		return new L.RotatedImageOverlay(options.href, bounds, {opacity: options.opacity, angle: options.rotation});
 	}
 
 });
@@ -336,13 +380,13 @@ L.KMLIcon = L.Icon.extend({
 			if (this.anchorType.y === 'UNITS_FRACTION' || this.anchorType.x === 'fraction') {
 				img.style.marginTop  = (-(1 - this.anchor.y) * i.height) + 'px';
 			}
-			this.style.display = "";
+			this.style.display = '';
 		};
 		return img;
 	},
 
 	_setIconStyles: function (img, name) {
-		L.Icon.prototype._setIconStyles.apply(this, [img, name])
+		L.Icon.prototype._setIconStyles.apply(this, [img, name]);
 		// save anchor information to the image
 		img.anchor = this.options.iconAnchorRef;
 		img.anchorType = this.options.iconAnchorType;
@@ -353,6 +397,37 @@ L.KMLIcon = L.Icon.extend({
 L.KMLMarker = L.Marker.extend({
 	options: {
 		icon: new L.KMLIcon.Default()
+	}
+});
+
+// Inspired by https://github.com/bbecquet/Leaflet.PolylineDecorator/tree/master/src
+L.RotatedImageOverlay = L.ImageOverlay.extend({
+	options: {
+		angle: 0
+	},
+	_reset: function () {
+		L.ImageOverlay.prototype._reset.call(this);
+		this._rotate();
+	},
+	_animateZoom: function (e) {
+		L.ImageOverlay.prototype._animateZoom.call(this, e);
+		this._rotate();
+	},
+	_rotate: function () {
+        if (L.DomUtil.TRANSFORM) {
+            // use the CSS transform rule if available
+            this._image.style[L.DomUtil.TRANSFORM] += ' rotate(' + this.options.angle + 'deg)';
+        } else if(L.Browser.ie) {
+            // fallback for IE6, IE7, IE8
+            var rad = this.options.angle * (Math.PI / 180),
+                costheta = Math.cos(rad),
+                sintheta = Math.sin(rad);
+            this._image.style.filter += ' progid:DXImageTransform.Microsoft.Matrix(sizingMethod=\'auto expand\', M11=' + 
+                costheta + ', M12=' + (-sintheta) + ', M21=' + sintheta + ', M22=' + costheta + ')';                
+        }
+	},
+	getBounds: function() {
+		return this._bounds;
 	}
 });
 

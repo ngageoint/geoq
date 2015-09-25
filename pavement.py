@@ -114,16 +114,12 @@ def start():
     info("GeoQ is now available.")
 
 
-@cmdopts([
-    ('template=', 'T', 'Database template to use when creating new database, defaults to "template_postgis"'),
-])
 @task
 def createdb(options):
     """ Creates the database in postgres. """
     from geoq import settings
-    template = options.get('template', 'template_postgis')
     database = settings.DATABASES.get('default').get('NAME')
-    sh('createdb {database}'.format(database=database, template=template))
+    sh('createdb {database}'.format(database=database))
     sh('echo "CREATE EXTENSION postgis;CREATE EXTENSION postgis_topology" | psql -d  {database}'.format(database=database))
 
 

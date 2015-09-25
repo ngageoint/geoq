@@ -55,13 +55,22 @@ leaflet_helper.constructors.identifyParser = function(result, outputLayer){
     result = result || {};
 
     if (result.results && result.results.length &&
-        result.results[0].layerName && result.results && result.results[0].attributes &&
+        result.results[0].layerName && result.results[0].attributes &&
         result.results[0].attributes.Latitude && result.results[0].attributes.ImageMissionId && result.results[0].attributes.ImageURL &&
         result.results[0].attributes.ThumbnailURL && result.results[0].attributes.Heading && result.results[0].geometryType) {
 
         //Parser is CAP imagery Format
         parser = leaflet_helper.parsers.addFEMAImageEventsData;
         parserName = "FEMA ImageEvents";
+
+    } else if (result.results && result.results.length &&
+            result.results[0].layerName && result.results[0].attributes &&
+            result.results[0].attributes.latitude && result.results[0].attributes.ProjectName && result.results[0].attributes.ImageURL &&
+            result.results[0].attributes.ThumbnailURL && result.results[0].attributes.ImageDirection && result.results[0].geometryType) {
+
+            //Parser is CAP imagery Format (but the new revised metadata)
+            parser = leaflet_helper.parsers.addDynamicCapimageData;
+            parserName = "CAP CapImages";
 
     } else if (result.results && result.results.length &&
                result.results[0].layerName && result.results && result.results[0].attributes &&
@@ -94,11 +103,33 @@ leaflet_helper.constructors.identifyParser = function(result, outputLayer){
 
         parser = leaflet_helper.parsers.youTube;
         parserName = "YouTube Videos";
+    } else if (result && result.type && result.type=="FeatureCollection" && result.features && result.features[0] &&
+        result.features[0].properties && result.features[0].properties.status && result.features[0].properties.created_at &&
+        result.features[0].properties.analyst && result.features[0].properties.updated_at && result.features[0].properties.template ) {
+
+        parser = leaflet_helper.parsers.geoq_exported_json;
+        parserName = "GeoQ GeoJSON";
+
+    } else if (result && result.type && result.type=="FeatureCollection" && result.features && result.features[0] &&
+        result.features[0].properties && result.features[0].properties.status && result.features[0].properties.created_at &&
+        result.features[0].properties.analyst && result.features[0].properties.updated_at && result.features[0].style) {
+
+        parser = leaflet_helper.parsers.leaflet_geojson;
+        parserName = "Leaflet GeoJSON";
+    } else if (result && result.type && result.type=="FeatureCollection" && result.features && result.features[0] &&
+        result.features[0].properties && result.features[0].properties.fulcrum_id && result.features[0].properties.created_at &&
+        result.features[0].properties.system_created_at && result.features[0].properties.updated_at ) {
+
+        parser = leaflet_helper.parsers.fulcrum_exported_json;
+        parserName = "Fulcrum GeoJSON";
+
+
+
     } else if (result && result.type && result.type=="FeatureCollection" && result.features) {
 
         parser = leaflet_helper.parsers.basicJson;
         parserName = "Basic JSON";
-    } else if (result && result.geonames && result.geonames.length && false) {
+    } else if (result && result.geonames && result.geonames.length && false) { //TODO: Why not turned on?
 
         parser = leaflet_helper.parsers.geoNameWikiData;
         parserName = "GeoName Lookup";
@@ -107,6 +138,12 @@ leaflet_helper.constructors.identifyParser = function(result, outputLayer){
 
         parser = leaflet_helper.parsers.webDataLink;
         parserName = "Web Data Lookup";
+    } else if (result && result[0] && result[0].key && result[0].skey && result[0].clon!==undefined
+        && result[0].clat!==undefined && result[0].location!==undefined && result[0].ca!==undefined
+        && result[0].cd!==undefined && result[0].image_url!==undefined) {
+
+        parser = leaflet_helper.parsers.mapillaryImages;
+        parserName = "Mapillary Images";
     }
     //ADD new parser detectors here
 
@@ -165,7 +202,7 @@ leaflet_helper.constructors.geojson = function(layerConfig, map, useLayerInstead
         if (_.str.endsWith(url,'/')) url = url.substr(0,url.length-1);
         if (_.str.endsWith(url,'/export')) url = url.substr(0,url.length-7) + '/identity';
         url += '?geometryType=esriGeometryEnvelope&geometry={{bbox}}&mapExtent={{bbox}}';
-        url += '&imageDisplay={{width}},{{height}},96&tolerance={{width}}&f=json&layers=visible:'+(layerConfig.layer||"all");
+        url += '&imageDisplay={{width}},{{height}},96&tolerance={{width}}&f=json&layers='+(layerConfig.layer||"all");
     }
 
     if (useLayerInstead && (useLayerInstead.geojson_layer_count !== undefined)) {
@@ -249,7 +286,7 @@ leaflet_helper.constructors.geojson = function(layerConfig, map, useLayerInstead
 
     var outputLayer = useLayerInstead || new L.geoJson(undefined,{
         onEachFeature: function(feature, layer) {leaflet_helper.parsers.standard_onEachFeature(feature, layer, layerConfig); },
-        style: leaflet_helper.constructors.polygonStyleBuilderCallback,
+        style: leaflet_helper.constructors.keepStyleBuilderCallback,
         pointToLayer: iconCallback
     });
     if (outputLayer.geojson_layer_count == undefined) {
@@ -259,8 +296,15 @@ leaflet_helper.constructors.geojson = function(layerConfig, map, useLayerInstead
     if (outputLayer && !outputLayer.options) {
         outputLayer.options = {};
     }
-    outputLayer.options.opacity = 1;
+
+    var opacity = 1;
+    if (outputLayer.config) opacity = (outputLayer.config.opacity !== undefined) ? outputLayer.config.opacity : opacity;
+
     outputLayer.options = $.extend(outputLayer.options, layerConfig.layerParams);
+
+    outputLayer.options.opacity = opacity;
+    outputLayer.options.style = outputLayer.options.style || {};
+    outputLayer.options.style.opacity = opacity;
 
     url = leaflet_helper.constructors.urlTemplater(url, map, layerConfig.layerParams);
     var proxiedURL = leaflet_helper.proxify(url);
@@ -271,6 +315,8 @@ leaflet_helper.constructors.geojson = function(layerConfig, map, useLayerInstead
         dataType: layerConfig.format || 'json',
         success: function(data){
             leaflet_helper.constructors.geojson_success(data, proxiedURL, map, outputLayer);
+            // try to set correct opacity
+                leaflet_layer_control.setLayerOpacity(outputLayer, outputLayer.options.opacity, true);
         },
         error: leaflet_helper.constructors.geojson_error
     });
@@ -301,12 +347,19 @@ leaflet_helper.constructors.iconBuilderCallback = function(feature, latlng, laye
 };
 
 leaflet_helper.constructors.polygonStyleBuilderCallback =function(feature) {
+//
+    var polyFillColor = '#ff0000';
+//    if (feature.properties && feature.properties.status) {
+//        var status = feature.properties.status.toLowerCase().replace(" ","_");
+//        polyFillColor = leaflet_helper.styles[status].fillColor;
+//    }
+
     var style = {
         weight: 2,
         opacity: 1,
         color: 'white',
         fillOpacity: 0.1,
-        fillColor: '#ff0000'};
+        fillColor: polyFillColor};
     if (feature.properties.layer_type == "Aerial Oblique Line") {
         style.color = 'green';
         style.dashArray = '3';
@@ -314,6 +367,23 @@ leaflet_helper.constructors.polygonStyleBuilderCallback =function(feature) {
         style.color = 'orange';
         style.dashArray = '3';
     }
+    return style;
+};
+
+leaflet_helper.constructors.keepStyleBuilderCallback = function(feature) {
+    var style;
+    if (feature.style) {
+        style = feature.style;
+    } else {
+        style = {
+            weight: 2,
+            opacity: 1,
+            color: 'white',
+            fillOpacity: 0.1,
+            fillColor: '#ff0000'
+        };
+    }
+
     return style;
 };
 
@@ -360,7 +430,6 @@ leaflet_helper.constructors.geojson_success = function (data, proxiedURL, map, o
     if (outputLayer && !outputLayer.options) {
         outputLayer.options = {};
     }
-    outputLayer.options.opacity = 1;
 
     return outputLayer;
 };
@@ -391,7 +460,18 @@ leaflet_helper.addLinksToPopup = function (layerName,id,useMove,useHide,useDrop)
 
 };
 leaflet_helper.update_tree_title = function(outputLayer) {
-    var treeNodes = leaflet_layer_control.$tree.fancytree('getTree').rootNode;
+    var treeNodes;
+    if (leaflet_layer_control && leaflet_layer_control.$tree && leaflet_layer_control.$tree.fancytree) {
+        treeNodes = leaflet_layer_control.$tree.fancytree('getTree');
+        if (treeNodes) {
+            treeNodes = treeNodes.rootNode;
+        } else {
+            return;
+        }
+    } else {
+        return;
+    }
+
 
     var layerName = outputLayer.name;
     var treeItem = null;
@@ -414,16 +494,30 @@ leaflet_helper.update_tree_title = function(outputLayer) {
 };
 
 leaflet_helper.parsers = {};
-leaflet_helper.parsers.basicJson = function (geojson, map, outputLayer) {
+leaflet_helper.parsers.basicJson = function (geojson, map, outputLayer, keepOld) {
     if (outputLayer) {
+        if (!keepOld) {
+            outputLayer.options.items = [];
+            outputLayer.clearLayers();
+        }
+        outputLayer.options.onEachFeature = function(feature, layer) {
+            leaflet_helper.parsers.standard_onEachFeature(feature, layer, outputLayer);
+        };
+        outputLayer.options.pointToLayer = function(feature, latlng) {
+            return leaflet_helper.constructors.iconBuilderCallback(feature, latlng, outputLayer);
+        };
+
         outputLayer.addData(geojson);
     } else {
         outputLayer = L.geoJson(geojson,{
-            onEachFeature: function(feature, layer) {leaflet_helper.parsers.standard_onEachFeature(feature, layer, outputLayer); },
+            onEachFeature: function(feature, layer) {
+                leaflet_helper.parsers.standard_onEachFeature(feature, layer, outputLayer);
+            },
             style: leaflet_helper.constructors.polygonStyleBuilderCallback,
-            pointToLayer: function(feature, latlng) { leaflet_helper.constructors.iconBuilderCallback(feature, latlng, outputLayer); }
+            pointToLayer: function(feature, latlng) {
+                return leaflet_helper.constructors.iconBuilderCallback(feature, latlng, outputLayer);
             }
-        ).addTo(map);
+        }).addTo(map);
     }
 
     if (outputLayer) {
@@ -432,10 +526,169 @@ leaflet_helper.parsers.basicJson = function (geojson, map, outputLayer) {
     if (outputLayer && !outputLayer.options) {
         outputLayer.options = {};
     }
-    outputLayer.options.opacity = 1;
 
     return outputLayer;
 };
+leaflet_helper.parsers.fulcrum_exported_json = function (geojson, map, outputLayer, keepOld) {
+    if (outputLayer) {
+        if (!keepOld) {
+            outputLayer.options.items = [];
+            outputLayer.clearLayers();
+        }
+        outputLayer.options.onEachFeature = function(feature, layer) {
+            aoi_feature_edit.fulcrumfeatureLayer_onEachFeature(feature, layer, outputLayer, true);
+        };
+        outputLayer.addData(geojson);
+
+    } else {
+        outputLayer = L.geoJson(geojson,{
+            style: leaflet_helper.constructors.polygonStyleBuilderCallback,
+            onEachFeature: function(feature, layer) {
+                aoi_feature_edit.fulcrumfeatureLayer_onEachFeature(feature, layer, outputLayer, true);
+            }
+        }).addTo(map);
+        outputLayer.on('click', function(e){
+            if (typeof leaflet_layer_control!="undefined"){
+                leaflet_layer_control.show_feature_info(e.layer.feature);
+            }
+        });
+    }
+
+    if (outputLayer) {
+        leaflet_helper.update_tree_title(outputLayer);
+    }
+    if (outputLayer && !outputLayer.options) {
+        outputLayer.options = {};
+    }
+
+    return outputLayer;
+};
+leaflet_helper.parsers.geoq_exported_json = function (geojson, map, outputLayer, keepOld) {
+    if (outputLayer) {
+        if (!keepOld) {
+            outputLayer.options.items = [];
+            outputLayer.clearLayers();
+        }
+        outputLayer.options.onEachFeature = function(feature, layer) {
+            aoi_feature_edit.featureLayer_onEachFeature(feature, layer, outputLayer, true);
+        };
+        outputLayer.options.pointToLayer = function(feature, latlng) {
+                return aoi_feature_edit.featureLayer_pointToLayer(feature, latlng, outputLayer, undefined);
+        };
+
+        outputLayer.addData(geojson);
+    } else {
+        outputLayer = L.geoJson(geojson,{
+            style: leaflet_helper.constructors.polygonStyleBuilderCallback,
+            onEachFeature: function(feature, layer) {
+                aoi_feature_edit.featureLayer_onEachFeature(feature, layer, outputLayer, true);
+            },
+
+            pointToLayer: function(feature, latlng) {
+                return aoi_feature_edit.featureLayer_pointToLayer(feature, latlng, outputLayer, undefined);
+            }
+
+        }).addTo(map);
+        outputLayer.on('click', function(e){
+            if (typeof leaflet_layer_control!="undefined"){
+                leaflet_layer_control.show_feature_info(e.layer.feature);
+            }
+        });
+    }
+
+    if (outputLayer) {
+        leaflet_helper.update_tree_title(outputLayer);
+    }
+    if (outputLayer && !outputLayer.options) {
+        outputLayer.options = {};
+    }
+
+    return outputLayer;
+};
+leaflet_helper.parsers.leaflet_geojson = function (geojson, map, outputLayer, keepOld) {
+    if (outputLayer) {
+        if (!keepOld) {
+            outputLayer.options.items = [];
+            outputLayer.clearLayers();
+        }
+        outputLayer.options.onEachFeature = function(feature, layer) {
+            aoi_feature_edit.featureLayer_onEachFeature(feature, layer, outputLayer, true);
+        };
+        outputLayer.options.pointToLayer = function(feature, latlng) {
+//            return aoi_feature_edit.featureLayer_pointToLayer(feature, latlng, outputLayer, undefined);
+            var style = feature.style || {"type":"image"};
+            var icon;
+            var marker;
+            if (style.type == 'maki') {
+                icon = L.MakiMarkers.Icon;
+                icon.type = 'maki';
+            }
+            else {
+                icon = aoi_feature_edit.MapIcon;
+            }
+            if (feature.name) {
+                icon.title = ftype.name;
+                icon.text = ftype.name;
+            }
+            if (feature.icon) {
+                style.iconUrl = feature.icon;
+            }
+
+            if (style) {
+                style.iconUrl = style.iconUrl || style.iconURL || style.iconurl ||  aoi_feature_edit.static_root +"/leaflet/images/red-marker-icon.png";
+            } else {
+                style.iconUrl = aoi_feature_edit.static_root +"/leaflet/images/red-marker-icon.png";
+            }
+
+            return new L.Marker(latlng, {
+                icon: new icon(style)
+            });
+        };
+
+        outputLayer.addData(geojson);
+    } else {
+        outputLayer = L.geoJson(geojson,{
+            style: leaflet_helper.constructors.keepStyleBuilderCallback,
+            onEachFeature: function(feature, layer) {
+                aoi_feature_edit.featureLayer_onEachFeature(feature, layer, outputLayer, true);
+            },
+
+            pointToLayer: function(feature, latlng) {
+                return aoi_feature_edit.featureLayer_pointToLayer(feature, latlng, outputLayer, undefined);
+            }
+
+        }).addTo(map);
+        outputLayer.on('click', function(e){
+            if (typeof leaflet_layer_control!="undefined"){
+                leaflet_layer_control.show_feature_info(e.layer.feature);
+            }
+        });
+    }
+
+    if (outputLayer) {
+        leaflet_helper.update_tree_title(outputLayer);
+    }
+    if (outputLayer && !outputLayer.options) {
+        outputLayer.options = {};
+    }
+
+    return outputLayer;
+};
+
+leaflet_helper.generic_popup_content = function (properties) {
+    var popupContent = document.createElement('div');
+    for (var idx in properties) {
+        if (idx[0] === '_') continue;
+        var entry = document.createElement('div');
+        var label = document.createElement('b');
+        label.appendChild(document.createTextNode(idx+": "));
+        entry.appendChild(label);
+        entry.appendChild(document.createTextNode(properties[idx]));
+        popupContent.appendChild(entry);
+    }
+    return popupContent;
+}
+
 leaflet_helper.parsers.standard_onEachFeature = function (feature, layer, layerConfig) {
     if (feature.properties) {
         var popupContent = "";
@@ -447,19 +700,24 @@ leaflet_helper.parsers.standard_onEachFeature = function (feature, layer, layerC
                 var link = leaflet_helper.clean(feature.properties.link); //Strip out any offending
                 popupContent = "<a href='"+link+"' target='_blank'>"+popupContent+"</a>";
             }
+        } else {
+            popupContent = leaflet_helper.generic_popup_content(feature.properties);
         }
-        if (popupContent && _.isString(popupContent)) {
-
-            if (!popupContent.indexOf("<span class='hide feature-id-hint'>")){
-                if (layerConfig && layerConfig.name) {
-                    if (!feature.properties.id) {
-                        feature.properties.id = leaflet_helper.id_count++;
+        if (popupContent) {
+            if (_.isString(popupContent)) {
+                if (!popupContent.indexOf("<span class='hide feature-id-hint'>")){
+                    if (layerConfig && layerConfig.name) {
+                        if (!feature.properties.id) {
+                            feature.properties.id = leaflet_helper.id_count++;
+                        }
+                        var id = feature.properties.id;
+                        popupContent += leaflet_helper.addLinksToPopup(layerConfig.name, id, true, false);
                     }
-                    var id = feature.properties.id;
-                    popupContent += leaflet_helper.addLinksToPopup(layerConfig.name, id, true, false);
                 }
+                layer.bindPopup(popupContent);
+            } else if (_.isElement(popupContent)) {
+                layer.bindPopup(popupContent);
             }
-            layer.bindPopup(popupContent);
         }
         if (feature.properties.heading && parseInt(feature.properties.heading) && layer.options){
             layer.options.angle = parseInt(feature.properties.heading);
@@ -569,88 +827,92 @@ leaflet_helper.parsers.addFEMAImageEventsData = function (result, map, outputLay
             feature.attributes = feature.attributes || {};
             var attributes = feature.attributes;
 
-            var lat = feature.geometry.y || attributes.Latitutde || 0;
-            var lng = feature.geometry.x || attributes.Longitude || 0;
-            lat = parseFloat(lat);
-            lng = parseFloat(lng);
+            try {
+                var lat = feature.geometry.y || attributes.Latitutde || 0;
+                var lng = feature.geometry.x || attributes.Longitude || 0;
+                lat = parseFloat(lat);
+                lng = parseFloat(lng);
 
-            var photo_date = attributes.EXIFPhotoDate;
-            var altitude = attributes.Altitude;
-            var team_name = attributes.TeamName;
-            var event_name = attributes.EventName;
+                var photo_date = attributes.EXIFPhotoDate;
+                var altitude = attributes.Altitude;
+                var team_name = attributes.TeamName;
+                var event_name = attributes.EventName;
 
-            var display = "";
-            if (feature.displayFieldName) {
-                display = attributes[feature.displayFieldName];
-            } else if (feature.value) {
-                display = feature.value;
-            } else if (event_name && team_name) {
-                display = event_name+": "+team_name;
-            } else {
-                display = "Uploaded Photo";
-            }
-
-            var image_type = "";
-            if (feature.attributes.ImageTypeId == 1) {
-                image_type = "Aerial Oblique";
-            } else if (feature.attributes.ImageTypeId == 2) {
-                image_type = "Aerial Nadir";
-            } else if (feature.attributes.ImageTypeId == 3) {
-                image_type = "Ground";
-            }
-
-            var popupContent = leaflet_layer_control.parsers.textIfExists({name: display, title:"Image", header:true, linkit:attributes.ThumbnailURL});
-            popupContent += leaflet_layer_control.parsers.textIfExists({name: photo_date, title:"Photo Date", datify:"calendar, fromnow"});
-            popupContent += "<a href='" + attributes.ImageURL + "' target='_new'><img style='width:150px' src='" + attributes.ThumbnailURL + "' /></a><br/>";
-            popupContent += leaflet_layer_control.parsers.textIfExists({name: altitude, title:"Altitude", suffix:" meters"});
-            popupContent += leaflet_layer_control.parsers.textIfExists({name: image_type, title:"Collection Type"});
-            popupContent += leaflet_helper.addLinksToPopup(outputLayer.name, id, true, false);
-
-            //TODO: Not using color yet
-            var color = "blue";
-            if (feature.layerName == "Track Points") {
-                color = "purple";
-            } else if (feature.layerName == "Ground Images") {
-                color = "orange";
-            } else if (feature.layerName == "Ground Targets") {
-                color = "green";
-            } else if (feature.layerName == "Ground Lines") {
-                color = "yellow";
-            }
-            //Adjust heading 90 degrees to the right
-            var heading = feature.attributes.CalculatedHeading || feature.attributes.Heading || 0;
-            heading = 90 + parseInt(heading);
-            if (heading > 360) heading -= 360;
-
-            var geometry = {};
-            if (feature.geometry && feature.geometry.paths) {
-                geometry = { type: "MultiLineString",
-                    coordinates: feature.geometry.paths //[ [100.0, 0.0], [101.0, 1.0] ]
+                var display = "";
+                if (feature.displayFieldName) {
+                    display = attributes[feature.displayFieldName];
+                } else if (feature.value) {
+                    display = feature.value;
+                } else if (event_name && team_name) {
+                    display = event_name+": "+team_name;
+                } else {
+                    display = "Uploaded Photo";
                 }
-            } else {
-                geometry = {
-                    type: "Point",
-                    coordinates: [lng, lat]
-                }
-            }
 
-            var json = {
-                type: "Feature",
-                properties: {
-                    id: id,
-                    source: 'CAP ImageEvents',
-                    name: display,
-                    image: feature.attributes.ImageURL,
-                    thumbnail: feature.attributes.ThumbnailURL,
-                    popupContent: popupContent,
-                    icon_type: "ImageEvents",
-                    layer_type: feature.layerName,
-                    heading: heading,
-                    color: color
-                },
-                geometry: geometry
-            };
-            jsonObjects.push(json);
+                var image_type = "";
+                if (feature.attributes.ImageTypeId == 1) {
+                    image_type = "Aerial Oblique";
+                } else if (feature.attributes.ImageTypeId == 2) {
+                    image_type = "Aerial Nadir";
+                } else if (feature.attributes.ImageTypeId == 3) {
+                    image_type = "Ground";
+                }
+
+                var popupContent = leaflet_layer_control.parsers.textIfExists({name: display, title:"Image", header:true, linkit:attributes.ThumbnailURL});
+                popupContent += leaflet_layer_control.parsers.textIfExists({name: photo_date, title:"Photo Date", datify:"calendar, fromnow"});
+                popupContent += "<a href='" + attributes.ImageURL + "' target='_new'><img style='width:150px' src='" + attributes.ThumbnailURL + "' /></a><br/>";
+                popupContent += leaflet_layer_control.parsers.textIfExists({name: altitude, title:"Altitude", suffix:" meters"});
+                popupContent += leaflet_layer_control.parsers.textIfExists({name: image_type, title:"Collection Type"});
+                popupContent += leaflet_helper.addLinksToPopup(outputLayer.name, id, true, false);
+
+                //TODO: Not using color yet
+                var color = "blue";
+                if (feature.layerName == "Track Points") {
+                    color = "purple";
+                } else if (feature.layerName == "Ground Images") {
+                    color = "orange";
+                } else if (feature.layerName == "Ground Targets") {
+                    color = "green";
+                } else if (feature.layerName == "Ground Lines") {
+                    color = "yellow";
+                }
+                //Adjust heading 90 degrees to the right
+                var heading = feature.attributes.CalculatedHeading || feature.attributes.Heading || 0;
+                heading = 90 + parseInt(heading);
+                if (heading > 360) heading -= 360;
+
+                var geometry = {};
+                if (feature.geometry && feature.geometry.paths) {
+                    geometry = { type: "MultiLineString",
+                        coordinates: feature.geometry.paths //[ [100.0, 0.0], [101.0, 1.0] ]
+                    }
+                } else {
+                    geometry = {
+                        type: "Point",
+                        coordinates: [lng, lat]
+                    }
+                }
+
+                var json = {
+                    type: "Feature",
+                    properties: {
+                        id: id,
+                        source: 'CAP ImageEvents',
+                        name: display,
+                        image: feature.attributes.ImageURL,
+                        thumbnail: feature.attributes.ThumbnailURL,
+                        popupContent: popupContent,
+                        icon_type: "ImageEvents",
+                        layer_type: feature.layerName,
+                        heading: heading,
+                        color: color
+                    },
+                    geometry: geometry
+                };
+                jsonObjects.push(json);
+            } catch (ex) {
+                log.error("There was an error importing a CAP ImageEvents feature", feature);
+            }
         }
     });
     outputLayer.addData(jsonObjects);
@@ -662,21 +924,37 @@ leaflet_helper.parsers.addFEMAImageEventsData = function (result, map, outputLay
 
     return outputLayer;
 };
-leaflet_helper.parsers.addDynamicCapimageData = function (result, map, outputLayer) {
-    //TODO: Handle de-dupes of all features returned
 
+/**
+ * Adds items from the resulting query. Assumes old data is invalid and clears it out.
+ * @param {[type]} result      [description]
+ * @param {[type]} map         [description]
+ * @param {[type]} outputLayer [description]
+ * @param {boolean} keepOld    true to keep old data (e.g. combinging paginated results)
+ */
+leaflet_helper.parsers.addDynamicCapimageData = function (result, map, outputLayer, keepOld) {
     if (!outputLayer.options) outputLayer.options = {};
     if (!outputLayer.options.items) outputLayer.options.items = [];
 
     var jsonObjects = [];
-    $(result.features).each(function () {
+
+    var results = result.features || result.results;
+
+    if (!keepOld) {
+        outputLayer.options.items = [];
+        outputLayer.clearLayers();
+    }
+
+    $(results).each(function () {
         var feature = $(this)[0];
         var id = feature.attributes.ID;
 
         var itemFound = false;
-        _.each(outputLayer.options.items,function(item){
-           if (item.id == id) itemFound = true;
-        });
+        if (keepOld) {
+            _.each(outputLayer.options.items,function(item){
+               if (item.attributes.ID == id) itemFound = true;
+            });
+        }
         if (!itemFound) {
             outputLayer.options.items.push(feature);
 
@@ -994,5 +1272,72 @@ leaflet_helper.parsers.webDataLink = function (result, map, outputLayer) {
     } catch (ex) {
         log.error("Problem parsing a Web Data Link: "+outputLayer.name);
     }
+    return outputLayer;
+};
+
+leaflet_helper.parsers.mapillaryImages = function (result, map, outputLayer) {
+    var jsonObjects = [];
+    var formatName = "Mapillary";
+
+    if (!outputLayer.options) { outputLayer.options = {}}
+    if (!outputLayer.options.items) { outputLayer.options.items = []}
+
+    $(result).each(function () {
+        var feature = $(this)[0];
+        var id=feature.key;
+
+        var itemFound = false;
+        _.each(outputLayer.options.items,function(item){
+           if (item.id == id) itemFound = true;
+        });
+        if (!itemFound) {
+            outputLayer.options.items.push(feature);
+
+            var title=feature.location || "";
+            var id=feature.key;
+            var imageURL= feature.image_url;
+            var thumbnailURL='';
+
+            var thumbs = feature.map_image_versions;
+            if (thumbs && thumbs[0] && thumbs[0].url) {
+                thumbnailURL = thumbs[0].url;
+            }
+
+            var center = map.getCenter();
+            var popupContent = "<h5>"+formatName+" Picture</h5>";
+            popupContent += "Posted at: "+title+"<br/>";
+            popupContent += "<a href='" + imageURL + "' target='_new'><img style='width:256px' src='" + thumbnailURL + "' /></a>";
+            popupContent += leaflet_helper.addLinksToPopup(outputLayer.name, id, true, true);
+
+            var lat = feature.lat || center.lat;
+            var lng = feature.lon || center.lng;
+
+            var json = {
+                type: "Feature",
+                properties: {
+                    id: id,
+                    name: title,
+                    source: formatName,
+                    image: imageURL,
+                    thumbnail: thumbnailURL,
+                    popupContent: popupContent,
+                    tags: aoi_feature_edit.tags || formatName
+                },
+                geometry: {
+                    type: "Point",
+                    coordinates: [lng, lat]
+                }
+            };
+            jsonObjects.push(json);
+        }
+    });
+
+    outputLayer.addData(jsonObjects);
+    if (jsonObjects && jsonObjects.length) {
+        log.info("A "+formatName+" Photos layer was loaded, with "+ jsonObjects.length+" features");
+    } else {
+        log.info("An "+formatName+" Photos response was returned, but with no features.");
+    }
+
     return outputLayer;
 };

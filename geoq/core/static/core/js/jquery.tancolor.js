@@ -40,10 +40,13 @@
             img.src = settings.load;
             return;
         }
+
+        var load_later_function = function(){tintImage(img,$(this),settings);};
+
         if (isImageOk(img)){
             tintImage(img,$(this),settings);
         } else {
-            img.addEventListener("load", function(){tintImage(img,$(this),settings);}, true);
+            img.addEventListener("load", load_later_function, true);
         }
 
         function tintImage(img,$img,settings){
@@ -198,12 +201,14 @@
             //Reapply the transparencies
             imageData = ctx.getImageData(0, 0, w, h);
             data = imageData.data;
+            //TODO: This can run slow especially on IE. Speed it up
             for(var p = 0, len = data.length; p < len; p+=4) {
                 data[p+3] = alphas[p+3];
             }
             ctx.putImageData(imageData,0,0);
 
-
+            // Remove the load event listener to fix infinite loop
+            img.removeEventListener("load", load_later_function, true); // MUST match addEventListener params as above perfectly
             //Write the changes back to the image
             var img_data = canvas.toDataURL("image/png");
             $img.attr('src',img_data);

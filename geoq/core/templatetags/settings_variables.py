@@ -6,5 +6,5 @@ register = template.Library()
 
 # gamification host
 @register.simple_tag
-def gamification_value(name):
+def settings_value(name):
     return getattr(settings, name, "")

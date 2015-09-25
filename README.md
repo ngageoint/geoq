@@ -2,7 +2,9 @@
 
 #### Geographic Work Queueing and Tasking System ####
 
-[![GeoQ Video](http://img.youtube.com/vi/HL_2CuoGz1w/0.jpg)](http://www.youtube.com/watch?v=HL_2CuoGz1w)
+<a href="http://www.youtube.com/watch?feature=player_embedded&v=HL_2CuoGz1w
+" target="_blank"><img src="https://raw.githubusercontent.com/wiki/ngageoint/geoq/images/geoq_video.jpg"
+alt="GeoQ video" width="240" height="180" border="10" /></a>
 
 GeoQ is an open source (MIT License) geographic tasking system that allows teams to collect geographic structured observations across a large area, but manage the work in smaller geographic regions. Large areas can be quickly broken up into small 1km squares and assigned to a team. System transparency informs all groups about workflow to avoid duplication of effort.
 
@@ -14,9 +16,9 @@ If you'd like to contribute to this project, please make a pull request. We'll r
 Software source code previously released under an open source license and then modified by NGA staff is considered a "joint work" (see 17 USC § 101); it is partially copyrighted, partially public domain, and as a whole is protected by the copyrights of the non-government authors and must be released according to the terms of the original open source license.
 
 ###In the News
-NGA Director Letitia Long talks about NGA's GitHub initiative and our first offering, GeoQ, at the GEOINT Symposium.  Her comments start at 40 minutes and 40 seconds in the [video clip] (http://geointv.com/archive/geoint-2013-keynote-letitia-a-long/).  
+Former NGA Director Letitia Long talks about NGA's GitHub initiative and our first offering, GeoQ, at the GEOINT Symposium.  Her comments start at 40 minutes and 40 seconds in the [video clip] (http://geointv.com/archive/geoint-2013-keynote-letitia-a-long/).  
 
-NGA Leaders speak at the 2014 White House Innovation for Disaster Response and Recovery Demo Day about GeoQ. [GeoQ Overview] (https://www.youtube.com/watch?v=X8eiXjbhfOc#t=26m13s)
+NGA Leaders speak at the 2014 White House Innovation for Disaster Response and Recovery Demo Day about [GeoQ] (https://www.youtube.com/watch?v=X8eiXjbhfOc#t=26m13s).
 
 ### Screenshots
 ![GeoQ Main page](https://cloud.githubusercontent.com/assets/147580/3464387/e58da414-024b-11e4-9a02-f9074f26047e.png)
@@ -55,13 +57,13 @@ The ``geoq/settings.py`` file contains installation-specific settings. The Datab
 
 ### GeoQ Installation ###
 
-Cloud Installation::
+**Cloud Installation::**
 
 1. You can optionally deploy GeoQ with all dependencies to a Virtual Machine or a cloud VM (such as an Amazon Web Services EC2 box) by using the chef installer at [https://github.com/ngageoint/geoq-chef-installer](https://github.com/ngageoint/geoq-chef-installer)
 
 2. Chef scripts are our preferred method of automating cloud builds
 
-Mac OSX Development Build Instructions::
+**Mac OSX Development Build Instructions::**
 
 1. Install PostGIS 2.0 using instructions at [https://docs.djangoproject.com/en/dev/ref/contrib/gis/install/#macosx](https://docs.djangoproject.com/en/dev/ref/contrib/gis/install/#macosx). There are several options there, but for most, the easiest option is to follow the Homebrew instructions. If you don't have Homebrew installed, you can either buid it securely yourself or follow the quick (yet not secure) one line instruction at [http://brew.sh](http://brew.sh).
 
@@ -69,7 +71,7 @@ Mac OSX Development Build Instructions::
 
 2. (Optional) Install a Geoserver (we recommend the OGC Geoserver at [https://github.com/geoserver](https://github.com/geoserver))
 
-3. Make sure Python, Virtualenv, and Git are installed
+3. Make sure Python, Virtualenv, npm, and Git are installed
 
         % Note that some distros (Debian) might need additional libraries:
         % sudo apt-get build-dep python-psycopg2
@@ -124,3 +126,46 @@ Mac OSX Development Build Instructions::
 
         % paver start_django
         
+**CentOS Development build instructions (tested on CentOS 6.6)::**
+
+*Dependencies*
+
+* Python 2.6+
+* Postgres 9.X (stock pg_hba.conf configuration)
+* virtualenv
+* node / npm
+
+From a shell:
+
+```bash
+virtualenv ~/geoq
+cd ~/geoq
+source bin/activate
+git clone https://github.com/ngageoint/geoq.git
+cd geoq
+sudo -u postgres psql << EOF
+create role geoq login password 'geoq';
+create database geoq with owner geoq;
+\c geoq
+create extension postgis;
+create extension postgis_topology;
+EOF
+
+pip install paver
+paver install_dependencies
+paver sync
+paver install_dev_fixtures
+
+npm install -g less
+cat << EOF > geoq/local_settings.py
+STATIC_URL_FOLDER = ''
+STATIC_ROOT = '{0}{1}'.format('', STATIC_URL_FOLDER)
+EOF
+
+```
+
+All that's left is to create a super user account => `python manage.py createsuperuser` and then you're ready to start GEOQ!
+
+```bash
+paver start_django
+```

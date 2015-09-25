@@ -41,6 +41,10 @@ leaflet_layer_control.initDrawer = function(){
 
     //Build an accordion row to view workcell log
     leaflet_layer_control.addLogInfo($accordion);
+    leaflet_layer_control.addLayerComparison($accordion);
+    leaflet_layer_control.addGeoOverview($accordion);
+    leaflet_layer_control.addRotationHelper($accordion);
+
 
     //The Layer Controls should also be built and added later in another script, something like:
     // var options = aoi_feature_edit.buildTreeLayers();
@@ -50,7 +54,7 @@ leaflet_layer_control.initDrawer = function(){
 };
 
 leaflet_layer_control.addPreferenceListener = function($accordion){
-    var lastOpened = $.cookie('leaflet_layer_control.layer_accordion');
+    var lastOpened = store.get('leaflet_layer_control.layer_accordion');
     if (lastOpened) {
         $('#'+lastOpened).collapse('toggle');
     } else {
@@ -60,7 +64,7 @@ leaflet_layer_control.addPreferenceListener = function($accordion){
 
     //Use a cookie to remember last accordion window opened
     $accordion.on("shown",function(event){
-        $.cookie('leaflet_layer_control.layer_accordion',event.target.id);
+        store.set('leaflet_layer_control.layer_accordion',event.target.id);
     });
 };
 
@@ -70,6 +74,177 @@ leaflet_layer_control.addFeatureInfo = function($accordion){
         .html("Click a feature on the map to see an information associated with it")
         .appendTo($content);
 };
+
+leaflet_layer_control.pan = function(dir, amt) {
+    var map =  aoi_feature_edit.map;
+    var mapsize = map.getSize();
+    if(amt === null || amt === undefined) {
+        var ms = aoi_feature_edit.map.getSize();
+        if(dir === 0 || dir === 180)
+            amt = mapsize.y / 4;
+        else amt = mapsize.x / 4;
+    }
+    switch(dir) {
+        case 0: map.panBy([0, -1*amt]); break;
+        case 90: map.panBy([amt, 0]); break;
+        case 180: map.panBy([0, amt]); break;
+        case 270: map.panBy([-1*amt,0]); break;
+    }
+};
+leaflet_layer_control.rotateMap = function(deg) {
+    var map = document.getElementById("map");
+    var rh = document.getElementById("roseHolder");
+
+
+    map.style.webkitTransform = 'rotate('+deg+'deg)';
+    map.style.mozTransform    = 'rotate('+deg+'deg)';
+    map.style.msTransform     = 'rotate('+deg+'deg)';
+    map.style.oTransform      = 'rotate('+deg+'deg)';
+    map.style.transform       = 'rotate('+deg+'deg)';
+
+    rh.style.webkitTransform = 'rotate('+deg+'deg)';
+    rh.style.mozTransform    = 'rotate('+deg+'deg)';
+    rh.style.msTransform     = 'rotate('+deg+'deg)';
+    rh.style.oTransform      = 'rotate('+deg+'deg)';
+    rh.style.transform       = 'rotate('+deg+'deg)';
+
+};
+
+leaflet_layer_control.addRotationHelper = function($accordion) {
+     var rh = leaflet_layer_control.buildAccordionPanel($accordion,"Rotation Helper");
+     var rhHTML = '<div style="overflow:hidden;background-color: white;"><div id="roseHolder" >'+
+    '<div><span onclick="leaflet_layer_control.pan(0)">N</span></div>'+
+    '<div><span onclick="leaflet_layer_control.pan(270)">E</span>'+
+    '<img src="/static/images/200px-rose-bw.png " /><span onclick="leaflet_layer_control.pan(90)">W</span></div>'+
+    '<div><span onclick="leaflet_layer_control.pan(180)">S</span></div></div></div>'+
+    '<div id="roseSpinner" style="background-color: white;"><input id="roseSpinnerInput" type="range" min="-180" max="180" value="0" oninput="leaflet_layer_control.rotateMap(this.value)" />' +
+    '&nbsp;<button id="spinnerResetButton">Reset</button></div>';
+    var rhdom = $(rhHTML);
+    rhdom.appendTo(rh);
+    $("#spinnerResetButton").click(function(evt) { leaflet_layer_control.rotateMap(0); $("#roseSpinnerInput").val(0); });
+
+};
+leaflet_layer_control.addGeoOverview = function($accordion) {
+    var go = leaflet_layer_control.buildAccordionPanel($accordion,"Geo Overview");
+    var ghtml = "<div id='goMap'></div><div id='goMapStatus' "
+        +"style='text-align:center; color:red;'></div>";
+    var godom = $(ghtml);
+    godom.appendTo(go);
+    $("#goMap").height(250);
+    var big = aoi_feature_edit.map;
+    var minimap = L.map("goMap", {
+        center: big.getCenter(),
+        zoom: big.getZoom(),
+        dragging: false,
+        touchZoom: false,
+        scrollWheelZoom: false,
+        doubleClickZoom: false,
+        boxZoom: false,
+        tap: false,
+        keyboard: false,
+        zoomControl :false,
+        attributionControl: false,
+
+    });
+    var osmAttr = '&copy; <a href="http://openstreetmap.org">OpenStreetMap</a> contributors, <a href="http://creativecommons.org/licenses/by-sa/2.0/">CC-BY-SA</a>';
+    var defaultLayer =L.tileLayer('http://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{attribution: osmAttr});
+    defaultLayer.addTo(minimap);
+    setTimeout(function() { minimap.fitBounds(big.getBounds());}, 500);
+    var aoi_extents = L.geoJson(aoi_feature_edit.aoi_extents_geojson,
+        {
+            style: leaflet_helper.styles.extentStyle_hollow,
+            zIndex: 1000,
+            name: "Bounds of this AOI"
+    });
+    aoi_extents.addTo(minimap);
+    var aeb = aoi_extents.getBounds();
+    var asd = aeb.getSouthWest().distanceTo(aeb.getSouthEast());
+    var bb = big.getBounds();
+    var viewRect = L.rectangle([bb.getNorthWest(), bb.getNorthEast(),
+        bb.getSouthEast(), bb.getSouthWest],
+        {"weight": 2, "color": "green", "opacity": 1, "fillOpacity":.25 }
+     );
+     viewRect.addTo(minimap);
+     big.on("moveend", function(evt) {
+        var bigBounds = big.getBounds();
+        viewRect.setBounds(bigBounds);
+        if(aeb.intersects(bigBounds)) {
+            var bsd = bigBounds.getSouthWest().distanceTo(bigBounds.getSouthEast());
+            if((bsd/asd) > 10 ) {
+                $("#goMapStatus").html("Zoom Warning")
+            } else $("#goMapStatus").html("");
+        } else
+            $("#goMapStatus").html("AOI out of view");
+
+
+     });
+}
+
+leaflet_layer_control.addLayerComparison = function($accordion) {
+
+    var c = leaflet_layer_control.buildAccordionPanel($accordion,"Layer Comparison");
+
+    var chtml = "<div>" +
+        "<div style='text-align: center'>" +
+        "    <select id='comparisonLayer1'></select>" +
+        "    <span id='comparisonLayerStatus1'></span><br />" +
+        "    <select id='comparisonLayer2'></select>"+
+        "    <span id='comparisonLayerStatus1'></span>"+
+        "</div>"+
+        " <div style='text-align: center'>"+
+        "    <input id='comparisonSlider' style='display: none' type='range' min='-50' max='50' step='5' value='0' oninput='aoi_feature_edit.handleComparisonSlide(this.value)' />"+
+        "    <br />"+
+        "    <button id='comparisonButton' onclick='aoi_feature_edit.startOrEndComparison(this)'>Start</button>"+
+        " </div>"+
+    "</div>";
+    var cdom = $(chtml);
+    cdom.appendTo(c);
+    var overlays = aoi_feature_edit.layers.base.concat(aoi_feature_edit.layers.overlays);
+
+
+    if(!overlays || overlays.length < 2) {
+        var cb = document.getElementById("comparisonButton");
+        cb.disabled = true;
+        cb.innerHTML = "Unavailable";
+    } else {
+        var optionHTML = "";
+        for(var i = 0; i<overlays.length; i++) {
+            optionHTML += "<option value='" + i + "'>" + overlays[i].name + "</option>";
+        }
+        $("#comparisonLayer1").html(optionHTML).prop("selectedIndex", 0);
+        $("#comparisonLayer2").html(optionHTML).prop("selectedIndex", 1);
+    }
+
+    aoi_feature_edit.startOrEndComparison = function(b) {
+        $("#comparisonSlider").toggle();
+        if(b.innerHTML === "Reset") {
+         b.innerHTML = "Start";
+         aoi_feature_edit.resetOverlays();
+        } else {
+            var overlay1 = overlays[$("#comparisonLayer1").val()];
+            var overlay2 = overlays[$("#comparisonLayer2").val()];
+            overlay1.setOpacity(.5);
+            overlay2.setOpacity(.5);
+            b.innerHTML = "Reset";
+        }
+    };
+    aoi_feature_edit.handleComparisonSlide = function(val) {
+        var v1 = (50-Number(val))/100.;
+        var v2 = (50+Number(val))/100.;
+
+        var overlay1 = overlays[$("#comparisonLayer1").val()];
+        var overlay2 = overlays[$("#comparisonLayer2").val()];
+        overlay1.setOpacity(v1);
+        overlay2.setOpacity(v2);
+    };
+    aoi_feature_edit.resetOverlays = function() {
+        for(var i=0; i<overlays.length; i++) {
+            var overlay = overlays[i];
+            if(overlay.config && overlay.config.opacity)
+                overlay.setOpacity(overlay.config.opacity);
+        }
+    };
+}
 
 leaflet_layer_control.addLogInfo = function($accordion) {
 
@@ -102,7 +277,7 @@ leaflet_layer_control.submitComment = function() {
             action: function(dialog) {
                 var text = dialog.getModalBody().find('input').val();
                 $.ajax({
-                    url: "/geoq/aois/work/" + aoi_feature_edit.aoi_id + "/comment",
+                    url: leaflet_helper.home_url+"aois/work/" + aoi_feature_edit.aoi_id + "/comment",
                     type: 'POST',
                     data: {
                         comment : text,
@@ -175,7 +350,7 @@ leaflet_layer_control.addWorkCellInfo = function($accordion) {
         return;
     }
 
-    var editableUrl = '/geoq/api/job/update/'+aoi_feature_edit.aoi_id;
+    var editableUrl = leaflet_helper.home_url+'api/job/update/'+aoi_feature_edit.aoi_id;
 
     var $content = leaflet_layer_control.buildAccordionPanel($accordion,"Work Cell Details");
     $content.attr({id:"drawer_tray_top"});
@@ -335,7 +510,7 @@ leaflet_layer_control.show_feature_info = function (feature) {
     }
     $content.empty();
 
-    var editableUrl = '/geoq/api/feature/update/'+feature.properties.id;
+    var editableUrl = leaflet_helper.home_url+'api/feature/update/'+feature.properties.id;
 
     var feature_note_original = "Click here to add a note to this feature";
     var feature_note = feature_note_original;
@@ -452,7 +627,14 @@ leaflet_layer_control.show_feature_info = function (feature) {
                         type   : schemaSettings.type,
                         submit : 'OK',
                         style  : 'inherit',
-                        tooltip: 'Click to change this value'
+                        tooltip: 'Click to change this value',
+                        callback:function(newText,settings){
+                            var property_name = this.id;
+                            if (feature.properties) {
+                                feature.properties[property_name] = newText;
+                            }
+                        }
+
                     });
             }
         }
@@ -506,10 +688,11 @@ leaflet_layer_control.show_info = function (objToShow, node) {
     if (typeof objToShow == "string"){
         html_objects.push(objToShow);
     } else {
-        if (objToShow.options && objToShow._leaflet_id) {
+        if (objToShow.options) {
             //Probably a Leaflet layer
             html_objects.push(leaflet_layer_control.parsers.infoFromLayer(objToShow));
             html_objects.push(leaflet_layer_control.parsers.opacityControls(objToShow));
+            html_objects.push(leaflet_layer_control.parsers.dynamicParamsControls(objToShow));
 
             if (leaflet_layer_control.likelyHasFeatures(objToShow)) {
                 var $btn = $('<a href="#" class="btn">Refresh based on current map</a>')
@@ -537,10 +720,12 @@ leaflet_layer_control.show_info = function (objToShow, node) {
     }
 
     //Clear the tray and add each html object generated from above
-    leaflet_layer_control.$drawer_tray.empty();
-    _.each(html_objects,function(html){
-        leaflet_layer_control.$drawer_tray.append(html);
-    });
+    if (leaflet_layer_control.$drawer_tray) {
+        leaflet_layer_control.$drawer_tray.empty();
+        _.each(html_objects, function (html) {
+            leaflet_layer_control.$drawer_tray.append(html);
+        });
+    }
 };
 //=========================================
 
@@ -562,7 +747,7 @@ leaflet_layer_control.parsers.infoFromLayer = function (obj){
 
         var number_by_analyst = 0;
         _.each (features,function(feature){
-            var properties = feature.feature.properties || {};
+            var properties = feature.feature ? feature.feature.properties || {} : {};
             if (properties.analyst == aoi_feature_edit.analyst_name) {
                 number_by_analyst++;
             }
@@ -611,7 +796,7 @@ leaflet_layer_control.parsers.infoFromFolder = function (obj){
 };
 leaflet_layer_control.parsers.textIfExists = function(options) {
     options = options || {};
-    var obj = options.name || "";
+    var obj = options.name;
     var title = options.title || "";
     var noBold = options.noBold;
     var noBreak = options.noBreak;
@@ -626,7 +811,7 @@ leaflet_layer_control.parsers.textIfExists = function(options) {
     var suffix = options.suffix;
 
     var html = "";
-    if (typeof obj != "undefined" && obj !== "") {
+    if (obj != undefined && obj !== "") {
         if (header) {
             html+="<h5>";
         }
@@ -714,6 +899,181 @@ leaflet_layer_control.parsers.opacityControls = function(layer) {
     return $opacity;
 };
 
+/**
+ * HTML renderer for dynamic parameters controls in the side bar.
+ */
+leaflet_layer_control.parsers.dynamicParamsControls = function(layer) {
+    "use strict";
+    if (!layer || !layer.config || !layer.config.dynamicParams) {
+        return undefined;
+    }
+
+    var dynamic_params_element = document.createElement("div");
+    var dynamic_params_title = document.createElement("span");
+    dynamic_params_title.textContent = "Dynamic Feed Parameters";
+    dynamic_params_element.appendChild(dynamic_params_title);
+
+    for (var idx in layer.config.dynamicParams) {
+        var param = layer.config.dynamicParams[idx];
+        var e_param;
+        if (leaflet_layer_control.parsers.dynamic_param_parsers[param.type]) {
+            e_param = leaflet_layer_control.parsers.dynamic_param_parsers[param.type](layer, param);
+        } else {
+            e_param = leaflet_layer_control.parsers.dynamic_param_parsers.String(layer, param);
+        }
+        dynamic_params_element.appendChild(e_param);
+    }
+
+    return dynamic_params_element;
+};
+
+leaflet_layer_control.parsers.dynamic_param_parsers = {};
+
+leaflet_layer_control.parsers.dynamic_param_parsers.__generic = function(layer, param, input) {
+    "use strict";
+    var wrapper = document.createElement("div");
+    wrapper.className = "input-append input-prepend";
+
+
+    var label = document.createElement("span");
+    label.className = "add-on";
+    label.textContent = param.name;
+
+    var button = document.createElement("button");
+    button.type = "submit";
+    button.className = "btn btn-primary";
+    button.textContent = "Change";
+    $(button).click((function(lyr, name, inp) {
+        return function() {
+            leaflet_layer_control.setDynamicParam(lyr, name, inp.value)
+        };
+    })(layer, param.name, input));
+
+    wrapper.appendChild(label);
+    wrapper.appendChild(input);
+    wrapper.appendChild(button);
+
+    return wrapper;
+}
+
+leaflet_layer_control.parsers.dynamic_param_parsers.__group_box = function(layer, param, input) {
+    "use strict";
+    var wrapper = document.createElement("div");
+    wrapper.className = "geoq-param-group clearfix";
+    
+    var label = document.createElement("label");
+    label.textContent = param.name;
+    label.className = "geoq-param-group-label";
+
+    var button = document.createElement("button");
+    button.type = "submit";
+    button.className = "btn btn-primary pull-right";
+    button.textContent = "Change";
+    $(button).click((function(lyr, name, inp) {
+        return function() {
+            leaflet_layer_control.setDynamicParam(lyr, name, inp.value)
+        };
+    })(layer, param.name, input));
+
+    wrapper.appendChild(label);
+    wrapper.appendChild(input);
+    wrapper.appendChild(button);
+
+    return wrapper;
+}
+
+leaflet_layer_control.parsers.dynamic_param_parsers.String = function(layer, param) {
+    "use strict";
+    var input = document.createElement("input");
+    input.type = "text";
+    input.className = "input-small";
+    input.value = layer.config.layerParams[param.name];
+
+    return leaflet_layer_control.parsers.dynamic_param_parsers.__generic(layer, param, input);
+};
+
+leaflet_layer_control.parsers.dynamic_param_parsers.Date = function(layer, param) {
+    "use strict";
+    var input = document.createElement("input");
+    input.type = "date";
+    input.className = "input-medium";
+    input.value = layer.config.layerParams[param.name];
+    
+    if (param.range) {
+        var rangeFun = leaflet_layer_control.parsers.dynamic_param_ranges[param.range.type];
+        if (rangeFun) rangeFun(input, param.range);
+    }
+
+    return leaflet_layer_control.parsers.dynamic_param_parsers.__group_box(layer, param, input);
+};
+
+leaflet_layer_control.parsers.dynamic_param_parsers.Number = function(layer, param) {
+    "use strict";
+    if (window.Slider && param.range) {
+        var input = document.createElement("input");
+        input.type = "number";
+        input.className = "input-small";
+        input.value = layer.config.layerParams[param.name];
+
+        var wrapper = leaflet_layer_control.parsers.dynamic_param_parsers.__group_box(layer, param, input);
+
+        if (param.range) {
+            var rangeFun = leaflet_layer_control.parsers.dynamic_param_ranges[param.range.type];
+            if (rangeFun) rangeFun(input, param.range, function() {
+                if (input.min && input.max) { // Only create slider if we have a MIN and max
+                    new Slider(input, {
+                        min: parseFloat(input.min),
+                        max: parseFloat(input.max),
+                        step: parseFloat(input.step),
+                        value: parseFloat(input.value)
+                    });
+                }
+            });
+        }
+
+        return wrapper;
+    } else {
+        var input = document.createElement("input");
+        input.type = "number";
+        input.className = "input-small";
+        input.value = layer.config.layerParams[param.name];
+
+        if (param.range) {
+            var rangeFun = leaflet_layer_control.parsers.dynamic_param_ranges[param.range.type];
+            if (rangeFun) rangeFun(input, param.range);
+        }
+
+        return leaflet_layer_control.parsers.dynamic_param_parsers.__generic(layer, param, input);
+    }
+};
+
+leaflet_layer_control.parsers.dynamic_param_ranges = {};
+
+leaflet_layer_control.parsers.dynamic_param_ranges.FixedRange = function(numberInput, range, callback) {
+    "use strict";
+    numberInput.min = range.start;
+    numberInput.max = range.end;
+    numberInput.step = range.step;
+    if (callback) callback();
+    return numberInput;
+}
+
+leaflet_layer_control.parsers.dynamic_param_ranges.NumberCapIDRange = function(numberInput, range, callback) {
+    "use strict";
+    $.ajax({
+            url: range.url,
+            dataType: "json"
+        })
+        .done(function(entries) {
+            numberInput.min = entries.objectIds[0];
+            numberInput.max = entries.objectIds[entries.objectIds.length - 1];
+            numberInput.step = range.step;
+            if (callback) callback();
+        });
+
+    return numberInput;
+}
+
 //=========================================
 leaflet_layer_control.layerDataList = function (options) {
 
@@ -721,8 +1081,7 @@ leaflet_layer_control.layerDataList = function (options) {
 
     var layerGroups = options.layers;
 
-    var previouslyLookedAtLayers = $.cookie('leaflet_layer_control.layers') || "";
-    previouslyLookedAtLayers = previouslyLookedAtLayers.split(",");
+    var previouslyLookedAtLayers = store.get('leaflet_layer_control.selected_tree_nodes') || [];
 
     //For each layer group
     _.each(layerGroups,function(layerGroup,groupNum){
@@ -751,9 +1110,7 @@ leaflet_layer_control.layerDataList = function (options) {
                 leaflet_layer_control.removeDuplicateLayers(layerGroups,layer);
 
                 //Check through cookie info to see if layer was previously selected
-                var layerID;
-                if (layer && layer.config && layer.config.id) layerID = layer.config.id+""; //NOTE: Convert it to string
-                if (layer && layer.id) layerID = layer.id+"";
+                var layerID = leaflet_layer_control._uninit_getLayerStorageID(layer_obj, treeData[groupNum]);
 
                 var layerPreviouslyChosen = false;
                 if (layerID && _.indexOf(previouslyLookedAtLayers,layerID) > -1) {
@@ -767,26 +1124,7 @@ leaflet_layer_control.layerDataList = function (options) {
                 }
 
                 if (showEvenIfNotInUS || layerPreviouslyChosen) {
-                    if (layer.getLayers && layer.getLayers() && layer.getLayers()[0]) {
-                        var layerItem = layer.getLayers()[0];
-                        var options = layerItem._options || layerItem.options;
-                        if (options && options.style) {
-                            if (options.style.opacity == 1 || options.style.fillOpacity == 1){
-                                layer_obj.selected = true;
-                            }
-                        }
-                        if (options && options.opacity && options.opacity == 1) {
-                            layer_obj.selected = true;
-                        }
-                    } else if (layer.options && layer.options.opacity){
-                        layer_obj.selected = true;
-                    } else if (layer.options && layer.options.is_geoq_feature) {
-                        layer_obj.selected = true;
-                    }
                     if (layerPreviouslyChosen) layer_obj.selected = true;
-                }
-                if (!layer_obj.selected) {
-                    leaflet_layer_control.setLayerOpacity(layer,0);
                 }
 
                 //Add this to the json to build the treeview
@@ -856,8 +1194,24 @@ leaflet_layer_control.setLayerOpacity = function (layer, amount, doNotMoveToTop)
     if (layer.setStyle){
         layer.setStyle({opacity:amount, fillOpacity:amount});
     } else if (layer.setOpacity){
-        try { layer.setOpacity(amount); }
-        catch(err) { log.error("Error while changing opacity", err); }
+        try {
+            layer.setOpacity(amount);
+        } catch(err) {
+            //For ESRI Dynamic Layers, sometimes not tracking layer correctly
+            var reset = false;
+            try {
+                var main_layer = _.find(_.flatten(aoi_feature_edit.layers),function(l){return l.name==layer.name});
+                if (main_layer && main_layer.setOpacity) {
+                    main_layer.setOpacity(amount);
+                    reset = true;
+                }
+            } catch(err){
+                reset = false;
+            }
+            if (!reset) {
+                log.error("Error while changing opacity for layer "+layer.name, err);
+            }
+        }
     }
 
     if (amount==0){
@@ -866,6 +1220,10 @@ leaflet_layer_control.setLayerOpacity = function (layer, amount, doNotMoveToTop)
                 $(f._icon).hide();
                 if (f._shadow){
                     $(f._shadow).hide();
+                }
+                // SRJ: do this for kml files with ground overlays
+                if (f._image && f._image.style) {
+                    f._image.style.opacity = amount;
                 }
             });
         }
@@ -882,6 +1240,10 @@ leaflet_layer_control.setLayerOpacity = function (layer, amount, doNotMoveToTop)
                 $(f._icon).show().css({opacity:amount});
                 if (f._shadow){
                     $(f._shadow).show().css({opacity:amount});
+                }
+                // SRJ: do this for kml files with ground overlays
+                if (f._image && f._image.style) {
+                    f._image.style.opacity = amount;
                 }
             });
         }
@@ -903,6 +1265,45 @@ leaflet_layer_control.setLayerOpacity = function (layer, amount, doNotMoveToTop)
     }
 };
 
+/**
+ * Sets a dynamic parameter for a layer (validating restrictions) and refreshes the layer.
+ */
+leaflet_layer_control.setDynamicParam = function(layer, param, setting, noRefresh) {
+    console && console.log(param + " " + setting + " for " + layer);
+    layer.config.layerParams[param] = setting;
+
+    if (!noRefresh) leaflet_layer_control.refreshLayer(layer);
+    //debugger;
+
+    $.ajax({
+        url: aoi_feature_edit.api_url_user_param,
+        dataType:"json",
+        method:'POST',
+        contentType: "application/json; charset=utf-8",
+        data: JSON.stringify({
+            maplayer: layer.config.maplayer_id,
+            param: param,
+            newValue: setting
+        })
+    }).fail(function(x, status, err) {
+        if (console) console.log(status);
+    });
+};
+
+leaflet_layer_control.refreshLayer = function(layer) {
+    window.test = layer;
+    switch (test.config.type) {
+        case "GeoJSON":
+            leaflet_helper.constructors.geojson(layer.config, aoi_feature_edit.map, layer);
+            break;
+        default:
+            layer.options = $.extend(layer.options, layer.config.layerParams);
+            layer.redraw();
+            break;
+    }
+    
+}
+
 leaflet_layer_control.addLayerControlInfoPanel = function($content){
     var $drawer_inner = $("<div>")
         .addClass("inner-padding")
@@ -916,6 +1317,83 @@ leaflet_layer_control.addLayerControlInfoPanel = function($content){
     $drawer_tray.html("Click a layer above to see more information.");
 };
 
+
+leaflet_layer_control.filetypeHelper = function(fileHandle, mimes,fileSuffix) {
+    var ft = fileHandle.type;
+    var fn = fileHandle.name;
+    if(typeof(mimes) === "string") { mimes = [mimes] };
+    for(var i=0; i<mimes.length; i++) {
+        if(ft.match(mimes[i])) return true;
+    }
+    if(fileSuffix)  {
+        var split = fn.split(".");
+        if(split.length > 0)
+            if(fileSuffix === split[split.length -1])
+                return true;
+    }
+
+    return false;
+};
+
+leaflet_layer_control.stringHelper = function(binary, encoding) {
+    var converted = null;
+    if(window.TextDecoder) {
+        var dv = new DataView(binary);
+        var decoder = new TextDecoder(encoding);
+        converted = decoder.decode(dv);
+    } else {
+        converted = String.fromCharCode.apply(null, new Uint8Array(binary));
+    }
+
+    return converted;
+
+}
+leaflet_layer_control.handleDrop = function(result, fileHandle) {
+  var foundLayers = [];
+  if(leaflet_layer_control.filetypeHelper(fileHandle, "kml", "kml")) {
+
+    // we are making assumptions about the kml encoding
+    // introspect the file encoding for i18n.
+    var kmlString = leaflet_layer_control.stringHelper(result, "utf-8");
+
+    var parser = new DOMParser();
+    var kmlDOM = parser.parseFromString(kmlString, "text/xml");
+    var foundLayers = L.KML.parseKML(kmlDOM);
+  } else if(leaflet_layer_control.filetypeHelper(fileHandle, [], "zip")) {
+
+    foundLayers = L.shapefile(result); // we'll get an unpopulated geojson layer even if this ISN'T a shape file
+    if(foundLayers && foundLayers.getLayers && foundLayers.getLayers().length == 0) {
+        foundLayers = null;
+    }
+  } else  if(leaflet_layer_control.filetypeHelper(fileHandle, ["geojson", "json"], "json")) {
+    var jsonString = leaflet_layer_control.stringHelper(result, "utf-8");
+    var json = JSON.parse(jsonString);
+    foundLayers = L.geoJson(json);
+
+  } else {
+
+    alert("Sorry, only GeoSJON, KML, and shapefile zip archives are supported at the moment.");
+  }
+  if(foundLayers !== null && !(foundLayers instanceof Array))
+    foundLayers = [foundLayers];
+  if(foundLayers !== null) {
+    var name =  fileHandle.name;
+    for(var i=0; i<foundLayers.length; i++) {
+        var layerName = name;
+        if(i > 0) layerName = layerName + "-" + (i+1);
+        var layer = foundLayers[i];
+        if(layer.options)
+          layer.options.name = layerName;
+        layer.addTo(aoi_feature_edit.map);
+        leaflet_layer_control.importNode.addChildren({title:layerName, folder:false, data:layer, selected:true});
+
+    }
+    } else {
+        alert("Sorry, I couldn't find anything to import.");
+    }
+
+
+};
 leaflet_layer_control.addLayerControl = function (map, options, $accordion) {
 
     //Hide the existing layer control
@@ -943,10 +1421,11 @@ leaflet_layer_control.addLayerControl = function (map, options, $accordion) {
     $tree.fancytree({
         checkbox: true,
         autoScroll: true,
-        selectMode: 2,
+        debugLevel: 1,
+        selectMode: 3, // Hierarchecal select mode
         source: treeData,
         init: function (event, data) {
-            leaflet_layer_control.drawEachLayer(data,map,true);
+            leaflet_layer_control.drawEachLayer(data, map);
         },
         activate: function (event, data) {
             //Clicked on a treenode title
@@ -967,10 +1446,14 @@ leaflet_layer_control.addLayerControl = function (map, options, $accordion) {
 
     leaflet_layer_control.$tree = $tree;
     leaflet_layer_control.lastSelectedNodes = $tree.fancytree("getTree").getSelectedNodes();
-
     var $content = leaflet_layer_control.buildAccordionPanel($accordion,"Geo Layers for Map");
 
     $tree.appendTo($content);
+    leaflet_layer_control.importNode = $("#layers_tree_control").fancytree("getRootNode").addChildren({title:"Imports", key:"imports", folder:true, selected:true});
+
+
+    $('<div id="importDragTarget" title="Drag GeoJSON and KML files or Shapefile zip archives here" style="text-align: center;border: solid;border-width: thin;">Drag & Drop Import</div>')
+        .appendTo($content);
 
     //TODO: Replace this with a form later to allow user to quick-add layers
     $('<a id="add_layer_button" href="/maps/layers/create" target="_new" class="btn">Add A Layer</a>')
@@ -978,26 +1461,30 @@ leaflet_layer_control.addLayerControl = function (map, options, $accordion) {
 
     leaflet_layer_control.addLayerControlInfoPanel($content);
 
+    var idt = document.getElementById("importDragTarget");
+    fileDragHelper.stopWindowDrop();
+    fileDragHelper.watchFor(idt, leaflet_layer_control.handleDrop, true);
+
+
     //If it was open last time, open it again
-    if ($.cookie('leaflet_layer_control.drawer')) {
+    if (store.get('leaflet_layer_control.drawer')) {
         leaflet_layer_control.toggleDrawer();
     }
 };
 leaflet_layer_control.drawEachLayer=function(data,map,doNotMoveToTop){
 
+    // All of the layers currently checked
     var selectedLayers = data.tree.getSelectedNodes();
+    // Layers that used to be checked, but are no longer
     var layersUnClicked = _.difference(leaflet_layer_control.lastSelectedNodes, selectedLayers);
+    // Layers that used to be unchecked, but now are.
     var layersClicked = _.difference(selectedLayers, leaflet_layer_control.lastSelectedNodes);
 
     _.each(layersUnClicked,function(layer_obj){
         if (layer_obj && layer_obj.data && _.toArray(layer_obj.data).length) {
             var layer = layer_obj.data;
-            leaflet_layer_control.setLayerOpacity(layer,0,doNotMoveToTop);
-        } else if (layer_obj.children && layer_obj.children.length) {
-            //A category was clicked
-            _.each(layer_obj.children, function(layer_obj_item){
-                layer_obj_item.setSelected(false);
-            });
+
+            aoi_feature_edit.map.removeLayer(layer);
         }
     });
 
@@ -1005,14 +1492,14 @@ leaflet_layer_control.drawEachLayer=function(data,map,doNotMoveToTop){
         if (layer_obj && layer_obj.data && _.toArray(layer_obj.data).length) {
             var layer = layer_obj.data;
 
-            if (layer._map && layer._initHooksCalled) {
+            if (layer._initHooksCalled) {
                 //It's a layer that's been already built
-                var oldOpacity = layer.options? layer.options.opacity||layer.options.oldOpacity||1 : 1;
-                leaflet_layer_control.setLayerOpacity(layer,oldOpacity,doNotMoveToTop);
-
+                
                 if (leaflet_layer_control.likelyHasFeatures(layer)) {
-                    leaflet_helper.constructors.geojson(layer.config, map);
+                    leaflet_helper.constructors.geojson(layer.config, map, layer);
                 }
+                
+                aoi_feature_edit.map.addLayer(layer);
             } else {
                 //It's an object with layer info, not yet built - build the layer from the config data
                 var name = layer.name;
@@ -1023,7 +1510,7 @@ leaflet_layer_control.drawEachLayer=function(data,map,doNotMoveToTop){
                 if (newLayer) {
                     aoi_feature_edit.map.addLayer(newLayer);
                     leaflet_layer_control.setLayerOpacity(newLayer,1,doNotMoveToTop);
-                    //TODO: Rethink if this should become a sub-item of the object
+
                     layer_obj.data = newLayer;
 
                     //Replace the old object list with the new layer
@@ -1038,7 +1525,7 @@ leaflet_layer_control.drawEachLayer=function(data,map,doNotMoveToTop){
 
                     //TODO: This should be consolidated into one move event
                     //TODO: The 'refresh layer json' should be a function added to the layer
-                    if (layer.type == "Social Networking Link" || layer.type == "Web Data Link") {
+                    if (layer.type == "Social Networking Link" || layer.type == "Web Data Link" || (layer.config && layer.config.job)) {
 
                         if (layer.type == "Social Networking Link") {
                             leaflet_filter_bar.showInputTags();
@@ -1063,10 +1550,7 @@ leaflet_layer_control.drawEachLayer=function(data,map,doNotMoveToTop){
             }
 
         } else if (layer_obj.children && layer_obj.children.length) {
-            //A category was clicked
-            _.each(layer_obj.children, function(layer_obj_item){
-                layer_obj_item.setSelected(true);
-            });
+            // A category was clicked, do nothing. (Selectmode 3 will select children).
         } else {
             log.error("A layer with no data was clicked");
         }
@@ -1074,14 +1558,46 @@ leaflet_layer_control.drawEachLayer=function(data,map,doNotMoveToTop){
 
     //Set a cookie with all viewed Layers
     var checkedIDs = [];
-    _.each(selectedLayers,function(layer_obj){
+    _.each(data.tree.getSelectedNodes(),function(layer_obj){ // Use data.tree.getSelectedNodes() because we updated recursively so selectedNodes is not up to date
         if (layer_obj.data && layer_obj.data.config && layer_obj.data.config.id && layer_obj.parent.title!="Features") {
             checkedIDs.push(layer_obj.data.config.id);
         }
     });
+
     var checkedIDs_str = checkedIDs.join(",");
-    $.cookie('leaflet_layer_control.layers', checkedIDs_str);
+    store.set('leaflet_layer_control.layers', checkedIDs_str);
+
+    store.set('leaflet_layer_control.selected_tree_nodes',_.map(data.tree.getSelectedNodes(), function(layer_obj) {
+        return leaflet_layer_control._getLayerStorageID(layer_obj);
+    }));
 };
+
+leaflet_layer_control._getLayerStorageID = function(layerTreeNode) {
+    if (layerTreeNode.data && layerTreeNode.data.config && layerTreeNode.data.config.id) {
+        return layerTreeNode.data.config.id;
+    } else {
+        var tree_objects = [layerTreeNode];
+        while (tree_objects[0].parent) {
+            tree_objects.unshift(tree_objects[0].parent);
+        }
+
+        return _.map(tree_objects, function(tree_obj) {
+            return tree_obj.title;
+        }).join(':');
+    }
+}
+
+leaflet_layer_control._uninit_getLayerStorageID = function(uninitTreeNode, uninitTreeGroup) {
+    // Get the layer id if it exists, otherwise get the folder it's in
+    if (uninitTreeNode.data && uninitTreeNode.data.config && uninitTreeNode.data.config.id) {
+        return uninitTreeNode.data.config.id;
+    } else if (uninitTreeNode.data && uninitTreeNode.data.id) {
+        // Social media feeds seem to have id set in data when uninitialized, then copied over to config after initialized.
+        return uninitTreeNode.data.id;
+    } else {
+        return 'root:' + uninitTreeGroup.title + ":" + uninitTreeNode.title;
+    }
+}
 
 leaflet_layer_control.toggleZooming=function($control){
     $control.on('mouseover',function(){
@@ -1129,13 +1645,13 @@ leaflet_layer_control.openDrawer = function() {
                 height: "easeOutBack"
             }
         });
-    $.cookie('leaflet_layer_control.drawer', 'open');
+    store.set('leaflet_layer_control.drawer', 'open');
 };
 leaflet_layer_control.closeDrawer = function() {
     leaflet_layer_control.$map.animate({marginLeft: "0px"}, 300);
     leaflet_layer_control.$map.css("overflow", "auto");
     leaflet_layer_control.$drawer.animate({marginLeft: "-300px"}, 300);
-    $.cookie('leaflet_layer_control.drawer', '');
+    store.set('leaflet_layer_control.drawer', '');
 };
 leaflet_layer_control.toggleDrawer = function() {
     if(leaflet_layer_control.drawerIsOpen) {

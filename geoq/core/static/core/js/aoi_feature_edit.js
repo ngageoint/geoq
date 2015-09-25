@@ -14,16 +14,23 @@
 //            style_obj.schema (array of {properties:options} and others)
 
 //            feature.properties.mapText = "Whatever"
+//            
 
 var aoi_feature_edit = {};
-aoi_feature_edit.layers = {features:[], base:[], overlays:[]};
+aoi_feature_edit.layers = {features: [], base: [], overlays: [], jobs: []};
 
 aoi_feature_edit.drawnItems = new L.FeatureGroup();
 aoi_feature_edit.options = {};
 aoi_feature_edit.all_polygons = [];
 aoi_feature_edit.all_markers = [];
+aoi_feature_edit.all_geomarkers = [];
+aoi_feature_edit.all_polylines = [];
 aoi_feature_edit.available_icons = [];
 aoi_feature_edit.MapIcon = null;
+
+aoi_feature_edit.findMePoint = null;
+aoi_feature_edit.findMeCircle = null;
+aoi_feature_edit.showMyLocation = false;
 
 aoi_feature_edit.init = function () {
     aoi_feature_edit.drawcontrol = null;
@@ -60,6 +67,9 @@ aoi_feature_edit.init = function () {
             if (ftype.name) {
                 aoi_feature_edit.icons[ftype.id].title = ftype.name;
                 aoi_feature_edit.icons[ftype.id].text = ftype.name;
+            }
+            if (ftype.icon) {
+                aoi_feature_edit.icon_style[ftype.id].iconUrl = ftype.icon;
             }
         }
 
@@ -138,8 +148,8 @@ aoi_feature_edit.addFeatureTable = function(feature, ftype){
         _.each(fields,function(field){
             field = _.str.trim(field);
             if (field){
-                var val = props[field] || "";
-                if (val) {
+                var val = props[field];
+                if (val !== undefined) {
                     field = _.str.capitalize(field);
                     field = field.replace(/_/g," ");
                     html+=leaflet_layer_control.parsers.textIfExists({name: val, title:field});
@@ -170,7 +180,7 @@ aoi_feature_edit.promptForUserAcceptance = function(){
                     label: 'Accept for all future workcells',
                     cssClass: 'btn-primary',
                     action: function(dialog) {
-                        $.post('/accounts/accept_terms_of_use');
+                        $.post(aoi_feature_edit.terms_acceptance_url);
                         dialog.close();
                     }
                 },{
@@ -202,8 +212,24 @@ aoi_feature_edit.getMapTextDivSize = function(text){
 };
 aoi_feature_edit.buildCustomIcon = function (feature, featureType) {
     feature.properties = feature.properties || {};
-    var featureTypeID = feature.properties.template;
-    var style_obj = featureType.style;
+    var featureTypeID = parseInt(feature.properties.template);
+
+    if (featureType==undefined) {
+        featureType = aoi_feature_edit.feature_types[featureTypeID] || aoi_feature_edit.feature_types_all[featureTypeID] || {};
+    }
+
+    var style_obj = featureType.style || {};
+    if (featureType.icon) {
+        style_obj.iconUrl = featureType.icon;
+    }
+
+    if (style_obj) {
+        style_obj.iconUrl = style_obj.iconUrl || style_obj.iconURL || style_obj.iconurl ||  aoi_feature_edit.static_root +"/leaflet/images/red-marker-icon.png";
+    } else {
+        style_obj = {};
+        style_obj.iconUrl = aoi_feature_edit.static_root +"/leaflet/images/red-marker-icon.png";
+    }
+
     var icon;
 
     //The feature has mapText, so draw a rectangle to hold the text
@@ -224,13 +250,20 @@ aoi_feature_edit.buildCustomIcon = function (feature, featureType) {
         });
 
     } else {
-        var iconLoader = aoi_feature_edit.icons[featureTypeID];
+        var iconLoader = aoi_feature_edit.icons[featureTypeID] || aoi_feature_edit.MapIcon;
         icon = new iconLoader(style_obj);
     }
     return icon;
 };
 aoi_feature_edit.featureLayer_pointToLayer = function (feature, latlng, featureLayer, featureType) {
-    var style_obj = featureType.style;
+    if (featureType==undefined) {
+        featureType = {};
+        if (feature.properties.template) {
+            var template_id = parseInt(feature.properties.template);
+            featureType = aoi_feature_edit.feature_types[template_id] || aoi_feature_edit.feature_types_all[template_id] || {};
+        }
+    }
+    var style_obj = featureType.style || feature.style || {};
     var iconW,iconH,iconAnchorW,iconAnchorH;
 
     if (style_obj.iconSize && typeof style_obj.iconSize != "object") {
@@ -327,7 +360,7 @@ aoi_feature_edit.colorIconFromStyle = function ($icon,style_obj){
     $icon.tancolor(color_options);
 };
 
-aoi_feature_edit.featureLayer_onEachFeature = function (feature, layer, featureLayer) {
+aoi_feature_edit.featureLayer_onEachFeature = function (feature, layer, featureLayer, dontAddDelete) {
     if (feature.properties) {
         var id = feature.properties.id;
         feature_manager.addAtId(id,{layerGroup: featureLayer, layer: layer});
@@ -338,8 +371,10 @@ aoi_feature_edit.featureLayer_onEachFeature = function (feature, layer, featureL
         }
         var template;
         if (feature.properties.template) {
-            template = aoi_feature_edit.feature_types[parseInt(feature.properties.template)];
-            popupContent += '<b>' + template.name + '</b><br/>';
+            var template_id = parseInt(feature.properties.template);
+            template = aoi_feature_edit.feature_types[template_id] || aoi_feature_edit.feature_types_all[template_id] || {};
+
+            if (template.name) popupContent += '<b>' + template.name + '</b><br/>';
         }
         if (feature.properties.analyst){
             popupContent += '<b>Analyst:</b> ' + feature.properties.analyst;
@@ -362,10 +397,65 @@ aoi_feature_edit.featureLayer_onEachFeature = function (feature, layer, featureL
             popupContent += aoi_feature_edit.addFeatureTable(feature, template);
         }
 
-        if (id){
-            popupContent += '<br/><a onclick="javascript:aoi_feature_edit.deleteFeature(\'' + id + '\', \'/geoq/features/delete/' + id + '\');">Delete Feature</a>';
+        if (id && !dontAddDelete) {
+            popupContent += '<br/><a onclick="aoi_feature_edit.deleteFeature(\'' + id + '\', \'' + leaflet_helper.home_url + 'features/delete/' + id + '\');">Delete Feature</a>';
+            popupContent += leaflet_helper.addLinksToPopup(featureLayer.name, id, false, false, true);
         }
-        popupContent += leaflet_helper.addLinksToPopup(featureLayer.name, id, false, false, true);
+
+        layer.bindPopup(popupContent);
+        feature.layer = layer;
+    }
+};
+aoi_feature_edit.fulcrumfeatureLayer_onEachFeature = function (feature, layer, featureLayer, dontAddDelete) {
+    if (feature.properties) {
+        var id = feature.properties.id;
+        feature_manager.addAtId(id,{layerGroup: featureLayer, layer: layer});
+
+        var popupContent = "<h5>Fulcrum Feature</h5>";
+        if (feature.properties.owner_name){
+            popupContent += '<b>Owner: </b>' + feature.properties.owner_name + '<br/>';
+        }
+        if (feature.properties.occupancy_id) {
+            popupContent += '<b>Occupancy: </b>' + feature.properties.occupancy_id + '<br/>';
+        }
+        if (feature.properties.streethighway) {
+            popupContent += '<b>Address: </b><br/>';
+            popupContent += '     ' + feature.properties.streethighway + '<br/>';
+            popupContent += '     ' + feature.properties.city + ',' + feature.properties.state + '<br/>';
+        }
+        if (feature.properties.response_district){
+            popupContent += '<b>Resp. District: </b> ' + feature.properties.response_district + '<br/>';
+        }
+        if (feature.properties.station_subdistricts){
+            popupContent += '<b>Station Subdist: </b> ' + feature.properties.response_district + '<br/>';
+        }
+        if (feature.properties.email_address){
+            popupContent += '<b>Email: </b> ' + feature.properties.email_address + '<br/>';
+        }
+        if (feature.properties.total_area_square_feet) {
+            popupContent += '<b>Area: </b>' + feature.properties.total_area_square_feet + '<br/>';
+        }
+        if (feature.properties.specific_property_use) {
+            popupContent += '<b>Use: </b>' + feature.properties.specific_property_use + '<br/>';
+        }
+        if (feature.properties.property_ownership) {
+            popupContent += '<b>Owner: </b>' + feature.properties.propery_ownership + '<br/>';
+        }
+        if (feature.properties.construction_type_check_one_other) {
+            popupContent += '<b>Construct Type: </b>' + feature.properties.construction_type_check_one_other + '<br/>';
+        }
+        if (feature.properties.knox_box_location) {
+            popupContent += '<b>Knox Box: </b>' + feature.properties.knox_box_location + '<br/>';
+        }
+        if (feature.properties.created_at){
+            var datetime = feature.properties.created_at;
+            datetime = datetime.replace("UTC", "").trim();
+            var dtg = moment(datetime);
+
+            if (dtg.isValid()){
+                popupContent += '<b>Created:</b> ' + dtg.calendar() + '<br/>';
+            }
+        }
 
         layer.bindPopup(popupContent);
         feature.layer = layer;
@@ -425,11 +515,13 @@ aoi_feature_edit.layer_oversight = {
   failing: []
 };
 aoi_feature_edit.watch_layer = function(layer, watch) {
-    oversight = aoi_feature_edit.layer_oversight;
-    name = layer.name;
-    pending = oversight.pending;
-    watched = oversight.watched;
-    failing = oversight.failing;
+    "use strict";
+    //TODO: Clean this up
+    var oversight = aoi_feature_edit.layer_oversight;
+    var name = layer.name;
+    var pending = oversight.pending;
+    var watched = oversight.watched;
+    var failing = oversight.failing;
     if(watch) {
         if(watched.indexOf(name) < 0) watched[watched.length] = name;
         layer.on("loading", function () {
@@ -470,35 +562,36 @@ aoi_feature_edit.watch_layer = function(layer, watch) {
     }
 };
 
+aoi_feature_edit._pendingPoints = {};
 aoi_feature_edit.map_init = function (map, bounds) {
 
-    map.on("layer_add", function(e) {
+    // Events to watch layers being added/loaded/etc.
+    map.on("layeradd", function(e) {
         aoi_feature_edit.watch_layer(e.layer, true);
     });
-    map.on("layer_remove", function(e) {
+    map.on("layerremove", function(e) {
         aoi_feature_edit.watch_layer(e.layer, false);
     });
 
-    map.options.maxZoom = 19;
+    // for some reason nginx isn't keeping MAX_ZOOM defined in settings.py. TODO: Figure out why
+    // map.options.maxZoom = 21;
 
     var custom_map = aoi_feature_edit.aoi_map_json || {};
     aoi_feature_edit.map = map;
 
-    var baseLayers = {};
-    var layerSwitcher = {};
-    //var editableLayers = new L.FeatureGroup();
-    // Only layer in here should be base OSM layer
-    _.each(aoi_feature_edit.map._layers, function (l) {
-        baseLayers["OpenStreetMap"] = l;
-    });
-
     aoi_feature_edit.layers.base = [];
     aoi_feature_edit.layers.overlays = [];
+    aoi_feature_edit.layers.jobs = [];
 
-    //Add the Base OSM Layer
+
+    
+    // aoi_feature_edit.map._layers - layers that have been added to the map already
+    // map.options.djoptions.layers - layer options that were passed to django
+    // Set the name for the base layer and add it to our layer map.
+    // TODO: It seems like it's possible to have multiple base maps, but that's not handled here
     var baselayer = _.toArray(aoi_feature_edit.map._layers);
     if (baselayer && baselayer[0]) {
-        baselayer[0].name="OpenStreetMap";
+        baselayer[0].name=(map.options.djoptions.layers[0]) ? map.options.djoptions.layers[0][0] : "Base Layer";
         aoi_feature_edit.layers.base.push(baselayer[0]);
     }
 
@@ -514,16 +607,18 @@ aoi_feature_edit.map_init = function (map, bounds) {
         });
     aoi_extents.addTo(aoi_feature_edit.map);
     aoi_feature_edit.layers.features.push(aoi_extents);
+
     //Build a reset button that zooms to the extents of the AOI
     function locateBounds() {
         return aoi_extents.getBounds();
-    }
+    };
     (new L.Control.ResetView(locateBounds)).addTo(aoi_feature_edit.map);
 
     //Zoom to the bounds of the Workcell, then one more level
     aoi_feature_edit.map.fitBounds(aoi_extents.getBounds());
     aoi_feature_edit.map.setZoom(aoi_feature_edit.map.getZoom()+1);
 
+    var layersToShow = store.get('leaflet_layer_control.selected_tree_nodes');
 
     //Build layers, parse them, and add them to the map and to memory
     if (custom_map.layers) {
@@ -532,20 +627,21 @@ aoi_feature_edit.map_init = function (map, bounds) {
         });
         _.each(layers, function (layer_data) {
             var built_layer = leaflet_helper.layer_conversion(layer_data, map);
-            if (built_layer !== undefined) {
-                if (layer_data.isBaseLayer) {
-                    baseLayers[layer_data.name] = built_layer;
-                    aoi_feature_edit.layers.base.push(built_layer);
+            if (! built_layer) {
+                // skip this layer and go to next
+                log.error("Tried to add a layer, but didn't work: "+layer_data.url)
+                return true;
+            }
+
+            if (layer_data.isBaseLayer) {
+                // Don't add base layers here, we should assume that base layers are properly added to the map by django
+                // aoi_feature_edit.layers.base.push(built_layer);
+            } else {
+                if (layer_data.job) {
+                    aoi_feature_edit.layers.jobs.push(built_layer);
                 } else {
-                    layerSwitcher[layer_data.name] = built_layer;
                     aoi_feature_edit.layers.overlays.push(built_layer);
                 }
-            } else {
-                log.error("Tried to add a layer, but didn't work: "+layer_data.url)
-            }
-            if (built_layer) {
-                aoi_feature_edit.watch_layer(built_layer, true);
-                aoi_feature_edit.map.addLayer(built_layer);
             }
         });
     }
@@ -557,7 +653,15 @@ aoi_feature_edit.map_init = function (map, bounds) {
             aoi_feature_edit.all_polygons.push(aoi_feature_edit.createPolygonOptions(ftype));
         } else if (ftype.type == 'Point') {
             var point = aoi_feature_edit.createPointOptions(ftype);
-            if (point) aoi_feature_edit.all_markers.push(point);
+            if (point) {
+                if (ftype && ftype.properties && ftype.properties.type && (ftype.properties.type == 'geomarker')) {
+                    aoi_feature_edit.all_geomarkers.push(point);
+                } else {
+                    aoi_feature_edit.all_markers.push(point);
+                }
+            }
+        } else if (ftype.type == 'LineString') {
+            aoi_feature_edit.all_polylines.push(aoi_feature_edit.createPolylineOptions(ftype));
         } else {
             log.error("Item should be drawn, but not a Polygon or Point object.")
         }
@@ -626,9 +730,30 @@ aoi_feature_edit.map_init = function (map, bounds) {
         'toggleStatus': false
     });
 
+    function draw_and_center_location() {
+        map.locate({setView: true, maxZoom: 16});
+    }
+
     help_control.addTo(map, {'position':'topleft'});
 
+    var location_control = new L.Control.Button({
+        'iconUrl': aoi_feature_edit.static_root + 'images/bullseye.png',
+        'onClick': draw_and_center_location,
+        'hideText': true,
+        'doToggle': false,
+        'toggleStatus': false
+    });
+
+    location_control.addTo(map, {'position': 'topleft'});
+
+    function pruneTemp(jqXHR) {
+        var tmpId = jqXHR.getResponseHeader("Temp-Point-Id");
+        var tmpLayer = aoi_feature_edit._pendingPoints[tmpId];
+        if(tmpLayer) aoi_feature_edit.map.removeLayer(tmpLayer);
+        delete aoi_feature_edit._pendingPoints[tmpId];
+    }
     function onSuccess(data, textStatus, jqXHR) {
+        pruneTemp(jqXHR);
         var feature = data[0];
         if (feature && feature.geojson) {
             var tnum = feature.fields.template;
@@ -647,6 +772,7 @@ aoi_feature_edit.map_init = function (map, bounds) {
     }
 
     function onError(jqXHR, textStatus, errorThrown) {
+        pruneTemp(jqXHR);
         log.error("Error while adding feature: " + errorThrown);
     }
 
@@ -655,18 +781,33 @@ aoi_feature_edit.map_init = function (map, bounds) {
         var layer = e.layer;
 
         var geojson = e.layer.toGeoJSON();
+        var headers = {};
         geojson.properties.template = aoi_feature_edit.current_feature_type_id || 1;
-        geojson = JSON.stringify(geojson);
+        if(geojson.geometry.type === "Point") {
+            var icon = null;
+            var tmpId = Math.uuidCompact();
+            headers = { "Temp-Point-Id": tmpId};
+            if(aoi_feature_edit.feature_types[geojson.properties.template]) {
+                var ft = aoi_feature_edit.feature_types[geojson.properties.template];
+                var style = ft.style;
+                if(!$.isEmptyObject(style)) icon = new aoi_feature_edit.MapIcon(style);
+            }
+            var layer = L.marker([geojson.geometry.coordinates[1], geojson.geometry.coordinates[0]], {
+                icon: icon, opacity: .5});
 
+            aoi_feature_edit._pendingPoints[tmpId] = layer;
+            aoi_feature_edit.map.addLayer(layer);
+         }
+        geojson = JSON.stringify(geojson);
+        var data = { aoi: aoi_feature_edit.aoi_id, geometry: geojson }
         $.ajax({
             type: "POST",
             url: aoi_feature_edit.create_feature_url,
-            data: { aoi: aoi_feature_edit.aoi_id,
-                geometry: geojson
-            },
+            data: data,
             success: onSuccess,
             error: onError,
-            dataType: "json"
+            dataType: "json",
+            headers: headers
         });
     });
 
@@ -698,6 +839,11 @@ aoi_feature_edit.map_init = function (map, bounds) {
         var layers = e.layers;
         layers.eachLayer(function (layer) {
             var geojson = layer.toGeoJSON();
+            // delete the pointer to layer within geojson so that we can stringify
+            if (geojson.layer) {
+                delete geojson.layer;
+            }
+
             geojson = JSON.stringify(geojson);
 
             $.ajax({
@@ -761,7 +907,7 @@ aoi_feature_edit.map_init = function (map, bounds) {
 
                         var json = JSON.stringify(props);
 
-                        var editableUrl = '/geoq/api/feature/update/'+feature_id;
+                        var editableUrl = leaflet_helper.home_url + 'api/feature/update/'+feature_id;
                         $.ajax({
                             type: "POST",
                             url: editableUrl,
@@ -800,6 +946,27 @@ aoi_feature_edit.map_init = function (map, bounds) {
         }
 
 
+    });
+
+    map.on('locationfound', function(e) {
+        aoi_feature_edit.showMyLocation = !aoi_feature_edit.showMyLocation;
+
+        if (aoi_feature_edit.showMyLocation) {
+            var radius = e.accuracy / 2;
+
+            aoi_feature_edit.findMePoint = L.marker(e.latlng, {icon: new L.Icon({iconUrl: aoi_feature_edit.static_root + 'images/dot.png'})}).addTo(map)
+                .bindPopup("Accuracy: " + radius + " meters");
+
+            aoi_feature_edit.findMeCircle = L.circle(e.latlng, radius).addTo(map);
+        } else {
+            map.removeLayer(aoi_feature_edit.findMePoint);
+            map.removeLayer(aoi_feature_edit.findMeCircle);
+        }
+
+    });
+
+    map.on('locationerror', function(e) {
+        alert('Sorry, but we are not able to determine your location');
     });
 
     $('div.leaflet-draw.leaflet-control').find('a').popover({trigger:"hover",placement:"right"});
@@ -841,7 +1008,23 @@ aoi_feature_edit.buildDrawingControl = function (drawnItems) {
 
     _.each(aoi_feature_edit.all_markers,function(marker){
         if (marker.title && marker.icon && marker.icon.options) {
-            marker.icon.options.text = marker.title
+            marker.icon.options.text = marker.title;
+        } else {
+            marker.icon = marker.icon || {};
+            marker.icon.options = marker.title.options || {};
+            marker.icon.options.text = marker.title || "Marker";
+        }
+
+
+    });
+
+    _.each(aoi_feature_edit.all_geomarkers, function(marker){
+        if (marker.title && marker.icon && marker.icon.options) {
+            marker.icon.options.text = marker.title;
+        } else {
+            marker.icon = marker.icon || {};
+            marker.icon.options = marker.title.options || {};
+            marker.icon.options.text = marker.title || "Marker";
         }
     });
 
@@ -852,12 +1035,13 @@ aoi_feature_edit.buildDrawingControl = function (drawnItems) {
         position: "topleft",
 
         draw: {
-            polyline: false,
             circle: false,
             rectangle: false,
 
             markers: aoi_feature_edit.all_markers,
-            polygons: aoi_feature_edit.all_polygons
+            geomarkers: aoi_feature_edit.all_geomarkers,
+            polygons: aoi_feature_edit.all_polygons,
+            polylines: aoi_feature_edit.all_polylines
         },
         edit: {
             featureGroup: drawnItems,
@@ -884,7 +1068,7 @@ aoi_feature_edit.buildDrawingControl = function (drawnItems) {
         var setColorBG = true;
         if ($icon) {
             var bg_color = ftype.style.color;
-            var bg_image = ftype.style.iconUrl || ftype.style.icon;
+            var bg_image = ftype.icon || ftype.style.iconUrl || ftype.style.icon;
 
             if (ftype.style.type=="maki"){
                 $icon
@@ -1025,6 +1209,9 @@ aoi_feature_edit.buildTreeLayers = function(){
     options.titles.push('Other Base Maps');
     options.layers.push(layers_only_non_transparent(aoi_feature_edit.layers.base));
 
+    options.titles.push('Tasks/Jobs in this Project');
+    options.layers.push(aoi_feature_edit.layers.jobs);
+
     options.titles.push('Features');
     options.layers.push(aoi_feature_edit.layers.features);
 
@@ -1037,8 +1224,8 @@ aoi_feature_edit.buildTreeLayers = function(){
     options.titles.push('GeoJump Data Lookups');
     options.layers.push(aoi_feature_edit.layersOfType("Web Data Link",'weblinks'));
 
-    options = removeEmptyParents(options);
 
+    options = removeEmptyParents(options);
     return options;
 };
 
@@ -1127,6 +1314,20 @@ aoi_feature_edit.createPolygonOptions = function (opts) {
     return options;
 };
 
+aoi_feature_edit.createPolylineOptions = function (opts) {
+    var options = {};
+
+    if (opts.name) {
+        options.title = opts.name;
+    }
+
+    options.allowIntersection = true;
+    options.shapeOptions = opts.style || {borderColor: "black"};
+    options.id = opts.id;
+
+    return options;
+};
+
 aoi_feature_edit.createPointOptions = function (opts) {
     var options = {};
 
@@ -1146,6 +1347,13 @@ aoi_feature_edit.createPointOptions = function (opts) {
         if (!style_obj.iconUrl && icon_obj.type != 'maki') {
             style_obj.iconUrl = aoi_feature_edit.static_root +"/leaflet/images/red-marker-icon.png";
         }
+        options.icon = new icon_obj(style_obj);
+    }
+    if (!options.icon){
+        style_obj = {
+          "iconSize":15,
+          "iconUrl":"/static/images/markers/44circle_red_house.png"
+        };
         options.icon = new icon_obj(style_obj);
     }
 

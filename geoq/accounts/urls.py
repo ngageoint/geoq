@@ -6,7 +6,7 @@ from django.conf import settings
 from forms import SignupFormExtra
 
 from userena import views as userena_views
-from views import accept_terms_of_use
+from views import accept_terms_of_use, UserExpertiseView
 
 logout_page = getattr(settings, 'LOGOUT_URL', '/geoq')
 
@@ -31,10 +31,10 @@ urlpatterns = patterns('',
         userena_views.signin,
         {'template_name': 'accounts/templates/accounts/signin_form.html'},
         name='userena_signin'),
-    # url(r'^signout/$',
-    #    userena_views.signout,
-    #    {'next_page': logout_page},
-    #    name='userena_signout'),
+    url(r'^signout/$',
+        userena_views.signout,
+        {'next_page': logout_page},
+        name='userena_signout'),
     #
     #
     # # Reset password
@@ -55,8 +55,9 @@ urlpatterns = patterns('',
     #     point_to_404, name='userena_activate_retry'),
     #
     # # Change email and confirm it
-    # url(r'^(?P<username>[\.\w-]+)/email/$',
-    #    point_to_404, name='userena_email_change'),
+    url(r'^(?P<username>[\.\w-]+)/email/$',
+        userena_views.email_change, {'template_name': 'accounts/email_form.html'},
+               name='userena_email_change' ),
     # url(r'^(?P<username>[\.\w-]+)/email/complete/$',
     #    point_to_404, name='userena_email_change_complete'),
     # url(r'^(?P<username>[\.\w-]+)/confirm-email/complete/$',
@@ -69,20 +70,21 @@ urlpatterns = patterns('',
     #    point_to_404, name='userena_disabled'),
     #
     # # Change password
-    # url(r'^(?P<username>[\.\w-]+)/password/$',
-    #    point_to_404, name='userena_password_change'),
+    url(r'^(?P<username>[\.\w-]+)/password/$',
+        userena_views.password_change, {'template_name': 'accounts/password_form.html'},
+               name='userena_password_change' ),
     # url(r'^(?P<username>[\.\w-]+)/password/complete/$',
     #    point_to_404, name='userena_password_change_complete'),
     #
     # # Edit profile
     # url(r'^(?P<username>[\.\w-]+)/edit/$',
     #    point_to_404, name='userena_profile_edit'),
-    url(r'^(?P<username>[\.\w-]+)/edit/$',
+    url(r'^(?P<username>[\.@\w-]+)/edit/$',
        userena_views.profile_edit, {'template_name': 'accounts/profile_form.html'},
        name='userena_profile_edit' ),
     # View profiles
-    url(r'^(?P<username>(?!signout|signup|signin)[\.\w-]+)/$',
-       userena_views.profile_detail,
+    url(r'^(?P<username>(?!signout|signup|signin)[\.@\w-]+)/$',
+       userena_views.profile_detail, {'template_name': 'accounts/profile_detail.html'},
        name='userena_profile_detail'),
     #
     # # View profiles
@@ -97,6 +99,9 @@ urlpatterns = patterns('',
     #    point_to_404, name='userena_profile_list'),
 
     url(r'^accept_terms_of_use/?$', accept_terms_of_use, name='accept_terms_link'),
+    url(r'^(?P<username>[\.\w-]+)/expertise/$',
+        UserExpertiseView.as_view(),
+        name='user_expertise'),
 
 
     # If nothing overrides the urls, then load the default with userena.

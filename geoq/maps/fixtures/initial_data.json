@@ -163,7 +163,7 @@
     "pk": 7,
     "model": "maps.layer",
     "fields": {
-        "layer": "modis,global_mosaic",
+        "layer": "AIRS_Precipitation_Day",
         "layer_parsing_function": null,
         "updated_at": null,
         "disabled": false,
@@ -173,19 +173,33 @@
         "enable_identify": false,
         "fields_to_show": "",
         "additional_domains": "",
-        "type": "WMS",
+        "type": "WMTS",
         "styles": "",
         "attribution": "",
-        "description": "NASA Satellite Imagery",
+        "description": "NASA Satellite",
         "root_field": "",
         "extent": null,
         "transparent": true,
         "refreshrate": null,
-        "name": "NASA Satellite",
+        "name": "NASA AIRS Precipitation Day",
         "spatial_reference": "EPSG:4326",
-        "url": "http://wms.jpl.nasa.gov/wms.cgi",
+        "url": "http://map1.vis.earthdata.nasa.gov/wmts-webmerc/AIRS_Precipitation_Day/default/{Time}/{TileMatrixSet}/{z}/{y}/{x}.png",
         "created_at": null,
-        "layer_params": null,
+        "layer_params": {
+            "layer":"AIRS_Precipitation_Day",
+            "TileMatrixSet":"GoogleMapsCompatible_Level6",
+            "Time":"2014-11-04"
+        },
+        "dynamic_params": [
+            {
+                "range":{
+                    "start":"2012-05-08",
+                    "type":"FixedRange"
+                },
+                "type":"Date",
+                "name":"Time"
+            }
+        ],
         "token": "",
         "info_format": null,
         "constraints": ""
@@ -255,7 +269,7 @@
         "analyst": 1,
         "project": 1,
         "job": 3,
-        "template": 1,
+        "template": 5,
         "the_geom": "POINT (-79.7903108596801616 34.1948009832628870)",
         "properties": null
     }
@@ -270,7 +284,7 @@
         "analyst": 1,
         "project": 1,
         "job": 3,
-        "template": 1,
+        "template": 5,
         "the_geom": "POINT (-79.7929716110229492 34.1949429696883342)",
         "properties": null
     }
@@ -285,7 +299,7 @@
         "analyst": 1,
         "project": 1,
         "job": 3,
-        "template": 1,
+        "template": 5,
         "the_geom": "POINT (-79.7891092300415039 34.1966822839969140)",
         "properties": null
     }

@@ -17,8 +17,7 @@ urlpatterns = patterns('',
 
     # PROJECTS
     url(r'^projects/?$',
-        ListView.as_view(queryset=Project.objects.filter(active=True).exclude(private=True)),
-        name='project-list'),
+        TabbedProjectListView.as_view(), name='project-list'),
 
     url(r'^projects/(?P<pk>\d+)/?$',
         DetailedListView.as_view(template_name="core/project_detail.html"),
@@ -35,7 +34,7 @@ urlpatterns = patterns('',
         name='project-update'),
 
     # JOBS
-    url(r'^jobs/?$', ListView.as_view(queryset=Job.objects.all().exclude(project__private=True)), name='job-list'),
+    url(r'^jobs/?$', TabbedJobListView.as_view(), name='job-list'),
     url(r'^jobs/(?P<pk>\d+)/(?P<status>[a-zA-Z_ ]+)?/?$',
         JobDetailedListView.as_view(template_name='core/job_detail.html'),
         name='job-detail'),
@@ -76,6 +75,7 @@ urlpatterns = patterns('',
 
     url(r'^aois/work/(?P<pk>\d+)/?$',login_required(CreateFeaturesView.as_view())),
     url(r'^workcells/work/(?P<pk>\d+)/?$',login_required(CreateFeaturesView.as_view()), name='aoi-work'),
+    url(r'^workcells/mapedit/(?P<pk>\d+)/?$', login_required(MapEditView.as_view()), name='aoi-mapedit'),
 
     url(r'^aois/work/(?P<pk>\d+)/comment/?$',
         add_workcell_comment, name='add-workcell-comment'),
@@ -114,6 +114,7 @@ urlpatterns = patterns('',
     url(r'^api/job[s ]?/(?P<pk>\d+).geojson$', JobGeoJSON.as_view(), name='json-job'),
     url(r'^api/job[s ]?/(?P<pk>\d+).kml$', JobKML.as_view(), name='kml-job'),
     url(r'^api/job[s ]?/(?P<pk>\d+).networked.kml$', JobKMLNetworkLink.as_view(), name='kml-networked-job'),
+    url(r'^api/job[s ]?/(?P<pk>\d+)/styled_features.json$', JobStyledGeoJSON.as_view(), name='geojson-job-features'),
     url(r'^api/job[s ]?/(?P<pk>\d+)/features.json$', JobFeaturesJSON.as_view(), name='json-job-features'),
     url(r'^api/job[s ]?/(?P<pk>\d+)/features.withlinks.json$', JobFeaturesJSON.as_view(show_detailed_properties=True), name='json-job-features-links'),
     url(r'^api/job[s ]?/(?P<pk>\d+)/grid/job-workcells.geojson$', GridGeoJSON.as_view(), name='json-job-grid'),

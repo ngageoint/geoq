@@ -2,6 +2,7 @@
 # This technical data was produced for the U. S. Government under Contract No. W15P7T-13-C-F600, and
 # is subject to the Rights in Technical Data-Noncommercial Items clause at DFARS 252.227-7013 (FEB 2012)
 
+import types
 import json
 from geoq.core.models import AOI, Job, Project, Setting
 from geoq.locations.models import Counties
@@ -12,17 +13,25 @@ from django.utils.datastructures import SortedDict
 from django.core.urlresolvers import reverse
 from jsonfield import JSONField
 from datetime import datetime
+from geoq.core.utils import clean_dumps
+from denorm import denormalized, depend_on_related
+
+import sys
+
+MIGRATING = reduce(lambda x, y: x or y, ['syncdb' in sys.argv, 'migrate' in sys.argv], False)
 
 #Set up Server URL setting
 SERVER_URL = '/'
-try:
-    main_server = Setting.objects.filter(name="main_server")
-    if len(main_server) > 0:
-        main_server = main_server[0].value
-        if main_server.__contains__('name'):
-            SERVER_URL = str(main_server['name'])
-except:
-    SERVER_URL = '/'
+if not MIGRATING:
+    try:
+        #main_server = Setting.objects.filter(name="main_server")
+        main_server = []
+        if len(main_server) > 0:
+            main_server = main_server[0].value
+            if main_server.__contains__('name'):
+                SERVER_URL = str(main_server['name'])
+    except:
+        SERVER_URL = '/'
 
 
 IMAGE_FORMATS = (
@@ -72,10 +81,16 @@ SERVICE_TYPES = (
                 ('Bing', 'Bing'),
                 ('Google Maps', 'Google Maps'),
                 ('Yandex', 'Yandex'),
-                ('Leaflet Tile Layer', 'Leaflet Tile Layer')
+                ('Leaflet Tile Layer', 'Leaflet Tile Layer'),
+                ('MediaQ', 'MediaQ'),
                 #('MapBox', 'MapBox'),
                 #('TileServer','TileServer'),
                 #('GetCapabilities', 'GetCapabilities'),
+)
+
+EDITABLE_LAYER_TYPES = (
+                        ('OSM','OSM'),
+                        ('OSM MapEdit','OSM MapEdit'),
 )
 
 INFO_FORMATS = [(n, n) for n in sorted(['application/vnd.ogc.wms_xml',
@@ -109,6 +124,7 @@ class Layer(models.Model):
     fields_to_show = models.CharField(max_length=200, null=True, blank=True, help_text='Fields to show when someone uses the identify tool to click on the layer. Leave blank for all.')
     downloadableLink = models.URLField(max_length=400, null=True, blank=True, help_text='URL of link to supporting tool (such as a KML document that will be shown as a download button)')
     layer_params = JSONField(null=True, blank=True, help_text='JSON key/value pairs to be sent to the web service.  ex: {"crs":"urn:ogc:def:crs:EPSG::4326"}')
+    dynamic_params = JSONField(null=True, blank=True, help_text='URL Variables that may be modified by the analyst. ex: "date"')
     spatial_reference = models.CharField(max_length=32, blank=True, null=True, default="EPSG:4326", help_text='The spatial reference of the service.  Should be in ESPG:XXXX format.')
     constraints = models.TextField(null=True, blank=True, help_text='Constrain layer data displayed to certain feature types')
     disabled = models.BooleanField(default=False, blank=True, help_text="If unchecked, Don't show this layer when listing all layers")
@@ -153,6 +169,7 @@ class Layer(models.Model):
             "layer": self.layer,
             "transparent": self.transparent,
             "layerParams": self.layer_params,
+            "dynamicParams": self.dynamic_params,
             "refreshrate": self.refreshrate,
             "token": self.token,
             "attribution": self.attribution,
@@ -211,6 +228,7 @@ class Map(models.Model):
         def layer_json(map_layer):
             return {
                 "id": map_layer.layer.id,
+                "maplayer_id": map_layer.id,
                 "name": map_layer.layer.name,
                 "format": map_layer.layer.image_format,
                 "type": map_layer.layer.type,
@@ -221,6 +239,7 @@ class Map(models.Model):
                 "transparent": map_layer.layer.transparent,
                 "opacity": map_layer.opacity,
                 "layerParams": map_layer.layer.get_layer_params(),
+                "dynamicParams": map_layer.layer.dynamic_params,
                 "isBaseLayer": map_layer.is_base_layer,
                 "displayInLayerSwitcher": map_layer.display_in_layer_switcher,
                 "refreshrate": map_layer.layer.refreshrate,
@@ -250,17 +269,21 @@ class Map(models.Model):
         for layer in Layer.objects.all():
             if not layer.disabled:
                 map_services.append(layer.layer_json())
-        return json.dumps(map_services)
+        return clean_dumps(map_services)
+
+    def to_object(self):
+        return {
+                    "center_x": self.center_x or 0,
+                    "center_y": self.center_y or 0,
+                    "zoom": self.zoom or 15,
+                    "projection": self.projection or "EPSG:4326",
+                    "layers": self.map_layers_json(),
+                    "all_layers": self.all_map_layers_json()
+                }
 
     def to_json(self):
-        return json.dumps({
-            "center_x": self.center_x or 0,
-            "center_y": self.center_y or 0,
-            "zoom": self.zoom or 15,
-            "projection": self.projection or "EPSG:4326",
-            "layers": self.map_layers_json(),
-            "all_layers": self.all_map_layers_json()
-        })
+        obj = self.to_object()
+        return clean_dumps(obj)
 
     def get_absolute_url(self):
         return reverse('map-update', args=[self.id])
@@ -285,6 +308,34 @@ class MapLayer(models.Model):
     def __unicode__(self):
         return 'Layer {0}: {1}'.format(self.stack_order, self.layer)
 
+class MapLayerUserRememberedParams(models.Model):
+    """
+    Remembers the last options selected for a MapLayer with dynamic feed params.
+    """
+
+    maplayer = models.ForeignKey(MapLayer, related_name="user_saved_params_set")
+    user = models.ForeignKey(User, related_name="map_layer_saved_params_set")
+    values = JSONField(null=True, blank=True, help_text='URL Variables that may be modified by the analyst. ex: "date"')
+
+    @denormalized(models.ForeignKey, to=Map)
+    @depend_on_related(MapLayer)
+    def map(self):
+        return self.maplayer.map.pk
+
+class EditableMapLayer(models.Model):
+    """
+    Built to support editable layers such as OSM
+    """
+    name = models.CharField(max_length=200, help_text='Name that will be displayed within GeoQ')
+    type = models.CharField(choices=EDITABLE_LAYER_TYPES, max_length=75)
+    view_url = models.CharField(help_text='URL of view service.', max_length=500)
+    edit_url = models.CharField(help_text='URL of service where changes can be pushed to. ', max_length=500)
+
+    class Meta:
+        ordering = ["name"]
+
+    def __unicode__(self):
+        return '{0} ({1})'.format(self.name, self.type)
 
 class Feature(models.Model):
     """
@@ -312,20 +363,31 @@ class Feature(models.Model):
     #Try this vs having individual models
     the_geom = models.GeometryField(blank=True, null=True)
 
-    def geoJSON(self, as_json=True):
+    def geoJSON(self, as_json=True, using_style_template=True):
         """
         Returns geoJSON of the feature.
         Try to conform to https://github.com/mapbox/simplestyle-spec/tree/master/1.0.0
         """
         properties_main = self.properties or {}
         properties_built = dict(id=self.id,
-                          template=self.template.id if hasattr(self.template, "id") else None,
                           status=self.status,
                           analyst=self.analyst.username,
                           created_at=datetime.strftime(self.created_at, '%Y-%m-%dT%H:%M:%S%Z'),
                           updated_at=datetime.strftime(self.updated_at, '%Y-%m-%dT%H:%M:%S%Z'),
                           )
-        properties = dict(properties_built.items() + properties_main.items())
+        properties_template = self.template.properties or {}
+
+        # properties_template can return a list from it's backing model, make sure we get the Dict
+        if type(properties_template) == types.ListType:
+            properties_template = properties_template[0]
+
+        # srj: if using_style_template set, we're styling object from its feature id, else we'll
+        #      just use the style properties (which should already be included if defined for feature)
+        #      (we may want to set some defaults later on to make sure)
+        if using_style_template:
+            properties_built['template'] = self.template.id if hasattr(self.template, "id") else None
+
+        properties = dict(properties_built.items() + properties_main.items() + properties_template.items())
 
         feature_type = FeatureType.objects.get(id=self.template.id)
 
@@ -334,10 +396,18 @@ class Feature(models.Model):
         geojson["properties"] = properties
         geojson["geometry"] = json.loads(self.the_geom.json)
 
-        if feature_type:
+        if feature_type and using_style_template:
             geojson["style"] = feature_type.style_to_geojson()
+        else:
+            geojson["style"] = feature_type.style
 
-        return json.dumps(geojson) if as_json else geojson
+        if(as_json):
+            return clean_dumps(geojson)
+        else:
+            for key in properties:
+                if isinstance(properties[key],str) or isinstance(properties[key], unicode):
+                    properties[key] = properties[key].replace('<', '&ltl').replace('>', '&gt;').replace("javascript:", "j_script-")
+            return geojson
 
     def json_item(self, show_detailed_properties=False):
         properties_main = self.properties or {}
@@ -394,7 +464,7 @@ class FeatureType(models.Model):
 
     FEATURE_TYPES = (
         ('Point', 'Point'),
-        # ('Line', 'Line'),  #TODO: Support Lines somehow
+        ('LineString', 'Line'),
         ('Polygon', 'Polygon'),
         # ('Text', 'Text'),
         # ('Overlay', 'Overlay'),  #TODO: Support overlay images. Should these be features?
@@ -406,15 +476,20 @@ class FeatureType(models.Model):
     order = models.IntegerField(default=0, null=True, blank=True, help_text='Optionally specify the order features should appear on the edit menu. Lower numbers appear sooner.')
     properties = JSONField(load_kwargs={}, blank=True, null=True, help_text='Metadata added to properties of individual features. Should be in JSON format, e.g. {"severity":"high", "mapText":"Text to Show instead of icon"}')
     style = JSONField(load_kwargs={}, blank=True, null=True, help_text='Any special CSS style that features of this types should have. e.g. {"opacity":0.7, "color":"red", "backgroundColor":"white", "mapTextStyle":"white_overlay", "iconUrl":"path/to/icon.png"}')
+    icon = models.ImageField(upload_to="static/featuretypes/", blank=True, null=True, help_text="Upload an icon (now only in Admin menu) of the FeatureType here, will override style iconUrl if set")
 
     def to_json(self):
-        return json.dumps(dict(id=self.id,
+        icon = ""
+        if self.icon:
+            icon = "/images/"+str(self.icon)
+        return clean_dumps(dict(id=self.id,
                                properties=self.properties,
                                category=self.category,
                                order=self.order,
                                name=self.name,
                                type=self.type,
-                               style=self.style))
+                               style=self.style,
+                               icon=icon))
 
     def style_to_geojson(self):
         local_style = self.style
@@ -442,8 +517,11 @@ class FeatureType(models.Model):
         opacity = "1"
 
         style = self.style or {}
-        if style.has_key('iconUrl'):
+        if self.icon:
+            src = str("/images/"+str(self.icon))
+        elif style.has_key('iconUrl'):
             src = str(style['iconUrl'])
+
         if style.has_key('weight'):
             style_html = style_html + "border-width:"+str(style['weight'])+"px; "
         if style.has_key('color'):
@@ -457,6 +535,9 @@ class FeatureType(models.Model):
 
         if self.type == "Point":
             html = "<img src='"+src+"' style='"+style_html+"vertical-align:initial;' />"
+        elif self.type == "LineString":
+            style_html = style_html + "background-color:"+bgColor+"; "
+            html = "<span style='"+style_html+"border-radius:4px; display:inline-block; opacity:"+opacity+"; width:5px; margin-left:3px; margin-right:5px;'> &nbsp; </span>"
         else:
             style_html = style_html + "background-color:"+bgColor+"; "
             html = "<span style='"+style_html+"border-radius:4px; display:inline-block; opacity:"+opacity+"; width:"+str(height)+"px;'> &nbsp; </span>"
@@ -464,7 +545,7 @@ class FeatureType(models.Model):
         return html
 
     def style_json(self):
-        return json.dumps(self.style)
+        return clean_dumps(self.style)
 
     def featuretypes(self):
         return FeatureType.objects.all()

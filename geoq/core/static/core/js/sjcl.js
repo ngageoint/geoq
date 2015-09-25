@@ -1,11 +1,15 @@
 "use strict";
-if(window.browserRandom == undefined) {
+
+if (window.browserRandom == undefined) {
   window.browserRandom = Math.random
   var randomReplace = function() {
     // generate two cryptographically secure words (32 bits)
     // bitwise them together, scale them down to 0-1 inclusive
     // Can be used to monkey patch Math.random
-    var rsrc = sjcl.random.randomWords(2);
+    var rsrc = null;
+     try {
+         rsrc = sjcl.random.randomWords(2);
+     } catch(e) { return window.browserRandom()}
     var high =rsrc[0];
     var low = rsrc[1];
     var hpl = ((high & 0x1fffff) * 0x100000000) + low;

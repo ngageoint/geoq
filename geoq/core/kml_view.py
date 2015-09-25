@@ -7,6 +7,7 @@ from django.shortcuts import get_object_or_404
 from datetime import datetime
 from pytz import timezone
 from webcolors import name_to_hex, normalize_hex
+from xml.sax.saxutils import escape as xml_escape
 
 
 class JobKML(ListView):
@@ -21,6 +22,8 @@ class JobKML(ListView):
         aoi_count = job.total_count()
         aoi_complete = job.complete_count()
         aoi_work = job.in_work_count()
+
+        cookie_url_trailer = get_cookie_trailer(request)
 
         description = 'Job #'+str(job.id)+': '+str(job.name)+'\n'+str(job.project.name)+'\n'
 
@@ -81,10 +84,11 @@ class JobKML(ListView):
 
         for feature in feature_types:
             output += '    <Style id="geoq_'+str(feature.id)+'">\n'
-            if feature.style.has_key('weight'):
-                output += '      <LineStyle>\n'
-                output += '        <width>'+str(feature.style['weight'])+'</width>\n'
-                output += '      </LineStyle>\n'
+            out_color = '7f0066ff'
+
+            if feature.style == None:
+                output += '    </Style>\n'
+                continue
 
             if feature.style.has_key('color'):
                 color = feature.style['color']
@@ -105,14 +109,23 @@ class JobKML(ListView):
                 output += '        <outline>1</outline>\n'
                 output += '      </PolyStyle>\n'
 
+            if feature.style.has_key('weight'):
+                output += '      <LineStyle>\n'
+                output += '        <width>'+str(feature.style['weight'])+'</width>\n'
+                if feature.style.has_key('color'):
+                    output += '        <color>'+out_color+'</color>\n'
+                output += '      </LineStyle>\n'
+
             if feature.style.has_key('iconUrl'):
                 icon_url = str(feature.style['iconUrl'])
                 if not icon_url.startswith("http"):
                     icon_url = request.build_absolute_uri(icon_url)
+                else:
+                    icon_url += cookie_url_trailer
 
                 output += '      <IconStyle>\n'
                 output += '        <Icon>\n'
-                output += '          <href>'+icon_url+'</href>\n'
+                output += '          <href>' + xml_escape(icon_url) + '</href>\n'
                 output += '        </Icon>\n'
                 output += '      </IconStyle>\n'
             output += '    </Style>\n'
@@ -153,7 +166,13 @@ class JobKML(ListView):
             #TODO: Add links to linked objects
 
             #Simplify polygons to reduce points in complex shapes
-            kml = str(loc.the_geom.simplify(0.0002).kml)
+            if loc.the_geom.num_coords > 0: #skip empty locations
+                simplegeom = loc.the_geom.simplify(0.0002)
+                if simplegeom.num_coords > 0:
+                    kml = str(loc.the_geom.simplify(0.0002).kml)
+                else:
+                    kml = str(loc.the_geom.kml)
+
             if '<Polygon><outerBoundaryIs><LinearRing><coordinates>' in kml:
                 add_text = '<altitudeMode>clampToGround</altitudeMode>'
                 kml = kml.replace('<coordinates>', add_text+'<coordinates>')
@@ -196,6 +215,19 @@ class JobKML(ListView):
         return HttpResponse(output, mimetype="application/vnd.google-earth.kml+xml", status=200)
 
 
+def get_cookie_trailer(request):
+
+    cookies_to_look_for = ['iPlanetDirectoryPro'] #TODO: Pull this from an admin setting
+    cookie_url_trailer = ''
+    for cook in cookies_to_look_for:
+        cookie = request.COOKIES.get(cook, None)
+        if cookie:
+            cookie_url_trailer += cook + "=" + cookie
+    if cookie_url_trailer:
+        cookie_url_trailer = "?" + cookie_url_trailer
+    return cookie_url_trailer
+
+
 class JobKMLNetworkLink(ListView):
 
     model = Job
@@ -204,15 +236,20 @@ class JobKMLNetworkLink(ListView):
         id = self.kwargs.get('pk')
         job = get_object_or_404(Job, pk=id)
 
-        url = request.build_absolute_uri('/geoq/api/job/'+id+'.kml')
+        setting_zoom_auto = True #TODO: Pull from settings
+        settings_refresh_every = 90 #TODO: Pull from settings
+
+        cookie_url_trailer = get_cookie_trailer(request)
+
+        url = request.build_absolute_uri('/geoq/api/job/'+id+'.kml' + cookie_url_trailer)
 
         aoi_count = job.total_count()
         aoi_complete = job.complete_count()
         aoi_work = job.in_work_count()
 
-        aoi_comp_pct = int(100 * float(aoi_complete)/float(aoi_count))
-        aoi_work_pct = int(100 * float(aoi_work)/float(aoi_count))
-        aoi_tot_pct = int(100 * float(aoi_work+aoi_complete)/float(aoi_count))
+        aoi_comp_pct = int(100 * float(aoi_complete)/float(aoi_count)) if aoi_count > 0 else 0
+        aoi_work_pct = int(100 * float(aoi_work)/float(aoi_count)) if aoi_count > 0 else 0
+        aoi_tot_pct = int(100 * float(aoi_work+aoi_complete)/float(aoi_count)) if aoi_count > 0 else 0
 
         doc_name = 'GeoQ C:'+str(aoi_complete)+', W:'+str(aoi_work)+', Tot:'+str(aoi_count)+' ['+str(aoi_tot_pct)+'%]'
 
@@ -226,16 +263,18 @@ class JobKMLNetworkLink(ListView):
         output += '    <visibility>1</visibility>\n'
         output += '    <open>1</open>\n'
         output += '    <description>Work progress from GeoQ</description>\n'
-        output += '    <NetworkLink>\n'
+        output += '    <NetworkLink id="GeoQ-'+id+'">\n'
         output += '      <name>'+doc_name+'</name>\n'
         output += '      <visibility>1</visibility>\n'
         output += '      <open>1</open>\n'
         output += '      <description>'+description+'</description>\n'
         output += '      <refreshVisibility>0</refreshVisibility>\n'
-        output += '      <flyToView>1</flyToView>\n'
+        if setting_zoom_auto:
+            output += '      <flyToView>1</flyToView>\n'
         output += '      <Link>\n'
         output += '        <href>'+url+'</href>\n'
-        output += '        <refreshInterval>90</refreshInterval>\n'  # Refresh every 1.5 min
+        if settings_refresh_every:
+            output += '        <refreshInterval>'+str(settings_refresh_every)+'</refreshInterval>\n'  # Refresh every n seconds
         output += '        <refreshMode>onInterval</refreshMode>\n'
         output += '        <viewRefreshTime>5</viewRefreshTime>\n'   # Also refresh after viewscreen movement
         output += '        <viewRefreshMode>onStop</viewRefreshMode>\n'

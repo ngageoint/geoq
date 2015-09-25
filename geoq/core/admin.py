@@ -7,7 +7,7 @@ from django.contrib.gis import admin
 from django.shortcuts import render
 from django.http import HttpResponseRedirect
 from django import forms
-from models import Project, Job, AOI, Setting
+from models import Project, Job, AOI, Setting, Organization
 from guardian.admin import GuardedModelAdmin
 
 
@@ -46,9 +46,10 @@ class AOIAdmin(ObjectAdmin):
 
 
 class JobAdmin(GuardedModelAdmin, ObjectAdmin):
-    filter_horizontal = ("analysts", "reviewers", "feature_types")
+    filter_horizontal = ("analysts", "reviewers", "feature_types", "required_courses")
+    list_display = ('name', 'project', 'created_at', 'updated_at', 'map')
 
-    fields = ('name', 'map', 'analysts',  'reviewers', 'feature_types', 'project', 'tags')
+    fields = ('name', 'map', 'analysts',  'reviewers', 'feature_types', 'required_courses', 'project', 'tags', 'editor')
     readonly_fields = ('created_at', 'updated_at')
 
     save_on_top = True
@@ -59,7 +60,13 @@ class SettingAdmin(admin.ModelAdmin):
     list_display = ['name', 'value']
 
 
+class ProjectAdmin(admin.ModelAdmin):
+    list_display = ('name', 'created_at', 'updated_at')
+    filter_horizontal = ('project_admins', 'contributors',)
+
+
 admin.site.register(Setting, SettingAdmin)
-admin.site.register(Project, ObjectAdmin)
+admin.site.register(Project, ProjectAdmin)
 admin.site.register(Job, JobAdmin)
 admin.site.register(AOI, AOIAdmin)
+admin.site.register(Organization)

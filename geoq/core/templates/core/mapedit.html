@@ -1,0 +1,36 @@
+{% extends "core/base.html" %}
+{% load compress %}
+{% load settings_variables %}
+
+{% block container %}
+
+    <div class="container">
+        <div class="btn-group pull-right">
+            <a class="btn btn" href="#">
+                <span class="glyphicon glyphicon-ok"></span>
+                <b> Finish </b>
+            </a>
+            <button class="btn btn dropdown-toggle" data-toggle="dropdown">
+                <span class="caret"></span>
+            </button>
+            <ul class="dropdown-menu">
+                {% if 'core.change_aoi' in request.base_perms %}
+                <li><a href="{% url 'aoi-update-status' object.id 'Awaiting review' %}">Submit for Review</a></li>
+                {% endif %}
+                {% if 'core.certify_workcells' in request.base_perms %}
+                <li><a href="{% url 'aoi-update-status' object.id 'Completed' %}">Certify as Complete</a></li>
+                {% endif %}
+            </ul>
+        </div>
+        <div class="row" style="padding-top: 10px;">
+            <iframe src="{{ mapedit_url }}" style="width:100%;height:800px;margin-top: 10px;"></iframe>
+        </div>
+
+    </div>
+
+
+<script language="JavaScript">
+
+</script>
+
+{% endblock %}

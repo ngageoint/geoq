@@ -1,7 +1,7 @@
 /* globals L */
 (function(L, Terraformer){
   L.esri.ClusteredFeatureLayer = L.Class.extend({
-    includes: L.esri.Mixins.featureGrid,
+    /* includes: L.esri.Mixins.featureGrid, */
     options: {
       cellSize: 512,
       debounce: 100,
@@ -127,7 +127,7 @@
   });
 
   L.esri.ClusteredFeatureLayer.include(L.Mixin.Events);
-  L.esri.ClusteredFeatureLayer.include(L.esri.Mixins.metadata);
+  /* L.esri.ClusteredFeatureLayer.include(L.esri.Mixins.metadata); */
 
   L.esri.clusteredFeatureLayer = function(url, options){
     return new L.esri.ClusteredFeatureLayer(url, options);

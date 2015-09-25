@@ -189,3 +189,16 @@ ul.fancytree-container {
 .leaflet-google-layer {
     z-index: 1 !important;
 }
+
+
+#roseHolder {
+    text-align: center;
+    font-weight: bold;
+}
+#roseHolder img {
+    vertical-align: middle;
+    padding-left: .25em;
+}
+#roseHolder span {
+    cursor: pointer;
+}

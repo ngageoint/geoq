@@ -13,7 +13,8 @@
                     <span class="caret"></span>
                 </button>
                 <ul class="dropdown-menu">
-                    <li><a href="{% url 'layer-import' %}">Import</a></li>
+                    <li><a href="{% url 'create-kml-layer' %}">Import KML/KMZ</a></li>
+                    <li><a href="{% url 'layer-import' %}">Import External Layer</a></li>
                 </ul>
             </div>
             {% endif %}

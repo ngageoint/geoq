@@ -13,13 +13,15 @@ from django.http import HttpResponse, HttpResponseRedirect, Http404
 from django.shortcuts import render_to_response
 from django.template import RequestContext
 from django.views.generic import ListView, View, DeleteView
+from django.views.decorators.http import require_http_methods
 
-from forms import MapForm, MapInlineFormset
+from forms import MapForm, MapInlineFormset, UploadKMZForm
 
 from geoq.core.models import AOI
 from geoq.locations.models import Counties
 
-from models import Feature, FeatureType, Map, Layer, GeoeventsSource
+from models import Feature, FeatureType, Map, Layer, MapLayerUserRememberedParams, MapLayer, GeoeventsSource
+from kmz_handler import save_kmz_file
 
 import logging
 
@@ -35,6 +37,7 @@ class CreateFeatures(View):
 
     def post(self, request, *args, **kwargs):
         feature = None
+        tpi = request.META.get('HTTP_TEMP_POINT_ID', "none")
         aoi = request.POST.get('aoi')
         geometry = request.POST.get('geometry')
         geojson = json.loads(geometry)
@@ -74,14 +77,17 @@ class CreateFeatures(View):
 
             feature.save()
         except ValidationError as e:
-            return HttpResponse(content=json.dumps(dict(errors=e.messages)), mimetype="application/json", status=400)
-
+            response =  HttpResponse(content=json.dumps(dict(errors=e.messages)), mimetype="application/json", status=400)
+            response['Temp-Point-Id'] = tpi
+            return response
         # This feels a bit ugly but it does get the GeoJSON into the response
         feature_json = serializers.serialize('json', [feature,])
         feature_list = json.loads(feature_json)
         feature_list[0]['geojson'] = feature.geoJSON(True)
 
-        return HttpResponse(json.dumps(feature_list), mimetype="application/json")
+        response = HttpResponse(json.dumps(feature_list), mimetype="application/json")
+        response['Temp-Point-Id'] = tpi
+        return response
 
 
 class EditFeatures(View):
@@ -119,7 +125,35 @@ class EditFeatures(View):
 
         return HttpResponse("{}", mimetype="application/json")
 
-def feature_delete(request,pk):
+@login_required
+@require_http_methods(["POST"])
+def update_user_maplayer_param(request, *args, **kwargs):
+    user = request.user
+
+    try:
+        json_stuff = json.loads(request.body)
+    except ValueError:
+        return HttpResponse("{\"status\":\"Bad Request\"}", mimetype="application/json", status=400)
+
+    mlq = MapLayer.objects.filter(id=json_stuff['maplayer'])
+
+    if not mlq.exists():
+        return HttpResponse("{\"status:\":\"Bad Request\", \"reason\":\"MapLayer does not exist\"}", status=400)
+    else:
+        ml = mlq.get()
+        mlurpq = MapLayerUserRememberedParams.objects.filter(maplayer=ml, user=user)
+        if mlurpq.exists():
+            mlurp = mlurpq.get()
+        else:
+            mlurp = MapLayerUserRememberedParams(maplayer=ml, user=user, values={})
+
+        mlurp.values[json_stuff['param']] = json_stuff['newValue']
+
+        mlurp.save()
+
+    return HttpResponse(json.dumps(mlurp.values), mimetype="application/json", status=200)
+
+def feature_delete(request, pk):
     try:
         feature = Feature.objects.get(pk=pk)
         feature.delete()
@@ -245,3 +279,26 @@ class LayerDelete(DeleteView):
 
     def get_success_url(self):
         return reverse('layer-list')
+
+class KMZLayerImport(ListView):
+
+    model = Layer
+    template_name = "maps/kmz_upload.html"
+
+    def get_context_data(self, **kwargs):
+        context = super(KMZLayerImport, self).get_context_data(**kwargs)
+        return context
+
+    def post(self, request, *args, **kwargs):
+        form = UploadKMZForm(request.POST, request.FILES)
+        if form.is_valid():
+            localdir = save_kmz_file(request.FILES['kmzfile'])
+            uri = request.build_absolute_uri(localdir)
+            if localdir != None:
+                layer = Layer.objects.create(name = request.POST['title'],type="KML",url=uri,layer="",styles="",description="")
+
+        return HttpResponseRedirect(reverse('layer-list'))
+
+
+
+

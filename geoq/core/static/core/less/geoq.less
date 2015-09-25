@@ -5,19 +5,23 @@
 .popover {
   line-height: 1.5em;
 }
-.hero-unit-smaller {
+.hero-header {
   background-color: #eeeeee;
   -webkit-border-radius: 6px;
   -moz-border-radius: 6px;
   border-radius: 6px;
-  padding: 10px 30px 30px 30px;
-  font-size: 18px;
-  line-height: 24px;
+  padding: 10px 20px 20px 20px;
 }
 
 #badge-container {
   line-height: 1em;
   margin-top: 4px;
+}
+
+#menu-logo {
+  height:30px;
+  width:30px;
+  margin-right:5px;
 }
 
 .badge_holder {
@@ -98,16 +102,22 @@
   overflow-x: none;
 }
 
-
+//Changed by Jared
+div.job_link_body {
+  text-align: center;
+  margin: 0 auto;
+}
 div.job_link_item {
 //  border: 1px solid blue;
   border-radius: 4px;
   display: inline-block;
-  width: 46px;
+  width: 60px;
   vertical-align: top;
   text-align: center;
-  font-size: 9px;
-  line-height: 12px;
+  font-size: 13px;
+  line-height: 16px;
+  margin: 3px 0px;
+  padding: 0px 4px;
 
   img {
     width:24px;
@@ -186,6 +196,12 @@ div.job_link_item {
   }
   li.shaded{
     background-color:@grayshaded;
+  }
+
+
+  .assignee-item {
+    float: left;
+    clear: left;
   }
 
   .statlist{
@@ -316,4 +332,44 @@ div.job_link_item {
 
 .bronze {
   color:  rgb(204,153,102)
+}
+
+.geoq-param-group {
+  border-radius: 4px;
+  -moz-border-radius: 4px;
+  -webkit-border-radius: 4px;
+  border: 1px solid #ccc;
+  position: relative;
+  padding: 30px 0 0 15px;
+}
+
+.geoq-param-group-label {
+  border-radius: 4px 0 4px 0;
+  -moz-border-radius: 4px 0 4px 0;
+  -webkit-border-radius: 4px 0 4px 0;
+  border: 1px solid #ccc;
+  position: absolute;
+  top: -1px;
+  left: -1px;
+  padding: 3px 7px;
+  background-color: #eee;
+}
+
+.geoq-param-group .slider-selection {
+  background: #BABABA;
+}
+
+.geoq-param-group .slider-track-high {
+  background: #BABABA;
+}
+
+.assignee-list-name {
+  margin-left: 5px;
+  position: relative;
+}
+
+.assignee-list-count {
+  margin-right: 5px;
+  position: relative;
+  float: right;
 }

@@ -29,8 +29,6 @@ DATABASES = {
     }
 }
 
-AUTH_PROFILE_MODULE = 'accounts.UserProfile'
-
 # Use this to change the base bootstrap library
 BOOTSTRAP_BASE_URL = '/static/bootstrap/'
 
@@ -112,10 +110,11 @@ LEAFLET_CSS = [
 
 LEAFLET_CONFIG = {
     'RESET_VIEW' : False,
+    'MAX_ZOOM' : 22,
     'PLUGINS': {
         'draw': {
             'css': LEAFLET_CSS,
-            'js': STATIC_URL + 'leaflet/leaflet-draw/leaflet.draw.js',
+            'js': STATIC_URL + 'leaflet/leaflet-draw/leaflet.draw-src.js',
             'repo': 'https://github.com/Leaflet/Leaflet.draw'
         },
         'esri': {
@@ -132,6 +131,11 @@ LEAFLET_CONFIG = {
             'css': [],
             'js': [STATIC_URL + 'leaflet/Leaflet.MakiMarkers.js'],
             'repo': 'https://github.com/jseppi/Leaflet.MakiMarkers'
+        },
+        'MediaQ': {
+            'css': [],
+            'js': [STATIC_URL + 'leaflet/Leaflet.MediaQ.js'],
+            'repo': 'https://github.com/stephenrjones/Leaflet.MediaQ'
         }
     }
 }
@@ -202,38 +206,44 @@ CRISPY_TEMPLATE_PACK = 'bootstrap'
 INSTALLED_APPS = (
     'django.contrib.auth',
     'django.contrib.contenttypes',
-    'django.contrib.gis',
-    'django.contrib.humanize',
     'django.contrib.sessions',
     'django.contrib.sites',
-    'django.contrib.messages',
-    'django.contrib.staticfiles',
     'django.contrib.admin',
+    'south',
+    'django_select2',
+    'reversion',
+    'easy_thumbnails',
+    'userena',
+    'geoq.accounts',
+    'geoq.core',
+    'geoq.maps',
+    'httpproxy',
+    'guardian',
+    'geoq.feedback',
+    'django.contrib.messages',
+    'userena.contrib.umessages',
+    'geoq.locations',
+    'geoq.proxy',
+    'geoq.training',
+
+
+    'django.contrib.gis',
+    'django.contrib.humanize',
+    'django.contrib.staticfiles',
     'django.contrib.humanize',
 
-    'south',
 
     'compressor',
     'geoexplorer',
-    'reversion',
-    'guardian',
-    'easy_thumbnails',
-    'userena',
-    'userena.contrib.umessages',
     'bootstrap_toolkit',
-    'django_select2',
     'leaflet',
     'jsonfield',
     'crispy_forms',
     'django_extensions',
+    'debug_toolbar',
 
-    'geoq.accounts',
-    'geoq.core',
-    'geoq.maps',
     'geoq.mgrs',
-    'geoq.feedback',
-    'geoq.proxy',
-    'geoq.locations',
+
 )
 
 # A sample logging configuration. The only tangible logging
@@ -275,6 +285,9 @@ GAMIFICATION_PROJECT = 'geoq'
 
 #GeoServer
 GEOSERVER_WFS_JOB_LAYER = None
+
+# For Django Debug Toolbar - need to set this to resolve some errors
+DEBUG_TOOLBAR_PATCH_SETTINGS = False
 
 # Bootstrap variables to work with django-bootstrap-toolkit
 # Comment these out to use cdnjs.cloudflare.com versions of Bootstrap

@@ -1,0 +1,63 @@
+{% extends "core/base.html" %}
+{% load staticfiles %}
+{% block title %}GeoQ Projects{% endblock %}
+
+{% block container %}
+
+    <link rel="stylesheet" href="{% static 'css/backpack.min.css'%}">
+
+    <script>
+        function retrieve_badges(id,gid) {
+            if (id < 0 || gid < 0) return;
+
+            var url = "http://backpack.openbadges.org/displayer/" + id + "/group/" + gid + ".json";
+            var badge_list = $('#badge_list');
+
+            $.ajax( {
+                url: url,
+                success: function( data ) {
+                    _.each(data.badges, function(badge) {
+                        var $i = $("<img width='64'>")
+                                .attr('src', badge.imageUrl);
+                        var $p1 = $("<p class='title'>")
+                                .attr('title',badge.assertion.badge.name)
+                                .text(badge.assertion.badge.name);
+                        var $p2 = $("<p class='issuer'>")
+                                .text("Issuer: " + badge.assertion.badge.issuer.name);
+                        var $div = $("<div class='openbadge'>")
+                                .append($i)
+                                .append($p1)
+                                .append($p2);
+
+                        var $li = $("<li class='span3 openbadge-container'>")
+                                .append($div);
+                        badge_list.append($li);
+                    });
+                }
+            });
+        }
+
+        $(document).ready(function() {
+            retrieve_badges({{ ids.userid }}, {{ ids.groupid }});
+        });
+
+    </script>
+
+    <div class="row-fluid container-narrow">
+
+        <div class="span12">
+            <div class="list-view-header">Expertise List for {{ profile_user.username }}</div>
+            <ul class="nav nav-tabs">
+                <li class="active">
+                    <a href="#">Badges</a>
+                </li>
+            </ul>
+
+            <ul id="badge_list" class="js-badges badge-list small-cards">
+
+            </ul>
+
+        </div>
+
+    </div>
+{% endblock %}

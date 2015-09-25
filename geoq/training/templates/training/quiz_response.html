@@ -1,0 +1,20 @@
+{% extends "core/templates/core/base.html" %}
+{% block title %}GeoQ: Quiz Results for {{ object.name }}{% endblock %}
+
+{% block container %}
+
+    <div class="row span12">
+        <span class="list-view-header">Quiz results for <b>{{ object.name }}</b></span><br/>
+        <a href="{% url 'training:course_list' %}">Return to Training Page</a>
+        <br/>
+        {{ object.description }}
+
+        <h2>{{ quiz_result.text }}</h2>
+        {{ quiz_result.result }}
+
+    </div>
+    <script language="JavaScript">
+
+    </script>
+
+{% endblock %}

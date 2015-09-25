@@ -6,7 +6,7 @@
 {% block static_libraries %}
     {% leaflet_js %}
     <script src="{{ STATIC_URL }}core/js/leaflet_helper.js"></script>
-    <script src="{{ STATIC_URL }}core/js/bootstrap-dialog.js"></script>
+    <script src="{{ STATIC_URL }}bootstrap/js/bootstrap-dialog.js"></script>
     <script src="{{ STATIC_URL }}core/js/maths.js"></script>
     <script src="{{ STATIC_URL }}core/js/leafletcontrols/leaflet.simple_button.js"></script>
     <script src="{{ STATIC_URL }}leaflet/L.Control.Button.js"></script>
@@ -34,8 +34,10 @@
                 onEachFeature: function(feature, layer) {
 
                     job_properties = feature.properties;
+                    {% if user.is_authenticated %}
                     var popupContent = _.template('{% filter escapejs %}{% include "core/job_detail_aoi_popup.html" %}{% endfilter %}', job_properties);
                     layer.bindPopup(popupContent);
+                    {% endif %}
 
                     layer.on({
                         mouseover: highlightFeature,
@@ -152,6 +154,14 @@
 
         };
 
+    $(document).ready(function(){
+        var $att = $('#attribute-table');
+        var $map = $('#map');
+        var height = $att.height();
+        $map.height(height);
+        $att.css('marginBottom','20px');
+    });
+
     </script>
     <style>
         .nav.nav-tabs li a {
@@ -175,7 +185,7 @@
 
         <div class="projectlist">
 
-            {% include 'core/_job_stat_list.html' %}
+            {% include 'core/_job_page.html' %}
 
             <h3>
                 <span class="icon-inbox icon-1x pull-left list-icon"></span>
@@ -189,6 +199,11 @@
             </p>
 
             <div class="row body" style="height:250px; margin-top:25px; margin-left:5px;">
+                <div class="span4 thumbnail" id="map" style="height:290px; margin-left: 0px; width: 400px;">
+                {% leaflet_map "map" creatediv=False%}
+                </div>
+                <div class="span6" id="attribute-table" style="float:left">
+
                 {% if 'core.change_aoi' in request.base_perms %}
                 <div class="btn-group pull-right">
                     <a class="btn btn-mini" href="{{ object.get_update_url }}">
@@ -216,11 +231,8 @@
                     </ul>
                 </div>
                 {% endif %}
-                <div class="span4 thumbnail" id="map" style="height:290px; margin-left: 0px; width: 400px;">
-                {% leaflet_map "map" creatediv=False%}
-                </div>
-                <div class="span6" id="attribute-table" style="float:left">
-                    <table>
+
+                    <table style="clear: both">
                         <tr>
                             <th style="min-width: 100px"></th>
                             <th></th>
@@ -239,6 +251,14 @@
                             </td>
                             <td>
                                 {{ object.created_at }}
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>
+                                <b>Editor:</b>
+                            </td>
+                            <td>
+                                {{ object.editor }}
                             </td>
                         </tr>
                         <tr>
@@ -267,22 +287,6 @@
                                 {{ object.project.description }}
                             </td>
                         </tr>
-                        <tr>
-                            <td>
-                                <b>Completed:</b>
-                            </td>
-                            <td>
-                                <div class="progress progress-bar-striped" style="margin-bottom: 0px;">
-                                    <div class="bar" role="progressbar"
-                                         aria-valuenow="{{ completed }}"
-                                         aria-valuemin="0"
-                                         aria-valuemax="100"
-                                         style="width:{{ completed }}%; color: white; text-shadow: black 0.1em 0.1em 0.2em;">
-                                        {{ completed }}%
-                                    </div>
-                                </div>
-                            </td>
-                        </tr>
                         {% include 'core/_job_links.html' %}
                     </table>
                 </div>
@@ -309,7 +313,7 @@
             {% if 'accounts.add_job' in request.base_perms %}
                 <span><b>No workcells. Next step: </b> <a class="btn btn-large btn-success" href="{% url 'job-create-aois' job_pk=object.id %}">Create workcells</a></span>
             {% else %}
-                <span><b>This project doesn't have any jobs yet, please ask a supervisor to create one</b></span>
+                <span><b>This job doesn't have any workcells yet, please ask a supervisor to create some</b></span>
             {% endif %}
             </div>
         {% endif %}

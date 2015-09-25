@@ -3,10 +3,11 @@
 # is subject to the Rights in Technical Data-Noncommercial Items clause at DFARS 252.227-7013 (FEB 2012)
 
 import json
+import re
 import requests
 
 from django.contrib.auth.decorators import login_required
-from django.contrib.auth.models import User, Group
+from django.contrib.auth.models import User, Group, Permission
 from django.contrib.gis.geos import GEOSGeometry
 from django.core.urlresolvers import reverse, reverse_lazy
 from django.core.exceptions import ObjectDoesNotExist
@@ -17,9 +18,10 @@ from django.shortcuts import get_object_or_404, redirect, render
 from django.views.generic import DetailView, ListView, TemplateView, View, DeleteView, CreateView, UpdateView
 from datetime import datetime
 
-from models import Project, Job, AOI, Comment, AssigneeType
+from models import Project, Job, AOI, Comment, AssigneeType, Organization
 from geoq.maps.models import *
-from utils import send_assignment_email
+from utils import send_assignment_email, increment_metric
+from geoq.training.models import Training
 
 from geoq.mgrs.utils import Grid, GridException, GeoConvertException
 from geoq.core.utils import send_aoi_create_event
@@ -43,6 +45,11 @@ class Dashboard(TemplateView):
         cv['projects_exercise'] = []
         cv['projects_private'] = []
 
+        cv['count_users'] = User.objects.count()
+        cv['count_jobs'] = Job.objects.count()
+        cv['count_workcells_total'] = AOI.objects.count()
+        cv['count_training'] = Training.objects.count()
+
         for project in all_projects:
             if project.private:
                 if (self.request.user in project.project_admins.all()) or (self.request.user in project.contributors.all()):
@@ -54,6 +61,12 @@ class Dashboard(TemplateView):
                 cv['projects_exercise'].append(project)
             else:
                 cv['projects'].append(project)
+
+        cv['count_projects_active'] = len(cv['projects'])
+        cv['count_projects_archived'] = len(cv['projects_archived'])
+        cv['count_projects_exercise'] = len(cv['projects_exercise'])
+
+        cv['orgs'] = Organization.objects.filter(show_on_front=True)
 
         return cv
 
@@ -86,6 +99,68 @@ class BatchCreateAOIS(TemplateView):
 
         return HttpResponse()
 
+class TabbedProjectListView(ListView):
+
+    def get_queryset(self):
+        search = self.request.GET.get('search', None)
+        return Project.objects.all() if search is None else Project.objects.filter(name__iregex=re.escape(search))
+
+    def get_context_data(self, **kwargs):
+        cv = super(TabbedProjectListView, self).get_context_data(**kwargs)
+
+        cv['active'] = []
+        cv['archived'] = []
+        cv['exercise'] = []
+        cv['private'] = []
+        cv['previous_search'] = self.request.GET.get('search', '')
+
+        for project in self.get_queryset():
+            if project.private:
+                if (self.request.user in project.project_admins.all()) or (self.request.user in project.contributors.all()):
+                    cv['private'].append(project)
+
+            elif not project.active:
+                cv['archived'].append(project)
+            elif project.project_type == 'Exercise':
+                cv['exercise'].append(project)
+            else:
+                cv['active'].append(project)
+
+        cv['active_pane'] = 'active' if cv['active'] else 'archived' if cv['archived'] else 'exercise' if cv['exercise'] else 'private'
+
+        return cv
+
+class TabbedJobListView(ListView):
+    projects = None
+
+    def get_queryset(self):
+        search = self.request.GET.get('search', None)
+        return Job.objects.all() if search is None else Job.objects.filter(name__iregex=re.escape(search))
+
+    def get_context_data(self, **kwargs):
+        cv = super(TabbedJobListView, self).get_context_data(**kwargs)
+
+        cv['active'] = []
+        cv['archived'] = []
+        cv['exercise'] = []
+        cv['private'] = []
+        cv['previous_search'] = self.request.GET.get('search', '')
+
+        for job in self.get_queryset():
+            if job.project.private:
+                if (self.request.user in job.project.project_admins.all()) or (self.request.user in job.project.contributors.all()):
+                    cv['private'].append(job)
+
+            elif not job.project.active:
+                cv['archived'].append(job)
+            elif job.project.project_type == 'Exercise':
+                cv['exercise'].append(job)
+            else:
+                cv['active'].append(job)
+
+        cv['active_pane'] = 'active' if cv['active'] else 'archived' if cv['archived'] else 'exercise' if cv['exercise'] else 'private'
+
+        return cv
 
 #TODO: Abstract this
 class DetailedListView(ListView):
@@ -103,6 +178,7 @@ class DetailedListView(ListView):
         cv = super(DetailedListView, self).get_context_data(**kwargs)
         cv['object'] = get_object_or_404(self.model, pk=self.kwargs.get('pk'))
         return cv
+
 
 class UserAllowedMixin(object):
 
@@ -134,6 +210,21 @@ class CreateFeaturesView(UserAllowedMixin, DetailView):
         if self.request.user.is_superuser or self.request.user.groups.filter(name='admin_group').count() > 0:
             is_admin = True
 
+        if not is_admin:
+            courses = aoi.job.required_courses.all()
+            if courses:
+                classes_passed = True
+                failed_names = []
+                for course in courses:
+                    if user not in course.users_completed.all():
+                        classes_passed = False
+                        url_name = "<a href='"+reverse_lazy('course_view_information', pk=course.id)+"' target='_blank'>"+course.name+"</a>"
+                        failed_names.append(url_name)
+                if not classes_passed:
+                    courses = ', '.join(failed_names)
+                    kwargs['error'] = "This Job has required training courses that you have not passed. Please take these quizes before editing this workcell: "+courses
+                    return False
+
         # logic for what we'll allow
         if aoi.status == 'Unassigned':
             aoi.analyst = self.request.user
@@ -148,27 +239,38 @@ class CreateFeaturesView(UserAllowedMixin, DetailView):
                 return False
             else:
                 return True
+        elif aoi.status == 'Assigned':
+            if is_admin:
+                return True
+            elif aoi.assignee_type.model_class() is Permission and aoi.assignee_id == self.request.user.id:
+                return True
+            elif aoi.assignee_type.model_class() is Group and self.request.user.groups.filter(name=aoi.assignee_name).count() > 0:
+                return True
+            else:
+                kwargs['error'] = "Another analyst has been assigned that workcell. Please select another workcell"
+                return False
         elif aoi.status == 'Awaiting review':
             if self.request.user in aoi.job.reviewers.all() or is_admin:
                 aoi.status = 'In review'
                 aoi.reviewers.add(self.request.user)
                 aoi.save()
+                increment_metric('workcell_analyzed')
                 return True
             else:
-                kwargs['error'] = "Sorry, you have not been assigned as a reviewer for this workcell"
+                kwargs['error'] = "Sorry, you have not been assigned as a reviewer for this workcell and are not allowed to edit it."
                 return False
         elif aoi.status == 'In review':
             # if this user previously reviewed this workcell, allow them in
             if self.request.user in aoi.reviewers.all() or is_admin:
                 return True
             else:
-                kwargs['error'] = "Sorry, only reviewers who previously reviewed this workcell may have access"
+                kwargs['error'] = "Sorry, only reviewers who previously reviewed this workcell may have access. You are not allowed to edit it while it is in review."
                 return False
         elif is_admin:
             return True
         else:
             # Can't open a completed workcell
-            kwargs['error'] = "Sorry, this workcell has been completed and can no longer be edited"
+            kwargs['error'] = "Sorry, this workcell has been completed and can no longer be edited."
             return False
 
     def get_context_data(self, **kwargs):
@@ -176,8 +278,46 @@ class CreateFeaturesView(UserAllowedMixin, DetailView):
         cv['reviewers'] = kwargs['object'].job.reviewers.all()
         cv['admin'] = self.request.user.is_superuser or self.request.user.groups.filter(name='admin_group').count() > 0
 
-        cv['map'] = self.object.job.map
+        if self.object.job.map:
+            cv['map'] = self.object.job.map
+        else:
+            maps = Map.objects.all()
+            if maps and len(maps):
+                cv['map'] = maps[0]
+            else:
+                new_default_map = Map(name="Default Map", description="Default Map that should have the layers you want on most maps")
+                new_default_map.save()
+                cv['map'] = new_default_map
+
         cv['feature_types'] = self.object.job.feature_types.all() #.order_by('name').order_by('order').order_by('-category')
+        cv['feature_types_all'] = FeatureType.objects.all()
+        layers = cv['map'].to_object()
+
+        for job in self.object.job.project.jobs:
+            if not job.id == self.object.job.id:
+                description = "Job #" + str(job.id) + " - " + str(job.name) + ". From Project #" + str(self.object.job.project.id)
+
+                url = self.request.build_absolute_uri(reverse('json-job-grid', args=[job.id]))
+                layer_name = "Workcells: " + job.name
+                layer = dict(attribution="GeoQ Job Workcells", description=description, id=int(10000+job.id),
+                             layer=layer_name, name=layer_name, opacity=0.3, refreshrate=300, shown=False,
+                             spatialReference="EPSG:4326", transparent=True, type="GeoJSON", url=url, job=job.id)
+                layers['layers'].append(layer)
+
+                url = self.request.build_absolute_uri(reverse('geojson-job-features', args=[job.id]))
+                layer_name = "Features: " + job.name
+                layer = dict(attribution="GeoQ Job Features", description=description, id=int(20000+job.id),
+                             layer=layer_name, name=layer_name, opacity=0.8, refreshrate=300, shown=False,
+                             spatialReference="EPSG:4326", transparent=True, type="GeoJSON", url=url, job=job.id)
+                layers['layers'].append(layer)
+
+#TODO: Add Job specific layers, and add these here
+
+        cv['user_custom_params'] =\
+            json.dumps(dict((e['maplayer'], e['values']) for e in
+                            MapLayerUserRememberedParams.objects.filter(user=self.request.user, map=cv['map']).values('maplayer','values')))
+        cv['layers_on_map'] = json.dumps(layers)
+        cv['base_layer'] = json.dumps(self.object.job.base_layer_object())
 
         Comment(user=cv['aoi'].analyst, aoi=cv['aoi'], text="Workcell opened").save()
         return cv
@@ -249,12 +389,24 @@ class JobDetailedListView(ListView):
         cv['metrics'] = self.metrics
         cv['metrics_url'] = reverse('job-metrics', args=[job_id])
         cv['features_url'] = reverse('json-job-features', args=[job_id])
+        temp_id = AOI.objects.filter(job_id=job_id).exclude(assignee_id=None).values_list('assignee_id', flat=True)
+        temp_assignee_set = []
+        temp_assignee_workcell = []
+        empty = []
+        cv['dict'] = {}
+        for i in temp_id:
+            #temp_assignee_set.append(User.objects.filter(id=i).values_list('username', flat=True)[0])
+            #temp_assignee_workcell.append(AOI.objects.filter(assignee_id=i, job_id=job_id).count())
+            key = User.objects.filter(id=i).values_list('username', flat=True)[0]
+            cv['dict'][key] = cv['dict'].get(key, 0) + 1
+        #cv['test'] = empty
+        #cv['test'] = zip( temp_assignee_set, temp_assignee_workcell)
+
+
         #TODO: Add feature_count
 
-        if cv['object'].aoi_count() > 0:
-            cv['completed'] = (cv['object'].complete().count() * 100) / cv['workcell_count']
-        else:
-            cv['completed'] = 0
+        cv['completed'] = cv['object'].complete_percent()
+
         return cv
 
 
@@ -339,7 +491,19 @@ class CreateJobView(CreateView):
         """
         self.object = form.save()
         self.object.reviewers.add(self.request.user)
+
+        # Create a new map for each job
+        map = Map(**{'title': self.object.name + ' Map', 'description': 'map for %s project' % self.object.name})
+        map.save()
+        n = 2
+        for layer in form.cleaned_data['layers']:
+            map_layer = MapLayer(**{'map':map, 'layer':layer, 'stack_order':n})
+            map_layer.save()
+            n += 1
+
+        self.object.map = map
         self.object.save()
+
         return HttpResponseRedirect(self.get_success_url())
 
 
@@ -352,6 +516,18 @@ class UpdateJobView(UpdateView):
         kwargs = super(UpdateJobView, self).get_form_kwargs()
         kwargs['project'] = kwargs['instance'].project_id if hasattr(kwargs['instance'],'project_id') else 0
         return kwargs
+
+class MapEditView(DetailView):
+    http_method_names = ['get']
+    template_name = 'core/mapedit.html'
+    model = AOI
+
+    def get_context_data(self, **kwargs):
+        cv = super(MapEditView, self).get_context_data(**kwargs)
+        pk = self.kwargs.get('pk')
+        aoi = get_object_or_404(AOI, pk=pk)
+        cv['mapedit_url'] = aoi.job.editable_layer.edit_url + '?#map=' + aoi.map_detail() + '&geojson=' + aoi.grid_geoJSON()
+        return cv
 
 
 class ChangeAOIStatus(View):
@@ -458,7 +634,7 @@ class AssignWorkcellsView(TemplateView):
         workcells = request.POST.getlist('workcells[]')
         utype = request.POST['user_type']
         id = request.POST['user_data']
-        send_email = request.POST['email']
+        send_email = request.POST['email'] in ["true","True"]
 
         if utype and id and workcells:
             Type = User if utype == 'user' else Group
@@ -480,6 +656,7 @@ class AssignWorkcellsView(TemplateView):
             return HttpResponse('{"status":"ok"}', status=200)
         else:
             return HttpResponse('{"status":"required field missing"}', status=500)
+
 
 def usng(request):
     """
@@ -757,6 +934,15 @@ class JobGeoJSON(ListView):
     def get(self, request, *args, **kwargs):
         job = get_object_or_404(Job, pk=self.kwargs.get('pk'))
         geojson = job.features_geoJSON()
+
+        return HttpResponse(geojson, mimetype="application/json", status=200)
+
+class JobStyledGeoJSON(ListView):
+    model = Job
+
+    def get(self, request, *args, **kwargs):
+        job = get_object_or_404(Job, pk=self.kwargs.get('pk'))
+        geojson = job.features_geoJSON(using_style_template=False)
 
         return HttpResponse(geojson, mimetype="application/json", status=200)
 

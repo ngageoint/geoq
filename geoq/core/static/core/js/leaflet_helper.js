@@ -47,6 +47,11 @@ leaflet_helper.layer_conversion = function (lyr, map) {
     };
 
     var layerParams = lyr.layerParams || {};
+
+    // Add in user saved parameters
+    var layerUserParams = aoi_feature_edit.aoi_user_remembered_params[lyr.maplayer_id];
+    $.extend(layerParams, layerUserParams); 
+
     var layerOptions;
     var outputLayer = undefined;
 
@@ -55,20 +60,35 @@ leaflet_helper.layer_conversion = function (lyr, map) {
         log.warn('Esri Leaflet plugin not installed.  Esri layer types disabled.');
     }
 
+    layerOptions = _.extend(options, layerParams);
     if (lyr.type == 'WMS') {
-        layerOptions = _.extend(options, layerParams);
         outputLayer = new L.tileLayer.wms(lyr.url, layerOptions);
+    } else if (lyr.type == 'WMTS') {
+        // this seems a bit fussy, so will make sure we can create this without errors
+        try {
+            outputLayer = new L.tileLayer(lyr.url, layerOptions);
+        }
+        catch (e) {
+            log.warn('Unable to create WMTS layer: ' + e.toString());
+        }
     } else if (lyr.type == 'ESRI Tiled Map Service' && esriPluginInstalled) {
-        layerOptions = options;
         outputLayer = new L.esri.tiledMapLayer(lyr.url, layerOptions);
     } else if (lyr.type == 'ESRI Dynamic Map Layer' && esriPluginInstalled) {
-        layerOptions = options;
+        // SRJ - DynamicMapLayer looking for an array passed in
+        try {
+            layerOptions.layers = JSON.parse(layerOptions.layers);
+        } catch (err) {
+            layerOptions.layers = [];
+        }
         outputLayer = new L.esri.dynamicMapLayer(lyr.url, layerOptions);
     } else if (lyr.type == 'ESRI Feature Layer' && esriPluginInstalled) {
-        layerOptions = options;
         outputLayer = new L.esri.featureLayer(lyr.url, layerOptions);
+        if (layerOptions.popupTemplate) {
+            outputLayer.bindPopup(function (feature, layerOptions) {
+                return L.Util.template(layerOptions.options.popupTemplate, feature.properties);
+            });
+        }
     } else if (lyr.type == 'ESRI Clustered Feature Layer' && esriPluginInstalled) {
-        layerOptions = _.extend(options, layerParams);
         if (layerOptions.createMarker) {
             layerOptions.createMarker = leaflet_helper.createMarker[layerOptions.createMarker];
         }
@@ -83,7 +103,7 @@ leaflet_helper.layer_conversion = function (lyr, map) {
         } else {
             layerOptions = options;
 
-            var url = leaflet_helper.constructors.urlTemplater(lyr.url, map, lyr.layerParams);
+            var url = leaflet_helper.constructors.urlTemplater(lyr.url, map, layerOptions);
             var proxiedURL = leaflet_helper.proxify(url);
 
             outputLayer = new L.KML(proxiedURL, layerOptions);
@@ -115,6 +135,8 @@ leaflet_helper.layer_conversion = function (lyr, map) {
         outputLayer = leaflet_helper.constructors.geojson(lyr, map);
     } else if (lyr.type == 'Web Data Link') {
         outputLayer = leaflet_helper.constructors.geojson(lyr, map);
+    } else if (lyr.type == 'MediaQ') {
+        outputLayer = new L.MediaQLayer(true, map, layerOptions);
     }
 
     //Make sure the name is set for showing up in the layer menu
@@ -174,20 +196,23 @@ leaflet_helper.addLocatorControl = function(map){
     };
     var infoButton = new L.Control.Button(infoButtonOptions).addTo(map);
 
-    map.on('mousemove click', function(e) {
-        var ll = e.latlng;
+    // ugly fix to get map to work correctly on iPad. Need to lose the location box
+    var userAgent = navigator.userAgent;
+    if (! userAgent.match(/iPad/i)) {
+        map.on('mousemove', function (e) {
+            var ll = e.latlng;
 
-        var pt = maptools.locationInfoString({lat:ll.lat, lng:ll.lng, separator:"<br/>", boldTitles:true});
+            var pt = maptools.locationInfoString({lat: ll.lat, lng: ll.lng, separator: "<br/>", boldTitles: true});
 
-        //Build text output to show in info box
-        var country = pt.country.name_long || pt.country.name || "";
-        var text = pt.usngCoords.usngString + "<br/><b>Lat:</b> "+ pt.lat + "<br/><b>Lon:</b> " + pt.lng;
-        if (country) text += "<br/>" + country;
-        if (pt.state && pt.state.name) text += "<br/>" + pt.state.name;
+            //Build text output to show in info box
+            var country = pt.country.name_long || pt.country.name || "";
+            var text = pt.usngCoords.usngString + "<br/><b>Lat:</b> " + pt.lat + "<br/><b>Lon:</b> " + pt.lng;
+            if (country) text += "<br/>" + country;
+            if (pt.state && pt.state.name) text += "<br/>" + pt.state.name;
 
-        $map_move_info_update.html(text);
-    });
-
+            $map_move_info_update.html(text);
+        });
+    }
 };
 
 //TODO: Add MULTIPOLYGON support and commit back to https://gist.github.com/bmcbride/4248238

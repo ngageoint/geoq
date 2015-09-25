@@ -26,6 +26,10 @@ class MapForm(StyledModelForm):
     class Meta:
         model = Map
 
+class UploadKMZForm(forms.Form):
+    title = forms.CharField(max_length=50)
+    kmzfile = forms.FileField()
+
 
 class LayerForm(StyledModelForm):
     class Meta:
@@ -55,6 +59,7 @@ class LayerForm(StyledModelForm):
                      'downloadableLink',
                      # 'spatial_reference',
                      'layer_params',
+                     'dynamic_params',
                      css_class='collapse',
                      css_id='more-options',
                      ),
@@ -69,4 +74,4 @@ class MapLayerForm(StyledModelForm):
     class Meta:
         model = MapLayer
 
-MapInlineFormset = inlineformset_factory(Map, MapLayer, extra=3, exclude=['display_in_layer_switcher'])
+MapInlineFormset = inlineformset_factory(Map, MapLayer, extra=3)

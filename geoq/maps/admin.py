@@ -4,7 +4,7 @@
 
 import reversion
 from django.contrib.gis import admin
-from models import Layer, Map, MapLayer, Feature, FeatureType, GeoeventsSource
+from models import Layer, Map, MapLayer, Feature, FeatureType, GeoeventsSource, EditableMapLayer
 
 
 class MapLayerInline(admin.TabularInline):
@@ -47,6 +47,10 @@ class MapLayerAdmin(reversion.VersionAdmin, admin.ModelAdmin):
     list_display = ['__unicode__', 'map', 'layer', 'stack_order', 'opacity', 'is_base_layer']
     list_filter = ['map', 'layer', 'stack_order',  'is_base_layer']
 
+class EditableMapLayerAdmin(admin.ModelAdmin):
+    model = EditableMapLayer
+    list_display = ['name','type','edit_url','view_url']
+
 
 class FeatureAdmin(reversion.VersionAdmin, admin.OSMGeoAdmin):
     list_display = ['template', 'status', 'aoi', 'job', 'analyst', 'created_at']
@@ -70,4 +74,5 @@ admin.site.register(Feature, FeatureAdmin)
 admin.site.register(FeatureType, FeatureTypeAdmin)
 admin.site.register(Layer, LayerAdmin)
 admin.site.register(Map, MapAdmin)
+admin.site.register(EditableMapLayer, EditableMapLayerAdmin)
 admin.site.register(GeoeventsSource, GeoeventsSourceAdmin)

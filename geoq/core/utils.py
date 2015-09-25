@@ -12,6 +12,9 @@ from django.contrib.auth.models import Group
 from datetime import datetime
 import requests
 import json
+import statsd
+
+statsd_client = statsd.StatsClient('localhost',8125)
 
 
 def send_aoi_create_event(user, aoi_id, aoi_feature_count):
@@ -59,10 +62,17 @@ def send_assignment_email(user_or_group, job, request):
 
     send_mail(subject, message, sender, recipients, fail_silently=True)
 
+def increment_metric(counter):
+    statsd_client.incr(counter)
 
 
 
-
+def clean_dumps(obj, skipkeys=False, ensure_ascii=True, check_circular=True,
+                allow_nan=True, cls=None, indent=None, separators=None, encoding="utf-8", default=None,
+                sort_keys=False):
+    return json.dumps(obj, indent=indent, skipkeys=skipkeys, ensure_ascii=ensure_ascii, check_circular=check_circular,
+                allow_nan=allow_nan, cls=cls, separators=separators, encoding=encoding, default=default,
+                sort_keys=sort_keys).replace('<', '&lt').replace('>', '&gt;').replace("javascript:", "j_script-")
 
 
 
