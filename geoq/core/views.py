@@ -390,18 +390,11 @@ class JobDetailedListView(ListView):
         cv['metrics_url'] = reverse('job-metrics', args=[job_id])
         cv['features_url'] = reverse('json-job-features', args=[job_id])
         temp_id = AOI.objects.filter(job_id=job_id).exclude(assignee_id=None).values_list('assignee_id', flat=True)
-        temp_assignee_set = []
-        temp_assignee_workcell = []
-        empty = []
         cv['dict'] = {}
         for i in temp_id:
-            #temp_assignee_set.append(User.objects.filter(id=i).values_list('username', flat=True)[0])
-            #temp_assignee_workcell.append(AOI.objects.filter(assignee_id=i, job_id=job_id).count())
+            cv['assignees'].append(User.objects.filter(id=i).values_list('assignee_id', flat=True)[0])
             key = User.objects.filter(id=i).values_list('username', flat=True)[0]
             cv['dict'][key] = cv['dict'].get(key, 0) + 1
-        #cv['test'] = empty
-        #cv['test'] = zip( temp_assignee_set, temp_assignee_workcell)
-
 
         #TODO: Add feature_count
 
@@ -736,6 +729,20 @@ def aoi_delete(request, pk):
 
     return HttpResponse(status=200)
 
+@login_required
+def update_priority(request, *args, **kwargs):
+    try:
+        import pdb; pdb.set_trace()
+        pk = kwargs.get('pk')
+        priority = request.POST.get('priority')
+        aoi = AOI.objects.get(pk=pk)
+        aoi.priority = priority
+        aoi.save()
+    except ObjectDoesNotExist:
+        raise Http404
+
+    return HttpResponse(status=200)
+
 
 def display_help(request):
     return render(request, 'core/geoq_help.html')
@@ -966,3 +973,4 @@ class GridGeoJSON(ListView):
         geojson = job.grid_geoJSON()
 
         return HttpResponse(geojson, mimetype="application/json", status=200)
+

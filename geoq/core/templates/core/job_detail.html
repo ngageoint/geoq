@@ -138,6 +138,23 @@
             );
         }
 
+        function updatePriority(id, priority) {
+            console.log("id: " + id + " and value " + priority);
+            if (id && priority) {
+                $.ajax({
+                    url: "{% url 'home' %}" + "aois/update-priority/" + id,
+                    type: 'POST',
+                    data: 'priority=' + priority,
+                    success: function(data) {
+                        // let them know it's successful
+                    },
+                    failure: function() {
+                        // let them know it failed
+                    }
+                });
+            }
+        }
+
         function configurePageUI () {
             //Color tabs with same colors as features
             _.each(status_colors, function(stat){
