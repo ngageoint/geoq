@@ -297,6 +297,9 @@ BOOTSTRAP_JS_URL =  BOOTSTRAP_JS_BASE_URL + 'bootstrap.min.js'
 BOOTSTRAP_CSS_BASE_URL = BOOTSTRAP_BASE_URL + 'css/'
 BOOTSTRAP_CSS_URL = BOOTSTRAP_CSS_BASE_URL + 'bootstrap.css'
 
+#Time to check if users online (in milliseconds)
+ONLINE_TIME = 10 * 60 * 1000
+
 # Override production settings with local settings if they exist
 try:
     from local_settings import *
