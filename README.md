@@ -2,7 +2,9 @@
 
 #### Geographic Work Queueing and Tasking System ####
 
-[![GeoQ Video](http://img.youtube.com/vi/HL_2CuoGz1w/0.jpg)](http://www.youtube.com/watch?v=HL_2CuoGz1w)
+<a href="http://www.youtube.com/watch?feature=player_embedded&v=HL_2CuoGz1w
+" target="_blank"><img src="http://img.youtube.com/vi/HL_2CuoGz1w/0.jpg"
+alt="GeoQ video" width="240" height="180" border="10" /></a>
 
 GeoQ is an open source (MIT License) geographic tasking system that allows teams to collect geographic structured observations across a large area, but manage the work in smaller geographic regions. Large areas can be quickly broken up into small 1km squares and assigned to a team. System transparency informs all groups about workflow to avoid duplication of effort.
 
