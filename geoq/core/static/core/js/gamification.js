@@ -53,7 +53,12 @@ gamification.init = function(options){
     gamification.loadBadges();
 };
 gamification.proxify = function(url){
-    url = gamification.proxy_url + encodeURI(url);
+    var gpu = gamification.proxy_url;
+    if (gpu.length == 0 || gpu[gpu.length-1] != "/")
+	{
+	    gpu = gpu + "/";
+	}
+    var url = gpu + encodeURI(url);
     return url.replace(/%253D/g,'%3D');
 };
 gamification.loadBadges = function(){

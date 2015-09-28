@@ -481,7 +481,11 @@ class Comment(models.Model):
 
     def to_dict(self):
         format = "%D %H:%M:%S"
-        o = {'user': self.user.username, 'timestamp': self.created_at.strftime(format), 'text': self.text}
+        if self.user:
+            username = self.user.username
+        else:
+            username = "Anonymous or Removed User"
+        o = {'user': username, 'timestamp': self.created_at.strftime(format), 'text': self.text}
         return o
 
 

@@ -66,7 +66,8 @@ geoq.redirect = function(url){
 
 geoq.underscoreSettings= function(){
     _.templateSettings = {
-      interpolate : /\{\{(.+?)\}\}/g
+      interpolate : /\{\{(.+?)\}\}/g,
+      evaluate : /\{\%(.+?)\%\}/g
     };
 };
 

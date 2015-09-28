@@ -202,7 +202,7 @@ leaflet_helper.constructors.geojson = function(layerConfig, map, useLayerInstead
         if (_.str.endsWith(url,'/')) url = url.substr(0,url.length-1);
         if (_.str.endsWith(url,'/export')) url = url.substr(0,url.length-7) + '/identity';
         url += '?geometryType=esriGeometryEnvelope&geometry={{bbox}}&mapExtent={{bbox}}';
-        url += '&imageDisplay={{width}},{{height}},96&tolerance={{width}}&f=json&layers='+(layerConfig.layer||"all");
+        url += '&imageDisplay={{width}},{{height}},96&tolerance={{width}}&f=json&layers=visible:'+(layerConfig.layer||"all");
     }
 
     if (useLayerInstead && (useLayerInstead.geojson_layer_count !== undefined)) {
@@ -560,6 +560,7 @@ leaflet_helper.parsers.fulcrum_exported_json = function (geojson, map, outputLay
     if (outputLayer && !outputLayer.options) {
         outputLayer.options = {};
     }
+    outputLayer.options.opacity = outputLayer.options.opacity || 1;
 
     return outputLayer;
 };
@@ -602,6 +603,7 @@ leaflet_helper.parsers.geoq_exported_json = function (geojson, map, outputLayer,
     if (outputLayer && !outputLayer.options) {
         outputLayer.options = {};
     }
+    outputLayer.options.opacity = outputLayer.options.opacity || 1;
 
     return outputLayer;
 };
@@ -671,6 +673,7 @@ leaflet_helper.parsers.leaflet_geojson = function (geojson, map, outputLayer, ke
     if (outputLayer && !outputLayer.options) {
         outputLayer.options = {};
     }
+    outputLayer.options.opacity = outputLayer.options.opacity || 1;
 
     return outputLayer;
 };
