@@ -732,7 +732,6 @@ def aoi_delete(request, pk):
 @login_required
 def update_priority(request, *args, **kwargs):
     try:
-        import pdb; pdb.set_trace()
         pk = kwargs.get('pk')
         priority = request.POST.get('priority')
         aoi = AOI.objects.get(pk=pk)
