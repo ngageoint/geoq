@@ -392,7 +392,6 @@ class JobDetailedListView(ListView):
         temp_id = AOI.objects.filter(job_id=job_id).exclude(assignee_id=None).values_list('assignee_id', flat=True)
         cv['dict'] = {}
         for i in temp_id:
-            cv['assignees'].append(User.objects.filter(id=i).values_list('assignee_id', flat=True)[0])
             key = User.objects.filter(id=i).values_list('username', flat=True)[0]
             cv['dict'][key] = cv['dict'].get(key, 0) + 1
 
