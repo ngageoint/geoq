@@ -195,7 +195,7 @@ class Map(models.Model):
     A Map aggregates several layers together.
     """
 
-    title = models.CharField(max_length=75, unique=True)
+    title = models.CharField(max_length=75)
     description = models.TextField(max_length=800, blank=True, null=True)
     zoom = models.IntegerField(help_text='Sets the default zoom level of the map.', default=5, blank=True, null=True)
     projection = models.CharField(max_length=32, blank=True, null=True, default="EPSG:4326", help_text='Set the default projection for layers added to this map. Note that the projection of the map is usually determined by that of the current baseLayer')
