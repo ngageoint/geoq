@@ -169,6 +169,7 @@ MIDDLEWARE_CLASSES = (
     #'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'geoq.core.middleware.UserPermsMiddleware',             # works w/ guardian
     'geoq.core.middleware.Http403Middleware',
+    'geoq.core.middleware.UpdateLastActivityMiddleware',
 )
 
 # auth setup
