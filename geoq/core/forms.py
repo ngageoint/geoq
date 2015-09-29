@@ -138,7 +138,7 @@ class JobForm(StyledModelForm):
             else:
                 self.fields['analysts'].initial = []
 
-            if hasattr(kwargs['instance'],'map'):
+            if hasattr(kwargs['instance'],'map') and kwargs['instance'].map and kwargs['instance'].map.layers:
                 self.fields['layers'].initial = [x.layer_id for x in kwargs['instance'].map.layers]
 
 

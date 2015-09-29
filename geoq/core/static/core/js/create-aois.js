@@ -26,6 +26,36 @@ create_aois.data_fields = [];
 create_aois.highlightMode = 'delete';
 
 
+function mapInit(map) {
+    //Auto-called after leaflet map is initialized
+    create_aois.map_object = map;
+
+    setTimeout(function () {
+        var startingBounds = site_settings.map_starting_bounds || [
+            [52.429222277955134, -51.50390625],
+            [21.043491216803556, -136.58203125]
+        ];
+        map.fitBounds(startingBounds);
+    }, 1);
+
+    create_aois.drawnItems = new L.FeatureGroup();
+    map.addLayer(create_aois.drawnItems);
+
+    map.on('zoomend', create_aois.mapWasZoomed);
+    map.on('draw:created', create_aois.somethingWasDrawn);
+
+    create_aois.addDrawingControls(map);
+    create_aois.addLocatorControl(map);
+    create_aois.addPrioritizeControls(map);
+    create_aois.addDeleteControls(map);
+//    create_aois.buildPriorityBoxes(map);
+    create_aois.setupStatusControls(map);
+    $('div.leaflet-left div.leaflet-draw.leaflet-control').find('a').popover({trigger: "hover", placement: "right"});
+    $('div.leaflet-right div.leaflet-draw.leaflet-control').find('a').popover({trigger: "hover", placement: "left"});
+
+    create_aois.map_updates();
+}
+
 create_aois.init = function () {
     var $usng = $('#option_usng').click(function () {
         create_aois.draw_method = 'usng';

@@ -688,7 +688,7 @@ leaflet_layer_control.show_info = function (objToShow, node) {
     if (typeof objToShow == "string"){
         html_objects.push(objToShow);
     } else {
-        if (objToShow.options) {
+        if (objToShow.options && objToShow._leaflet_id) {
             //Probably a Leaflet layer
             html_objects.push(leaflet_layer_control.parsers.infoFromLayer(objToShow));
             html_objects.push(leaflet_layer_control.parsers.opacityControls(objToShow));
@@ -811,7 +811,7 @@ leaflet_layer_control.parsers.textIfExists = function(options) {
     var suffix = options.suffix;
 
     var html = "";
-    if (obj != undefined && obj !== "") {
+    if (typeof obj != "undefined" && obj !== "") {
         if (header) {
             html+="<h5>";
         }
@@ -1081,7 +1081,8 @@ leaflet_layer_control.layerDataList = function (options) {
 
     var layerGroups = options.layers;
 
-    var previouslyLookedAtLayers = store.get('leaflet_layer_control.selected_tree_nodes') || [];
+    var previouslyLookedAtLayers = store.get('leaflet_layer_control.layers') || "";
+    previouslyLookedAtLayers = previouslyLookedAtLayers.split(",");
 
     //For each layer group
     _.each(layerGroups,function(layerGroup,groupNum){
@@ -1110,7 +1111,9 @@ leaflet_layer_control.layerDataList = function (options) {
                 leaflet_layer_control.removeDuplicateLayers(layerGroups,layer);
 
                 //Check through cookie info to see if layer was previously selected
-                var layerID = leaflet_layer_control._uninit_getLayerStorageID(layer_obj, treeData[groupNum]);
+                var layerID;
+                if (layer && layer.config && layer.config.id) layerID = layer.config.id+""; //NOTE: Convert it to string
+                if (layer && layer.id) layerID = layer.id+"";
 
                 var layerPreviouslyChosen = false;
                 if (layerID && _.indexOf(previouslyLookedAtLayers,layerID) > -1) {
@@ -1124,7 +1127,26 @@ leaflet_layer_control.layerDataList = function (options) {
                 }
 
                 if (showEvenIfNotInUS || layerPreviouslyChosen) {
+                    if (layer.getLayers && layer.getLayers() && layer.getLayers()[0]) {
+                        var layerItem = layer.getLayers()[0];
+                        var options = layerItem._options || layerItem.options;
+                        if (options && options.style) {
+                            if (options.style.opacity == 1 || options.style.fillOpacity == 1){
+                                layer_obj.selected = true;
+                            }
+                        }
+                        if (options && options.opacity && options.opacity == 1) {
+                            layer_obj.selected = true;
+                        }
+                    } else if (layer.options && layer.options.opacity){
+                        layer_obj.selected = true;
+                    } else if (layer.options && layer.options.is_geoq_feature) {
+                        layer_obj.selected = true;
+                    }
                     if (layerPreviouslyChosen) layer_obj.selected = true;
+                }
+                if (!layer_obj.selected) {
+                    leaflet_layer_control.setLayerOpacity(layer,0);
                 }
 
                 //Add this to the json to build the treeview
@@ -1484,7 +1506,12 @@ leaflet_layer_control.drawEachLayer=function(data,map,doNotMoveToTop){
         if (layer_obj && layer_obj.data && _.toArray(layer_obj.data).length) {
             var layer = layer_obj.data;
 
-            aoi_feature_edit.map.removeLayer(layer);
+            leaflet_layer_control.setLayerOpacity(layer,0,doNotMoveToTop);
+        } else if (layer_obj.children && layer_obj.children.length) {
+            //A category was clicked
+            _.each(layer_obj.children, function(layer_obj_item){
+                layer_obj_item.setSelected(false);
+            });
         }
     });
 
@@ -1492,9 +1519,14 @@ leaflet_layer_control.drawEachLayer=function(data,map,doNotMoveToTop){
         if (layer_obj && layer_obj.data && _.toArray(layer_obj.data).length) {
             var layer = layer_obj.data;
 
-            if (layer._initHooksCalled) {
+            if (layer._map && layer._initHooksCalled) {
                 //It's a layer that's been already built
-                
+                var opacity = layer.options ? layer.options.opacity||layer.options.oldOpacity : 0;
+                if (!opacity) {
+                    opacity = layer.config ? layer.config.opacity : 1;
+                }
+                leaflet_layer_control.setLayerOpacity(layer,opacity,doNotMoveToTop);
+
                 if (leaflet_layer_control.likelyHasFeatures(layer)) {
                     leaflet_helper.constructors.geojson(layer.config, map, layer);
                 }
@@ -1550,7 +1582,10 @@ leaflet_layer_control.drawEachLayer=function(data,map,doNotMoveToTop){
             }
 
         } else if (layer_obj.children && layer_obj.children.length) {
-            // A category was clicked, do nothing. (Selectmode 3 will select children).
+            //A category was clicked
+            _.each(layer_obj.children, function(layer_obj_item){
+                layer_obj_item.setSelected(true);
+            });
         } else {
             log.error("A layer with no data was clicked");
         }

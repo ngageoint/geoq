@@ -169,6 +169,7 @@ MIDDLEWARE_CLASSES = (
     #'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'geoq.core.middleware.UserPermsMiddleware',             # works w/ guardian
     'geoq.core.middleware.Http403Middleware',
+    'geoq.core.middleware.UpdateLastActivityMiddleware',
 )
 
 # auth setup
@@ -296,6 +297,9 @@ BOOTSTRAP_JS_BASE_URL = BOOTSTRAP_BASE_URL + 'js/'
 BOOTSTRAP_JS_URL =  BOOTSTRAP_JS_BASE_URL + 'bootstrap.min.js'
 BOOTSTRAP_CSS_BASE_URL = BOOTSTRAP_BASE_URL + 'css/'
 BOOTSTRAP_CSS_URL = BOOTSTRAP_CSS_BASE_URL + 'bootstrap.css'
+
+#Time to check if users online (in milliseconds)
+ONLINE_TIME = 10 * 60 * 1000
 
 # Override production settings with local settings if they exist
 try:
