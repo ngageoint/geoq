@@ -109,13 +109,13 @@ footprints.buildAccordionPanel = function () {
     _.each(footprints.schema, function (schema_item) {
 	    if (schema_item.filter) {
 		if (schema_item.filter == 'options') {
-		    schema_item.update = _.debounce(function(){footprints.addFilterOptions(footprints.$filter_holder, schema_item)}, 500);
+		    schema_item.update = _.debounce(function(schema_item){footprints.addFilterOptions(footprints.$filter_holder, schema_item)}, 500);
 		} else if (schema_item.filter == 'slider-max') {
-		    schema_item.update = _.debounce(function(){footprints.addFilterSliderMax(footprints.$filter_holder, schema_item)}, 500);
+		    schema_item.update = _.debounce(function(schema_item){footprints.addFilterSliderMax(footprints.$filter_holder, schema_item)}, 500);
 		} else if (schema_item.filter == 'date-range') {
-		    schema_item.update = _.debounce(function(){footprints.addFilterDateMax(footprints.$filter_holder, schema_item)}, 500);
+		    schema_item.update = _.debounce(function(schema_item){footprints.addFilterDateMax(footprints.$filter_holder, schema_item)}, 500);
 		} else if (schema_item.filter == 'textbox') {
-		    schema_item.update = _.debounce(function(){footprints.addFilterTextbox(footprints.$filter_holder, schema_item)}, 500);
+		    schema_item.update = _.debounce(function(schema_item){footprints.addFilterTextbox(footprints.$filter_holder, schema_item)}, 500);
 		}
 	    }
     });
