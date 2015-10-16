@@ -67,15 +67,13 @@ The ``geoq/settings.py`` file contains installation-specific settings. The Datab
 
 	Note: To install software by downloading from Internet, the computer should be connected to Outernet. The installtion does not work on MITRE network even though http_proxy and https_proxy environment vairables are set.
 
-	One exception: Instead of using brew to install postgres, it's usually easier to install Postgres.app from [postgresapp.com](http://postgresapp.com). After installing, add the app's bin directory (``/Applications/Postgres.app/Contents/Versions/X.Y/bin``) to your PATH. 
-
-	After installing Postgres.app, postGIS, gdal, and libgeoip need to be installed using the following commands:
+	One exception: Instead of using brew to install postgres, it's usually easier to install Postgres.app from [postgresapp.com](http://postgresapp.com). After installing, add the app's bin directory (``/Applications/Postgres.app/Contents/Versions/X.Y/bin``) to your PATH.  After installing Postgres.app, postGIS, gdal, and libgeoip need to be installed using the following commands:
 
 		$ brew install postgis
 		$ brew install gdal
 		$ brew install libgeoip
 
-	Note: Home brew needs to be installed to run these commands.
+	Note: Homebrew needs to be installed to run these commands.
 
 
 2. (Optional) Install a Geoserver (we recommend the OGC Geoserver at [https://github.com/geoserver](https://github.com/geoserver))
