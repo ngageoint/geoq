@@ -65,17 +65,17 @@ The ``geoq/settings.py`` file contains installation-specific settings. The Datab
 
 1. Install PostGIS 2.0 using instructions at [https://docs.djangoproject.com/en/dev/ref/contrib/gis/install/#macosx](https://docs.djangoproject.com/en/dev/ref/contrib/gis/install/#macosx). There are several options there, but for most, the easiest option is to follow the Homebrew instructions. If you don't have Homebrew installed, you can either buid it securely yourself or follow the quick (yet not secure) one line instruction at [http://brew.sh](http://brew.sh).
 
-Note: To install software by downloading from Internet, the computer should be connected to Outernet. The installtion does not work on MITRE network even though http_proxy and https_proxy environment vairables are set.
+	Note: To install software by downloading from Internet, the computer should be connected to Outernet. The installtion does not work on MITRE network even though http_proxy and https_proxy environment vairables are set.
 
-	One exception: Instead of using brew to install postgres, it's usually easier to install Postgres.app from [postgresapp.com](http://postgresapp.com). After installing, add the app's bin directory (``/Applications/Postgres.app/Contents/Versions/X.Y/bin``) to your PATH. (Replace X.Y with the version of PostgreSQL in the Postgres.app you installed.)
+	One exception: Instead of using brew to install postgres, it's usually easier to install Postgres.app from [postgresapp.com](http://postgresapp.com). After installing, add the app's bin directory (``/Applications/Postgres.app/Contents/Versions/X.Y/bin``) to your PATH. 
 
-After installing Postgres.app, postGIS, gdal, and libgeoip need to be installed using the following commands:
+	After installing Postgres.app, postGIS, gdal, and libgeoip need to be installed using the following commands:
 
-	$ brew install postgis
-	$ brew install gdal
-	$ brew install libgeoip
+		$ brew install postgis
+		$ brew install gdal
+		$ brew install libgeoip
 
-Note: Home brew needs to be installed to run these commands.
+	Note: Home brew needs to be installed to run these commands.
 
 
 2. (Optional) Install a Geoserver (we recommend the OGC Geoserver at [https://github.com/geoserver](https://github.com/geoserver))
