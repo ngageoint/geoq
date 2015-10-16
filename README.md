@@ -81,7 +81,7 @@ The ``geoq/settings.py`` file contains installation-specific settings. The Datab
 3. Make sure Python, Virtualenv, npm, and Git are installed
 
         % Note that some distros (Debian) might need additional libraries:
-        % sudo apt-get build-dep python-psycopg2
+        % sudo pip install psycopg2
         % (optional) sudo apt-get install sendmail
 
 4. Install and setup geoq:
@@ -100,7 +100,7 @@ The ``geoq/settings.py`` file contains installation-specific settings. The Datab
         % paver create_db_user
         % paver sync
 
-6. Modify local settings (modify entries below based on your system settings):
+6. Modify local settings (Modify entries below based on your system settings. Hit Ctl + D to save local settings file.):
 
         % cd geoq
         % cat > local_settings.py
