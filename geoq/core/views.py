@@ -228,7 +228,7 @@ class CreateFeaturesView(UserAllowedMixin, DetailView):
         # logic for what we'll allow
         if aoi.status == 'Unassigned':
             aoi.analyst = self.request.user
-            aoi.status = 'In work'
+            aoi.status = 'Awaiting Imagery'
             aoi.save()
             return True
         elif aoi.status == 'In work':
@@ -239,7 +239,7 @@ class CreateFeaturesView(UserAllowedMixin, DetailView):
                 return False
             else:
                 return True
-        elif aoi.status == 'Assigned':
+        elif aoi.status == 'Assigned' or aoi.status == 'Awaiting Imagery':
             if is_admin:
                 return True
             elif aoi.assignee_type.model_class() is Permission and aoi.assignee_id == self.request.user.id:
@@ -249,9 +249,9 @@ class CreateFeaturesView(UserAllowedMixin, DetailView):
             else:
                 kwargs['error'] = "Another analyst has been assigned that workcell. Please select another workcell"
                 return False
-        elif aoi.status == 'Awaiting review':
+        elif aoi.status == 'Awaiting Analysis':
             if self.request.user in aoi.job.reviewers.all() or is_admin:
-                aoi.status = 'In review'
+                aoi.status = 'In work'
                 aoi.reviewers.add(self.request.user)
                 aoi.save()
                 increment_metric('workcell_analyzed')

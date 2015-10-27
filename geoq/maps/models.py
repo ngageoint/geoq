@@ -342,7 +342,7 @@ class Feature(models.Model):
     Model to represent features created in the application.
     """
 
-    STATUS_VALUES = ['Unassigned', 'In work', 'Awaiting review', 'In review', 'Completed'] #'Assigned'
+    STATUS_VALUES = ['Unassigned', 'Assigned', 'In work', 'Awaiting Imagery', 'Awaiting Analysis', 'Completed'] #'Assigned'
     STATUS_CHOICES = [(choice, choice) for choice in STATUS_VALUES]
 
     aoi = models.ForeignKey(AOI, related_name='features', editable=False)

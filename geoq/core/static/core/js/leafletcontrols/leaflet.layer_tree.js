@@ -371,7 +371,7 @@ leaflet_layer_control.addWorkCellInfo = function($accordion) {
             $('<span class="editable" id="status" style="display: inline">'+_.str.capitalize(value)+'</span>')
                 .appendTo($status)
                 .editable(editableUrl, {
-                    data   : " {'Unassigned':'Unassigned','In work':'In work', 'In review':'In review', 'Completed':'Completed'}",
+                    data   : " {'Unassigned':'Unassigned','Assigned':'Assigned','Awaiting Imagery':'Awaiting Imager', 'Awaiting Analysis':'Awaiting Analysis', 'Completed':'Completed'}",
                     type   : 'select',
                     submit : 'OK',
                     style  : 'inherit',
@@ -550,7 +550,7 @@ leaflet_layer_control.show_feature_info = function (feature) {
             $('<span class="editable" id="status" style="display: inline">'+_.str.capitalize(value)+'</span>')
                 .appendTo($status)
                 .editable(editableUrl, {
-                    data   : " {'Unassigned':'Unassigned','In work':'In work', 'In review':'In review', 'Completed':'Completed'}",
+                    data   : " {'Unassigned':'Unassigned','Assigned':'Assigned','Awaiting Imagery':'Awaiting Imager', 'Awaiting Analysis':'Awaiting Analysis', 'Completed':'Completed'}",
                     type   : 'select',
                     submit : 'OK',
                     style  : 'inherit',

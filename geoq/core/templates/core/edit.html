@@ -64,12 +64,12 @@
             aoi_feature_edit.feature_types_all[{{ feature_type.id }}] = {{ feature_type.to_json|safe }};
         {% endfor %}
 
-        var inreview_status_url = "{% url 'aoi-update-status' object.id 'In review' %}";
-        aoi_feature_edit.awaitingreview_status_url = "{% url 'aoi-update-status' object.id 'Awaiting review' %}";
+        var awaitinganalysis_status_url = "{% url 'aoi-update-status' object.id 'Awaiting Analysis' %}";
+        aoi_feature_edit.awaitingimagery_status_url = "{% url 'aoi-update-status' object.id 'Awaiting Imagery' %}";
         aoi_feature_edit.unassigned_status_url = "{% url 'aoi-update-status' object.id 'Unassigned' %}";
         aoi_feature_edit.completed_status_url = "{% url 'aoi-update-status' object.id 'Completed' %}";
 
-        leaflet_layer_control.finish_options.push('awaitingreview');
+        leaflet_layer_control.finish_options.push('awaitingimagery');
         {% if request.user in reviewers %}
             leaflet_layer_control.finish_options.push('unassigned');
             leaflet_layer_control.finish_options.push('completed');

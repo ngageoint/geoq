@@ -14,8 +14,8 @@ if (typeof site_settings=="undefined") {
 leaflet_helper.styles = {
     extentStyle:     {"weight": 2, "color": "green","fillColor": c[0], "fillOpacity": .2, "opacity": 1},
     in_work:         {"weight": 2, "color": "green","fillColor": c[1], "fillOpacity": .3, "opacity": 1},
-    awaiting_review: {"weight": 2, "color": "red",  "fillColor": c[2], "fillOpacity": .5, "opacity": 1},
-    in_review:       {"weight": 2, "color": "red",  "fillColor": c[3], "fillOpacity": .7, "opacity": 1},
+    awaiting_imagery: {"weight": 2, "color": "red",  "fillColor": c[2], "fillOpacity": .5, "opacity": 1},
+    awaiting_analysis:       {"weight": 2, "color": "red",  "fillColor": c[3], "fillOpacity": .7, "opacity": 1},
     completed:       {"weight": 2, "color": "red",  "fillColor": c[4], "fillOpacity": .9, "opacity": 1},
     assigned:        {"weight": 2, "color": "black", "fillColor": "gray", "fillOpacity": .9, "opacity": 1},
     extentStyle_hollow: {"weight": 2, "color": "red", "opacity": 1, "fillOpacity":0 }
