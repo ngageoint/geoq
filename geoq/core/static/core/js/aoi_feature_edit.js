@@ -1457,14 +1457,23 @@ aoi_feature_edit.buildDropdownMenu = function() {
         var opt = leaflet_layer_control.finish_options[i];
         var $li;
 
-        if (opt=='awaitingreview'){
+        if (opt == 'awaitingimagery') {
             $li = $("<li>")
                 .appendTo($ull);
             $("<a>")
                 .appendTo($li)
-                .text("Submit for Review")
-                .click(function(){
-                    aoi_feature_edit.complete_button_onClick(aoi_feature_edit.awaitingreview_status_url);
+                .text("Insufficient Imagery")
+                .click(function () {
+                    aoi_feature_edit.complete_button_onClick(aoi_feature_edit.awaitingimagery_status_url);
+                });
+        } else if (opt=='awaitinganalysis') {
+            $li = $("<li>")
+                .appendTo($ull);
+            $("<a>")
+                .appendTo($li)
+                .text("Ready for Analysis")
+                .click(function () {
+                    aoi_feature_edit.complete_button_onClick(aoi_feature_edit.awaitinganalysis_status_url);
                 });
         } else if (opt=='unassigned'){
             $li = $("<li>")

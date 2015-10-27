@@ -350,7 +350,7 @@ class AOI(GeoQBase, Assignment):
     objects = AOIManager()
     polygon = models.MultiPolygonField()
     priority = models.SmallIntegerField(choices=PRIORITIES, max_length=1, default=5)
-    status = models.CharField(max_length=15, choices=STATUS_CHOICES, default='Unassigned')
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='Unassigned')
 
     class Meta:
         permissions = (
