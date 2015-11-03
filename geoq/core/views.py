@@ -252,6 +252,8 @@ class CreateFeaturesView(UserAllowedMixin, DetailView):
         elif aoi.status == 'Awaiting Analysis':
             if self.request.user in aoi.job.reviewers.all() or is_admin:
                 aoi.status = 'In work'
+                if aoi.started_at is None:
+                    aoi.started_at = datetime.now()
                 aoi.reviewers.add(self.request.user)
                 aoi.save()
                 increment_metric('workcell_analyzed')
@@ -533,6 +535,11 @@ class ChangeAOIStatus(View):
     def _update_aoi(self, request, aoi, status):
         aoi.analyst = request.user
         aoi.status = status
+
+        # if completed, mark completion date/time
+        if status == 'Completed':
+            aoi.finished_at = datetime.now()
+
         aoi.save()
         return aoi
 
