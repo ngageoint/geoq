@@ -84,8 +84,9 @@ leaflet_helper.layer_conversion = function (lyr, map) {
     } else if (lyr.type == 'ESRI Feature Layer' && esriPluginInstalled) {
         outputLayer = new L.esri.featureLayer(lyr.url, layerOptions);
         if (layerOptions.popupTemplate) {
-            outputLayer.bindPopup(function (feature, layerOptions) {
-                return L.Util.template(layerOptions.options.popupTemplate, feature.properties);
+            var template = layerOptions.popupTemplate;
+            outputLayer.bindPopup(function (feature) {
+                return L.Util.template(template, feature.properties);
             });
         }
     } else if (lyr.type == 'ESRI Clustered Feature Layer' && esriPluginInstalled) {
