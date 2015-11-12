@@ -657,6 +657,21 @@ class AssignWorkcellsView(TemplateView):
             return HttpResponse('{"status":"required field missing"}', status=500)
 
 
+class SummaryView(TemplateView):
+    template_name = 'core/summary.html'
+    model = Job
+
+    def get_queryset(self):
+        status = getattr(self, 'status', None)
+        q_set = AOI.objects.filter(job=self.kwargs.get('job_pk'))
+
+    def get_context_data(self, **kwargs):
+        cv = super(SummaryView, self).get_context_data(**kwargs)
+        cv['object'] = get_object_or_404(Job, pk=self.kwargs.get('job_pk'))
+        cv['workcells'] = AOI.objects.filter(job_id=self.kwargs.get('job_pk')).order_by('id')
+        return cv
+
+
 def usng(request):
     """
     Proxy to USNG service.

@@ -65,6 +65,9 @@ urlpatterns = patterns('',
     url(r'^jobs/(?P<job_pk>\d+)/assign-workcells/?$',
         login_required(AssignWorkcellsView.as_view()),
         name='job-assign-workcells'),
+    url(r'^jobs/(?P<job_pk>\d+)/job-summary/?$',
+        login_required(SummaryView.as_view()),
+        name='job-summary'),
 
     url(r'^jobs/(?P<job_pk>\d+)/batch-create-aois/?$',
         #login required set in views
