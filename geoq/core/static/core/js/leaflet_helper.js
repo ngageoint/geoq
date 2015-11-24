@@ -239,4 +239,40 @@ leaflet_helper.toWKT = function (layer) {
     }
 };
 
+leaflet_helper.addLayerControl = function (map) {
+    var layers = _.filter(map_layers.layers, function (l) {
+        return l.type == "WMS" || l.type == "KML";
+    });
+
+    var overlayMaps = {
+        "No Overlays": L.layerGroup([])
+    };
+
+    _.each(layers, function (layer) {
+        if (layer.displayInLayerSwitcher) {
+            if (layer.type == "WMS") {
+                var mywms = L.tileLayer.wms(layer.url, {
+                    layers: layer.layer,
+                    format: layer.format,
+                    transparent: layer.transparent,
+                    attribution: layer.attribution
+                });
+                overlayMaps[layer.name] = mywms;
+            }
+            else if (layer.type == "KML") {
+                mykml = new L.KML(layer.url, {
+                    layers: layer.layer,
+                    format: layer.format,
+                    transparent: layer.transparent,
+                    attribution: layer.attribution
+                });
+                overlayMaps[layer.name] = mykml;
+            }
+        }
+    });
+
+    if (layers && layers.length) {
+        L.control.layers(overlayMaps).addTo(map);
+    }
+};
 
