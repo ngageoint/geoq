@@ -246,7 +246,6 @@ leaflet_helper.addLayerControl = function (map) {
 
     var overlayMaps = {
     };
-    var overlay_count = 0;
 
     _.each(layers, function (layer) {
         if (layer.displayInLayerSwitcher) {
@@ -258,7 +257,6 @@ leaflet_helper.addLayerControl = function (map) {
                     attribution: layer.attribution
                 });
                 overlayMaps[layer.name] = mywms;
-                overlay_count++;
             }
             else if (layer.type == "KML") {
                 mykml = new L.KML(layer.url, {
@@ -268,12 +266,11 @@ leaflet_helper.addLayerControl = function (map) {
                     attribution: layer.attribution
                 });
                 overlayMaps[layer.name] = mykml;
-                overlay_count++;
             }
         }
     });
 
-    if (overlay_count) {
+    if (_.size(overlayMaps)) {
         L.control.layers(null, overlayMaps).addTo(map);
     }
 };
