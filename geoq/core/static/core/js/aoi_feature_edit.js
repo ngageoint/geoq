@@ -36,9 +36,12 @@ aoi_feature_edit.init = function () {
     aoi_feature_edit.featureLayers = [];
     aoi_feature_edit.icons = {};
     aoi_feature_edit.icon_style = {};
+    aoi_feature_edit.featureLayersSelected = [];    
+    aoi_feature_edit.deleteBoundLayers = [];    
+    aoi_feature_edit.ctlKeyPressed = false;
 
     leaflet_helper.init();
-
+    
     //Set up base icon
     aoi_feature_edit.MapIcon = L.Icon.extend({
         options: {
@@ -86,9 +89,18 @@ aoi_feature_edit.init = function () {
                 return aoi_feature_edit.featureLayer_pointToLayer(feature, latlng, featureLayer, ftype);
             }
         });
+        
         featureLayer.on('click', function(e){
             if (typeof leaflet_layer_control!="undefined"){
-                leaflet_layer_control.show_feature_info(e.layer.feature);
+                leaflet_layer_control.show_feature_info(e.layer.feature);      
+                if (e.originalEvent.shiftKey) {              
+                    if (e.layer.feature.geometry.type == "Polygon") {
+                        e.layer.setStyle({"fillOpacity": 0.4});;
+                    } else {
+                        e.layer.setOpacity(0.4);
+                    }
+                    aoi_feature_edit.featureLayersSelected.push(e.layer);          
+                } 
             }
         });
 
@@ -476,6 +488,22 @@ aoi_feature_edit.deleteFeature = function(id, delete_url) {
     };
     BootstrapDialog.confirm(confirmText, confirmFunction);
 };
+aoi_feature_edit.deleteFeatureWithoutConfirm = function(id, delete_url) {
+    var confirmText = 'Delete feature #' + id + '?';
+    var confirmFunction = function(result) {
+        if (result) {
+            $.ajax({
+                url: delete_url,
+                type: 'GET',
+                success: function(data) {
+                    aoi_feature_edit.deleteFeatureFromHash(data);
+                },
+                failure: function() { log.error('Failed to delete feature ' + id);}
+            })
+        }
+    };
+    confirmFunction(true);
+};
 aoi_feature_edit.deleteFeatureFromHash = function (id) {
     var feature = feature_manager.findById(id);
     if (feature) {
@@ -757,6 +785,66 @@ aoi_feature_edit.map_init = function (map, bounds) {
     var options = aoi_feature_edit.buildTreeLayers();
     leaflet_layer_control.addLayerControl(map, options, $accordion);
     leaflet_layer_control.addPreferenceListener($accordion);
+    
+    function deleteMultipleFeatures(){
+        
+        var confirmText = 'Delete feature(s) selected?';
+        var confirmFunction = function(result){
+            if (result) {     
+                if (aoi_feature_edit.deleteBoundLayers.length>0) {
+                     var allLayers = aoi_feature_edit.drawnItems.getLayers();
+                     
+                    _.each(aoi_feature_edit.deleteBoundLayers, function(boundLayer){
+                        var bound = boundLayer.toGeoJSON().geometry.coordinates[0];
+                        _.each(allLayers, function(layer){
+                            var featureCoordinates = null;
+                            if (layer.toGeoJSON().geometry.type == "Point") {
+                                featureCoordinates = layer.toGeoJSON().geometry.coordinates;
+                                if (featureCoordinates[0] >= bound[0][0] && featureCoordinates[0] <= bound[2][0] && featureCoordinates[1] >= bound[0][1] && featureCoordinates[1] <= bound[2][1]) {
+                                    aoi_feature_edit.featureLayersSelected.push(layer);
+                                } 
+                            } else {
+                                featureCoordinates = layer.toGeoJSON().geometry.coordinates[0];
+                                var selected = true;
+                                _.each(featureCoordinates, function(point){
+                                    if (!(point[0] >= bound[0][0] && point[0] <= bound[2][0] && point[1] >= bound[0][1] && point[1] <= bound[2][1])) {
+                                        selected = false;
+                                    }
+                                });
+                                
+                                if (selected) {
+                                    aoi_feature_edit.featureLayersSelected.push(layer);
+                                }                      
+                            }
+                        
+                        });
+                        aoi_feature_edit.map.removeLayer(boundLayer);
+                    });
+                }
+                
+                _.each(aoi_feature_edit.featureLayersSelected,function(layer){              
+                    var id = layer.feature.properties.id;
+                    var deleteURL = leaflet_helper.home_url + 'features/delete/' + id ;
+                    aoi_feature_edit.deleteFeatureWithoutConfirm(id , deleteURL);
+                });
+                
+                aoi_feature_edit.featureLayersSelected = [];
+                aoi_feature_edit.deleteBoundLayers = [];
+            }
+        }
+
+        BootstrapDialog.confirm(confirmText, confirmFunction);
+    }
+    
+    var delete_control = new L.Control.Button({
+        'iconUrl': aoi_feature_edit.static_root + 'images/trash_can.png',
+        'onClick': deleteMultipleFeatures,
+        'hideText': true,
+        'doToggle': false,
+        'toggleStatus': false
+    });
+    
+    delete_control.addTo(map, {'position':'topleft'});
 
     function help_onclick() {
         window.open(aoi_feature_edit.help_url);
@@ -815,6 +903,21 @@ aoi_feature_edit.map_init = function (map, bounds) {
         pruneTemp(jqXHR);
         log.error("Error while adding feature: " + errorThrown);
     }
+    
+    map.on('click', function (e) {      
+        _.each(aoi_feature_edit.deleteBoundLayers, function(layer){
+            aoi_feature_edit.map.removeLayer(layer);    
+        });
+        _.each(aoi_feature_edit.featureLayersSelected, function(layer){
+            if (layer.feature.geometry.type == "Polygon") {
+                layer.setStyle({"fillOpacity": 1});;
+            } else {
+                layer.setOpacity(1);
+            }
+        });
+        aoi_feature_edit.featureLayersSelected = [];
+        aoi_feature_edit.deleteBoundLayers = [];     
+    });
 
     map.on('draw:created', function (e) {
         var type = e.layerType;
@@ -837,18 +940,26 @@ aoi_feature_edit.map_init = function (map, bounds) {
 
             aoi_feature_edit._pendingPoints[tmpId] = layer;
             aoi_feature_edit.map.addLayer(layer);
-         }
-        geojson = JSON.stringify(geojson);
-        var data = { aoi: aoi_feature_edit.aoi_id, geometry: geojson }
-        $.ajax({
-            type: "POST",
-            url: aoi_feature_edit.create_feature_url,
-            data: data,
-            success: onSuccess,
-            error: onError,
-            dataType: "json",
-            headers: headers
-        });
+        } 
+        
+        if (type == "rectangle") {
+            aoi_feature_edit.map.addLayer(layer);
+            aoi_feature_edit.deleteBoundLayers.push(layer);            
+        } else {
+            geojson = JSON.stringify(geojson);
+            var data = { aoi: aoi_feature_edit.aoi_id, geometry: geojson }
+            $.ajax({
+                type: "POST",
+                url: aoi_feature_edit.create_feature_url,
+                data: data,
+                success: onSuccess,
+                error: onError,
+                dataType: "json",
+                headers: headers
+            });
+        
+        }
+            
     });
 
     map.on('draw:drawstart', function (e) {
@@ -1103,7 +1214,11 @@ aoi_feature_edit.buildDrawingControl = function (drawnItems) {
 
         draw: {
             circle: false,
-            rectangle: false,
+            rectangle: {
+                shapeOptions: {
+                    color: '#808080'
+                }
+            },
 
             markers: aoi_feature_edit.all_markers,
             geomarkers: aoi_feature_edit.all_geomarkers,
@@ -1119,6 +1234,7 @@ aoi_feature_edit.buildDrawingControl = function (drawnItems) {
     //Create the drawing objects control
     aoi_feature_edit.map.addControl(drawControl);
     aoi_feature_edit.drawcontrol = drawControl;
+    
 
     //Change the color of the icons or add an Image of the icon if there is one
     var icons = $('div.leaflet-draw.leaflet-control').find('a');
@@ -1129,6 +1245,9 @@ aoi_feature_edit.buildDrawingControl = function (drawnItems) {
             var icon_title = $icon_obj.attr('title') || $icon_obj.attr('data-original-title');
             if (icon_title == ftype.name){
                 $icon = $icon_obj;
+            }
+            if (icon_title == "Draw a rectangle") {
+                $icon_obj.attr("title", "Select features");
             }
         });
 
