@@ -4,12 +4,27 @@
 {% load geoserver_job_link %}
 {% block title %}GeoQ Job: {{ object.name }}{% endblock %}
 {% block static_libraries %}
+    <link href="{{ STATIC_URL }}core/js/fancytree/skin-win7/ui.fancytree.css" rel="stylesheet" type="text/css">
+    <style type="text/css">
+        /***********************************************************
+        span.fancytree-node.fancytree-folder > span.fancytree-icon {
+            icon: "glyphicon-user";
+        }
+        ***********************************************************/
+        span.fancytree-node.fancytree-folder > span.fancytree-title {
+            font-size: 22.5px;
+        }
+        span.fancytree-node {
+            margin-bottom: 10px;
+        }
+    </style>
     {% leaflet_js %}
     <script src="{{ STATIC_URL }}core/js/leaflet_helper.js"></script>
     <script src="{{ STATIC_URL }}bootstrap/js/bootstrap-dialog.js"></script>
     <script src="{{ STATIC_URL }}core/js/maths.js"></script>
     <script src="{{ STATIC_URL }}core/js/leafletcontrols/leaflet.simple_button.js"></script>
     <script src="{{ STATIC_URL }}leaflet/L.Control.Button.js"></script>
+    <script src="{{ STATIC_URL }}core/js/fancytree/jquery.fancytree.js"></script>
     <script type="text/javascript">
 
         var map_object;
@@ -203,6 +218,10 @@
         var height = $att.height();
         $map.height(height);
         $att.css('marginBottom','20px');
+
+        $('#tree').fancytree({
+            icons: false
+        });
     });
 
     </script>
@@ -361,7 +380,7 @@
             </div>
         {% endif %}
 
-            {% include "core/_object_list.html" %}
+            {% include "core/_object_list_user_tree.html" %}
 
         </div>
 

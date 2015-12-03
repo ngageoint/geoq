@@ -14,13 +14,13 @@ from django.core.urlresolvers import reverse
 from django.utils.datastructures import SortedDict
 from managers import AOIManager
 from jsonfield import JSONField
-from collections import defaultdict
+from collections import defaultdict, OrderedDict
 from django.db.models import Q
 from geoq.training.models import Training
 from geoq.core.utils import clean_dumps
 
 TRUE_FALSE = [(0, 'False'), (1, 'True')]
-STATUS_VALUES_LIST = ['Unassigned', 'Assigned', 'Awaiting Imagery', 'Awaiting Analysis', 'In work', 'Completed']
+STATUS_VALUES_LIST = ['Assigned', 'Unassigned', 'Awaiting Imagery', 'Awaiting Analysis', 'In work', 'Completed']
 
 
 class AssigneeType:
@@ -204,9 +204,10 @@ class Job(GeoQBase, Assignment):
 
     @property
     def aoi_counts_html(self):
-        count = defaultdict(int)
+        count = OrderedDict([(i,0) for i in STATUS_VALUES_LIST])
         for cell in AOI.objects.filter(job__id=self.id):
-            count[cell.status] += 1
+            if cell.status in count:
+                count[cell.status] += 1
 
         return str(', '.join("%s: <b>%r</b>" % (key, val) for (key, val) in count.iteritems()))
 
@@ -239,7 +240,7 @@ class Job(GeoQBase, Assignment):
             counts[featuretype][status] += 1
 
         #TODO: Also return this as JSON
-        if len(counts):
+        if 0:
             output = "<table class='job_feature_list'>"
 
             header = "<th><i>Feature Counts</i></th>"

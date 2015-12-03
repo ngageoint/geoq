@@ -345,13 +345,13 @@ class JobDetailedListView(ListView):
 
     paginate_by = 15
     model = Job
-    default_status = 'in work'
+    default_status = 'assigned'
     request = None
     metrics = False
 
     def get_queryset(self):
         status = getattr(self, 'status', None)
-        q_set = AOI.objects.filter(job=self.kwargs.get('pk'))
+        q_set = AOI.objects.filter(job=self.kwargs.get('pk')).order_by('assignee_id','id')
 
         # # If there is a user logged in, we want to show their stuff
         # # at the top of the list
