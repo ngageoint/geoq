@@ -17,6 +17,7 @@ from django.http import Http404, HttpResponse, HttpResponseRedirect, HttpRespons
 from django.shortcuts import get_object_or_404, redirect, render
 from django.views.generic import DetailView, ListView, TemplateView, View, DeleteView, CreateView, UpdateView
 from datetime import datetime
+import distutils
 
 from models import Project, Job, AOI, Comment, AssigneeType, Organization
 from geoq.maps.models import *
@@ -964,6 +965,22 @@ def add_workcell_comment(request, *args, **kwargs):
     if comment_text:
         comment = Comment(user=user, aoi=aoi, text=comment_text)
         comment.save()
+
+    return HttpResponse()
+
+@login_required
+def accept_workcell_image(request, *args, **kwargs):
+    wcell_image = get_object_or_404(WorkcellImage, id=kwargs.get('id'))
+    accepted = kwargs.get('tf')
+
+    if accepted == 'True':
+        wcell_image.status = 'Accepted'
+    elif accepted == 'False':
+        wcell_image.status = 'RejectedQuality'
+    else:
+        wcell_image.status = 'NotEvaluated'
+
+    wcell_image.save()
 
     return HttpResponse()
 

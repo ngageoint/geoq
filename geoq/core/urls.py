@@ -133,5 +133,7 @@ urlpatterns = patterns('',
 
     url(r'^api/prioritize/(?P<method>\w+)?$',
         'core.views.prioritize_cells', name='batch-prioritize-cells'),
+    url(r'^api/workcell-image/(?P<id>\s+)/accept/(?P<tf>True|False|Undefined)/?$', 'core.views.accept_workcell_image',
+        name='accept-workcell-image'
 
 )
