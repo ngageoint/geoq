@@ -21,7 +21,7 @@ from geoq.core.utils import clean_dumps
 
 TRUE_FALSE = [(0, 'False'), (1, 'True')]
 STATUS_VALUES_LIST = ['Assigned', 'Unassigned', 'Awaiting Imagery', 'Awaiting Analysis', 'In work', 'Completed']
-
+EVALUATION_VALUES_LIST = ['NotEvaluated','Accepted','RejectedClouds','RejectedQuality','RejectedOverlap']
 
 class AssigneeType:
     USER, GROUP = range(1, 3)
@@ -468,6 +468,37 @@ class AOI(GeoQBase, Assignment):
     class Meta:
         verbose_name = 'Area of Interest'
         verbose_name_plural = 'Areas of Interest'
+
+
+class WorkcellImage(models.Model):
+    """
+    Track Images that can be displayed within a workcell
+    """
+    EVALUATION_CHOICES = [(choice, choice) for choice in EVALUATION_VALUES_LIST]
+
+    image_id = models.CharField(max_length=200)
+    nef_name = models.CharField(max_length=200)
+    sensor = models.CharField(max_length=50)
+    acq_date = models.DateTimeField(auto_now_add=False)
+    img_geom = models.GeometryField(blank=True, null=True)
+    area = models.DecimalField(max_digits=10,decimal_places=3)
+    status = models.CharField(max_length=20, choices=EVALUATION_CHOICES, default='NotEvaluated')
+    workcell = models.ForeignKey(AOI)
+
+    def __unicode__(self):
+        image_obj = 'WorkcellImage %s' % image_id
+        return image_obj
+
+    class Meta:
+        permissions = (
+
+        )
+        ordering = ('-acq_date',)
+
+    @property
+    def url(self):
+        # TODO: format the url using the nef_name
+        return self.nef_name
 
 
 class Comment(models.Model):
