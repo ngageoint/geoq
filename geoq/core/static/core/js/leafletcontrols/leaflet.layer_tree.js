@@ -16,9 +16,11 @@ leaflet_layer_control.$tree = undefined;
 leaflet_layer_control.accordion_sections = [];
 leaflet_layer_control.$feature_info = undefined;
 leaflet_layer_control.finish_options = [];
+leaflet_layer_control.hidden_panels = [];
 
 leaflet_layer_control.init = function(){
     leaflet_layer_control.$map = $("#map");
+    leaflet_layer_control.hidden_panels = site_settings.hidden_panels[aoi_feature_edit.status] || ["Work Cell Details"];
     return leaflet_layer_control.initDrawer();
 };
 leaflet_layer_control.initDrawer = function(){
@@ -320,11 +322,16 @@ leaflet_layer_control.refreshLogInfo = function() {
 };
 
 leaflet_layer_control.buildAccordionPanel = function($accordion,title){
+    hide = $.inArray(title, leaflet_layer_control.hidden_panels) > -1;
+
     var sectionName = _.str.dasherize(_.str.stripTags(title));
 
     var $drawerHolder = $("<div>")
         .addClass("accordion-group")
         .appendTo($accordion);
+    if (hide) {
+        ($drawerHolder).hide();
+    }
     var $drawerInner = $("<div>")
         .addClass("accordion-heading gray-header")
         .appendTo($drawerHolder);

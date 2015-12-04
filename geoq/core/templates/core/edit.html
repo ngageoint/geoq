@@ -86,6 +86,7 @@
         aoi_feature_edit.aoi_extents_geojson = {{ object.polygon.json|safe }};
         aoi_feature_edit.aoi_properties = {{ object.properties_json|safe }};
         aoi_feature_edit.priority = {{ object.priority|default:5 }};
+        aoi_feature_edit.status = "{{ object.status }}";
 
         aoi_feature_edit.aoi_user_remembered_params = {{ user_custom_params|safe }};
 
