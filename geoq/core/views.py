@@ -672,6 +672,69 @@ class SummaryView(TemplateView):
         return cv
 
 
+def image_footprints(request):
+    """
+    Stub to return sample JSON of fake image footprints with sample data. Used to test workcell_images model and footprints tool
+    Take in bbox:  s, w, n, e
+    """
+    import random, time
+
+    bbox = request.GET.get('bbox')
+
+    if not bbox:
+        return HttpResponse()
+
+    bb = bbox.split(',')
+    output = ""
+
+    if not len(bb) == 4:
+        output = json.dumps(dict(error=500, message='Need 4 corners of a bounding box passed in using EPSG 4386 lat/long format', grid=str(bb)))
+    else:
+        try:
+            month = str(time.strftime('%m'))
+            day = int(time.strftime('%d'))
+            year = str(time.strftime('%Y'))
+
+            samples = dict()
+            samples['features'] = []
+
+
+            for x in range(0, 30):
+                feature = dict()
+                feature['attributes'] = dict()
+                feature['attributes']['id'] = random.randint(1,1000000000)
+                feature['attributes']['image_id'] = feature['attributes']['id']
+                feature['attributes']['layerId'] = random.choice(['overwatch','eyesight','birdofprey','jupiter','eagle'])
+                feature['attributes']['image_sensor'] = random.choice(['xray','visible','gamma ray','telepathy','bw'])
+                feature['attributes']['cloud_cover'] = random.randint(1,100)
+                feature['attributes']['date_image'] = year + month + str(random.randint(0,day))
+                feature['attributes']['value'] = 'NEF-' + str(random.randint(1,10000)) + '-ABC-' + str(random.randint(1,10000))
+
+                feature['geometry'] = dict()
+
+                s = random.uniform(float(bb[0]), float(bb[2]))
+                w = random.uniform(float(bb[1]), float(bb[3]))
+                n = random.uniform(float(s), float(bb[2]))
+                e = random.uniform(float(w), float(bb[3]))
+
+                rings = []
+                rings.append([n, w])
+                rings.append([n, e])
+                rings.append([s, e])
+                rings.append([s, w])
+                rings.append([n, w])
+                feature['geometry']['rings'] = [rings]
+
+                samples['features'].append(feature)
+
+            output = json.dumps(samples)
+
+        except Exception, e:
+            import traceback
+            output = json.dumps(dict(error=500, message='Generic Exception', details=traceback.format_exc(), exception=str(e), grid=str(bb)))
+
+    return HttpResponse(output, mimetype="application/json")
+
 def usng(request):
     """
     Proxy to USNG service.

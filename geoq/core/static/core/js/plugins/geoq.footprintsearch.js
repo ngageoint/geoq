@@ -6,6 +6,8 @@
 
  TODO: Show Workcell as highest vis layer
  TODO: Allow this class to be loaded multiple times in separate namespaces via closure
+ TODO: Update pqgrid to v 2.0.4 to improve scrolling
+
  */
 var footprints = {};
 footprints.title = "Footprint";
@@ -23,11 +25,11 @@ footprints.$error_div = null;
 
 footprints.schema = [
     {name: 'image_id', id: true},
-    {name: 'layerId', title: 'Platform', filter: 'options', show: 'small-table'},
+    {name: 'layerId', title: 'Platform', filter: 'options', show: 'small-table', showSizeMultiplier: 2},
     {name: 'image_sensor', title: 'Sensor', filter: 'options'},
     //TODO: Show image name as mouseover or small text field?
-    {name: 'cloud_cover', title: 'Cloud Cover', type: 'integer', filter: 'slider-max', min: 0, max: 100, start: 10, show: 'small-table', sizeMarker: true},
-    {name: 'date_image', title: 'Date', type: 'date', filter: 'date-range', transform: 'day', initialDateRange: 30, colorMarker: true},
+    {name: 'cloud_cover', title: 'Cloud%', type: 'integer', filter: 'slider-max', min: 0, max: 100, start: 10, show: 'small-table', sizeMarker: true},
+    {name: 'date_image', title: 'Date Taken', type: 'date', filter: 'date-range', transform: 'day', show: 'small-table', showSizeMultiplier: 2, initialDateRange: 30, colorMarker: true},
     {name: 'value', title: 'NEF name', filter: 'textbox', onNotFound: function (name) {
         console.log("TODO: Load If not found: " + name)
     }}
@@ -108,15 +110,15 @@ footprints.buildAccordionPanel = function () {
     //For every item in the schema that has a filter, draw the filter chrome and link it to the item
     _.each(footprints.schema, function (schema_item) {
 	    if (schema_item.filter) {
-		if (schema_item.filter == 'options') {
-		    schema_item.update = _.debounce(function(schema_item){footprints.addFilterOptions(footprints.$filter_holder, schema_item)}, 500);
-		} else if (schema_item.filter == 'slider-max') {
-		    schema_item.update = _.debounce(function(schema_item){footprints.addFilterSliderMax(footprints.$filter_holder, schema_item)}, 500);
-		} else if (schema_item.filter == 'date-range') {
-		    schema_item.update = _.debounce(function(schema_item){footprints.addFilterDateMax(footprints.$filter_holder, schema_item)}, 500);
-		} else if (schema_item.filter == 'textbox') {
-		    schema_item.update = _.debounce(function(schema_item){footprints.addFilterTextbox(footprints.$filter_holder, schema_item)}, 500);
-		}
+            if (schema_item.filter == 'options') {
+                schema_item.update = _.debounce(function(){footprints.addFilterOptions(footprints.$filter_holder, schema_item)}, 500);
+            } else if (schema_item.filter == 'slider-max') {
+                schema_item.update = _.debounce(function(){footprints.addFilterSliderMax(footprints.$filter_holder, schema_item)}, 500);
+            } else if (schema_item.filter == 'date-range') {
+                schema_item.update = _.debounce(function(){footprints.addFilterDateMax(footprints.$filter_holder, schema_item)}, 500);
+            } else if (schema_item.filter == 'textbox') {
+                schema_item.update = _.debounce(function(){footprints.addFilterTextbox(footprints.$filter_holder, schema_item)}, 500);
+            }
 	    }
     });
     footprints.addWorkcellBounds(footprints.$filter_holder);
@@ -280,10 +282,12 @@ footprints.updateFootprintDataFromMap = function () {
     var bounds = footprints.map.getBounds();
 
     //Do Ajax requests for each Layer in the LayerList
+    var bbox_string = bounds.toBBoxString().replace(/,/gi,'%2C');
+
     var layers = footprints.layerList || [1];
     _.each(layers, function(layer, layer_id) {
         var inputs = {
-            bounds: bounds.toBBoxString(),
+            bounds: bbox_string,
             layers: "show:" + (footprints.layers || '0'),
             layer: layer,
             n: bounds._northEast.lat,
@@ -299,6 +303,8 @@ footprints.updateFootprintDataFromMap = function () {
         //Apply all the above inputs to the url template to build out the final url
         var url = url_template(inputs);
 
+        if (_.str.startsWith(url,'http')) url = proxy + url;
+
         var layer_name = "Layer";
         if (footprints.layerNames && footprints.layerNames.length && footprints.layerNames.length >= layer_id) {
             layer_name = footprints.layerNames[layer_id];
@@ -306,9 +312,11 @@ footprints.updateFootprintDataFromMap = function () {
 
         console.log(url);
         $.ajax({
-            url: proxy + url,
+            url: url,
             type: 'json',
-            success: function (data) {footprints.newFeaturesArrived(data, proxy + url, layer_id, layer_name);}
+            success: function (data) {
+                footprints.newFeaturesArrived(data, url, layer_id, layer_name);
+            }
         });
     });
 };
@@ -340,10 +348,15 @@ footprints.expandPromptSettings = function (field){
 };
 footprints.newFeaturesArrived = function (data, url, layer_id, layer_name) {
     var returned = {};
-    try {
-        returned = JSON.parse(data);
-    } catch (ex) {
-        footprints.userMessage('Invalid JSON data returned from server', 'red');
+
+    if (_.isObject(data)) {
+        returned = data;
+    } else {
+        try {
+            returned = JSON.parse(data);
+        } catch (ex) {
+            footprints.userMessage('Invalid JSON data returned from server', 'red');
+        }
     }
 
     var field_id = _.find(footprints.schema, function (s) {
@@ -793,7 +806,7 @@ footprints.addResultTable = function ($holder) {
         .appendTo($holder);
 
     //Set up table
-    var width = 210;
+    var width = 300;
     var obj = { width: width, height: 180, title: "Matched " + footprints.title + "s", editable: false,
         flexHeight: false, topVisible: false, bottomVisible: false, flexWidth: true, numberCell: false };
 
