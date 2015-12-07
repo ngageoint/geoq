@@ -931,13 +931,24 @@ aoi_feature_edit.map_init = function (map, bounds) {
                                     L.DomUtil.addClass(icon, 'leaflet-edit-marker-selected');
                                 } 
                 } else {
-                    featureCoordinates = featureLayer.toGeoJSON().geometry.coordinates[0];
                     var selected = true;
-                    _.each(featureCoordinates, function(point){
-                        if (!(point[0] >= bound[0][0] && point[0] <= bound[2][0] && point[1] >= bound[0][1] && point[1] <= bound[2][1])) {
-                            selected = false;
-                        }
-                    });
+                    if (featureLayer.toGeoJSON().geometry.type == "Polygon") {
+                        featureCoordinates = featureLayer.toGeoJSON().geometry.coordinates[0];
+                       
+                        _.each(featureCoordinates, function(point){
+                            if (!(point[0] >= bound[0][0] && point[0] <= bound[2][0] && point[1] >= bound[0][1] && point[1] <= bound[2][1])) {
+                                selected = false;
+                            }
+                        });
+                    } else if (featureLayer.toGeoJSON().geometry.type == "LineString") {
+                        featureCoordinates = featureLayer.toGeoJSON().geometry.coordinates;
+                        _.each(featureCoordinates, function(point){
+                            if (!(point[0] >= bound[0][0] && point[0] <= bound[2][0] && point[1] >= bound[0][1] && point[1] <= bound[2][1])) {
+                                selected = false;
+                            }
+                        });
+                    }
+                
                                 
                     if (selected) {
                         aoi_feature_edit.featureLayersSelected.push(featureLayer);
