@@ -16,10 +16,11 @@ from django.forms.util import ValidationError
 from django.http import Http404, HttpResponse, HttpResponseRedirect, HttpResponseForbidden
 from django.shortcuts import get_object_or_404, redirect, render
 from django.views.generic import DetailView, ListView, TemplateView, View, DeleteView, CreateView, UpdateView
+from django.views.decorators.http import require_POST
 from datetime import datetime
 import distutils
 
-from models import Project, Job, AOI, Comment, AssigneeType, Organization
+from models import Project, Job, AOI, Comment, AssigneeType, Organization, WorkcellImage
 from geoq.maps.models import *
 from utils import send_assignment_email, increment_metric
 from geoq.training.models import Training
@@ -969,18 +970,18 @@ def add_workcell_comment(request, *args, **kwargs):
     return HttpResponse()
 
 @login_required
-def accept_workcell_image(request, *args, **kwargs):
-    wcell_image = get_object_or_404(WorkcellImage, id=kwargs.get('id'))
-    accepted = kwargs.get('tf')
+@require_POST
+def create_workcell_image(request, id, **kwargs):
+    defaults = {}
+    wcell_params = request.POST.dict()
+    defaults['status'] = wcell_params.pop('status','NotEvaluated')
+    wcell_params['image_id'] = id
+    wcell_params['defaults'] = defaults
 
-    if accepted == 'True':
-        wcell_image.status = 'Accepted'
-    elif accepted == 'False':
-        wcell_image.status = 'RejectedQuality'
-    else:
-        wcell_image.status = 'NotEvaluated'
-
-    wcell_image.save()
+    wcell_image, created = WorkcellImage.objects.get_or_create(**wcell_params)
+    if not created:
+        wcell_image.status = defaults['status']
+        wcell_image.save()
 
     return HttpResponse()
 

@@ -486,7 +486,7 @@ class WorkcellImage(models.Model):
     workcell = models.ForeignKey(AOI)
 
     def __unicode__(self):
-        image_obj = 'WorkcellImage %s' % image_id
+        image_obj = 'WorkcellImage %s' % self.image_id
         return image_obj
 
     class Meta:
