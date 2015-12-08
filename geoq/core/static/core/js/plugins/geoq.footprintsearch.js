@@ -118,6 +118,38 @@ footprints.init = function (options) {
         console.error("Footprint Plugin could not load layerHolder");
     }
 
+    if (aoi_feature_edit.workcell_images && aoi_feature_edit.workcell_images.length) {
+        footprints.addInitialImages();
+    }
+};
+footprints.addInitialImages = function () {
+    _.each(aoi_feature_edit.workcell_images, function(data_row){
+        var layer_id = data_row.sensor;
+        var geo_json = JSON.parse(data_row.img_geom);
+        var rings = [];
+        _.each(geo_json.coordinates[0], function(point){
+            rings.push(point);
+        });
+
+        var data = {
+            attributes:{
+                image_id: data_row.image_id,
+                value: data_row.nef_name,
+                date_image: data_row.acq_date,
+                area: data_row.area,
+                status: data_row.status,
+                aoi_id: data_row.workcell
+            },
+            geometry: {rings: [rings]}
+        };
+
+        var layer_name = "Layer";
+        if (footprints.layerNames && footprints.layerNames.length && footprints.layerNames.length >= layer_id) {
+            layer_name = footprints.layerNames[layer_id];
+        }
+        footprints.newFeaturesArrived({features:[data]}, "[initial]", layer_id, layer_name);
+    });
+
 };
 footprints.buildAccordionPanel = function () {
     footprints.$title = leaflet_layer_control.buildAccordionPanel(footprints.$accordion, footprints.plugin_title);
@@ -139,19 +171,19 @@ footprints.buildAccordionPanel = function () {
     _.each(footprints.schema, function (schema_item) {
         if (schema_item.filter) {
             if (schema_item.filter == 'options') {
-                schema_item.update = _.debounce(function () {
+                schema_item.update = _.throttle(function () {
                     footprints.addFilterOptions(footprints.$filter_holder, schema_item)
                 }, 500);
             } else if (schema_item.filter == 'slider-max') {
-                schema_item.update = _.debounce(function () {
+                schema_item.update = _.throttle(function () {
                     footprints.addFilterSliderMax(footprints.$filter_holder, schema_item)
                 }, 500);
             } else if (schema_item.filter == 'date-range') {
-                schema_item.update = _.debounce(function () {
+                schema_item.update = _.throttle(function () {
                     footprints.addFilterDateMax(footprints.$filter_holder, schema_item)
                 }, 500);
             } else if (schema_item.filter == 'textbox') {
-                schema_item.update = _.debounce(function () {
+                schema_item.update = _.throttle(function () {
                     footprints.addFilterTextbox(footprints.$filter_holder, schema_item)
                 }, 500);
             }
@@ -948,11 +980,10 @@ footprints.addResultTable = function ($holder) {
                     sensor: data_row.layerId,
                     acq_date: data_row.date_image,
                     img_geom: JSON.stringify(geometry),
-                    area: 1,  //TODO: Calc area
+                    area: 1,
                     status: val,
                     workcell: aoi_feature_edit.aoi_id
                 };
-                //TODO: views doesn't seem to allow editing of data. default doesn't seem needed
 
                 console.log(url);
                 $.ajax({
