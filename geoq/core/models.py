@@ -484,6 +484,8 @@ class WorkcellImage(models.Model):
     image_id = models.CharField(max_length=200)
     nef_name = models.CharField(max_length=200)
     sensor = models.CharField(max_length=50)
+    platform = models.CharField(max_length=50)
+    cloud_cover = models.IntegerField(default=0, null=True, blank=True)
     acq_date = models.DateTimeField(auto_now_add=False)
     img_geom = models.GeometryField(blank=True, null=True)
     area = models.DecimalField(max_digits=10,decimal_places=3)
@@ -491,13 +493,16 @@ class WorkcellImage(models.Model):
     workcell = models.ForeignKey(AOI)
 
     def properties_json(self):
+        area = "%.2f" % self.img_geom.area
         _json = dict(
             image_id=str(self.image_id),
             nef_name=str(self.nef_name),
             sensor=str(self.sensor),
-            acq_date=format(self.acq_date, '%Y-%m-%d'),
+            cloud_cover=int(self.cloud_cover),
+            platform=str(self.platform),
+            acq_date=format(self.acq_date, '%Y%m%d'),
             img_geom=str(self.img_geom.geojson),
-            area=float(self.img_geom.area),
+            area=float(area),
             status=str(self.status),
             workcell=int(self.workcell.id)
         )

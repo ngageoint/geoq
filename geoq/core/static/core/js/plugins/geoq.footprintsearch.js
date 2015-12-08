@@ -9,6 +9,9 @@
  TODO: Update pqgrid to v 2.0.4 to improve scrolling
 
  TODO: Have rejected be hidden unless "show rejected" is on
+ TODO: Filters (date and cloud) are showing multiple times when preloaded
+ TODO: Cloud filter should always go from 0 to 100
+
  */
 var footprints = {};
 footprints.title = "Footprint";
@@ -40,6 +43,7 @@ footprints.schema = [
         show: 'small-table',
         sizeMarker: true
     },
+    {name: 'status', title: 'Status', filter: 'options'},
     {
         name: 'date_image',
         title: 'Date Taken',
@@ -131,14 +135,18 @@ footprints.addInitialImages = function () {
             rings.push(point);
         });
 
+        //Convert the json output from saved images into the format the list is expecting
         var data = {
             attributes:{
+                id: data_row.image_id,
                 image_id: data_row.image_id,
-                value: data_row.nef_name,
+                layerId: data_row.platform, //TODO: Was this saved?
+                image_sensor: data_row.sensor,
+                cloud_cover : data_row.cloud_cover,
                 date_image: data_row.acq_date,
+                value: data_row.nef_name,
                 area: data_row.area,
-                status: data_row.status,
-                aoi_id: data_row.workcell
+                status: data_row.status
             },
             geometry: {rings: [rings]}
         };
@@ -935,10 +943,15 @@ footprints.addResultTable = function ($holder) {
                 resizable: false,
                 render: function (ui) {
                     var id = ui.rowIndx;
+                    var data = ui.data[id];
 
-                    var bg = '<input class="accept" id="r1-' + id + '" type="radio" name="acceptance-' + id + '" value="Accepted"/><label for="r1-' + id + '"></label>';
-                    bg += '<input class="unsure" id="r2-' + id + '" type="radio" name="acceptance-' + id + '" checked value="NotEvaluated"/>';
-                    bg += '<input class="reject" id="r3-' + id + '" type="radio" name="acceptance-' + id + '" value="RejectedQuality"/><label for="r3-' + id + '"></label>';
+                    var c1 = (data.status && data.status == 'Accepted') ? 'checked' : '';
+                    var c2 = (!data.status || (data.status && data.status == 'NotEvaluated')) ? 'checked' : '';
+                    var c3 = (data.status && data.status == 'RejectedQuality') ? 'checked' : '';
+
+                    var bg = '<input class="accept" id="r1-' + id + '" type="radio" name="acceptance-' + id + '" '+c1+' value="Accepted"/><label for="r1-' + id + '"></label>';
+                    bg += '<input class="unsure" id="r2-' + id + '" type="radio" name="acceptance-' + id + '" '+c2+' value="NotEvaluated"/>';
+                    bg += '<input class="reject" id="r3-' + id + '" type="radio" name="acceptance-' + id + '" '+c3+' value="RejectedQuality"/><label for="r3-' + id + '"></label>';
 
                     return bg;
                 }
@@ -977,7 +990,9 @@ footprints.addResultTable = function ($holder) {
                 var data = {
                     image_id: data_row.image_id,
                     nef_name: data_row.value,
-                    sensor: data_row.layerId,
+                    sensor: data_row.image_sensor,
+                    platform: data_row.layerId,
+                    cloud_cover: data_row.cloud_cover,
                     acq_date: data_row.date_image,
                     img_geom: JSON.stringify(geometry),
                     area: 1,

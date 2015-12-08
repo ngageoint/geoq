@@ -701,7 +701,7 @@ def image_footprints(request):
             samples['features'] = []
 
 
-            for x in range(0, 30):
+            for x in range(0, 8):
                 feature = dict()
                 feature['attributes'] = dict()
                 feature['attributes']['id'] = random.randint(1,1000000000)
