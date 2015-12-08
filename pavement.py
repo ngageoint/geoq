@@ -64,7 +64,7 @@ def install_dev_fixtures():
 def sync():
     """ Runs the syncdb process with migrations """
     sh("python manage.py syncdb --noinput")
-    sh("python manage.py migrate --all --no-initial-data")
+#    sh("python manage.py migrate --all --no-initial-data")
 
     fixture = 'geoq/fixtures/initial_data.json'
     sh("python manage.py loaddata {fixture}".format(fixture=fixture))

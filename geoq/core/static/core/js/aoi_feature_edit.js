@@ -1010,7 +1010,7 @@ aoi_feature_edit.map_init = function (map, bounds) {
     });
 
     $('div.leaflet-draw.leaflet-control').find('a').popover({trigger:"hover",placement:"right"});
-    //
+
     //footprints.init({
 	 //   url_template: 'http://dev.femadata.com/arcgis/rest/services/ImageEvents/ImageEvents/MapServer/{{layer}}/query?geometry={{bounds}}&geometryType=esriGeometryEnvelope&spatialRel=esriSpatialRelIntersects&outFields=*&outSR=4326&f=json',
 		//layerList: [1,2,3,4,5,6,7,8,9],
@@ -1044,7 +1044,8 @@ aoi_feature_edit.map_init = function (map, bounds) {
         title: 'Images',
         markerColorMax: '#ffdf00',
         markerColorMin: '#332200',
-        featureSelectFunction: null
+        showRejectOption: true,
+        featureSelectUrl: '/geoq/api/workcell-image/{{id}}'
     });
 
 

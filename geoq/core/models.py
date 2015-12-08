@@ -380,6 +380,11 @@ class AOI(GeoQBase, Assignment):
             else:
                 return Group.objects.get(id=self.assignee_id).name
 
+    def images(self):
+        return WorkcellImage.objects.filter(workcell=self)
+
+    def images_json(self):
+        return [image.properties_json() for image in self.images()]
 
     #def save(self):
     # if analyst or reviewer updated, then create policy to give them permission to edit this object.....
@@ -496,6 +501,19 @@ class WorkcellImage(models.Model):
     area = models.DecimalField(max_digits=10,decimal_places=3)
     status = models.CharField(max_length=20, choices=EVALUATION_CHOICES, default='NotEvaluated')
     workcell = models.ForeignKey(AOI)
+
+    def properties_json(self):
+        _json = dict(
+            image_id=str(self.image_id),
+            nef_name=str(self.nef_name),
+            sensor=str(self.sensor),
+            acq_date=format(self.acq_date, '%Y-%m-%d'),
+            img_geom=str(self.img_geom.geojson),
+            area=float(self.img_geom.area),
+            status=str(self.status),
+            workcell=int(self.workcell.id)
+        )
+        return _json
 
     def __unicode__(self):
         image_obj = 'WorkcellImage %s' % self.image_id
