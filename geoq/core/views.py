@@ -709,7 +709,7 @@ def image_footprints(request):
                 feature['attributes']['layerId'] = random.choice(['overwatch','eyesight','birdofprey','jupiter','eagle'])
                 feature['attributes']['image_sensor'] = random.choice(['xray','visible','gamma ray','telepathy','bw'])
                 feature['attributes']['cloud_cover'] = random.randint(1,100)
-                feature['attributes']['date_image'] = year + month + str(random.randint(0,day))
+                feature['attributes']['date_image'] = year + month + str(random.randint(1,day))
                 feature['attributes']['value'] = 'NEF-' + str(random.randint(1,10000)) + '-ABC-' + str(random.randint(1,10000))
 
                 feature['geometry'] = dict()
@@ -977,13 +977,19 @@ def create_workcell_image(request, id, **kwargs):
     defaults['status'] = wcell_params.pop('status','NotEvaluated')
     wcell_params['image_id'] = id
     wcell_params['defaults'] = defaults
+    wcell_params['workcell'] = AOI.objects.get(id=wcell_params.get('workcell'))
 
+    geometry = wcell_params.get('img_geom')
+    wcell_params['img_geom'] = GEOSGeometry(geometry)
+
+    message = 'created'
     wcell_image, created = WorkcellImage.objects.get_or_create(**wcell_params)
     if not created:
         wcell_image.status = defaults['status']
         wcell_image.save()
+        message = 'updated'
 
-    return HttpResponse()
+    return HttpResponse(json.dumps({message: message}), mimetype="application/json", status=200)
 
 
 class LogJSON(ListView):

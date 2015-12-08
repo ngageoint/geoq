@@ -20,7 +20,7 @@ leaflet_layer_control.hidden_panels = [];
 
 leaflet_layer_control.init = function(){
     leaflet_layer_control.$map = $("#map");
-    leaflet_layer_control.hidden_panels = site_settings.hidden_panels[aoi_feature_edit.status] || ["Work Cell Details"];
+    leaflet_layer_control.hidden_panels = site_settings.hidden_panels ? site_settings.hidden_panels[aoi_feature_edit.status] : ["Work Cell Details"];
     return leaflet_layer_control.initDrawer();
 };
 leaflet_layer_control.initDrawer = function(){
