@@ -130,6 +130,7 @@ urlpatterns = patterns('',
     url(r'^api/feature/update/(?P<pk>\d+)$', update_feature_data, name='update-feature-data'),
     url(r'^api/layer[s ]?.json$', LayersJSON.as_view(), name='json-layers'),
     url(r'^api/cell[s ]?/(?P<pk>\d+)?.geojson$', CellJSON.as_view(), name='json-workcell'),
+    url(r'^api/workcell/(?P<pk>\d+)/images/?$', CellImages.as_view(), name='workcell-images'),
 
     url(r'^api/prioritize/(?P<method>\w+)?$',
         'core.views.prioritize_cells', name='batch-prioritize-cells'),

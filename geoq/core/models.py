@@ -4,6 +4,7 @@
 
 import json
 import cgi
+import ast
 
 from django.contrib.auth.models import User, Group
 from django.contrib.gis.db import models
@@ -459,6 +460,17 @@ class AOI(GeoQBase, Assignment):
 
         return clean_dumps(geojson)
 
+    def images(self):
+        """
+        Return image list for workcell
+        """
+
+        images_json = []
+        for image in self.workcellimage_set.all():
+            images_json.append(image.to_dict())
+
+        return clean_dumps({'images': images_json})
+
     def user_can_complete(self, user):
         """
         Returns whether the user can update the AOI as complete.
@@ -499,6 +511,14 @@ class WorkcellImage(models.Model):
     def url(self):
         # TODO: format the url using the nef_name
         return self.nef_name
+
+    def to_dict(self):
+        format = "%D %H:%M:%S"
+        o = {'image_id':self.image_id, 'nef_name':self.nef_name, 'url':self.url, 'sensor':self.sensor,
+             'area':str(self.area), 'acq_date':self.acq_date.strftime(format), 'status':self.status,
+             'geometry':ast.literal_eval(self.img_geom.geojson)}
+
+        return o
 
 
 class Comment(models.Model):

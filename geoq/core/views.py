@@ -1035,6 +1035,15 @@ class CellJSON(ListView):
 
         return HttpResponse(cell, mimetype="application/json", status=200)
 
+class CellImages(ListView):
+    model = AOI
+
+    def get(self, request, *args, **kwargs):
+        aoi = get_object_or_404(AOI, id=kwargs.get('pk'))
+        images = aoi.images()
+
+        return HttpResponse(images, mimetype="application/json", status=200)
+
 
 class JobGeoJSON(ListView):
     model = Job
