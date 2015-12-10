@@ -380,8 +380,10 @@ aoi_feature_edit.featureLayer_onEachFeature = function (feature, layer, featureL
         }
         if (feature.properties.updated_at){
             var datetime = feature.properties.updated_at;
-            datetime = datetime.replace("T"," ");
-            datetime = datetime.replace("UTC"," UTC");
+            if ((datetime.indexOf('T') > 0) && (datetime.indexOf('UTC')> 0)) {
+                //Needs to be in: 2007-04-05T14:30Z
+                datetime = datetime.replace("UTC","Z");
+            }
             var dtg = moment(datetime);
 
             if (dtg.isValid()){

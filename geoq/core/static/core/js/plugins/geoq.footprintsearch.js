@@ -241,10 +241,12 @@ footprints.polyToLayer = function (feature) {
         var val = feature.properties[size_field.name] || feature[size_field.name] || size_min;
         if ((size_field.type && size_field.type == 'date') || (size_field.filter && size_field.filter == 'date-range')) {
             var date_val = val;
+            var date_format = null;
             if (size_field.transform == 'day') {
                 date_val = val.substr(0, 4) + '-' + val.substr(4, 2) + '-' + val.substr(6, 2);
+                date_format = "YYYY-MM-DD";
             }
-            date_val = moment(date_val);
+            date_val = moment(date_val, date_format);
             if (date_val && date_val.isValid()) val = date_val.unix();
         }
         var color_prime = footprints.markerColorMax;
