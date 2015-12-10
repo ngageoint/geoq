@@ -8,7 +8,8 @@
  TODO: Allow this class to be loaded multiple times in separate namespaces via closure
  TODO: Update pqgrid to v 2.0.4 to improve scrolling
 
- TODO: Have rejected be hidden unless "show rejected" is on
+ TODO: MINOR: Cloud filter slider in middle, not at 10%
+
  */
 var footprints = {};
 footprints.title = "Footprint";
@@ -40,6 +41,7 @@ footprints.schema = [
         show: 'small-table',
         sizeMarker: true
     },
+    {name: 'status', title: 'Status', filter: 'options'},
     {
         name: 'date_image',
         title: 'Date Taken',
@@ -67,7 +69,7 @@ footprints.featureSelectFunction = function (feature) {
     console.log("Lookup more info on " + feature.name);
 };
 footprints.featureSelectUrl = null;
-footprints.filters = {in_bounds: true, previously_rejected: true};
+footprints.filters = {in_bounds: true, previously_rejected: false};
 footprints.prompts = {};
 footprints.features = [];
 
@@ -131,14 +133,18 @@ footprints.addInitialImages = function () {
             rings.push(point);
         });
 
+        //Convert the json output from saved images into the format the list is expecting
         var data = {
             attributes:{
+                id: data_row.image_id,
                 image_id: data_row.image_id,
-                value: data_row.nef_name,
+                layerId: data_row.platform, //TODO: Was this saved?
+                image_sensor: data_row.sensor,
+                cloud_cover : data_row.cloud_cover,
                 date_image: data_row.acq_date,
+                value: data_row.nef_name,
                 area: data_row.area,
-                status: data_row.status,
-                aoi_id: data_row.workcell
+                status: data_row.status
             },
             geometry: {rings: [rings]}
         };
@@ -171,21 +177,13 @@ footprints.buildAccordionPanel = function () {
     _.each(footprints.schema, function (schema_item) {
         if (schema_item.filter) {
             if (schema_item.filter == 'options') {
-                schema_item.update = _.throttle(function () {
-                    footprints.addFilterOptions(footprints.$filter_holder, schema_item)
-                }, 500);
+                schema_item.update = footprints.addFilterOptions(footprints.$filter_holder, schema_item);
             } else if (schema_item.filter == 'slider-max') {
-                schema_item.update = _.throttle(function () {
-                    footprints.addFilterSliderMax(footprints.$filter_holder, schema_item)
-                }, 500);
+                schema_item.update = footprints.addFilterSliderMax(footprints.$filter_holder, schema_item);
             } else if (schema_item.filter == 'date-range') {
-                schema_item.update = _.throttle(function () {
-                    footprints.addFilterDateMax(footprints.$filter_holder, schema_item)
-                }, 500);
+                schema_item.update = footprints.addFilterDateMax(footprints.$filter_holder, schema_item);
             } else if (schema_item.filter == 'textbox') {
-                schema_item.update = _.throttle(function () {
-                    footprints.addFilterTextbox(footprints.$filter_holder, schema_item)
-                }, 500);
+                schema_item.update = footprints.addFilterTextbox(footprints.$filter_holder, schema_item);
             }
         }
     });
@@ -507,39 +505,44 @@ footprints.updateFeatureMinMaxes = function () {
     //If it's a number or date, find the min and max and save it with the schema
 
     _.each(footprints.schema, function (schema_item) {
-        var min = Number.MAX_VALUE;
-        var max = Number.MIN_VALUE;
-        var update = false;
+        if (schema_item.min !== undefined && schema_item.max !== undefined) {
+            schema_item._min = schema_item.min;
+            schema_item._max = schema_item.max;
+        } else {
+            var min = Number.MAX_VALUE;
+            var max = Number.MIN_VALUE;
+            var update = false;
 
-        if ((schema_item.type && schema_item.type == 'integer') || (schema_item.filter && schema_item.filter == 'slider-max')) {
-            for (var i = 0; i < footprints.features.length; i++) {
-                var feature = footprints.features[i];
-                var val = feature.attributes[schema_item.name] || feature[schema_item.name];
-                val = parseFloat(val);
-                if (val > max) max = val;
-                if (val < min) min = val;
-                update = true;
-            }
-        } else if ((schema_item.type && schema_item.type == 'date') || (schema_item.filter && schema_item.filter == 'date-range')) {
-            for (var i = 0; i < footprints.features.length; i++) {
-                var feature = footprints.features[i];
-                var val = feature.attributes[schema_item.name] || feature[schema_item.name];
-                var date_val = val;
-                if (schema_item.transform == 'day') {
-                    date_val = val.substr(0, 4) + '-' + val.substr(4, 2) + '-' + val.substr(6, 2);
-                }
-                date_val = moment(date_val);
-                if (date_val && date_val.isValid()) {
-                    val = date_val.unix();  //Convert it to seconds to compare
+            if ((schema_item.type && schema_item.type == 'integer') || (schema_item.filter && schema_item.filter == 'slider-max')) {
+                for (var i = 0; i < footprints.features.length; i++) {
+                    var feature = footprints.features[i];
+                    var val = feature.attributes[schema_item.name] || feature[schema_item.name];
+                    val = parseFloat(val);
                     if (val > max) max = val;
                     if (val < min) min = val;
                     update = true;
                 }
+            } else if ((schema_item.type && schema_item.type == 'date') || (schema_item.filter && schema_item.filter == 'date-range')) {
+                for (var i = 0; i < footprints.features.length; i++) {
+                    var feature = footprints.features[i];
+                    var val = feature.attributes[schema_item.name] || feature[schema_item.name];
+                    var date_val = val;
+                    if (schema_item.transform == 'day') {
+                        date_val = val.substr(0, 4) + '-' + val.substr(4, 2) + '-' + val.substr(6, 2);
+                    }
+                    date_val = moment(date_val);
+                    if (date_val && date_val.isValid()) {
+                        val = date_val.unix();  //Convert it to seconds to compare
+                        if (val > max) max = val;
+                        if (val < min) min = val;
+                        update = true;
+                    }
+                }
             }
-        }
-        if (update) {
-            if (min < Number.MAX_VALUE) schema_item._min = min;
-            if (max > Number.MIN_VALUE) schema_item._max = max;
+            if (update) {
+                if (min < Number.MAX_VALUE) schema_item._min = min;
+                if (max > Number.MIN_VALUE) schema_item._max = max;
+            }
         }
     });
 };
@@ -756,7 +759,7 @@ footprints.updateFootprintFilteredResults = function (options) {
         }
 
         //Check if item has been rejected and rejects shouldn't be shown
-        if (feature.attributes.rejected && !footprints.filters.previously_rejected) {
+        if (feature.attributes.status && feature.attributes.status == "RejectedQuality" && !footprints.filters.previously_rejected) {
             matched = false;
         }
         //TODO: Make sure previous data is returned from AOIs
@@ -935,10 +938,15 @@ footprints.addResultTable = function ($holder) {
                 resizable: false,
                 render: function (ui) {
                     var id = ui.rowIndx;
+                    var data = ui.data[id];
 
-                    var bg = '<input class="accept" id="r1-' + id + '" type="radio" name="acceptance-' + id + '" value="Accepted"/><label for="r1-' + id + '"></label>';
-                    bg += '<input class="unsure" id="r2-' + id + '" type="radio" name="acceptance-' + id + '" checked value="NotEvaluated"/>';
-                    bg += '<input class="reject" id="r3-' + id + '" type="radio" name="acceptance-' + id + '" value="RejectedQuality"/><label for="r3-' + id + '"></label>';
+                    var c1 = (data.status && data.status == 'Accepted') ? 'checked' : '';
+                    var c2 = (!data.status || (data.status && data.status == 'NotEvaluated')) ? 'checked' : '';
+                    var c3 = (data.status && data.status == 'RejectedQuality') ? 'checked' : '';
+
+                    var bg = '<input class="accept" id="r1-' + id + '" type="radio" name="acceptance-' + id + '" '+c1+' value="Accepted"/><label for="r1-' + id + '"></label>';
+                    bg += '<input class="unsure" id="r2-' + id + '" type="radio" name="acceptance-' + id + '" '+c2+' value="NotEvaluated"/>';
+                    bg += '<input class="reject" id="r3-' + id + '" type="radio" name="acceptance-' + id + '" '+c3+' value="RejectedQuality"/><label for="r3-' + id + '"></label>';
 
                     return bg;
                 }
@@ -977,7 +985,9 @@ footprints.addResultTable = function ($holder) {
                 var data = {
                     image_id: data_row.image_id,
                     nef_name: data_row.value,
-                    sensor: data_row.layerId,
+                    sensor: data_row.image_sensor,
+                    platform: data_row.layerId,
+                    cloud_cover: data_row.cloud_cover,
                     acq_date: data_row.date_image,
                     img_geom: JSON.stringify(geometry),
                     area: 1,
@@ -1164,8 +1174,11 @@ footprints.addFilterButton = function ($holder) {
 };
 
 footprints.addFilterSliderMax = function ($holder, schema_item) {
-    var $cc = $('<div><b>Max ' + (schema_item.title || schema_item.name) + ':</b></div>')
+    var $slider = $('<div>')
         .appendTo($holder);
+
+    var $cc = $('<div><b>Max ' + (schema_item.title || schema_item.name) + ':</b></div>')
+        .appendTo($slider);
     var $cc_count = $('<span>')
         .html(" (" + (schema_item.start || 10) + ")")
         .appendTo($cc);
@@ -1179,7 +1192,7 @@ footprints.addFilterSliderMax = function ($holder, schema_item) {
             $cc_count.html(" (" + this.value + ")")
         }, 50))
         .attr({val: schema_item.start || 10})
-        .appendTo($holder);
+        .appendTo($slider);
 
     var update = function () {
         //Hide if there's no variable in options, so no reason to have a filter
@@ -1188,8 +1201,10 @@ footprints.addFilterSliderMax = function ($holder, schema_item) {
                 .attr({val: schema_item._min})
                 .hide();
         } else if (schema_item._max) {
+            var min = schema_item.min !== undefined ? schema_item.min : schema_item._min || 0;
+            var max = schema_item.max || schema_item._max;
             $input
-                .attr({type: 'range', min: schema_item._min, max: schema_item._max})
+                .attr({type: 'range', min: min, max: max})
                 .show();
         }
     };
