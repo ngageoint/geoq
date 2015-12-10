@@ -241,10 +241,12 @@ footprints.polyToLayer = function (feature) {
         var val = feature.properties[size_field.name] || feature[size_field.name] || size_min;
         if ((size_field.type && size_field.type == 'date') || (size_field.filter && size_field.filter == 'date-range')) {
             var date_val = val;
+            var date_format = null;
             if (size_field.transform == 'day') {
                 date_val = val.substr(0, 4) + '-' + val.substr(4, 2) + '-' + val.substr(6, 2);
+                date_format = "YYYY-MM-DD";
             }
-            date_val = moment(date_val);
+            date_val = moment(date_val, date_format);
             if (date_val && date_val.isValid()) val = date_val.unix();
         }
         var color_prime = footprints.markerColorMax;
@@ -284,10 +286,13 @@ footprints.pointToLayer = function (feature, latlng) {
         var val = feature.properties[size_field.name] || feature[size_field.name] || size_min;
         if ((size_field.type && size_field.type == 'date') || (size_field.filter && size_field.filter == 'date-range')) {
             var date_val = val;
-            if (schema_item.transform == 'day') {
+            var date_format = null;
+            if (size_field.transform == 'day') {
                 date_val = val.substr(0, 4) + '-' + val.substr(4, 2) + '-' + val.substr(6, 2);
+                date_format = "YYYY-MM-DD";
             }
-            date_val = moment(date_val);
+            date_val = moment(date_val, date_format);
+
             if (date_val && date_val.isValid()) val = date_val.unix();
         }
         radius = footprints.percent_range(val, size_min, size_max, footprints.markerRadiusMax / 3, footprints.markerRadiusMax);
@@ -311,10 +316,12 @@ footprints.pointToLayer = function (feature, latlng) {
         var val = feature.properties[size_field.name] || feature[size_field.name] || size_min;
         if ((size_field.type && size_field.type == 'date') || (size_field.filter && size_field.filter == 'date-range')) {
             var date_val = val;
+            var date_format = null;
             if (size_field.transform == 'day') {
                 date_val = val.substr(0, 4) + '-' + val.substr(4, 2) + '-' + val.substr(6, 2);
+                date_format = "YYYY-MM-DD";
             }
-            date_val = moment(date_val);
+            date_val = moment(date_val, date_format);
             if (date_val && date_val.isValid()) val = date_val.unix();
         }
 
@@ -527,10 +534,14 @@ footprints.updateFeatureMinMaxes = function () {
                     var feature = footprints.features[i];
                     var val = feature.attributes[schema_item.name] || feature[schema_item.name];
                     var date_val = val;
+                    var date_format = null;
                     if (schema_item.transform == 'day') {
                         date_val = val.substr(0, 4) + '-' + val.substr(4, 2) + '-' + val.substr(6, 2);
+                        date_format = "YYYY-MM-DD";
                     }
-                    date_val = moment(date_val);
+                    date_val = moment(date_val, date_format);
+
+
                     if (date_val && date_val.isValid()) {
                         val = date_val.unix();  //Convert it to seconds to compare
                         if (val > max) max = val;
@@ -632,10 +643,12 @@ footprints.popupContentOfFeature = function (feature) {
             }
             out += "<b>" + title + ":</b> <a href='" + val_url + "' target='_blank'>Link</a><br/>";
         } else if (val && (schema_item.type && schema_item.type == 'date') || (schema_item.filter && schema_item.filter == 'date-range')) {
+            var date_format = null;
             if (schema_item.transform == 'day') {
                 val = val.substr(0, 4) + '-' + val.substr(4, 2) + '-' + val.substr(6, 2);
+                date_format = "YYYY-MM-DD";
             }
-            var date_val = moment(val);
+            var date_val = moment(val, date_format);
             if (date_val && date_val.isValid && date_val.isValid()) {
                 val = date_val.format('YYYY-MM-DD') + ' - ' + date_val.fromNow();
             }
@@ -790,12 +803,14 @@ footprints.updateFootprintFilteredResults = function (options) {
                         }
                     } else if (schema_item.filter == 'date-range') {
                         var val_date = val;
+                        var date_format = null;
                         if (schema_item.transform == 'day') {
                             val_date = val.substr(0, 4) + '-' + val.substr(4, 2) + '-' + val.substr(6, 2);
+                            date_format = "YYYY-MM-DD";
                         } else if (schema_item.transform == 'thousands') {
                             //No problem if there are miliseconds in the field, moment should interpret it correctly
                         }
-                        var feature_date = moment(val_date);
+                        var feature_date = moment(val_date, date_format);
                         if (feature_date < filterSetting.startdate_moment ||
                             feature_date > filterSetting.enddate_moment) {
                             matched = false;
@@ -831,10 +846,12 @@ footprints.updateFootprintFilteredResults = function (options) {
             var val = feature[fieldToCheck] || feature.attributes[fieldToCheck] || feature._geojson[fieldToCheck];
 
             if ((schema_item.type && schema_item.type == 'date') || (schema_item.filter && schema_item.filter == 'date-range')) {
+                var date_format = null;
                 if (schema_item.transform == 'day') {
                     val = val.substr(0, 4) + '-' + val.substr(4, 2) + '-' + val.substr(6, 2);
+                    date_format = "YYYY-MM-DD";
                 }
-                var date_val = moment(val);
+                var date_val = moment(val, date_format);
                 if (date_val && date_val.isValid && date_val.isValid()) {
                     val = date_val.format('YYYY-MM-DD');
                 }
@@ -952,7 +969,16 @@ footprints.addResultTable = function ($holder) {
                 }
             }];
         obj.cellClick = function (evt, ui) {
-            if (evt.srcElement.nodeName != "INPUT") {
+            var clicked_on = evt.srcElement;
+            if (!clicked_on) {
+                //Firefox
+                clicked_on = evt.originalEvent.target ? evt.originalEvent.target : false;
+                if (!clicked_on) {
+                    throw "footprints error - Could not determine what was clicked on using this browser";
+                }
+            }
+
+            if (clicked_on.nodeName != "INPUT") {
                 return; //Fires for row and for cell, nly want for cell
             }
             var $target = $("input:radio[name ='acceptance-" + ui.rowIndx + "']:checked");
