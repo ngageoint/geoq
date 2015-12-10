@@ -4,12 +4,27 @@
 {% load geoserver_job_link %}
 {% block title %}GeoQ Job: {{ object.name }}{% endblock %}
 {% block static_libraries %}
+    <link href="{{ STATIC_URL }}core/js/fancytree/skin-win7/ui.fancytree.css" rel="stylesheet" type="text/css">
+    <style type="text/css">
+        /***********************************************************
+        span.fancytree-node.fancytree-folder > span.fancytree-icon {
+            icon: "glyphicon-user";
+        }
+        ***********************************************************/
+        span.fancytree-node.fancytree-folder > span.fancytree-title {
+            font-size: 22.5px;
+        }
+        span.fancytree-node {
+            margin-bottom: 10px;
+        }
+    </style>
     {% leaflet_js %}
     <script src="{{ STATIC_URL }}core/js/leaflet_helper.js"></script>
     <script src="{{ STATIC_URL }}bootstrap/js/bootstrap-dialog.js"></script>
     <script src="{{ STATIC_URL }}core/js/maths.js"></script>
     <script src="{{ STATIC_URL }}core/js/leafletcontrols/leaflet.simple_button.js"></script>
     <script src="{{ STATIC_URL }}leaflet/L.Control.Button.js"></script>
+    <script src="{{ STATIC_URL }}core/js/fancytree/jquery.fancytree.js"></script>
     <script type="text/javascript">
 
         var map_object;
@@ -20,8 +35,8 @@
             {name:'Assigned', color: leaflet_helper.styles.assigned, slug:'assigned'},  //TODO: Are we still using 'Assigned'?
             {name:'Completed', color: leaflet_helper.styles.completed, slug:'completed'},
             {name:'In work', color: leaflet_helper.styles.in_work, slug:'in-work'},
-            {name:'In review', color: leaflet_helper.styles.in_review, slug:'in-review'},
-            {name:'Awaiting review', color: leaflet_helper.styles.awaiting_review, slug:'awaiting-review'},
+            {name:'Awaiting Analysis', color: leaflet_helper.styles.awaiting_analysis, slug:'awaiting-analysis'},
+            {name:'Awaiting Imagery', color: leaflet_helper.styles.awaiting_imagery, slug:'awaiting-imagery'},
             {name:'Unassigned', color: leaflet_helper.styles.extentStyle, slug:'unassigned'}
         ];
 
@@ -106,6 +121,8 @@
                 'toggleStatus': false  // bool
             };
             var titleInfoButton = new L.Control.Button(titleInfoOptions).addTo(map);
+
+            leaflet_helper.addLayerControl(map);
 
         }
 
@@ -193,12 +210,18 @@
 
         };
 
+    var map_layers = {{ object.map.to_json|safe|default:"{}" }};
+
     $(document).ready(function(){
         var $att = $('#attribute-table');
         var $map = $('#map');
         var height = $att.height();
         $map.height(height);
         $att.css('marginBottom','20px');
+
+        $('#tree').fancytree({
+            icons: false
+        });
     });
 
     </script>
@@ -357,7 +380,7 @@
             </div>
         {% endif %}
 
-            {% include "core/_object_list.html" %}
+            {% include "core/_object_list_user_tree.html" %}
 
         </div>
 

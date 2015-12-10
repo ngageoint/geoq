@@ -342,7 +342,7 @@ class Feature(models.Model):
     Model to represent features created in the application.
     """
 
-    STATUS_VALUES = ['Unassigned', 'In work', 'Awaiting review', 'In review', 'Completed'] #'Assigned'
+    STATUS_VALUES = ['Unassigned', 'Assigned', 'In work', 'Awaiting Imagery', 'Awaiting Analysis', 'Completed'] #'Assigned'
     STATUS_CHOICES = [(choice, choice) for choice in STATUS_VALUES]
 
     aoi = models.ForeignKey(AOI, related_name='features', editable=False)
@@ -351,7 +351,7 @@ class Feature(models.Model):
     objects = models.GeoManager()
     analyst = models.ForeignKey(User, editable=False)
     template = models.ForeignKey("FeatureType", on_delete=models.PROTECT)
-    status = models.CharField(max_length=15, choices=STATUS_CHOICES, default='In work')
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='In work')
 
     # Allow the user to save their own properties
     properties = JSONField(load_kwargs={}, blank=True, null=True)

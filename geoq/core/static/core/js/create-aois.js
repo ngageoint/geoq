@@ -302,7 +302,7 @@ create_aois.removeFeatures = function (e) {
 };
 
 create_aois.map_updates = function () {
-    var layers = _.filter(map.layers, function (l) {
+    var layers = _.filter(map_layers.layers, function (l) {
         return l.type == "WMS" || l.type == "KML";
     });
 

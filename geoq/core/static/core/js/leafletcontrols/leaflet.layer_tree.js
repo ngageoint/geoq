@@ -16,9 +16,17 @@ leaflet_layer_control.$tree = undefined;
 leaflet_layer_control.accordion_sections = [];
 leaflet_layer_control.$feature_info = undefined;
 leaflet_layer_control.finish_options = [];
+leaflet_layer_control.hidden_panels = [];
 
 leaflet_layer_control.init = function(){
     leaflet_layer_control.$map = $("#map");
+    leaflet_layer_control.hidden_panels = site_settings.hidden_panels ? site_settings.hidden_panels[aoi_feature_edit.status] : null;
+    if (!leaflet_layer_control.hidden_panels) {
+        leaflet_layer_control.hidden_panels = {
+            "Awaiting Imagery" : ["Feature Details", "Geo Overview", "Layer Comparison", "Rotation Helper", "Geo Layers for Map"],
+            "In work" : [ "Imagery Query"]
+        };
+    }
     return leaflet_layer_control.initDrawer();
 };
 leaflet_layer_control.initDrawer = function(){
@@ -320,11 +328,16 @@ leaflet_layer_control.refreshLogInfo = function() {
 };
 
 leaflet_layer_control.buildAccordionPanel = function($accordion,title){
+    var hide = $.inArray(title, leaflet_layer_control.hidden_panels) > -1;
+
     var sectionName = _.str.dasherize(_.str.stripTags(title));
 
     var $drawerHolder = $("<div>")
         .addClass("accordion-group")
         .appendTo($accordion);
+    if (hide) {
+        ($drawerHolder).hide();
+    }
     var $drawerInner = $("<div>")
         .addClass("accordion-heading gray-header")
         .appendTo($drawerHolder);
@@ -371,7 +384,7 @@ leaflet_layer_control.addWorkCellInfo = function($accordion) {
             $('<span class="editable" id="status" style="display: inline">'+_.str.capitalize(value)+'</span>')
                 .appendTo($status)
                 .editable(editableUrl, {
-                    data   : " {'Unassigned':'Unassigned','In work':'In work', 'In review':'In review', 'Completed':'Completed'}",
+                    data   : " {'Unassigned':'Unassigned','Assigned':'Assigned','Awaiting Imagery':'Awaiting Imager', 'Awaiting Analysis':'Awaiting Analysis', 'Completed':'Completed'}",
                     type   : 'select',
                     submit : 'OK',
                     style  : 'inherit',
@@ -550,7 +563,7 @@ leaflet_layer_control.show_feature_info = function (feature) {
             $('<span class="editable" id="status" style="display: inline">'+_.str.capitalize(value)+'</span>')
                 .appendTo($status)
                 .editable(editableUrl, {
-                    data   : " {'Unassigned':'Unassigned','In work':'In work', 'In review':'In review', 'Completed':'Completed'}",
+                    data   : " {'Unassigned':'Unassigned','Assigned':'Assigned','Awaiting Imagery':'Awaiting Imager', 'Awaiting Analysis':'Awaiting Analysis', 'Completed':'Completed'}",
                     type   : 'select',
                     submit : 'OK',
                     style  : 'inherit',
@@ -960,7 +973,7 @@ leaflet_layer_control.parsers.dynamic_param_parsers.__group_box = function(layer
     "use strict";
     var wrapper = document.createElement("div");
     wrapper.className = "geoq-param-group clearfix";
-    
+
     var label = document.createElement("label");
     label.textContent = param.name;
     label.className = "geoq-param-group-label";
@@ -998,7 +1011,7 @@ leaflet_layer_control.parsers.dynamic_param_parsers.Date = function(layer, param
     input.type = "date";
     input.className = "input-medium";
     input.value = layer.config.layerParams[param.name];
-    
+
     if (param.range) {
         var rangeFun = leaflet_layer_control.parsers.dynamic_param_ranges[param.range.type];
         if (rangeFun) rangeFun(input, param.range);
@@ -1323,7 +1336,7 @@ leaflet_layer_control.refreshLayer = function(layer) {
             layer.redraw();
             break;
     }
-    
+
 }
 
 leaflet_layer_control.addLayerControlInfoPanel = function($content){
@@ -1530,7 +1543,7 @@ leaflet_layer_control.drawEachLayer=function(data,map,doNotMoveToTop){
                 if (leaflet_layer_control.likelyHasFeatures(layer)) {
                     leaflet_helper.constructors.geojson(layer.config, map, layer);
                 }
-                
+
                 aoi_feature_edit.map.addLayer(layer);
             } else {
                 //It's an object with layer info, not yet built - build the layer from the config data

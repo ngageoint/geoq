@@ -16,9 +16,11 @@ from django.forms.util import ValidationError
 from django.http import Http404, HttpResponse, HttpResponseRedirect, HttpResponseForbidden
 from django.shortcuts import get_object_or_404, redirect, render
 from django.views.generic import DetailView, ListView, TemplateView, View, DeleteView, CreateView, UpdateView
+from django.views.decorators.http import require_POST
 from datetime import datetime
+import distutils
 
-from models import Project, Job, AOI, Comment, AssigneeType, Organization
+from models import Project, Job, AOI, Comment, AssigneeType, Organization, WorkcellImage
 from geoq.maps.models import *
 from utils import send_assignment_email, increment_metric
 from geoq.training.models import Training
@@ -228,7 +230,7 @@ class CreateFeaturesView(UserAllowedMixin, DetailView):
         # logic for what we'll allow
         if aoi.status == 'Unassigned':
             aoi.analyst = self.request.user
-            aoi.status = 'In work'
+            aoi.status = 'Awaiting Imagery'
             aoi.save()
             return True
         elif aoi.status == 'In work':
@@ -239,7 +241,7 @@ class CreateFeaturesView(UserAllowedMixin, DetailView):
                 return False
             else:
                 return True
-        elif aoi.status == 'Assigned':
+        elif aoi.status == 'Assigned' or aoi.status == 'Awaiting Imagery':
             if is_admin:
                 return True
             elif aoi.assignee_type.model_class() is Permission and aoi.assignee_id == self.request.user.id:
@@ -249,9 +251,11 @@ class CreateFeaturesView(UserAllowedMixin, DetailView):
             else:
                 kwargs['error'] = "Another analyst has been assigned that workcell. Please select another workcell"
                 return False
-        elif aoi.status == 'Awaiting review':
+        elif aoi.status == 'Awaiting Analysis':
             if self.request.user in aoi.job.reviewers.all() or is_admin:
-                aoi.status = 'In review'
+                aoi.status = 'In work'
+                if aoi.started_at is None:
+                    aoi.started_at = datetime.now()
                 aoi.reviewers.add(self.request.user)
                 aoi.save()
                 increment_metric('workcell_analyzed')
@@ -343,13 +347,13 @@ class JobDetailedListView(ListView):
 
     paginate_by = 15
     model = Job
-    default_status = 'in work'
+    default_status = 'assigned'
     request = None
     metrics = False
 
     def get_queryset(self):
         status = getattr(self, 'status', None)
-        q_set = AOI.objects.filter(job=self.kwargs.get('pk'))
+        q_set = AOI.objects.filter(job=self.kwargs.get('pk')).order_by('assignee_id','id')
 
         # # If there is a user logged in, we want to show their stuff
         # # at the top of the list
@@ -533,6 +537,11 @@ class ChangeAOIStatus(View):
     def _update_aoi(self, request, aoi, status):
         aoi.analyst = request.user
         aoi.status = status
+
+        # if completed, mark completion date/time
+        if status == 'Completed':
+            aoi.finished_at = datetime.now()
+
         aoi.save()
         return aoi
 
@@ -649,6 +658,84 @@ class AssignWorkcellsView(TemplateView):
         else:
             return HttpResponse('{"status":"required field missing"}', status=500)
 
+
+class SummaryView(TemplateView):
+    template_name = 'core/summary.html'
+    model = Job
+
+    def get_queryset(self):
+        status = getattr(self, 'status', None)
+        q_set = AOI.objects.filter(job=self.kwargs.get('job_pk'))
+
+    def get_context_data(self, **kwargs):
+        cv = super(SummaryView, self).get_context_data(**kwargs)
+        cv['object'] = get_object_or_404(Job, pk=self.kwargs.get('job_pk'))
+        cv['workcells'] = AOI.objects.filter(job_id=self.kwargs.get('job_pk')).order_by('id')
+        return cv
+
+
+def image_footprints(request):
+    """
+    Stub to return sample JSON of fake image footprints with sample data. Used to test workcell_images model and footprints tool
+    Take in bbox:  s, w, n, e
+    """
+    import random, time
+
+    bbox = request.GET.get('bbox')
+
+    if not bbox:
+        return HttpResponse()
+
+    bb = bbox.split(',')
+    output = ""
+
+    if not len(bb) == 4:
+        output = json.dumps(dict(error=500, message='Need 4 corners of a bounding box passed in using EPSG 4386 lat/long format', grid=str(bb)))
+    else:
+        try:
+            month = str(time.strftime('%m'))
+            day = int(time.strftime('%d'))
+            year = str(time.strftime('%Y'))
+
+            samples = dict()
+            samples['features'] = []
+
+
+            for x in range(0, 8):
+                feature = dict()
+                feature['attributes'] = dict()
+                feature['attributes']['id'] = random.randint(1,1000000000)
+                feature['attributes']['image_id'] = feature['attributes']['id']
+                feature['attributes']['layerId'] = random.choice(['overwatch','eyesight','birdofprey','jupiter','eagle'])
+                feature['attributes']['image_sensor'] = random.choice(['xray','visible','gamma ray','telepathy','bw'])
+                feature['attributes']['cloud_cover'] = random.randint(1,100)
+                feature['attributes']['date_image'] = year + month + str(random.randint(1,day))
+                feature['attributes']['value'] = 'NEF-' + str(random.randint(1,10000)) + '-ABC-' + str(random.randint(1,10000))
+
+                feature['geometry'] = dict()
+
+                s = random.uniform(float(bb[0]), float(bb[2]))
+                w = random.uniform(float(bb[1]), float(bb[3]))
+                n = random.uniform(float(s), float(bb[2]))
+                e = random.uniform(float(w), float(bb[3]))
+
+                rings = []
+                rings.append([n, w])
+                rings.append([n, e])
+                rings.append([s, e])
+                rings.append([s, w])
+                rings.append([n, w])
+                feature['geometry']['rings'] = [rings]
+
+                samples['features'].append(feature)
+
+            output = json.dumps(samples)
+
+        except Exception, e:
+            import traceback
+            output = json.dumps(dict(error=500, message='Generic Exception', details=traceback.format_exc(), exception=str(e), grid=str(bb)))
+
+    return HttpResponse(output, mimetype="application/json")
 
 def usng(request):
     """
@@ -882,6 +969,28 @@ def add_workcell_comment(request, *args, **kwargs):
 
     return HttpResponse()
 
+@login_required
+@require_POST
+def create_workcell_image(request, id, **kwargs):
+    defaults = {}
+    wcell_params = request.POST.dict()
+    defaults['status'] = wcell_params.pop('status','NotEvaluated')
+    wcell_params['image_id'] = id
+    wcell_params['defaults'] = defaults
+    wcell_params['workcell'] = AOI.objects.get(id=wcell_params.get('workcell'))
+
+    geometry = wcell_params.get('img_geom')
+    wcell_params['img_geom'] = GEOSGeometry(geometry)
+
+    message = 'created'
+    wcell_image, created = WorkcellImage.objects.get_or_create(**wcell_params)
+    if not created:
+        wcell_image.status = defaults['status']
+        wcell_image.save()
+        message = 'updated'
+
+    return HttpResponse(json.dumps({message: message}), mimetype="application/json", status=200)
+
 
 class LogJSON(ListView):
     model = AOI
@@ -931,6 +1040,15 @@ class CellJSON(ListView):
         cell = aoi.grid_geoJSON()
 
         return HttpResponse(cell, mimetype="application/json", status=200)
+
+class CellImages(ListView):
+    model = AOI
+
+    def get(self, request, *args, **kwargs):
+        aoi = get_object_or_404(AOI, id=kwargs.get('pk'))
+        images = aoi.images()
+
+        return HttpResponse(images, mimetype="application/json", status=200)
 
 
 class JobGeoJSON(ListView):

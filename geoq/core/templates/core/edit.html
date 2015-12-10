@@ -64,12 +64,13 @@
             aoi_feature_edit.feature_types_all[{{ feature_type.id }}] = {{ feature_type.to_json|safe }};
         {% endfor %}
 
-        var inreview_status_url = "{% url 'aoi-update-status' object.id 'In review' %}";
-        aoi_feature_edit.awaitingreview_status_url = "{% url 'aoi-update-status' object.id 'Awaiting review' %}";
+        aoi_feature_edit.awaitinganalysis_status_url = "{% url 'aoi-update-status' object.id 'Awaiting Analysis' %}";
+        aoi_feature_edit.awaitingimagery_status_url = "{% url 'aoi-update-status' object.id 'Awaiting Imagery' %}";
         aoi_feature_edit.unassigned_status_url = "{% url 'aoi-update-status' object.id 'Unassigned' %}";
         aoi_feature_edit.completed_status_url = "{% url 'aoi-update-status' object.id 'Completed' %}";
 
-        leaflet_layer_control.finish_options.push('awaitingreview');
+        leaflet_layer_control.finish_options.push('awaitingimagery');
+        leaflet_layer_control.finish_options.push('awaitinganalysis');
         {% if request.user in reviewers %}
             leaflet_layer_control.finish_options.push('unassigned');
             leaflet_layer_control.finish_options.push('completed');
@@ -85,6 +86,8 @@
         aoi_feature_edit.aoi_extents_geojson = {{ object.polygon.json|safe }};
         aoi_feature_edit.aoi_properties = {{ object.properties_json|safe }};
         aoi_feature_edit.priority = {{ object.priority|default:5 }};
+        aoi_feature_edit.status = "{{ object.status }}";
+        aoi_feature_edit.workcell_images = {{ object.images_json|safe }};
 
         aoi_feature_edit.aoi_user_remembered_params = {{ user_custom_params|safe }};
 

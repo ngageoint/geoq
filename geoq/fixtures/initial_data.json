@@ -988,19 +988,6 @@
     }
 },
 {
-    "pk": 5, 
-    "model": "maps.maplayer", 
-    "fields": {
-        "opacity": 0.80000000000000004, 
-        "map": 2, 
-        "layer": 3, 
-        "shown": true, 
-        "stack_order": 2, 
-        "display_in_layer_switcher": true, 
-        "is_base_layer": true
-    }
-},
-{
     "pk": 21, 
     "model": "maps.maplayer", 
     "fields": {
@@ -1074,19 +1061,6 @@
         "layer": 162, 
         "shown": true, 
         "stack_order": 2, 
-        "display_in_layer_switcher": false, 
-        "is_base_layer": false
-    }
-},
-{
-    "pk": 44, 
-    "model": "maps.maplayer", 
-    "fields": {
-        "opacity": 0.80000000000000004, 
-        "map": 2, 
-        "layer": 161, 
-        "shown": true, 
-        "stack_order": 5, 
         "display_in_layer_switcher": false, 
         "is_base_layer": false
     }

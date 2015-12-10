@@ -4,6 +4,7 @@
 
 import json
 import cgi
+import ast
 
 from django.contrib.auth.models import User, Group
 from django.contrib.gis.db import models
@@ -14,14 +15,14 @@ from django.core.urlresolvers import reverse
 from django.utils.datastructures import SortedDict
 from managers import AOIManager
 from jsonfield import JSONField
-from collections import defaultdict
+from collections import defaultdict, OrderedDict
 from django.db.models import Q
 from geoq.training.models import Training
 from geoq.core.utils import clean_dumps
 
 TRUE_FALSE = [(0, 'False'), (1, 'True')]
-STATUS_VALUES_LIST = ['Unassigned', 'Assigned', 'In work', 'Awaiting review', 'In review', 'Completed']
-
+STATUS_VALUES_LIST = ['Assigned', 'Unassigned', 'Awaiting Imagery', 'Awaiting Analysis', 'In work', 'Completed']
+EVALUATION_VALUES_LIST = ['NotEvaluated','Accepted','RejectedClouds','RejectedQuality','RejectedOverlap']
 
 class AssigneeType:
     USER, GROUP = range(1, 3)
@@ -204,9 +205,10 @@ class Job(GeoQBase, Assignment):
 
     @property
     def aoi_counts_html(self):
-        count = defaultdict(int)
+        count = OrderedDict([(i,0) for i in STATUS_VALUES_LIST])
         for cell in AOI.objects.filter(job__id=self.id):
-            count[cell.status] += 1
+            if cell.status in count:
+                count[cell.status] += 1
 
         return str(', '.join("%s: <b>%r</b>" % (key, val) for (key, val) in count.iteritems()))
 
@@ -239,7 +241,7 @@ class Job(GeoQBase, Assignment):
             counts[featuretype][status] += 1
 
         #TODO: Also return this as JSON
-        if len(counts):
+        if 0:
             output = "<table class='job_feature_list'>"
 
             header = "<th><i>Feature Counts</i></th>"
@@ -273,7 +275,7 @@ class Job(GeoQBase, Assignment):
         """
         Returns the AOIs currently being worked on or in review
         """
-        return self.aois.filter(Q(status='In work') | Q(status='Awaiting review') | Q(status='In review'))
+        return self.aois.filter(Q(status='In work') | Q(status='Awaiting Imagery') | Q(status='Awaiting Analysis'))
 
     def in_work_count(self):
         return self.in_work().count()
@@ -350,7 +352,10 @@ class AOI(GeoQBase, Assignment):
     objects = AOIManager()
     polygon = models.MultiPolygonField()
     priority = models.SmallIntegerField(choices=PRIORITIES, max_length=1, default=5)
-    status = models.CharField(max_length=15, choices=STATUS_CHOICES, default='Unassigned')
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='Unassigned')
+
+    started_at = models.DateTimeField(blank=True,null=True)
+    finished_at = models.DateTimeField(blank=True,null=True)
 
     class Meta:
         permissions = (
@@ -375,6 +380,11 @@ class AOI(GeoQBase, Assignment):
             else:
                 return Group.objects.get(id=self.assignee_id).name
 
+    def images(self):
+        return WorkcellImage.objects.filter(workcell=self)
+
+    def images_json(self):
+        return [image.properties_json() for image in self.images()]
 
     #def save(self):
     # if analyst or reviewer updated, then create policy to give them permission to edit this object.....
@@ -464,6 +474,55 @@ class AOI(GeoQBase, Assignment):
     class Meta:
         verbose_name = 'Area of Interest'
         verbose_name_plural = 'Areas of Interest'
+
+
+class WorkcellImage(models.Model):
+    """
+    Track Images that can be displayed within a workcell
+    """
+    EVALUATION_CHOICES = [(choice, choice) for choice in EVALUATION_VALUES_LIST]
+
+    image_id = models.CharField(max_length=200)
+    nef_name = models.CharField(max_length=200)
+    sensor = models.CharField(max_length=50)
+    platform = models.CharField(max_length=50)
+    cloud_cover = models.IntegerField(default=0, null=True, blank=True)
+    acq_date = models.DateTimeField(auto_now_add=False)
+    img_geom = models.GeometryField(blank=True, null=True)
+    area = models.DecimalField(max_digits=10,decimal_places=3)
+    status = models.CharField(max_length=20, choices=EVALUATION_CHOICES, default='NotEvaluated')
+    workcell = models.ForeignKey(AOI)
+
+    def properties_json(self):
+        area = "%.2f" % self.img_geom.area
+        _json = dict(
+            image_id=str(self.image_id),
+            nef_name=str(self.nef_name),
+            sensor=str(self.sensor),
+            cloud_cover=int(self.cloud_cover),
+            platform=str(self.platform),
+            acq_date=format(self.acq_date, '%Y%m%d'),
+            img_geom=str(self.img_geom.geojson),
+            area=float(area),
+            status=str(self.status),
+            workcell=int(self.workcell.id)
+        )
+        return _json
+
+    def __unicode__(self):
+        image_obj = 'WorkcellImage %s' % self.image_id
+        return image_obj
+
+    class Meta:
+        permissions = (
+
+        )
+        ordering = ('-acq_date',)
+
+    @property
+    def url(self):
+        # TODO: format the url using the nef_name
+        return self.nef_name
 
 
 class Comment(models.Model):

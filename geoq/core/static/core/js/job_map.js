@@ -17,8 +17,8 @@ job_map.status_colors = [
     {name:'Assigned', color: leaflet_helper.styles.assigned, slug:'assigned'},
     {name:'Completed', color: leaflet_helper.styles.completed, slug:'completed'},
     {name:'In work', color: leaflet_helper.styles.in_work, slug:'in-work'},
-    {name:'In review', color: leaflet_helper.styles.in_review, slug:'in-review'},
-    {name:'Awaiting review', color: leaflet_helper.styles.awaiting_review, slug:'awaiting-review'},
+    {name:'Awaiting Analysis', color: leaflet_helper.styles.awaiting_analysis, slug:'awaiting-analysis'},
+    {name:'Awaiting Imagery', color: leaflet_helper.styles.awaiting_imagery, slug:'awaiting-imagery'},
     {name:'Unassigned', color: leaflet_helper.styles.extentStyle, slug:'unassigned'}
 ];
 

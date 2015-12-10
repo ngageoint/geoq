@@ -380,8 +380,10 @@ aoi_feature_edit.featureLayer_onEachFeature = function (feature, layer, featureL
         }
         if (feature.properties.updated_at){
             var datetime = feature.properties.updated_at;
-            datetime = datetime.replace("T"," ");
-            datetime = datetime.replace("UTC"," UTC");
+            if ((datetime.indexOf('T') > 0) && (datetime.indexOf('UTC')> 0)) {
+                //Needs to be in: 2007-04-05T14:30Z
+                datetime = datetime.replace("UTC","Z");
+            }
             var dtg = moment(datetime);
 
             if (dtg.isValid()){
@@ -1011,31 +1013,43 @@ aoi_feature_edit.map_init = function (map, bounds) {
 
     $('div.leaflet-draw.leaflet-control').find('a').popover({trigger:"hover",placement:"right"});
 
+    //footprints.init({
+	 //   url_template: 'http://dev.femadata.com/arcgis/rest/services/ImageEvents/ImageEvents/MapServer/{{layer}}/query?geometry={{bounds}}&geometryType=esriGeometryEnvelope&spatialRel=esriSpatialRelIntersects&outFields=*&outSR=4326&f=json',
+		//layerList: [1,2,3,4,5,6,7,8,9],
+		///*promptFields: [
+		//	       {name: 'mission', title: 'Mission ID#', popover: 'Comma-separated list of missions to search for', default: '75, 76', type: 'integer', format:'where', compare:'='}
+		//	       ],
+		//*/
+		//title: 'CAP Image',
+		//markerColorMax: '#ffdf00',
+		//markerColorMin: '#332200',
+		//schema: [
+		//	 {name: 'Id', id: true, visualize: 'none'},
+		//	 {name: 'layerId', title:'Image Type', color_by_layerid:true, filter:'options', show: 'small-table'},
+		//	 {name: 'EXIFCameraMaker', title: 'Camera Type', filter: 'options'},
+		//	 {name: 'ImageMissionName', title: 'Mission Name', filter: 'options', show: 'small-table', showSizeMultiplier: 2},
+		//	 {name: 'Altitude', title: 'Alt', type: 'integer', filter: 'slider-max', min: 0, max: 10000, start: 2000, show: 'small-table', sizeMarker: true},
+		//	 {name: 'Heading', title: 'Dir', type: 'integer', show: 'small-table'},
+		//	 {name: 'UploadDate', title: 'Date', type: 'date', filter: 'date-range', initialDateRange: 100, colorMarker: true},
+		//	 {name: 'ThumbnailURL', title: 'Thumbnail', visualize: 'thumbnail', linkField: 'ImageURL'},
+		//	 {name: 'Filename', title: 'File Name', filter: 'textbox', visualize: 'none', onNotFound: function (name) {
+		//		 console.log("TODO: Load If not found: " + name)
+		//		     }}
+		//	 ],
+		//featureSelectFunction: null
+    //            });
+
+
     footprints.init({
-	    url_template: 'http://dev.femadata.com/arcgis/rest/services/ImageEvents/ImageEvents/MapServer/{{layer}}/query?geometry={{bounds}}&geometryType=esriGeometryEnvelope&spatialRel=esriSpatialRelIntersects&outFields=*&outSR=4326&f=json',
-		layerList: [1,2,3,4,5,6,7,8,9],
-		/*promptFields: [
-			       {name: 'mission', title: 'Mission ID#', popover: 'Comma-separated list of missions to search for', default: '75, 76', type: 'integer', format:'where', compare:'='}
-			       ],
-		*/
-		title: 'CAP Image',
-		markerColorMax: '#ffdf00',
-		markerColorMin: '#332200',
-		schema: [
-			 {name: 'Id', id: true, visualize: 'none'},
-			 {name: 'layerId', title:'Image Type', color_by_layerid:true, filter:'options', show: 'small-table'},
-			 {name: 'EXIFCameraMaker', title: 'Camera Type', filter: 'options'},
-			 {name: 'ImageMissionName', title: 'Mission Name', filter: 'options', show: 'small-table', showSizeMultiplier: 2},
-			 {name: 'Altitude', title: 'Alt', type: 'integer', filter: 'slider-max', min: 0, max: 10000, start: 2000, show: 'small-table', sizeMarker: true},
-			 {name: 'Heading', title: 'Dir', type: 'integer', show: 'small-table'},
-			 {name: 'UploadDate', title: 'Date', type: 'date', filter: 'date-range', initialDateRange: 100, colorMarker: true},
-			 {name: 'ThumbnailURL', title: 'Thumbnail', visualize: 'thumbnail', linkField: 'ImageURL'},
-			 {name: 'Filename', title: 'File Name', filter: 'textbox', visualize: 'none', onNotFound: function (name) {
-				 console.log("TODO: Load If not found: " + name)
-				     }}
-			 ],
-		featureSelectFunction: null
-                });
+        url_template: '/geoq/api/test/image_footprints/?bbox={{bounds}}',
+        layerList: [1],
+        title: 'Images',
+        markerColorMax: '#ffdf00',
+        markerColorMin: '#332200',
+        showRejectOption: true,
+        featureSelectUrl: '/geoq/api/workcell-image/{{id}}'
+    });
+
 
 
     //Resize the map
@@ -1457,14 +1471,23 @@ aoi_feature_edit.buildDropdownMenu = function() {
         var opt = leaflet_layer_control.finish_options[i];
         var $li;
 
-        if (opt=='awaitingreview'){
+        if (opt == 'awaitingimagery') {
             $li = $("<li>")
                 .appendTo($ull);
             $("<a>")
                 .appendTo($li)
-                .text("Submit for Review")
-                .click(function(){
-                    aoi_feature_edit.complete_button_onClick(aoi_feature_edit.awaitingreview_status_url);
+                .text("Insufficient Imagery")
+                .click(function () {
+                    aoi_feature_edit.complete_button_onClick(aoi_feature_edit.awaitingimagery_status_url);
+                });
+        } else if (opt=='awaitinganalysis') {
+            $li = $("<li>")
+                .appendTo($ull);
+            $("<a>")
+                .appendTo($li)
+                .text("Ready for Analysis")
+                .click(function () {
+                    aoi_feature_edit.complete_button_onClick(aoi_feature_edit.awaitinganalysis_status_url);
                 });
         } else if (opt=='unassigned'){
             $li = $("<li>")

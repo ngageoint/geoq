@@ -65,6 +65,9 @@ urlpatterns = patterns('',
     url(r'^jobs/(?P<job_pk>\d+)/assign-workcells/?$',
         login_required(AssignWorkcellsView.as_view()),
         name='job-assign-workcells'),
+    url(r'^jobs/(?P<job_pk>\d+)/job-summary/?$',
+        login_required(SummaryView.as_view()),
+        name='job-summary'),
 
     url(r'^jobs/(?P<job_pk>\d+)/batch-create-aois/?$',
         #login required set in views
@@ -81,7 +84,7 @@ urlpatterns = patterns('',
         add_workcell_comment, name='add-workcell-comment'),
     url(r'^aois/work/(?P<pk>\d+)/log/?$',
         LogJSON.as_view(), name='workcell_log'),
-    url(r'^aois/update-status/(?P<pk>\d+)/(?P<status>Unassigned|Assigned|In work|Awaiting review|In review|Completed)/?$', login_required(
+    url(r'^aois/update-status/(?P<pk>\d+)/(?P<status>Unassigned|Assigned|In work|Awaiting Imagery|Awaiting Analysis|Completed)/?$', login_required(
         ChangeAOIStatus.as_view()),
         name="aoi-update-status"),
     url(r'^aois/update-priority/(?P<pk>\d+)/?$', login_required( update_priority ),
@@ -111,6 +114,7 @@ urlpatterns = patterns('',
     url(r'^api/jobs/(?P<job_pk>\d+)/groups/?$', list_groups, name='list_groups'),
     url(r'^api/geo/usng/?$', 'core.views.usng', name='usng'),
     url(r'^api/geo/mgrs/?$', 'core.views.mgrs', name='mgrs'),
+    url(r'^api/test/image_footprints/?$', 'core.views.image_footprints', name='image_footprints'),
     url(r'^proxy/(?P<path>.*)$', proxy_to, {'target_url': ''}),
     url(r'^proxy/?$', proxy_to, name='proxy'),
     url(r'^api/job[s ]?/(?P<pk>\d+).geojson$', JobGeoJSON.as_view(), name='json-job'),
@@ -126,8 +130,11 @@ urlpatterns = patterns('',
     url(r'^api/feature/update/(?P<pk>\d+)$', update_feature_data, name='update-feature-data'),
     url(r'^api/layer[s ]?.json$', LayersJSON.as_view(), name='json-layers'),
     url(r'^api/cell[s ]?/(?P<pk>\d+)?.geojson$', CellJSON.as_view(), name='json-workcell'),
+    url(r'^api/workcell/(?P<pk>\d+)/images/?$', CellImages.as_view(), name='workcell-images'),
 
     url(r'^api/prioritize/(?P<method>\w+)?$',
         'core.views.prioritize_cells', name='batch-prioritize-cells'),
+    url(r'^api/workcell-image/(?P<id>\w+)?$', 'core.views.create_workcell_image',
+        name='create-workcell-image'),
 
 )

@@ -6,6 +6,10 @@
 
  TODO: Show Workcell as highest vis layer
  TODO: Allow this class to be loaded multiple times in separate namespaces via closure
+ TODO: Update pqgrid to v 2.0.4 to improve scrolling
+
+ TODO: MINOR: Cloud filter slider in middle, not at 10%
+
  */
 var footprints = {};
 footprints.title = "Footprint";
@@ -23,14 +27,37 @@ footprints.$error_div = null;
 
 footprints.schema = [
     {name: 'image_id', id: true},
-    {name: 'layerId', title: 'Platform', filter: 'options', show: 'small-table'},
+    {name: 'layerId', title: 'Platform', filter: 'options', show: 'small-table', showSizeMultiplier: 2},
     {name: 'image_sensor', title: 'Sensor', filter: 'options'},
     //TODO: Show image name as mouseover or small text field?
-    {name: 'cloud_cover', title: 'Cloud Cover', type: 'integer', filter: 'slider-max', min: 0, max: 100, start: 10, show: 'small-table', sizeMarker: true},
-    {name: 'date_image', title: 'Date', type: 'date', filter: 'date-range', transform: 'day', initialDateRange: 30, colorMarker: true},
-    {name: 'value', title: 'NEF name', filter: 'textbox', onNotFound: function (name) {
+    {
+        name: 'cloud_cover',
+        title: 'Cloud%',
+        type: 'integer',
+        filter: 'slider-max',
+        min: 0,
+        max: 100,
+        start: 10,
+        show: 'small-table',
+        sizeMarker: true
+    },
+    {name: 'status', title: 'Status', filter: 'options'},
+    {
+        name: 'date_image',
+        title: 'Date Taken',
+        type: 'date',
+        filter: 'date-range',
+        transform: 'day',
+        show: 'small-table',
+        showSizeMultiplier: 2,
+        initialDateRange: 30,
+        colorMarker: true
+    },
+    {
+        name: 'value', title: 'NEF name', filter: 'textbox', onNotFound: function (name) {
         console.log("TODO: Load If not found: " + name)
-    }}
+    }
+    }
 ];
 
 footprints.url_template = 'http://server.com/arcgis/rest/services/ImageEvents/MapServer/req_{{layer}}/query?&geometry={{bounds}}&geometryType=esriGeometryEnvelope&spatialRel=esriSpatialRelIntersects&outFields=*&outSR=4326&f=json';
@@ -41,7 +68,8 @@ footprints.layerColors = "#00ff00, #ff0000, #0000ff".split(', ');
 footprints.featureSelectFunction = function (feature) {
     console.log("Lookup more info on " + feature.name);
 };
-footprints.filters = {in_bounds: true};
+footprints.featureSelectUrl = null;
+footprints.filters = {in_bounds: true, previously_rejected: false};
 footprints.prompts = {};
 footprints.features = [];
 
@@ -83,10 +111,50 @@ footprints.init = function (options) {
 
     //Set up GeoJSON layer
     if (footprints.map) {
-        footprints.layerHolder = L.geoJson([], {onEachFeature: onEachFeature, style: footprints.polyToLayer, pointToLayer: footprints.pointToLayer}).addTo(footprints.map);
+        footprints.layerHolder = L.geoJson([], {
+            onEachFeature: onEachFeature,
+            style: footprints.polyToLayer,
+            pointToLayer: footprints.pointToLayer
+        }).addTo(footprints.map);
     } else {
         console.error("Footprint Plugin could not load layerHolder");
     }
+
+    if (aoi_feature_edit.workcell_images && aoi_feature_edit.workcell_images.length) {
+        footprints.addInitialImages();
+    }
+};
+footprints.addInitialImages = function () {
+    _.each(aoi_feature_edit.workcell_images, function(data_row){
+        var layer_id = data_row.sensor;
+        var geo_json = JSON.parse(data_row.img_geom);
+        var rings = [];
+        _.each(geo_json.coordinates[0], function(point){
+            rings.push(point);
+        });
+
+        //Convert the json output from saved images into the format the list is expecting
+        var data = {
+            attributes:{
+                id: data_row.image_id,
+                image_id: data_row.image_id,
+                layerId: data_row.platform, //TODO: Was this saved?
+                image_sensor: data_row.sensor,
+                cloud_cover : data_row.cloud_cover,
+                date_image: data_row.acq_date,
+                value: data_row.nef_name,
+                area: data_row.area,
+                status: data_row.status
+            },
+            geometry: {rings: [rings]}
+        };
+
+        var layer_name = "Layer";
+        if (footprints.layerNames && footprints.layerNames.length && footprints.layerNames.length >= layer_id) {
+            layer_name = footprints.layerNames[layer_id];
+        }
+        footprints.newFeaturesArrived({features:[data]}, "[initial]", layer_id, layer_name);
+    });
 
 };
 footprints.buildAccordionPanel = function () {
@@ -107,19 +175,21 @@ footprints.buildAccordionPanel = function () {
 
     //For every item in the schema that has a filter, draw the filter chrome and link it to the item
     _.each(footprints.schema, function (schema_item) {
-	    if (schema_item.filter) {
-		if (schema_item.filter == 'options') {
-		    schema_item.update = _.debounce(function(schema_item){footprints.addFilterOptions(footprints.$filter_holder, schema_item)}, 500);
-		} else if (schema_item.filter == 'slider-max') {
-		    schema_item.update = _.debounce(function(schema_item){footprints.addFilterSliderMax(footprints.$filter_holder, schema_item)}, 500);
-		} else if (schema_item.filter == 'date-range') {
-		    schema_item.update = _.debounce(function(schema_item){footprints.addFilterDateMax(footprints.$filter_holder, schema_item)}, 500);
-		} else if (schema_item.filter == 'textbox') {
-		    schema_item.update = _.debounce(function(schema_item){footprints.addFilterTextbox(footprints.$filter_holder, schema_item)}, 500);
-		}
-	    }
+        if (schema_item.filter) {
+            if (schema_item.filter == 'options') {
+                schema_item.update = footprints.addFilterOptions(footprints.$filter_holder, schema_item);
+            } else if (schema_item.filter == 'slider-max') {
+                schema_item.update = footprints.addFilterSliderMax(footprints.$filter_holder, schema_item);
+            } else if (schema_item.filter == 'date-range') {
+                schema_item.update = footprints.addFilterDateMax(footprints.$filter_holder, schema_item);
+            } else if (schema_item.filter == 'textbox') {
+                schema_item.update = footprints.addFilterTextbox(footprints.$filter_holder, schema_item);
+            }
+        }
     });
     footprints.addWorkcellBounds(footprints.$filter_holder);
+    if (footprints.showRejectOption) footprints.addRejectButton(footprints.$filter_holder);
+
     footprints.addResultTable(footprints.$filter_holder);
 };
 footprints.clamp = function (num, min, max) {
@@ -171,10 +241,12 @@ footprints.polyToLayer = function (feature) {
         var val = feature.properties[size_field.name] || feature[size_field.name] || size_min;
         if ((size_field.type && size_field.type == 'date') || (size_field.filter && size_field.filter == 'date-range')) {
             var date_val = val;
+            var date_format = null;
             if (size_field.transform == 'day') {
                 date_val = val.substr(0, 4) + '-' + val.substr(4, 2) + '-' + val.substr(6, 2);
+                date_format = "YYYY-MM-DD";
             }
-            date_val = moment(date_val);
+            date_val = moment(date_val, date_format);
             if (date_val && date_val.isValid()) val = date_val.unix();
         }
         var color_prime = footprints.markerColorMax;
@@ -214,10 +286,13 @@ footprints.pointToLayer = function (feature, latlng) {
         var val = feature.properties[size_field.name] || feature[size_field.name] || size_min;
         if ((size_field.type && size_field.type == 'date') || (size_field.filter && size_field.filter == 'date-range')) {
             var date_val = val;
-            if (schema_item.transform == 'day') {
+            var date_format = null;
+            if (size_field.transform == 'day') {
                 date_val = val.substr(0, 4) + '-' + val.substr(4, 2) + '-' + val.substr(6, 2);
+                date_format = "YYYY-MM-DD";
             }
-            date_val = moment(date_val);
+            date_val = moment(date_val, date_format);
+
             if (date_val && date_val.isValid()) val = date_val.unix();
         }
         radius = footprints.percent_range(val, size_min, size_max, footprints.markerRadiusMax / 3, footprints.markerRadiusMax);
@@ -241,10 +316,12 @@ footprints.pointToLayer = function (feature, latlng) {
         var val = feature.properties[size_field.name] || feature[size_field.name] || size_min;
         if ((size_field.type && size_field.type == 'date') || (size_field.filter && size_field.filter == 'date-range')) {
             var date_val = val;
+            var date_format = null;
             if (size_field.transform == 'day') {
                 date_val = val.substr(0, 4) + '-' + val.substr(4, 2) + '-' + val.substr(6, 2);
+                date_format = "YYYY-MM-DD";
             }
-            date_val = moment(date_val);
+            date_val = moment(date_val, date_format);
             if (date_val && date_val.isValid()) val = date_val.unix();
         }
 
@@ -280,10 +357,12 @@ footprints.updateFootprintDataFromMap = function () {
     var bounds = footprints.map.getBounds();
 
     //Do Ajax requests for each Layer in the LayerList
+    var bbox_string = bounds.toBBoxString().replace(/,/gi, '%2C');
+
     var layers = footprints.layerList || [1];
-    _.each(layers, function(layer, layer_id) {
+    _.each(layers, function (layer, layer_id) {
         var inputs = {
-            bounds: bounds.toBBoxString(),
+            bounds: bbox_string,
             layers: "show:" + (footprints.layers || '0'),
             layer: layer,
             n: bounds._northEast.lat,
@@ -292,12 +371,14 @@ footprints.updateFootprintDataFromMap = function () {
             w: bounds._southWest.lng
         };
         //If there are any WHERE clauses, add those in
-        _.each(footprints.promptFields, function(field) {
+        _.each(footprints.promptFields, function (field) {
             inputs[field.name] = footprints.expandPromptSettings(field);
         });
 
         //Apply all the above inputs to the url template to build out the final url
         var url = url_template(inputs);
+
+        if (_.str.startsWith(url, 'http')) url = proxy + url;
 
         var layer_name = "Layer";
         if (footprints.layerNames && footprints.layerNames.length && footprints.layerNames.length >= layer_id) {
@@ -306,23 +387,27 @@ footprints.updateFootprintDataFromMap = function () {
 
         console.log(url);
         $.ajax({
-            url: proxy + url,
+            url: url,
             type: 'json',
-            success: function (data) {footprints.newFeaturesArrived(data, proxy + url, layer_id, layer_name);}
+            success: function (data) {
+                footprints.newFeaturesArrived(data, url, layer_id, layer_name);
+            }
         });
     });
 };
-footprints.expandPromptSettings = function (field){
+footprints.expandPromptSettings = function (field) {
     //If the prompt is a 'where', turns a comma-seperated list into a proper where clause
     var name = field.name;
 
-    var field_values = _.find(footprints.prompts,function(f){return f.name==name}) || field.default || '';
+    var field_values = _.find(footprints.prompts, function (f) {
+            return f.name == name
+        }) || field.default || '';
     var str = field_values;
 
     if (field_values.length > 0 && field.format && field.format == 'where') {
         str = 'WHERE=';
         var first = true;
-        _.each(field_values.split(','), function(val){
+        _.each(field_values.split(','), function (val) {
             val = _.str.trim(val);
             if (!first) {
                 str = str + 'OR '
@@ -340,15 +425,20 @@ footprints.expandPromptSettings = function (field){
 };
 footprints.newFeaturesArrived = function (data, url, layer_id, layer_name) {
     var returned = {};
-    try {
-        returned = JSON.parse(data);
-    } catch (ex) {
-        footprints.userMessage('Invalid JSON data returned from server', 'red');
+
+    if (_.isObject(data)) {
+        returned = data;
+    } else {
+        try {
+            returned = JSON.parse(data);
+        } catch (ex) {
+            footprints.userMessage('Invalid JSON data returned from server', 'red');
+        }
     }
 
     var field_id = _.find(footprints.schema, function (s) {
-        return s.id
-    }).name || "id";
+            return s.id
+        }).name || "id";
 
     if (returned) {
         var count_added = 0;
@@ -411,7 +501,7 @@ footprints.newFeaturesArrived = function (data, url, layer_id, layer_name) {
             }
             footprints.userMessage(count_added + ' new ' + footprints.title + 's added', 'yellow');
         } else if (features) {
-            console.log('No Features found in this area from layer: '+layer_name + ' ('+layer_id+')');
+            console.log('No Features found in this area from layer: ' + layer_name + ' (' + layer_id + ')');
         } else {
             footprints.userMessage('The Service returned an invalid response', 'red');
             console.log("Invalid feature types returned from url: " + url);
@@ -422,46 +512,55 @@ footprints.updateFeatureMinMaxes = function () {
     //If it's a number or date, find the min and max and save it with the schema
 
     _.each(footprints.schema, function (schema_item) {
-        var min = Number.MAX_VALUE;
-        var max = Number.MIN_VALUE;
-        var update = false;
+        if (schema_item.min !== undefined && schema_item.max !== undefined) {
+            schema_item._min = schema_item.min;
+            schema_item._max = schema_item.max;
+        } else {
+            var min = Number.MAX_VALUE;
+            var max = Number.MIN_VALUE;
+            var update = false;
 
-        if ((schema_item.type && schema_item.type == 'integer') || (schema_item.filter && schema_item.filter == 'slider-max')) {
-            for (var i = 0; i < footprints.features.length; i++) {
-                var feature = footprints.features[i];
-                var val = feature.attributes[schema_item.name] || feature[schema_item.name];
-                val = parseFloat(val);
-                if (val > max) max = val;
-                if (val < min) min = val;
-                update = true;
-            }
-        } else if ((schema_item.type && schema_item.type == 'date') || (schema_item.filter && schema_item.filter == 'date-range')) {
-            for (var i = 0; i < footprints.features.length; i++) {
-                var feature = footprints.features[i];
-                var val = feature.attributes[schema_item.name] || feature[schema_item.name];
-                var date_val = val;
-                if (schema_item.transform == 'day') {
-                    date_val = val.substr(0, 4) + '-' + val.substr(4, 2) + '-' + val.substr(6, 2);
-                }
-                date_val = moment(date_val);
-                if (date_val && date_val.isValid()) {
-                    val = date_val.unix();  //Convert it to seconds to compare
+            if ((schema_item.type && schema_item.type == 'integer') || (schema_item.filter && schema_item.filter == 'slider-max')) {
+                for (var i = 0; i < footprints.features.length; i++) {
+                    var feature = footprints.features[i];
+                    var val = feature.attributes[schema_item.name] || feature[schema_item.name];
+                    val = parseFloat(val);
                     if (val > max) max = val;
                     if (val < min) min = val;
                     update = true;
                 }
+            } else if ((schema_item.type && schema_item.type == 'date') || (schema_item.filter && schema_item.filter == 'date-range')) {
+                for (var i = 0; i < footprints.features.length; i++) {
+                    var feature = footprints.features[i];
+                    var val = feature.attributes[schema_item.name] || feature[schema_item.name];
+                    var date_val = val;
+                    var date_format = null;
+                    if (schema_item.transform == 'day') {
+                        date_val = val.substr(0, 4) + '-' + val.substr(4, 2) + '-' + val.substr(6, 2);
+                        date_format = "YYYY-MM-DD";
+                    }
+                    date_val = moment(date_val, date_format);
+
+
+                    if (date_val && date_val.isValid()) {
+                        val = date_val.unix();  //Convert it to seconds to compare
+                        if (val > max) max = val;
+                        if (val < min) min = val;
+                        update = true;
+                    }
+                }
             }
-        }
-        if (update) {
-            if (min < Number.MAX_VALUE) schema_item._min = min;
-            if (max > Number.MIN_VALUE) schema_item._max = max;
+            if (update) {
+                if (min < Number.MAX_VALUE) schema_item._min = min;
+                if (max > Number.MIN_VALUE) schema_item._max = max;
+            }
         }
     });
 };
 footprints.findMarkerByFeature = function (feature_search) {
     var field_id = _.find(footprints.schema, function (s) {
-        return s.id
-    }).name || "id";
+            return s.id
+        }).name || "id";
 
     var marker_found = null;
     var markers = _.toArray(footprints.layerHolder._layers);
@@ -531,7 +630,7 @@ footprints.popupContentOfFeature = function (feature) {
         var val = (feature.attributes[schema_item.name] || feature[schema_item.name]);
         var title = (schema_item.title || schema_item.name);
 
-	if (val && schema_item.visualize == 'thumbnail') {
+        if (val && schema_item.visualize == 'thumbnail') {
             var val_url = val;
             if (schema_item.linkField) {
                 val_url = (feature.attributes[schema_item.linkField] || feature[schema_item.linkField]) || val;
@@ -544,10 +643,12 @@ footprints.popupContentOfFeature = function (feature) {
             }
             out += "<b>" + title + ":</b> <a href='" + val_url + "' target='_blank'>Link</a><br/>";
         } else if (val && (schema_item.type && schema_item.type == 'date') || (schema_item.filter && schema_item.filter == 'date-range')) {
+            var date_format = null;
             if (schema_item.transform == 'day') {
                 val = val.substr(0, 4) + '-' + val.substr(4, 2) + '-' + val.substr(6, 2);
+                date_format = "YYYY-MM-DD";
             }
-            var date_val = moment(val);
+            var date_val = moment(val, date_format);
             if (date_val && date_val.isValid && date_val.isValid()) {
                 val = date_val.format('YYYY-MM-DD') + ' - ' + date_val.fromNow();
             }
@@ -571,8 +672,8 @@ footprints.convertFeatureToGeoJson = function (feature) {
     };
 
     var field_id = _.find(footprints.schema, function (s) {
-        return s.id
-    }).name || "id";
+            return s.id
+        }).name || "id";
     geojsonFeature.name = feature[field_id] || feature.attributes[field_id];
     if (feature.geometry && feature.geometry.x && feature.geometry.y) {
         geojsonFeature.geometry = {
@@ -608,7 +709,10 @@ footprints.isFeatureInPolygon = function (feature, workcellGeojson) {
 
         //Check if the shape (or all the points of the shape's boundary) is within the workcell
         for (var r = 0; r < geo.rings.length; r++) {
-            if (gju.pointInPolygon({"type": "Point", "coordinates": [geo.rings[0][r][0], geo.rings[0][r][1]]}, workcellGeojson)) {
+            if (gju.pointInPolygon({
+                    "type": "Point",
+                    "coordinates": [geo.rings[0][r][0], geo.rings[0][r][1]]
+                }, workcellGeojson)) {
                 in_poly = true;
                 break;
             }
@@ -625,7 +729,10 @@ footprints.isFeatureInPolygon = function (feature, workcellGeojson) {
         if (!in_poly) {
             var coords = footprints.workcellGeojson.coordinates[0][0];
             for (var r = 0; r < coords.length; r++) {
-                if (gju.pointInPolygon({"type": "Point", "coordinates": coords[r]}, {type: "Polygon", coordinates: geo.rings})) {
+                if (gju.pointInPolygon({"type": "Point", "coordinates": coords[r]}, {
+                        type: "Polygon",
+                        coordinates: geo.rings
+                    })) {
                     in_poly = true;
                     break;
                 }
@@ -664,8 +771,14 @@ footprints.updateFootprintFilteredResults = function (options) {
             }
         }
 
+        //Check if item has been rejected and rejects shouldn't be shown
+        if (feature.attributes.status && feature.attributes.status == "RejectedQuality" && !footprints.filters.previously_rejected) {
+            matched = false;
+        }
+        //TODO: Make sure previous data is returned from AOIs
+
         //Check through each filter to see if it's excluded
-        _.each(footprints.schema, function (schema_item) {
+        if (matched) _.each(footprints.schema, function (schema_item) {
             if (schema_item.filter && matched) {
                 var fieldToCheck = schema_item.name;
                 var filterSetting = footprints.filters[fieldToCheck];
@@ -690,12 +803,14 @@ footprints.updateFootprintFilteredResults = function (options) {
                         }
                     } else if (schema_item.filter == 'date-range') {
                         var val_date = val;
+                        var date_format = null;
                         if (schema_item.transform == 'day') {
                             val_date = val.substr(0, 4) + '-' + val.substr(4, 2) + '-' + val.substr(6, 2);
+                            date_format = "YYYY-MM-DD";
                         } else if (schema_item.transform == 'thousands') {
                             //No problem if there are miliseconds in the field, moment should interpret it correctly
                         }
-                        var feature_date = moment(val_date);
+                        var feature_date = moment(val_date, date_format);
                         if (feature_date < filterSetting.startdate_moment ||
                             feature_date > filterSetting.enddate_moment) {
                             matched = false;
@@ -731,10 +846,12 @@ footprints.updateFootprintFilteredResults = function (options) {
             var val = feature[fieldToCheck] || feature.attributes[fieldToCheck] || feature._geojson[fieldToCheck];
 
             if ((schema_item.type && schema_item.type == 'date') || (schema_item.filter && schema_item.filter == 'date-range')) {
+                var date_format = null;
                 if (schema_item.transform == 'day') {
                     val = val.substr(0, 4) + '-' + val.substr(4, 2) + '-' + val.substr(6, 2);
+                    date_format = "YYYY-MM-DD";
                 }
-                var date_val = moment(val);
+                var date_val = moment(val, date_format);
                 if (date_val && date_val.isValid && date_val.isValid()) {
                     val = date_val.format('YYYY-MM-DD');
                 }
@@ -793,9 +910,14 @@ footprints.addResultTable = function ($holder) {
         .appendTo($holder);
 
     //Set up table
-    var width = 210;
-    var obj = { width: width, height: 180, title: "Matched " + footprints.title + "s", editable: false,
-        flexHeight: false, topVisible: false, bottomVisible: false, flexWidth: true, numberCell: false };
+    var width = 300;
+    if (footprints.featureSelectFunction || footprints.featureSelectUrl) {
+        width -= 40;
+    }
+    var obj = {
+        width: width, height: 180, title: "Matched " + footprints.title + "s", editable: false,
+        flexHeight: false, topVisible: false, bottomVisible: false, flexWidth: true, numberCell: false
+    };
 
 
     //Pull out just the columns that will be shown
@@ -803,7 +925,12 @@ footprints.addResultTable = function ($holder) {
     var column_count = 0;
     _.each(footprints.schema, function (schema_item) {
         if (schema_item.show && schema_item.show == 'small-table') {
-            columns.push({title: schema_item.title || schema_item.name, dataType: 'string', dataIndx: schema_item.name, showSizeMultiplier: schema_item.showSizeMultiplier});
+            columns.push({
+                title: schema_item.title || schema_item.name,
+                dataType: 'string',
+                dataIndx: schema_item.name,
+                showSizeMultiplier: schema_item.showSizeMultiplier
+            });
             column_count += schema_item.showSizeMultiplier || 1;
         }
     });
@@ -815,29 +942,102 @@ footprints.addResultTable = function ($holder) {
 
     //If featureSelectFunction exists as a function, have a checkbox
     obj.colModel = [];
-    if (footprints.featureSelectFunction) {
+    if (footprints.featureSelectUrl || footprints.featureSelectFunction) {
         obj.colModel = [
-            { title: "Show", width: 10, dataType: "string", dataIndx: columns.length + 2, editable: false, sortable: false, align: "center", resizable: false,
+            {
+                title: "Accept",
+                width: 10,
+                dataType: "string",
+                dataIndx: columns.length + 2,
+                editable: false,
+                sortable: false,
+                align: "center",
+                resizable: false,
                 render: function (ui) {
-                    return "<input type='checkbox'/>";
-            }}];
+                    var id = ui.rowIndx;
+                    var data = ui.data[id];
+
+                    var c1 = (data.status && data.status == 'Accepted') ? 'checked' : '';
+                    var c2 = (!data.status || (data.status && data.status == 'NotEvaluated')) ? 'checked' : '';
+                    var c3 = (data.status && data.status == 'RejectedQuality') ? 'checked' : '';
+
+                    var bg = '<input class="accept" id="r1-' + id + '" type="radio" name="acceptance-' + id + '" '+c1+' value="Accepted"/><label for="r1-' + id + '"></label>';
+                    bg += '<input class="unsure" id="r2-' + id + '" type="radio" name="acceptance-' + id + '" '+c2+' value="NotEvaluated"/>';
+                    bg += '<input class="reject" id="r3-' + id + '" type="radio" name="acceptance-' + id + '" '+c3+' value="RejectedQuality"/><label for="r3-' + id + '"></label>';
+
+                    return bg;
+                }
+            }];
         obj.cellClick = function (evt, ui) {
-            var $target = $(evt.target);
-            var $checkbox = $target.find("input[type='checkbox']");
+            var clicked_on = evt.srcElement;
+            if (!clicked_on) {
+                //Firefox
+                clicked_on = evt.originalEvent.target ? evt.originalEvent.target : false;
+                if (!clicked_on) {
+                    throw "footprints error - Could not determine what was clicked on using this browser";
+                }
+            }
 
-            if ($checkbox.length) {
-                var item = ui.dataModel.data[ui.rowIndx];
-                var feature = footprints.getFeatureFromTable(item);
-                feature.checked = $checkbox.is(":checked");
+            if (clicked_on.nodeName != "INPUT") {
+                return; //Fires for row and for cell, nly want for cell
+            }
+            var $target = $("input:radio[name ='acceptance-" + ui.rowIndx + "']:checked");
 
-                footprints.featureSelectFunction(feature);
-            } else {
-                console.log('A box was clicked, but not a checkbox');
+            var val = $target.val();
+            if (val && footprints.featureSelectUrl) {
+                var data_row = ui.dataModel.data[ui.rowIndx];
+                var image_id = data_row.image_id;
+
+                var inputs = {
+                    id: image_id,
+                    evaluation: val
+                };
+
+                //Apply all the above inputs to the url template to build out the final url
+                var proxy = leaflet_helper.proxy_path || '/geoq/proxy/';
+                var url_template = _.template(footprints.featureSelectUrl);
+                var url = url_template(inputs);
+
+                if (_.str.startsWith(url, 'http')) url = proxy + url;
+
+                var geometry = {
+                    "type": "Polygon",
+                    "coordinates": [[]]
+                };
+                _.each(data_row.geometry.geometry.rings[0], function(point) {
+                   geometry.coordinates[0].push(point);
+                });
+
+                var data = {
+                    image_id: data_row.image_id,
+                    nef_name: data_row.value,
+                    sensor: data_row.image_sensor,
+                    platform: data_row.layerId,
+                    cloud_cover: data_row.cloud_cover,
+                    acq_date: data_row.date_image,
+                    img_geom: JSON.stringify(geometry),
+                    area: 1,
+                    status: val,
+                    workcell: aoi_feature_edit.aoi_id
+                };
+
+                console.log(url);
+                $.ajax({
+                    type: "POST",
+                    url: url,
+                    data: data,
+                    dataType: "json",
+                    success: function (data) {
+                        console.log(data)
+                    }
+                });
+            } else if (val && footprints.featureSelectFunction) {
+                footprints.featureSelectFunction(ui, val);
             }
         };
     }
     obj.colModel = obj.colModel.concat(columns);
-    obj.dataModel = { data: footprints.matched_flattened };
+    obj.dataModel = {data: footprints.matched_flattened};
 
     $grid.pqGrid(obj);
     footprints.$grid = $grid;
@@ -845,8 +1045,8 @@ footprints.addResultTable = function ($holder) {
 footprints.getFeatureFromTable = function (rowData) {
 
     var field_id = _.find(footprints.schema, function (s) {
-        return s.id
-    }).name || "id";
+            return s.id
+        }).name || "id";
 
     var feature = null;
     for (var j = 0; j < footprints.features.length; j++) {
@@ -878,16 +1078,29 @@ footprints.addWorkcellBounds = function ($holder) {
         })
         .appendTo($div);
 };
+footprints.addRejectButton = function ($holder) {
+    var $div = $("<div><b>Show items previously rejected:</b> </div>")
+        .appendTo($holder);
+    $('<input>')
+        .attr({type: 'checkbox', value: 'previously_rejected', checked: false})
+        .css({fontSize: '12px', padding: '2px'})
+        .on('change', function () {
+            var val = $(this).attr('checked');
+            footprints.filters.previously_rejected = !!val;
+            footprints.updateFootprintFilteredResults();
+        })
+        .appendTo($div);
+};
 footprints.addFilterPrompts = function ($content) {
     _.each(footprints.promptFields || [], function (prompt_item) {
         $("<span>")
             .html((prompt_item.title || prompt_item.name) + ": ")
-            .attr('title',prompt_item.popover)
+            .attr('title', prompt_item.popover)
             .appendTo($content);
         $("<input>")
             .val(prompt_item.default || '')
-            .attr('title',prompt_item.popover)
-            .css({minWidth:'100px',maxWidth:'120px'})
+            .attr('title', prompt_item.popover)
+            .css({minWidth: '100px', maxWidth: '120px'})
             .on('change', function (evt) {
                 footprints.prompts[prompt_item.name] = evt.target.value;
             })
@@ -987,8 +1200,11 @@ footprints.addFilterButton = function ($holder) {
 };
 
 footprints.addFilterSliderMax = function ($holder, schema_item) {
-    var $cc = $('<div><b>Max ' + (schema_item.title || schema_item.name) + ':</b></div>')
+    var $slider = $('<div>')
         .appendTo($holder);
+
+    var $cc = $('<div><b>Max ' + (schema_item.title || schema_item.name) + ':</b></div>')
+        .appendTo($slider);
     var $cc_count = $('<span>')
         .html(" (" + (schema_item.start || 10) + ")")
         .appendTo($cc);
@@ -1002,7 +1218,7 @@ footprints.addFilterSliderMax = function ($holder, schema_item) {
             $cc_count.html(" (" + this.value + ")")
         }, 50))
         .attr({val: schema_item.start || 10})
-        .appendTo($holder);
+        .appendTo($slider);
 
     var update = function () {
         //Hide if there's no variable in options, so no reason to have a filter
@@ -1011,8 +1227,10 @@ footprints.addFilterSliderMax = function ($holder, schema_item) {
                 .attr({val: schema_item._min})
                 .hide();
         } else if (schema_item._max) {
+            var min = schema_item.min !== undefined ? schema_item.min : schema_item._min || 0;
+            var max = schema_item.max || schema_item._max;
             $input
-                .attr({type: 'range', min: schema_item._min, max: schema_item._max})
+                .attr({type: 'range', min: min, max: max})
                 .show();
         }
     };
@@ -1102,53 +1320,4 @@ footprints.addFilterOptions = function ($holder, schema_item) {
 
 };
 
-//===================================
-footprints.dev = function () {
-
-    console.log('Loading Footprints scripts');
-    $('head')
-        .append('<link rel="stylesheet" href="//rawgit.com/paramquery/grid/master/pqgrid.dev.css" type="text/css" />')
-        .append('<link rel="stylesheet" href="//rawgit.com/paramquery/grid/master/themes/Office/pqgrid.css" type="text/css" />')
-        .append('<link rel="stylesheet" href="//cdn.jsdelivr.net/bootstrap.daterangepicker/2/daterangepicker.css" type="text/css" />');
-
-    moment = null;
-    delete moment;
-    $.curCSS = function (element, attrib, val) {
-        $(element).css(attrib, val);
-    };
-    $.getScript('//rawgit.com/moment/moment/develop/moment.js', function () {
-        $.getScript('//rawgit.com/paramquery/grid/master/pqgrid.dev.js', function () {
-            $.getScript('//cdn.jsdelivr.net/bootstrap.daterangepicker/2/daterangepicker.js', function () {
-                footprints.init({
-                    url_template: 'http://dev.femadata.com/arcgis/rest/services/ImageEvents/ImageEvents/MapServer/{{layer}}/query?{{mission}}&geometry={{bounds}}&geometryType=esriGeometryEnvelope&spatialRel=esriSpatialRelIntersects&outFields=*&outSR=4326&f=json',
-                    layerList: [1,2,3,4,5,6,7,8,9],
-                    promptFields: [
-                        {name: 'mission', title: 'Mission ID#', popover: 'Comma-separated list of missions to search for', default: '75, 76', type: 'integer', format:'where', compare:'='}
-                    ],
-                    title: 'CAP Image',
-                    markerColorMax: '#ffdf00',
-                    markerColorMin: '#332200',
-                    schema: [
-                        {name: 'Id', id: true, visualize: 'none'},
-                        {name: 'layerId', title:'Image Type', color_by_layerid:true, filter:'options', show: 'small-table'},
-                        {name: 'EXIFCameraMaker', title: 'Camera Type', filter: 'options'},
-                        {name: 'ImageMissionName', title: 'Mission Name', filter: 'options', show: 'small-table', showSizeMultiplier: 2},
-                        {name: 'Altitude', title: 'Alt', type: 'integer', filter: 'slider-max', min: 0, max: 10000, start: 2000, show: 'small-table', sizeMarker: true},
-                        {name: 'Heading', title: 'Dir', type: 'integer', show: 'small-table'},
-                        {name: 'UploadDate', title: 'Date', type: 'date', filter: 'date-range', initialDateRange: 100, colorMarker: true},
-                        {name: 'ThumbnailURL', title: 'Thumbnail', visualize: 'thumbnail', linkField: 'ImageURL'},
-                        {name: 'Filename', title: 'File Name', filter: 'textbox', visualize: 'none', onNotFound: function (name) {
-                            console.log("TODO: Load If not found: " + name)
-                        }}
-                    ],
-                    featureSelectFunction: null
-                });
-                console.log("Loaded all Footprint scripts in dev mode")
-            });
-        });
-    });
-};
-
 geoq.footprints = footprints;
-//geoq.footprints.dev();
-//geoq.footprints.init();

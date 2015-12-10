@@ -9,15 +9,15 @@ var c;
 if (typeof site_settings=="undefined") {
     c = [];
 } else {
-    c = site_settings.cell_status_colors || ["green","#cf8601","#cf6201","#cf4001","#cf0101"];
+    c = site_settings.cell_status_colors || ["green","#cf8601","#cf6201","#cf4001","#cf0101", "#d2b48c"];
 }
 leaflet_helper.styles = {
-    extentStyle:     {"weight": 2, "color": "green","fillColor": c[0], "fillOpacity": .2, "opacity": 1},
-    in_work:         {"weight": 2, "color": "green","fillColor": c[1], "fillOpacity": .3, "opacity": 1},
-    awaiting_review: {"weight": 2, "color": "red",  "fillColor": c[2], "fillOpacity": .5, "opacity": 1},
-    in_review:       {"weight": 2, "color": "red",  "fillColor": c[3], "fillOpacity": .7, "opacity": 1},
-    completed:       {"weight": 2, "color": "red",  "fillColor": c[4], "fillOpacity": .9, "opacity": 1},
-    assigned:        {"weight": 2, "color": "black", "fillColor": "gray", "fillOpacity": .9, "opacity": 1},
+    extentStyle:     {"weight": 2, "color": "gray","fillColor": c[0], "fillOpacity": .2, "opacity": 1},
+    in_work:         {"weight": 2, "color": "gray","fillColor": c[1], "fillOpacity": .3, "opacity": 1},
+    awaiting_imagery: {"weight": 2, "color": "gray",  "fillColor": c[2], "fillOpacity": .5, "opacity": 1},
+    awaiting_analysis:       {"weight": 2, "color": "gray",  "fillColor": c[3], "fillOpacity": .7, "opacity": 1},
+    completed:       {"weight": 2, "color": "gray",  "fillColor": c[4], "fillOpacity": .9, "opacity": 1},
+    assigned:        {"weight": 2, "color": "gray", "fillColor": c[5], "fillOpacity": .9, "opacity": 1},
     extentStyle_hollow: {"weight": 2, "color": "red", "opacity": 1, "fillOpacity":0 }
 };
 
@@ -239,4 +239,40 @@ leaflet_helper.toWKT = function (layer) {
     }
 };
 
+leaflet_helper.addLayerControl = function (map) {
+    var layers = _.filter(map_layers.layers, function (l) {
+        return l.type == "WMS" || l.type == "KML";
+    });
+
+    var overlayMaps = {
+    };
+
+    _.each(layers, function (layer) {
+        if (layer.displayInLayerSwitcher) {
+            if (layer.type == "WMS") {
+                var mywms = L.tileLayer.wms(layer.url, {
+                    layers: layer.layer,
+                    format: layer.format,
+                    transparent: layer.transparent,
+                    zIndex: layer.zIndex,
+                    attribution: layer.attribution
+                });
+                overlayMaps[layer.name] = mywms;
+            }
+            else if (layer.type == "KML") {
+                mykml = new L.KML(layer.url, {
+                    layers: layer.layer,
+                    format: layer.format,
+                    transparent: layer.transparent,
+                    attribution: layer.attribution
+                });
+                overlayMaps[layer.name] = mykml;
+            }
+        }
+    });
+
+    if (_.size(overlayMaps)) {
+        L.control.layers(null, overlayMaps).addTo(map);
+    }
+};
 
