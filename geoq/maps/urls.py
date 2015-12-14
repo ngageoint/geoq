@@ -53,7 +53,7 @@ urlpatterns = patterns('',
         login_required(create_update_map),
         name='map-create'),
 
-    url(r'^update/(?P<pk>\d+)/?$',
+    url(r'^update/(?P<job_id>\d+)/(?P<map_id>\d+)/?$',
         login_required(create_update_map),
         name='map-update'),
 

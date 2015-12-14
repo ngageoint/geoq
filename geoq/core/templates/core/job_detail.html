@@ -265,7 +265,7 @@
                         <li><a href="{% url 'job-delete' object.id %}">Delete Job</a></li>
                         {% endif %}
                         {% if 'core.change_job' in request.base_perms and object.map%}
-                        <li><a href="{% url 'map-update' object.map.id %}">Edit Map</a></li>
+                        <li><a href="{% url 'map-update' object.id object.map.id %}">Edit Map</a></li>
                         {% endif %}
                     </ul>
                 </div>
