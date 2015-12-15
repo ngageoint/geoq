@@ -1217,7 +1217,7 @@ footprints.addFilterSliderMax = function ($holder, schema_item) {
             footprints.updateFootprintFilteredResults();
             $cc_count.html(" (" + this.value + ")")
         }, 50))
-        .attr({val: schema_item.start || 10})
+        .attr({value: schema_item.start || 10})
         .appendTo($slider);
 
     var update = function () {
