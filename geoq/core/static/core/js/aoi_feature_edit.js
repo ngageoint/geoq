@@ -36,6 +36,7 @@ aoi_feature_edit.init = function () {
     aoi_feature_edit.featureLayers = [];
     aoi_feature_edit.icons = {};
     aoi_feature_edit.icon_style = {};
+    aoi_feature_edit.hidden_tools = site_settings.hidden_tools ? site_settings.hidden_tools[aoi_feature_edit.status] : [];
 
     leaflet_helper.init();
 
@@ -745,10 +746,18 @@ aoi_feature_edit.map_init = function (map, bounds) {
     aoi_feature_edit.layers.features = aoi_feature_edit.featureLayers;
 
     //Add other controls
-    leaflet_helper.addLocatorControl(map);
-    aoi_feature_edit.buildDrawingControl(aoi_feature_edit.drawnItems);
-    leaflet_helper.addGeocoderControl(map);
-    feature_manager.addStatusControl(map);
+    if ($.inArray("Locator",aoi_feature_edit.hidden_tools) == -1) {
+        leaflet_helper.addLocatorControl(map);
+    }
+    if ($.inArray("Drawing",aoi_feature_edit.hidden_tools) == -1) {
+        aoi_feature_edit.buildDrawingControl(aoi_feature_edit.drawnItems);
+    }
+    if ($.inArray("Geocoder",aoi_feature_edit.hidden_tools) == -1) {
+        leaflet_helper.addGeocoderControl(map);
+    }
+    if ($.inArray("Status",aoi_feature_edit.hidden_tools) == -1) {
+        feature_manager.addStatusControl(map);
+    }
 
     //Build the filter drawer (currently on left, TODO: move to bottom)
     leaflet_filter_bar.init();
@@ -778,15 +787,17 @@ aoi_feature_edit.map_init = function (map, bounds) {
 
     help_control.addTo(map, {'position':'topleft'});
 
-    var location_control = new L.Control.Button({
-        'iconUrl': aoi_feature_edit.static_root + 'images/bullseye.png',
-        'onClick': draw_and_center_location,
-        'hideText': true,
-        'doToggle': false,
-        'toggleStatus': false
-    });
+    if ($.inArray("Location",aoi_feature_edit.hidden_tools) == -1) {
+        var location_control = new L.Control.Button({
+            'iconUrl': aoi_feature_edit.static_root + 'images/bullseye.png',
+            'onClick': draw_and_center_location,
+            'hideText': true,
+            'doToggle': false,
+            'toggleStatus': false
+        });
 
-    location_control.addTo(map, {'position': 'topleft'});
+        location_control.addTo(map, {'position': 'topleft'});
+    }
 
     function pruneTemp(jqXHR) {
         var tmpId = jqXHR.getResponseHeader("Temp-Point-Id");
