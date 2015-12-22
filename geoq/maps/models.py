@@ -64,6 +64,7 @@ IMAGE_FORMATS = (
 
 SERVICE_TYPES = (
                 ('WMS', 'WMS'),
+                ('WFS', 'WFS'),
                 ('KML', 'KML'),
                 ('GeoRSS', 'GeoRSS'),
                 ('ESRI Identifiable MapServer', 'ESRI Identifiable MapServer'),
