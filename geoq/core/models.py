@@ -383,8 +383,14 @@ class AOI(GeoQBase, Assignment):
     def images(self):
         return WorkcellImage.objects.filter(workcell=self)
 
+    def images_accepted(self):
+        return WorkcellImage.objects.filter(workcell=self,status='Accepted')
+
     def images_json(self):
-        return [image.properties_json() for image in self.images()]
+        if self.status in ['Awaiting Analysis','In work','Completed']:
+            return [image.properties_json() for image in self.images_accepted()]
+        else:
+            return [image.properties_json() for image in self.images()]
 
     #def save(self):
     # if analyst or reviewer updated, then create policy to give them permission to edit this object.....

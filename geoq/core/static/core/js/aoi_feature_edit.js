@@ -1061,7 +1061,7 @@ aoi_feature_edit.map_init = function (map, bounds) {
         featureSelectUrl: '/geoq/api/workcell-image/{{id}}'
     });
 
-
+    imageviewer.init();
 
     //Resize the map
     aoi_feature_edit.mapResize();
