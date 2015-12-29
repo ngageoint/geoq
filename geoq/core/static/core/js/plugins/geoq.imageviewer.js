@@ -24,20 +24,18 @@ imageviewer.$matching_total = null;
 imageviewer.$error_div = null;
 
 imageviewer.schema = [
-    {name: 'nef_name', title: 'NEF name', filter: 'options', show: 'small-table', index: 0, showSizeMultiplier: 3},
-    {name: 'image_id', id: true},
-    {name: 'platform', title: 'Platform', filter: 'options'},
-    {name: 'sensor', title: 'Sensor', filter: 'options', show: 'small-table', index: 1, showSizeMultiplier: 2},
-    {name: 'cloud_cover', title: 'Clouds', filter: 'options'},
-    {name: 'status', title: 'Status', filter: 'options'},
-    {name: 'acq_date',title: 'Date Taken',filter: 'options', show: 'small-table', index: 2, showSizeMultiplier: 2}
+    {name: 'id', title: 'id', filter: 'hidden', show: 'small-table', index: 5, type: 'int', showSizeMultiplier: 0 },
+    {name: 'nef_name', title: 'NEF name', filter: 'options', show: 'small-table', index: 0, type:'string',showSizeMultiplier: 3},
+    {name: 'sensor', title: 'Sensor', filter: 'options', show: 'small-table', index: 1, type:'string',showSizeMultiplier: 2},
+    {name: 'acq_date',title: 'Date Taken',filter: 'options', show: 'small-table', index: 2, type:'date',showSizeMultiplier: 2},
+    {name: 'examined', title: 'Done', filter: 'checkbox', show: 'small-table', index:3, type:'bool',showSizeMultiplier: 1}
 ];
 
 
 //imageviewer.featureSelectFunction = function (feature) {
 //    console.log("Lookup more info on " + feature.name);
 //};
-//imageviewer.featureSelectUrl = null;
+imageviewer.finishImageUrl = null;
 //imageviewer.filters = {in_bounds: true, previously_rejected: false};
 //imageviewer.prompts = {};
 //imageviewer.features = [];
@@ -121,7 +119,7 @@ imageviewer.userMessage = function (text, color) {
 
 
 imageviewer.updateImageList = function(options) {
-    var width = 300;
+    var width = 280;
     if (aoi_feature_edit.workcell_images && aoi_feature_edit.workcell_images.length) {
         var matched_list = aoi_feature_edit.workcell_images;
     } else {
@@ -150,39 +148,14 @@ imageviewer.updateImageList = function(options) {
                 }
             }
 
+            if (schema_item.type && schema_item.type == 'bool') {
+                val = (val == "true");
+            }
+
             item[fieldToCheck] = val;
         });
 
-        //Pull out just the columns that will be shown
-        var columns = [];
-        var data = [];
-        var column_count = 0;
-        _.each(imageviewer.schema, function (schema_item) {
-            if (schema_item.show && schema_item.show == 'small-table') {
-                columns.push({
-                    title: schema_item.title || schema_item.name,
-                    dataType: 'string',
-                    dataIndx: schema_item.index,
-                    showSizeMultiplier: schema_item.showSizeMultiplier
-                });
-                column_count += schema_item.showSizeMultiplier || 1;
-
-                data.push(item[schema_item.name]);
-            }
-        });
-        //Shrink them to fit width, apply showSizeMultiplier
-        _.each(columns, function (column) {
-            column.width = parseInt((width / column_count) - 10);
-            if (column.showSizeMultiplier) column.width *= column.showSizeMultiplier;
-        });
-
-        //Pull out the geometry
-//        item.geometry = {};
-//        if (feature.GeometryType) item.geometry.GeometryType = feature.GeometryType;
-//        if (feature.Geometry) item.geometry.Geometry = feature.Geometry;
-//        if (feature.geometry) item.geometry.geometry = feature.geometry;
-
-        flattened_list.push(data);
+        flattened_list.push(item);
     }
 
 
@@ -370,7 +343,7 @@ imageviewer.addResultTable = function ($holder) {
         .appendTo($holder);
 
     //Set up table
-    var width = 300;
+    var width = 275;
     //if (imageviewer.featureSelectFunction || imageviewer.featureSelectUrl) {
     //    width -= 40;
     //}
@@ -383,17 +356,77 @@ imageviewer.addResultTable = function ($holder) {
     //Pull out just the columns that will be shown
     var columns = [];
     var column_count = 0;
+
+    // Add a 'Load' checkbox to each image
+    columns.push({
+        title: 'Load',
+        type: 'checkBoxSelection',
+        align: "center",
+        sortable: false,
+        width: 25,
+        minWidth: 25,
+        render: function (ui) {
+            var rowData = ui.rowData;
+            var nef = rowData["nef_name"] || "unknown";
+            var id = rowData["id"];
+
+            return ("<input type='checkbox' id='show-checkbox-" + id + "' onclick='imageviewer.displayImage(\"" + nef + "\")' />");
+        }
+    });
+    column_count++;
+
     _.each(imageviewer.schema, function (schema_item) {
         if (schema_item.show && schema_item.show == 'small-table') {
-            columns.push({
-                title: schema_item.title || schema_item.name,
-                dataType: 'string',
-                dataIndx: schema_item.index,
-                showSizeMultiplier: schema_item.showSizeMultiplier
-            });
+            if (schema_item.filter && schema_item.filter == 'options') {
+                columns.push({
+                    title: schema_item.title || schema_item.name,
+                    dataType: 'string',
+                    dataIndx: schema_item.name,
+                    showSizeMultiplier: schema_item.showSizeMultiplier
+                });
+            }
+            else if (schema_item.filter && schema_item.filter == 'checkbox') {
+                columns.push({
+                    title: schema_item.title || "",
+                    type: 'checkBoxSelection',
+                    dataIndx: schema_item.name,
+                    cls: 'checkboxColumn',
+                    showSizeMultiplier: schema_item.showSizeMultiplier,
+                    align: "center",
+                    sortable: false,
+                    width:25,
+                    render: function (ui) {
+                        try {
+                            var rowData = ui.rowData, dataIndx = ui.dataIndx;
+                            var val = rowData["examined"];
+                            var id = rowData["id"];
+
+                            str = "";
+                            if (val) {
+                                str = "checked='checked'";
+                            }
+                        }
+                        catch (exx) {
+                            var laa = exx;
+                        }
+                        return "<input type='checkbox' " + str + " id='finish-checkbox-" + id + "' onclick='imageviewer.finishImage(\"" + id + "\")' />";
+                    },
+                    className: "checkboxColumn"
+                })
+            } else if (schema_item.filter && schema_item.filter == 'hidden') {
+                // add a hidden column with the image id
+                columns.push({
+                    title: 'id',
+                    hidden: true,
+                    dataIndx: schema_item.name,
+                    sortable: false
+                });
+            }
+
             column_count += schema_item.showSizeMultiplier || 1;
         }
     });
+
     //Shrink them to fit width, apply showSizeMultiplier
     _.each(columns, function (column) {
         column.width = parseInt((width / column_count) - 10);
@@ -501,6 +534,25 @@ imageviewer.addResultTable = function ($holder) {
 
     $grid.pqGrid(obj);
     imageviewer.$grid = $grid;
+};
+
+imageviewer.finishImage = function(id) {
+    var fin = $('#finish-checkbox-'+id).is(':checked');
+    var data = {'value':fin};
+
+    $.ajax({
+        type: "POST",
+        url: imageviewer.finishImageUrl.replace("{{id}}",id),
+        data: data,
+        dataType: 'json',
+        success: function (data) {
+            console.log(data)
+        }
+    });
+};
+
+imageviewer.displayImage = function(nef) {
+    alert("display" + nef);
 };
 
 

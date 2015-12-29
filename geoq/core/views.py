@@ -16,8 +16,8 @@ from django.forms.util import ValidationError
 from django.http import Http404, HttpResponse, HttpResponseRedirect, HttpResponseForbidden
 from django.shortcuts import get_object_or_404, redirect, render
 from django.views.generic import DetailView, ListView, TemplateView, View, DeleteView, CreateView, UpdateView
-from django.views.decorators.http import require_POST
-from datetime import datetime
+from django.views.decorators.http import require_POST, require_http_methods
+from django import utils
 import distutils
 
 from models import Project, Job, AOI, Comment, AssigneeType, Organization, WorkcellImage
@@ -255,7 +255,7 @@ class CreateFeaturesView(UserAllowedMixin, DetailView):
             if self.request.user in aoi.job.reviewers.all() or is_admin:
                 aoi.status = 'In work'
                 if aoi.started_at is None:
-                    aoi.started_at = datetime.now()
+                    aoi.started_at = utils.timezone.now()
                 aoi.reviewers.add(self.request.user)
                 aoi.save()
                 increment_metric('workcell_analyzed')
@@ -540,7 +540,7 @@ class ChangeAOIStatus(View):
 
         # if completed, mark completion date/time
         if status == 'Completed':
-            aoi.finished_at = datetime.now()
+            aoi.finished_at = utils.timezone.now()
 
         aoi.save()
         return aoi
@@ -893,7 +893,7 @@ def update_feature_data(request, *args, **kwargs):
                 properties_main_links = []
             link_info = {}
             link_info['properties'] = json.loads(value)
-            link_info['created_at'] = str(datetime.now())
+            link_info['created_at'] = str(utils.timezone.now())
             link_info['user'] = str(request.user)
             properties_main_links.append(link_info)
             properties_main['linked_items'] = properties_main_links
@@ -990,6 +990,23 @@ def create_workcell_image(request, id, **kwargs):
         message = 'updated'
 
     return HttpResponse(json.dumps({message: message}), mimetype="application/json", status=200)
+
+@login_required
+@require_http_methods(["POST"])
+def workcell_image_examined(request, id, **kwargs):
+    import pdb; pdb.set_trace()
+    finish_image = True if request.POST['value'] == 'true' else False
+
+    wcell_image = get_object_or_404(WorkcellImage, id=id)
+
+    if finish_image:
+        wcell_image.exam_date = utils.timezone.now()
+    else:
+        wcell_image.exam_date = None
+
+    wcell_image.save()
+
+    return HttpResponse()
 
 
 class LogJSON(ListView):

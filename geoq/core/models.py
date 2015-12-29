@@ -499,15 +499,20 @@ class WorkcellImage(models.Model):
     status = models.CharField(max_length=20, choices=EVALUATION_CHOICES, default='NotEvaluated')
     workcell = models.ForeignKey(AOI)
 
+    exam_date = models.DateTimeField(auto_now_add=False, null=True, blank=True)
+
     def properties_json(self):
         area = "%.2f" % self.img_geom.area
         _json = dict(
+            id=str(self.id),
             image_id=str(self.image_id),
             nef_name=str(self.nef_name),
             sensor=str(self.sensor),
             cloud_cover=int(self.cloud_cover),
             platform=str(self.platform),
-            acq_date=format(self.acq_date, '%Y%m%d'),
+            acq_date=format(self.acq_date, '%Y-%m%d'),
+            examined=str(self.exam_date is not None).lower(),
+            exam_date=format(self.exam_date, '%Y%m%dT%H%M%S') if self.exam_date is not None else '',
             img_geom=str(self.img_geom.geojson),
             area=float(area),
             status=str(self.status),
