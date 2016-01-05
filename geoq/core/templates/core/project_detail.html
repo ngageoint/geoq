@@ -172,7 +172,60 @@
             {% include "core/_object_list.html" with object_list=page_obj%}
 
         </div>
+        <script type="text/javascript">
+          //This script applies to the jobs listed under a specifc project
+           $( document ).ready(function() {
 
+                var showChar = 300;  // How many characters are shown by default
+                var ellipses = "..."; //used to show where content is truncated
+                var more = "<br/>Show more >"; //show more link
+                var less = "<br/>Show less"; //show less link
+
+                //goes through the description
+                $('.project-description').each(function() {
+
+                   // $(this).addClass("check");
+                    var content = $(this).html(); //gets the description body
+
+                    //if the description length is more than the max char number
+                    if(content.length > showChar) {
+
+                        //stores the new, smaller content
+                        var less_content = content.substr(0, showChar);
+
+                        //stores what is cut off
+                        var cutoff_content = content.substr(showChar, content.length - showChar);
+
+                        //causes only the less_content to be visible and makes the rest hidden
+                        var html = less_content + '<span class="more_ellipse">' + ellipses + '&nbsp;</span><span class="next_content"><span>' + cutoff_content + '</span>&nbsp;&nbsp;<a href="" class="next_link">' + more + '</a></span>';
+
+                        //appends new html
+                        $(this).html(html);
+
+                }
+
+            });
+
+            $(document).on('click', '.next_link', function(){ //done differently than in job_detail.html because the elements are dynamically placed
+                //if less content is being shown, then show more
+                if($(this).hasClass("min")) {
+                    $(this).removeClass("min");
+                    $(this).html(more);
+
+                 //else the full content is being shown, so show less
+                } else {
+                    $(this).addClass("min");
+                    $(this).html(less);
+                }
+                //toggles between the two stages
+                $(this).parent().prev().toggle();
+                $(this).prev().toggle();
+                return false;
+            });
+         });
+
+
+        </script>
     </div>
 {% endblock %}
 
