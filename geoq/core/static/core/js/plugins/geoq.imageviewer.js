@@ -22,9 +22,11 @@ imageviewer.$searchBox = null;
 imageviewer.$matching_count = null;
 imageviewer.$matching_total = null;
 imageviewer.$error_div = null;
+imageviewer.displayed_layers = {};
 
 imageviewer.schema = [
     {name: 'id', title: 'id', filter: 'hidden', show: 'small-table', index: 5, type: 'int', showSizeMultiplier: 0 },
+    {name: 'image_id', title: 'image_id', filter: 'hidden', show: 'small-table', index: 6, type: 'string', showSizeMultiplier: 0},
     {name: 'nef_name', title: 'NEF name', filter: 'options', show: 'small-table', index: 0, type:'string',showSizeMultiplier: 3},
     {name: 'sensor', title: 'Sensor', filter: 'options', show: 'small-table', index: 1, type:'string',showSizeMultiplier: 2},
     {name: 'acq_date',title: 'Date Taken',filter: 'options', show: 'small-table', index: 2, type:'date',showSizeMultiplier: 2},
@@ -367,10 +369,10 @@ imageviewer.addResultTable = function ($holder) {
         minWidth: 25,
         render: function (ui) {
             var rowData = ui.rowData;
-            var nef = rowData["nef_name"] || "unknown";
+            var imid = rowData["image_id"] || "unknown";
             var id = rowData["id"];
 
-            return ("<input type='checkbox' id='show-checkbox-" + id + "' onclick='imageviewer.displayImage(\"" + nef + "\")' />");
+            return ("<input type='checkbox' id='show-checkbox-" + id + "' onclick='imageviewer.displayImage(\"" + id + "\", \"" + imid + "\")' />");
         }
     });
     column_count++;
@@ -416,7 +418,7 @@ imageviewer.addResultTable = function ($holder) {
             } else if (schema_item.filter && schema_item.filter == 'hidden') {
                 // add a hidden column with the image id
                 columns.push({
-                    title: 'id',
+                    title: schema_item.title || "",
                     hidden: true,
                     dataIndx: schema_item.name,
                     sortable: false
@@ -551,8 +553,41 @@ imageviewer.finishImage = function(id) {
     });
 };
 
-imageviewer.displayImage = function(nef) {
-    alert("display" + nef);
+imageviewer.displayImage = function(id, imageId) {
+    var showImage = $('#show-checkbox-'+id).is(':checked');
+
+    if (site_settings.image_server && site_settings.image_server["url"]) {
+        var imageServer = site_settings.image_server["url"];
+    } else {
+        // let them know that we weren't able to find a server to retrieve images from
+        console.log("No imagery server available, so unable to create layer");
+        console.log("Look at the site_settings.image_server setting");
+        return;
+    }
+
+    //TODO: figure out how we translate imageId to a layerId
+    var layerId = imageId;
+
+
+    if (showImage) {
+        // if a layer for this image has already been created, then display it again.
+        // else go ahead and create a WMS layer using a layer name we get from somewhere...
+        var layerOptions = {};
+        if (imageviewer.displayed_layers[layerId]) {
+            imageviewer.displayed_layers[layerId].opacity = 1.0;
+        } else {
+            var url = imageServer + layerId;
+            var outputLayer = new L.tileLayer.wms(url, layerOptions);
+            outputLayer.addTo(imageviewer.map);
+            imageviewer.displayed_layers[layerId] = outputLayer;
+        }
+
+    } else {
+        // make sure we have a handle to the layer
+        if (imageviewer.displayed_layers[layerId]) {
+            imageviewer.displayed_layers[layerId].opacity = 0.0;
+        }
+    }
 };
 
 
