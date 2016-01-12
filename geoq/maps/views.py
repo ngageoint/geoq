@@ -10,7 +10,7 @@ from django.core import serializers
 from django.core.exceptions import ValidationError, ObjectDoesNotExist
 from django.core.urlresolvers import reverse
 from django.http import HttpResponse, HttpResponseRedirect, Http404
-from django.shortcuts import render_to_response
+from django.shortcuts import render_to_response, get_object_or_404
 from django.template import RequestContext
 from django.views.generic import ListView, View, DeleteView
 from django.views.decorators.http import require_http_methods
@@ -161,6 +161,21 @@ def feature_delete(request, pk):
         raise Http404
 
     return HttpResponse( content=pk, status=200 )
+
+@login_required
+@require_http_methods(["POST"])
+def update_feature_metadata(request, pk):
+    try:
+        feature = get_object_or_404(Feature, pk=pk);
+        # if there are feature properties already in place, remove those
+        if 'metadata' in feature.properties:
+            feature.properties.pop('metadata')
+        feature.properties['metadata'] = dict((key,request.POST[key]) for key in ['threshold','name'])
+        feature.save()
+    except:
+        raise Http404
+
+    return HttpResponse()
 
 @login_required
 def create_update_map(request, pk=None):
