@@ -107,6 +107,9 @@ urlpatterns = patterns('',
 
     url(r'^features/delete/(?P<pk>\d+)/?$', login_required( feature_delete ), name='feature-delete'),
 
+    # Report Pages
+    url(r'^reports/work/?$', login_required(WorkSummaryView.as_view()), name='work-summary'),
+
     # OTHER URLS
     url(r'^edit/?$', TemplateView.as_view(template_name='core/edit.html'), name='edit'),
     url(r'^help/?$', display_help, name='help_page'),

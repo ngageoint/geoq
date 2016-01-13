@@ -673,6 +673,15 @@ class SummaryView(TemplateView):
         cv['workcells'] = AOI.objects.filter(job_id=self.kwargs.get('job_pk')).order_by('id')
         return cv
 
+class WorkSummaryView(TemplateView):
+    http_method_names = ['get']
+    template_name = 'core/reports/work_summary.html'
+    model = AOI
+
+    def get_context_data(self, **kwargs):
+        cv = super(WorkSummaryView, self).get_context_data(**kwargs)
+        return cv
+
 
 def image_footprints(request):
     """
