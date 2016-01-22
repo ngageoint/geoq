@@ -52,7 +52,7 @@
 </style>
 {% endblock %}
 {% block container %}
-<div id="title"><h2>Work Summary</h2></div>
+<div id="title"><h2>Work Summary</h2><a class="icon-circle-arrow-left icon-2x pull-right" href="{% url 'job-detail' object.id %}"></a></div>
 <div class="row-fluid">
     <div id='dashboard'>
     </div>
@@ -374,6 +374,8 @@
             {name: 'Unassigned', assigned: 0, awaiting_imagery: 5, awaiting_analysis: 6, in_work: 0, completed: 0, avgtime: 0}
         ]}
     ];
+
+    var Data = {{ data|safe }};
 
     dashboard('#dashboard',workData, groupData);
 </script>

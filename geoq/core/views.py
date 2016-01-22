@@ -700,6 +700,7 @@ class WorkSummaryView(TemplateView):
                 print "%s %s %s" % (uorg, aoi.analyst, aoi.status)
                 job_team_data[uorg].increment(aoi.analyst, aoi.status)
 
+        cv['object'] = job
         cv['data'] = []
         for key,value in job_team_data.iteritems():
             cv['data'].append(value.toJSON())

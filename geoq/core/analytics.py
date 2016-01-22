@@ -23,7 +23,7 @@ class UserGroupStats(object):
         if user is not None:
             if not user.username in self.users:
                 self.users[user.username] = dict([(s.lower().replace(" ","_"),0) for s in STATUS_VALUES_LIST])
-                self.users[user.username]['name'] = user.username
+                self.users[user.username]['name'] = str(user.username)
 
             self.users[user.username][k] += 1
 
@@ -32,7 +32,7 @@ class UserGroupStats(object):
 
     def toJSON(self):
         output = {}
-        output['Group'] = self.name
+        output['Group'] = str(self.name)
         output['Stats'] = self.stats
         output['Users'] = []
         for key, value in self.users.iteritems():
