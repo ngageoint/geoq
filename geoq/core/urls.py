@@ -75,6 +75,7 @@ urlpatterns = patterns('',
 
     url(r'^aois/work/(?P<pk>\d+)/?$',login_required(CreateFeaturesView.as_view())),
     url(r'^workcells/work/(?P<pk>\d+)/?$',login_required(CreateFeaturesView.as_view()), name='aoi-work'),
+    url(r'^workcells/mapedit/(?P<pk>\d+)/?$', login_required(MapEditView.as_view()), name='aoi-mapedit'),
 
     url(r'^aois/work/(?P<pk>\d+)/comment/?$',
         add_workcell_comment, name='add-workcell-comment'),
@@ -83,6 +84,8 @@ urlpatterns = patterns('',
     url(r'^aois/update-status/(?P<pk>\d+)/(?P<status>Unassigned|Assigned|In work|Awaiting review|In review|Completed)/?$', login_required(
         ChangeAOIStatus.as_view()),
         name="aoi-update-status"),
+    url(r'^aois/update-priority/(?P<pk>\d+)/?$', login_required( update_priority ),
+        name="aoi-update-priority"),
     url(r'^aois/create/?$', login_required(
         CreateView.as_view(queryset=AOI.objects.all(),
                            template_name='core/generic_form.html',

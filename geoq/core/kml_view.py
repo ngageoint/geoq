@@ -7,6 +7,7 @@ from django.shortcuts import get_object_or_404
 from datetime import datetime
 from pytz import timezone
 from webcolors import name_to_hex, normalize_hex
+from xml.sax.saxutils import escape as xml_escape
 
 
 class JobKML(ListView):
@@ -124,7 +125,7 @@ class JobKML(ListView):
 
                 output += '      <IconStyle>\n'
                 output += '        <Icon>\n'
-                output += '          <href>'+icon_url+'</href>\n'
+                output += '          <href>' + xml_escape(icon_url) + '</href>\n'
                 output += '        </Icon>\n'
                 output += '      </IconStyle>\n'
             output += '    </Style>\n'
@@ -262,7 +263,7 @@ class JobKMLNetworkLink(ListView):
         output += '    <visibility>1</visibility>\n'
         output += '    <open>1</open>\n'
         output += '    <description>Work progress from GeoQ</description>\n'
-        output += '    <NetworkLink>\n'
+        output += '    <NetworkLink id="GeoQ-'+id+'">\n'
         output += '      <name>'+doc_name+'</name>\n'
         output += '      <visibility>1</visibility>\n'
         output += '      <open>1</open>\n'

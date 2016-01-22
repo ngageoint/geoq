@@ -5,7 +5,14 @@
 	</h5>
 	<div>
 		<label>Priority: </label>
-		<span>{{ job_properties.priority }}</span>
+		<span><select id="cell-{{ job_properties.id }}" onchange="updatePriority({{ job_properties.id}}, this);" style="width:40px;height:20px;line-height:20px;padding:2px;font-size:10px;">
+                <option value="1" {% if (job_properties.priority == 1){ %} selected="selected" {% } %}>1</option>
+                <option value="2" {% if (job_properties.priority == 2){ %} selected="selected" {% } %}>2</option>
+                <option value="3" {% if (job_properties.priority == 3){ %} selected="selected" {% } %}>3</option>
+                <option value="4" {% if (job_properties.priority == 4){ %} selected="selected" {% } %}>4</option>
+                <option value="5" {% if (job_properties.priority == 5){ %} selected="selected" {% } %}>5</option>
+              </select>
+        </span>
 	</div>
 	<div>
 		<label>Status: </label>

@@ -51,7 +51,7 @@ L.Control.OSMGeocoder = L.Control.extend({
 
 		if (this.options.collapsed) {
 			L.DomEvent.addListener(container, 'mouseover', this._expand, this);
-			L.DomEvent.addListener(container, 'mouseout', this._collapse, this);
+			L.DomEvent.addListener(container, 'dblclick', this._collapse, this);
 
 			var link = this._layersLink = L.DomUtil.create('a', className + '-toggle', container);
 			link.href = '#';
@@ -59,7 +59,7 @@ L.Control.OSMGeocoder = L.Control.extend({
 
 			L.DomEvent.addListener(link, L.Browser.touch ? 'click' : 'focus', this._expand, this);
 
-			this._map.on('movestart', this._collapse, this);
+			//this._map.on('movestart', this._collapse, this);
 		} else {
 			this._expand();
 		}

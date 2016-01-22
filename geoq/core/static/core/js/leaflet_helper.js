@@ -47,6 +47,11 @@ leaflet_helper.layer_conversion = function (lyr, map) {
     };
 
     var layerParams = lyr.layerParams || {};
+
+    // Add in user saved parameters
+    var layerUserParams = aoi_feature_edit.aoi_user_remembered_params[lyr.maplayer_id];
+    $.extend(layerParams, layerUserParams); 
+
     var layerOptions;
     var outputLayer = undefined;
 
@@ -78,6 +83,12 @@ leaflet_helper.layer_conversion = function (lyr, map) {
         outputLayer = new L.esri.dynamicMapLayer(lyr.url, layerOptions);
     } else if (lyr.type == 'ESRI Feature Layer' && esriPluginInstalled) {
         outputLayer = new L.esri.featureLayer(lyr.url, layerOptions);
+        if (layerOptions.popupTemplate) {
+            var template = layerOptions.popupTemplate;
+            outputLayer.bindPopup(function (feature) {
+                return L.Util.template(template, feature.properties);
+            });
+        }
     } else if (lyr.type == 'ESRI Clustered Feature Layer' && esriPluginInstalled) {
         if (layerOptions.createMarker) {
             layerOptions.createMarker = leaflet_helper.createMarker[layerOptions.createMarker];
@@ -125,6 +136,8 @@ leaflet_helper.layer_conversion = function (lyr, map) {
         outputLayer = leaflet_helper.constructors.geojson(lyr, map);
     } else if (lyr.type == 'Web Data Link') {
         outputLayer = leaflet_helper.constructors.geojson(lyr, map);
+    } else if (lyr.type == 'MediaQ') {
+        outputLayer = new L.MediaQLayer(true, map, layerOptions);
     }
 
     //Make sure the name is set for showing up in the layer menu

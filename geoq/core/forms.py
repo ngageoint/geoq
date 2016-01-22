@@ -89,7 +89,8 @@ class JobForm(StyledModelForm):
     class Meta:
 
         fields = ('name', 'description', 'project', 'analysts',
-                  'teams', 'reviewers', 'feature_types', 'required_courses', 'tags', 'layers')
+                  'teams', 'reviewers', 'feature_types', 'required_courses', 'tags', 'layers', 'editor',
+                  'editable_layer')
         model = Job
 
     def __init__(self, project, *args, **kwargs):
@@ -137,7 +138,7 @@ class JobForm(StyledModelForm):
             else:
                 self.fields['analysts'].initial = []
 
-            if hasattr(kwargs['instance'],'map'):
+            if hasattr(kwargs['instance'],'map') and kwargs['instance'].map and kwargs['instance'].map.layers:
                 self.fields['layers'].initial = [x.layer_id for x in kwargs['instance'].map.layers]
 
 

@@ -15,6 +15,8 @@
 
         var map_object;
         var map_toggle=false;
+        var selected_workcell;
+
         var status_colors = [
             {name:'Assigned', color: leaflet_helper.styles.assigned, slug:'assigned'},  //TODO: Are we still using 'Assigned'?
             {name:'Completed', color: leaflet_helper.styles.completed, slug:'completed'},
@@ -42,7 +44,8 @@
 
                     layer.on({
                         mouseover: highlightFeature,
-                        mouseout: resetHighlight
+                        mouseout: resetHighlight,
+                        click: cellClick
                     });
                 }
             }).addTo(map);
@@ -122,6 +125,10 @@
             aoi_extents.resetStyle(e.target);
         }
 
+        function cellClick(e) {
+            selected_workcell = e.target;
+        }
+
         function deleteAOI(id, delete_url) {
             BootstrapDialog.confirm('Delete AOI # ' + id + '?',
                     function(result) {
@@ -137,6 +144,38 @@
                         }
                     }
             );
+        }
+
+        function updatePriority(id, select) {
+            var value=select.value;
+            console.log("id: " + id + " and value " + value);
+            if (id && select.value) {
+                $.ajax({
+                    url: "{% url 'home' %}" + "aois/update-priority/" + id,
+                    type: 'POST',
+                    data: 'priority=' + value,
+                    success: function(data) {
+
+                    },
+                    failure: function() {
+                        // let them know it failed
+                        console.log("Error updating priority");
+                    }
+                }).done( function (msg) {
+                    // make sure popup is set to this value in GUI
+                    resetPopup(value);
+                });
+            }
+
+        }
+
+        function resetPopup(value) {
+            if (selected_workcell && value) {
+                var popupContent = selected_workcell._popupContent;
+                popupContent = popupContent.replace(' selected="selected"', '');
+                popupContent = popupContent.replace('value="' + value + '"', 'value="' + value + '" selected="selected"');
+                selected_workcell.bindPopup(popupContent);
+            }
         }
 
         function configurePageUI () {
@@ -309,6 +348,14 @@
                             </td>
                             <td>
                                 {{ object.created_at }}
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>
+                                <b>Editor:</b>
+                            </td>
+                            <td>
+                                {{ object.editor }}
                             </td>
                         </tr>
                         <tr>

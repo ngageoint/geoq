@@ -97,7 +97,9 @@ STATICFILES_FINDERS = (
     #'django.contrib.staticfiles.finders.DefaultStorageFinder',
     'compressor.finders.CompressorFinder',
 )
-COMPRESS_ENABLED = True
+#Change back to True after finishing development to verify it still works
+
+COMPRESS_ENABLED = False
 COMPRESS_PRECOMPILERS = (
     ('text/less', 'lessc {infile} {outfile}'),
 )
@@ -131,6 +133,11 @@ LEAFLET_CONFIG = {
             'css': [],
             'js': [STATIC_URL + 'leaflet/Leaflet.MakiMarkers.js'],
             'repo': 'https://github.com/jseppi/Leaflet.MakiMarkers'
+        },
+        'MediaQ': {
+            'css': [],
+            'js': [STATIC_URL + 'leaflet/Leaflet.MediaQ.js'],
+            'repo': 'https://github.com/stephenrjones/Leaflet.MediaQ'
         }
     }
 }
@@ -164,6 +171,7 @@ MIDDLEWARE_CLASSES = (
     #'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'geoq.core.middleware.UserPermsMiddleware',             # works w/ guardian
     'geoq.core.middleware.Http403Middleware',
+    'geoq.core.middleware.UpdateLastActivityMiddleware',
 )
 
 # auth setup

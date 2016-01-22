@@ -14,6 +14,7 @@ from django.core.urlresolvers import reverse
 from jsonfield import JSONField
 from datetime import datetime
 from geoq.core.utils import clean_dumps
+from denorm import denormalized, depend_on_related
 
 import sys
 
@@ -80,10 +81,16 @@ SERVICE_TYPES = (
                 ('Bing', 'Bing'),
                 ('Google Maps', 'Google Maps'),
                 ('Yandex', 'Yandex'),
-                ('Leaflet Tile Layer', 'Leaflet Tile Layer')
+                ('Leaflet Tile Layer', 'Leaflet Tile Layer'),
+                ('MediaQ', 'MediaQ'),
                 #('MapBox', 'MapBox'),
                 #('TileServer','TileServer'),
                 #('GetCapabilities', 'GetCapabilities'),
+)
+
+EDITABLE_LAYER_TYPES = (
+                        ('OSM','OSM'),
+                        ('OSM MapEdit','OSM MapEdit'),
 )
 
 INFO_FORMATS = [(n, n) for n in sorted(['application/vnd.ogc.wms_xml',
@@ -117,6 +124,7 @@ class Layer(models.Model):
     fields_to_show = models.CharField(max_length=200, null=True, blank=True, help_text='Fields to show when someone uses the identify tool to click on the layer. Leave blank for all.')
     downloadableLink = models.URLField(max_length=400, null=True, blank=True, help_text='URL of link to supporting tool (such as a KML document that will be shown as a download button)')
     layer_params = JSONField(null=True, blank=True, help_text='JSON key/value pairs to be sent to the web service.  ex: {"crs":"urn:ogc:def:crs:EPSG::4326"}')
+    dynamic_params = JSONField(null=True, blank=True, help_text='URL Variables that may be modified by the analyst. ex: "date"')
     spatial_reference = models.CharField(max_length=32, blank=True, null=True, default="EPSG:4326", help_text='The spatial reference of the service.  Should be in ESPG:XXXX format.')
     constraints = models.TextField(null=True, blank=True, help_text='Constrain layer data displayed to certain feature types')
     disabled = models.BooleanField(default=False, blank=True, help_text="If unchecked, Don't show this layer when listing all layers")
@@ -161,6 +169,7 @@ class Layer(models.Model):
             "layer": self.layer,
             "transparent": self.transparent,
             "layerParams": self.layer_params,
+            "dynamicParams": self.dynamic_params,
             "refreshrate": self.refreshrate,
             "token": self.token,
             "attribution": self.attribution,
@@ -186,7 +195,7 @@ class Map(models.Model):
     A Map aggregates several layers together.
     """
 
-    title = models.CharField(max_length=75, unique=True)
+    title = models.CharField(max_length=75)
     description = models.TextField(max_length=800, blank=True, null=True)
     zoom = models.IntegerField(help_text='Sets the default zoom level of the map.', default=5, blank=True, null=True)
     projection = models.CharField(max_length=32, blank=True, null=True, default="EPSG:4326", help_text='Set the default projection for layers added to this map. Note that the projection of the map is usually determined by that of the current baseLayer')
@@ -219,6 +228,7 @@ class Map(models.Model):
         def layer_json(map_layer):
             return {
                 "id": map_layer.layer.id,
+                "maplayer_id": map_layer.id,
                 "name": map_layer.layer.name,
                 "format": map_layer.layer.image_format,
                 "type": map_layer.layer.type,
@@ -229,6 +239,7 @@ class Map(models.Model):
                 "transparent": map_layer.layer.transparent,
                 "opacity": map_layer.opacity,
                 "layerParams": map_layer.layer.get_layer_params(),
+                "dynamicParams": map_layer.layer.dynamic_params,
                 "isBaseLayer": map_layer.is_base_layer,
                 "displayInLayerSwitcher": map_layer.display_in_layer_switcher,
                 "refreshrate": map_layer.layer.refreshrate,
@@ -297,6 +308,34 @@ class MapLayer(models.Model):
     def __unicode__(self):
         return 'Layer {0}: {1}'.format(self.stack_order, self.layer)
 
+class MapLayerUserRememberedParams(models.Model):
+    """
+    Remembers the last options selected for a MapLayer with dynamic feed params.
+    """
+
+    maplayer = models.ForeignKey(MapLayer, related_name="user_saved_params_set")
+    user = models.ForeignKey(User, related_name="map_layer_saved_params_set")
+    values = JSONField(null=True, blank=True, help_text='URL Variables that may be modified by the analyst. ex: "date"')
+
+    @denormalized(models.ForeignKey, to=Map)
+    @depend_on_related(MapLayer)
+    def map(self):
+        return self.maplayer.map.pk
+
+class EditableMapLayer(models.Model):
+    """
+    Built to support editable layers such as OSM
+    """
+    name = models.CharField(max_length=200, help_text='Name that will be displayed within GeoQ')
+    type = models.CharField(choices=EDITABLE_LAYER_TYPES, max_length=75)
+    view_url = models.CharField(help_text='URL of view service.', max_length=500)
+    edit_url = models.CharField(help_text='URL of service where changes can be pushed to. ', max_length=500)
+
+    class Meta:
+        ordering = ["name"]
+
+    def __unicode__(self):
+        return '{0} ({1})'.format(self.name, self.type)
 
 class Feature(models.Model):
     """

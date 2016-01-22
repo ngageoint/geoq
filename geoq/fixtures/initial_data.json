@@ -1540,7 +1540,7 @@
         "user_permissions": [
 
         ], 
-        "password": "pbkdf2_sha256$10000$sAQ1D0P8lLOR$P2NYGVruL9P+BZiYvzbWwVAyAtBb2WzJMGppFa8Y98k=", 
+        "password": "pbkdf2_sha256$10000$1xIM69wJ2DIE$7P66WGhzjLhkHDcFaHmP+vDkLz6KxRh712h96IPjso0=", 
         "email": "admin@example.com", 
         "date_joined": "2013-07-23T13:44:15Z"
     }
@@ -33131,7 +33131,7 @@
         "properties": null, 
         "project": 1, 
         "job": 3, 
-        "template": 1, 
+        "template": 5, 
         "the_geom": "POINT (-79.7903108596801616 34.1948009832628870)", 
         "analyst": 1
     }
@@ -33147,7 +33147,7 @@
         "properties": null, 
         "project": 1, 
         "job": 3, 
-        "template": 1, 
+        "template": 5, 
         "the_geom": "POINT (-79.7929716110229492 34.1949429696883342)", 
         "analyst": 1
     }
@@ -33163,7 +33163,7 @@
         "properties": null, 
         "project": 1, 
         "job": 3, 
-        "template": 1, 
+        "template": 5, 
         "the_geom": "POINT (-79.7891092300415039 34.1966822839969140)", 
         "analyst": 1
     }
@@ -34667,7 +34667,7 @@
         "properties": null, 
         "project": 2, 
         "job": 8, 
-        "template": 1, 
+        "template": 5, 
         "the_geom": "POINT (-71.0509443283081055 42.3564508909879152)", 
         "analyst": 7
     }
@@ -35851,7 +35851,7 @@
         "properties": null, 
         "project": 1, 
         "job": 11, 
-        "template": 1, 
+        "template": 5, 
         "the_geom": "POINT (-75.4106712341308594 39.1173089819845003)", 
         "analyst": 1
     }
@@ -35931,7 +35931,7 @@
         "properties": null, 
         "project": 1, 
         "job": 7, 
-        "template": 1, 
+        "template": 5, 
         "the_geom": "POINT (-75.9911012649536133 36.9120535847755065)", 
         "analyst": 1
     }
@@ -36059,7 +36059,7 @@
         "properties": null, 
         "project": 4, 
         "job": 12, 
-        "template": 1, 
+        "template": 5, 
         "the_geom": "POINT (124.9775075912475586 11.2435250508416704)", 
         "analyst": 1
     }
@@ -36075,7 +36075,7 @@
         "properties": null, 
         "project": 4, 
         "job": 12, 
-        "template": 1, 
+        "template": 5, 
         "the_geom": "POINT (124.9776792526245117 11.2431883171744147)", 
         "analyst": 1
     }
@@ -36123,7 +36123,7 @@
         "properties": null, 
         "project": 4, 
         "job": 12, 
-        "template": 1, 
+        "template": 5, 
         "the_geom": "POINT (124.9915838241577006 11.2221206353546510)", 
         "analyst": 1
     }
@@ -36139,7 +36139,7 @@
         "properties": null, 
         "project": 4, 
         "job": 12, 
-        "template": 1, 
+        "template": 5, 
         "the_geom": "POINT (124.9922919273376465 11.2231309089513971)", 
         "analyst": 1
     }
@@ -36155,7 +36155,7 @@
         "properties": null, 
         "project": 4, 
         "job": 12, 
-        "template": 1, 
+        "template": 5, 
         "the_geom": "POINT (124.9807047843932963 11.2497124619342781)", 
         "analyst": 8
     }
@@ -36203,7 +36203,7 @@
         "properties": null, 
         "project": 4, 
         "job": 12, 
-        "template": 1, 
+        "template": 5, 
         "the_geom": "POINT (124.9872708320617676 11.2513119071315533)", 
         "analyst": 1
     }
@@ -36219,7 +36219,7 @@
         "properties": null, 
         "project": 4, 
         "job": 12, 
-        "template": 1, 
+        "template": 5, 
         "the_geom": "POINT (124.9814343452453471 11.2517538575277545)", 
         "analyst": 1
     }
@@ -36235,7 +36235,7 @@
         "properties": null, 
         "project": 4, 
         "job": 12, 
-        "template": 1, 
+        "template": 5, 
         "the_geom": "POINT (124.9923563003539897 11.2492705084057896)", 
         "analyst": 8
     }
@@ -36251,7 +36251,7 @@
         "properties": null, 
         "project": 4, 
         "job": 12, 
-        "template": 1, 
+        "template": 5, 
         "the_geom": "POINT (124.9898672103881836 11.2532901560094327)", 
         "analyst": 8
     }
@@ -36267,7 +36267,7 @@
         "properties": null, 
         "project": 4, 
         "job": 12, 
-        "template": 1, 
+        "template": 5, 
         "the_geom": "POINT (124.9902749061584473 11.2496914165435449)", 
         "analyst": 8
     }
@@ -36299,7 +36299,7 @@
         "properties": null, 
         "project": 4, 
         "job": 12, 
-        "template": 1, 
+        "template": 5, 
         "the_geom": "POINT (125.0049304962158061 11.2516486313044588)", 
         "analyst": 8
     }
@@ -36315,7 +36315,7 @@
         "properties": null, 
         "project": 4, 
         "job": 12, 
-        "template": 1, 
+        "template": 5, 
         "the_geom": "POINT (125.0007462501525879 11.2246252654988190)", 
         "analyst": 8
     }
@@ -36331,7 +36331,7 @@
         "properties": null, 
         "project": 4, 
         "job": 12, 
-        "template": 1, 
+        "template": 5, 
         "the_geom": "POINT (125.0010466575622559 11.2243937459766396)", 
         "analyst": 8
     }
@@ -36347,7 +36347,7 @@
         "properties": null, 
         "project": 4, 
         "job": 12, 
-        "template": 1, 
+        "template": 5, 
         "the_geom": "POINT (125.0013470649719380 11.2239728009152522)", 
         "analyst": 8
     }
@@ -36363,7 +36363,7 @@
         "properties": null, 
         "project": 4, 
         "job": 12, 
-        "template": 1, 
+        "template": 5, 
         "the_geom": "POINT (125.0016474723815918 11.2236991862962547)", 
         "analyst": 8
     }
@@ -36411,7 +36411,7 @@
         "properties": null, 
         "project": 4, 
         "job": 12, 
-        "template": 1, 
+        "template": 5, 
         "the_geom": "POINT (124.9841809272765971 11.2326020519784802)", 
         "analyst": 8
     }
@@ -36427,7 +36427,7 @@
         "properties": null, 
         "project": 4, 
         "job": 12, 
-        "template": 1, 
+        "template": 5, 
         "the_geom": "POINT (125.0029349327087402 11.2479235982321892)", 
         "analyst": 8
     }
@@ -36507,7 +36507,7 @@
         "properties": null, 
         "project": 4, 
         "job": 12, 
-        "template": 1, 
+        "template": 5, 
         "the_geom": "POINT (124.9830436706542827 11.2423254353564186)", 
         "analyst": 8
     }
@@ -36523,7 +36523,7 @@
         "properties": null, 
         "project": 4, 
         "job": 12, 
-        "template": 1, 
+        "template": 5, 
         "the_geom": "POINT (124.9827647209167338 11.2438828299320619)", 
         "analyst": 8
     }
@@ -36539,7 +36539,7 @@
         "properties": null, 
         "project": 4, 
         "job": 12, 
-        "template": 1, 
+        "template": 5, 
         "the_geom": "POINT (124.9809408187866211 11.2451455761126358)", 
         "analyst": 8
     }
@@ -36571,7 +36571,7 @@
         "properties": null, 
         "project": 4, 
         "job": 12, 
-        "template": 1, 
+        "template": 5, 
         "the_geom": "POINT (124.9930858612060405 11.2341174060164768)", 
         "analyst": 3
     }
@@ -36587,7 +36587,7 @@
         "properties": null, 
         "project": 4, 
         "job": 12, 
-        "template": 1, 
+        "template": 5, 
         "the_geom": "POINT (124.9927639961242534 11.2355064735583117)", 
         "analyst": 3
     }
@@ -36619,7 +36619,7 @@
         "properties": null, 
         "project": 4, 
         "job": 12, 
-        "template": 1, 
+        "template": 5, 
         "the_geom": "POINT (125.0053167343139648 11.2498597796264335)", 
         "analyst": 8
     }
@@ -36635,7 +36635,7 @@
         "properties": null, 
         "project": 4, 
         "job": 12, 
-        "template": 1, 
+        "template": 5, 
         "the_geom": "POINT (125.0017333030700684 11.2498176888649404)", 
         "analyst": 8
     }
@@ -36651,7 +36651,7 @@
         "properties": null, 
         "project": 4, 
         "job": 12, 
-        "template": 1, 
+        "template": 5, 
         "the_geom": "POINT (125.0009822845458842 11.2479656892704405)", 
         "analyst": 8
     }
@@ -36667,7 +36667,7 @@
         "properties": null, 
         "project": 4, 
         "job": 12, 
-        "template": 1, 
+        "template": 5, 
         "the_geom": "POINT (125.0042438507079936 11.2480077803025349)", 
         "analyst": 8
     }
@@ -36683,7 +36683,7 @@
         "properties": null, 
         "project": 4, 
         "job": 12, 
-        "template": 1, 
+        "template": 5, 
         "the_geom": "POINT (125.0056815147399902 11.2511856354652231)", 
         "analyst": 8
     }
@@ -36699,7 +36699,7 @@
         "properties": null, 
         "project": 4, 
         "job": 12, 
-        "template": 1, 
+        "template": 5, 
         "the_geom": "POINT (125.0018620491027690 11.2480077803025349)", 
         "analyst": 8
     }
@@ -36715,7 +36715,7 @@
         "properties": null, 
         "project": 4, 
         "job": 12, 
-        "template": 1, 
+        "template": 5, 
         "the_geom": "POINT (125.0022697448730327 11.2471449129154806)", 
         "analyst": 8
     }
@@ -36731,7 +36731,7 @@
         "properties": null, 
         "project": 4, 
         "job": 12, 
-        "template": 1, 
+        "template": 5, 
         "the_geom": "POINT (124.9897170066833496 11.2121018975917313)", 
         "analyst": 8
     }
@@ -36747,7 +36747,7 @@
         "properties": null, 
         "project": 4, 
         "job": 12, 
-        "template": 1, 
+        "template": 5, 
         "the_geom": "POINT (124.9902749061584473 11.2114915010815377)", 
         "analyst": 8
     }
@@ -36763,7 +36763,7 @@
         "properties": null, 
         "project": 4, 
         "job": 12, 
-        "template": 1, 
+        "template": 5, 
         "the_geom": "POINT (124.9939656257629252 11.2139330793879370)", 
         "analyst": 8
     }
@@ -36779,7 +36779,7 @@
         "properties": null, 
         "project": 4, 
         "job": 12, 
-        "template": 1, 
+        "template": 5, 
         "the_geom": "POINT (124.9906611442565776 11.2164798761581963)", 
         "analyst": 8
     }
@@ -36795,7 +36795,7 @@
         "properties": null, 
         "project": 4, 
         "job": 13, 
-        "template": 1, 
+        "template": 5, 
         "the_geom": "POINT (125.0071406364440776 11.2504911403108263)", 
         "analyst": 1
     }
@@ -36811,7 +36811,7 @@
         "properties": null, 
         "project": 4, 
         "job": 13, 
-        "template": 1, 
+        "template": 5, 
         "the_geom": "POINT (125.0077843666076518 11.2496703711512591)", 
         "analyst": 1
     }
@@ -36827,7 +36827,7 @@
         "properties": null, 
         "project": 4, 
         "job": 13, 
-        "template": 1, 
+        "template": 5, 
         "the_geom": "POINT (125.0071835517883159 11.2474816419593662)", 
         "analyst": 1
     }
@@ -36843,7 +36843,7 @@
         "properties": null, 
         "project": 4, 
         "job": 13, 
-        "template": 1, 
+        "template": 5, 
         "the_geom": "POINT (125.0081276893615723 11.2487233269072835)", 
         "analyst": 1
     }
@@ -36859,7 +36859,7 @@
         "properties": null, 
         "project": 4, 
         "job": 12, 
-        "template": 1, 
+        "template": 5, 
         "the_geom": "POINT (125.0171184539794922 11.2048822977268330)", 
         "analyst": 1
     }
@@ -36875,7 +36875,7 @@
         "properties": null, 
         "project": 4, 
         "job": 12, 
-        "template": 1, 
+        "template": 5, 
         "the_geom": "POINT (125.0184488296508789 11.2041876911503397)", 
         "analyst": 1
     }
@@ -36891,7 +36891,7 @@
         "properties": null, 
         "project": 4, 
         "job": 12, 
-        "template": 1, 
+        "template": 5, 
         "the_geom": "POINT (125.0173759460449077 11.2025458871572337)", 
         "analyst": 1
     }
@@ -36907,7 +36907,7 @@
         "properties": null, 
         "project": 4, 
         "job": 13, 
-        "template": 1, 
+        "template": 5, 
         "the_geom": "POINT (124.9905323982238770 11.2320127454807768)", 
         "analyst": 3
     }
@@ -36923,7 +36923,7 @@
         "properties": null, 
         "project": 4, 
         "job": 12, 
-        "template": 1, 
+        "template": 5, 
         "the_geom": "POINT (124.9830222129821777 11.2493757354978978)", 
         "analyst": 1
     }
@@ -36955,7 +36955,7 @@
         "properties": null, 
         "project": 4, 
         "job": 13, 
-        "template": 1, 
+        "template": 5, 
         "the_geom": "POINT (125.0016689300537251 11.2329808912341971)", 
         "analyst": 8
     }
@@ -36971,7 +36971,7 @@
         "properties": null, 
         "project": 4, 
         "job": 13, 
-        "template": 1, 
+        "template": 5, 
         "the_geom": "POINT (125.0029563903808452 11.2325389120541548)", 
         "analyst": 8
     }
@@ -36987,7 +36987,7 @@
         "properties": null, 
         "project": 4, 
         "job": 13, 
-        "template": 1, 
+        "template": 5, 
         "the_geom": "POINT (124.9895668029785156 11.2428305372219004)", 
         "analyst": 8
     }
@@ -37003,7 +37003,7 @@
         "properties": null, 
         "project": 4, 
         "job": 13, 
-        "template": 1, 
+        "template": 5, 
         "the_geom": "POINT (124.9898672103881836 11.2423675272123536)", 
         "analyst": 8
     }
@@ -37019,7 +37019,7 @@
         "properties": null, 
         "project": 4, 
         "job": 13, 
-        "template": 1, 
+        "template": 5, 
         "the_geom": "POINT (124.9916911125183105 11.2423254353564186)", 
         "analyst": 8
     }
@@ -37099,7 +37099,7 @@
         "properties": null, 
         "project": 4, 
         "job": 12, 
-        "template": 1, 
+        "template": 5, 
         "the_geom": "POINT (124.9862194061279297 11.2535006072179726)", 
         "analyst": 8
     }
@@ -37227,7 +37227,7 @@
         "properties": null, 
         "project": 4, 
         "job": 14, 
-        "template": 1, 
+        "template": 5, 
         "the_geom": "POINT (124.9540328979492188 11.3189855378623587)", 
         "analyst": 8
     }
@@ -37243,7 +37243,7 @@
         "properties": null, 
         "project": 4, 
         "job": 14, 
-        "template": 1, 
+        "template": 5, 
         "the_geom": "POINT (124.9541616439819194 11.3179756010354904)", 
         "analyst": 8
     }
@@ -37259,7 +37259,7 @@
         "properties": null, 
         "project": 4, 
         "job": 14, 
-        "template": 1, 
+        "template": 5, 
         "the_geom": "POINT (124.9540758132934428 11.3158084329023438)", 
         "analyst": 8
     }
@@ -37275,7 +37275,7 @@
         "properties": null, 
         "project": 4, 
         "job": 12, 
-        "template": 1, 
+        "template": 5, 
         "the_geom": "POINT (125.0250577926635742 11.1959996273282520)", 
         "analyst": 8
     }

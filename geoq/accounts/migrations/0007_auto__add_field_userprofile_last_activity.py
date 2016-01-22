@@ -10,7 +10,7 @@ class Migration(SchemaMigration):
     def forwards(self, orm):
         # Adding field 'UserProfile.last_activity'
         db.add_column(u'accounts_userprofile', 'last_activity',
-                      self.gf('django.db.models.fields.DateTimeField')(default=datetime.datetime(2015, 7, 15, 0, 0)),
+                      self.gf('django.db.models.fields.DateTimeField')(default=datetime.datetime(2015, 10, 22, 0, 0)),
                       keep_default=False)
 
 
@@ -36,7 +36,7 @@ class Migration(SchemaMigration):
             'Meta': {'object_name': 'UserAuthorization'},
             'authorized': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
             u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
-            'permission_granted_on': ('django.db.models.fields.DateTimeField', [], {'default': 'datetime.datetime(2015, 7, 15, 0, 0)', 'auto_now_add': 'True', 'blank': 'True'}),
+            'permission_granted_on': ('django.db.models.fields.DateTimeField', [], {'default': 'datetime.datetime(2015, 10, 22, 0, 0)', 'auto_now_add': 'True', 'blank': 'True'}),
             'permissions_granted_by': ('django.db.models.fields.related.ForeignKey', [], {'blank': 'True', 'related_name': "'permissions_granted_by'", 'null': 'True', 'to': u"orm['auth.User']"}),
             'user': ('django.db.models.fields.related.OneToOneField', [], {'to': u"orm['auth.User']", 'unique': 'True'}),
             'user_accepted_terms_on': ('django.db.models.fields.DateTimeField', [], {'null': 'True', 'blank': 'True'}),
@@ -46,7 +46,7 @@ class Migration(SchemaMigration):
             'Meta': {'object_name': 'UserProfile'},
             'email': ('django.db.models.fields.CharField', [], {'max_length': '250', 'null': 'True', 'blank': 'True'}),
             u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
-            'last_activity': ('django.db.models.fields.DateTimeField', [], {}),
+            'last_activity': ('django.db.models.fields.DateTimeField', [], {'default': 'datetime.datetime(2015, 10, 22, 0, 0)'}),
             'mugshot': ('django.db.models.fields.files.ImageField', [], {'max_length': '100', 'blank': 'True'}),
             'openbadge_id': ('django.db.models.fields.CharField', [], {'max_length': '250', 'null': 'True', 'blank': 'True'}),
             'organization': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['accounts.Organization']", 'null': 'True', 'blank': 'True'}),

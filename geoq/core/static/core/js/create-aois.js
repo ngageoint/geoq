@@ -14,8 +14,10 @@ create_aois.batch_redirect_url = '';
 
 create_aois.drawControl = null;
 create_aois.deleteControl = null;
+create_aois.removeControl = null;
 create_aois.prioritizeControl = [];
 create_aois.drawnItems = null;
+create_aois.removeOrSplit = false;
 
 create_aois.last_shapes = null;
 create_aois.$feature_info = null;
@@ -87,6 +89,7 @@ create_aois.init = function () {
     });
     $('#option_polygon').click(function () {
         create_aois.draw_method = 'polygon';
+        create_aois.get_grids_url = '/geoq/api/geo/usng';
         $('#poly_split_holder').css('display', 'inline-block');
         $('#file_uploader_holder').hide();
         $('a.leaflet-draw-draw-polygon').show();
@@ -96,6 +99,7 @@ create_aois.init = function () {
 
     $('#option_shapefile').click(function () {
         create_aois.draw_method = 'polygon';
+        create_aois.get_grids_url = '/geoq/api/geo/usng';
         $('#file_uploader_holder').css('display', 'inline-block');
         $('a.leaflet-draw-draw-polygon').hide();
         $('a.leaflet-draw-draw-rectangle').hide();
@@ -122,31 +126,6 @@ create_aois.init = function () {
             $n.hide();
             $n_sized.show();
         }
-    });
-
-    $("#poly_split_button").click(function () {
-        var $n = $("#poly_split_n_cells");
-        var $n_sized = $("#poly_split_n_sized_cells");
-        var num = 1;
-        var splitIntoSized = false;
-        if ($n.css('display') != 'none') {
-            num = parseInt($("#split_number").val());
-            splitIntoSized = false;
-        } else if ($n_sized.css('display') != 'none') {
-            num = parseInt($("#split_sized").val());
-            splitIntoSized = true;
-        }
-
-        if (num > 0) {
-            if (create_aois.last_polygon_workcells) {
-                create_aois.removeFeatures(create_aois.last_polygon_workcells);
-            }
-            var geoJSON = create_aois.splitPolygonsIntoSections(create_aois.last_polygon_drawn, num, splitIntoSized);
-
-            var data = {"type": "FeatureCollection", "features": geoJSON};
-            create_aois.last_polygon_workcells = create_aois.createWorkCellsFromService(data);
-        }
-
     });
 
     $("#file_holder_select").on('change', function (ev) {
@@ -289,6 +268,33 @@ create_aois.init = function () {
     create_aois.initializeFileUploads();
 };
 
+//
+create_aois.splitWorkcell = function(){
+
+    var $n = $("#poly_split_n_cells");
+    var $n_sized = $("#poly_split_n_sized_cells");
+    var num = 1;
+    var splitIntoSized = false;
+    if ($n.css('display') != 'none') {
+        num = parseInt($("#split_number").val());
+        splitIntoSized = false;
+    } else if ($n_sized.css('display') != 'none') {
+        num = parseInt($("#split_sized").val());
+        splitIntoSized = true;
+    }
+
+    if (num > 0) {
+        if (create_aois.last_polygon_workcells) {
+            create_aois.removeFeatures(create_aois.last_polygon_workcells);
+        }
+        var geoJSON = create_aois.splitPolygonsIntoSections(create_aois.last_polygon_drawn, num, splitIntoSized);
+
+        var data = {"type": "FeatureCollection", "features": geoJSON};
+        create_aois.last_polygon_workcells = create_aois.createWorkCellsFromService(data);
+    }
+
+};
+
 create_aois.removeFeatures = function (e) {
     _.each(e._layers, function (layer) {
         create_aois.removeFeature(layer);
@@ -296,7 +302,7 @@ create_aois.removeFeatures = function (e) {
 };
 
 create_aois.map_updates = function () {
-    var layers = _.filter(map_layers.layers, function (l) {
+    var layers = _.filter(map.layers, function (l) {
         return l.type == "WMS" || l.type == "KML";
     });
 
@@ -331,6 +337,8 @@ create_aois.map_updates = function () {
         L.control.layers(overlayMaps).addTo(create_aois.map_object);
     }
 };
+
+
 
 create_aois.addLocatorControl = function (map) {
 
@@ -414,6 +422,7 @@ create_aois.addDrawingControls = function (map) {
 
     create_aois.setDrawingControlColor();
 };
+
 create_aois.setDrawingControlColor = function () {
     //Find the create icons and color them
     var icons = $('div.leaflet-draw.leaflet-control').find('a');
@@ -572,8 +581,7 @@ create_aois.somethingWasDrawn = function (e) {
             var data = {"type": "FeatureCollection", "features": geoJSON};
             create_aois.last_polygon_workcells = create_aois.createWorkCellsFromService(data, false, true);
 
-            $('#poly_split_button').attr('disabled', false);
-            $("#poly_split_button").trigger('click');
+            create_aois.splitWorkcell();
         } else {
             //Using USNG or MGRS
             create_aois.update_info("Requesting Grid Information from the server");
@@ -932,6 +940,16 @@ create_aois.resetHighlight = function (e) {
     create_aois.update_info("");
 };
 
+create_aois.splitOrRemove = function (e) {
+    var layer = e.target;
+    if(!create_aois.removeOrSplit){
+        create_aois.splitFeature(layer);
+    }
+    else{
+        create_aois.removeFeature(layer);
+    }
+}
+
 create_aois.removeFeature = function (e) {
     for (var key in create_aois.aois._layers) {
         var layer = create_aois.aois._layers[key];
@@ -947,15 +965,16 @@ create_aois.removeFeature = function (e) {
     }
     create_aois.updateCellCount();
 };
-create_aois.splitFeature = function (e) {
+create_aois.splitFeature = function (layer) {
     var layerParent;
-    var layer = e.target;
+    //var layer = e.target;
 
     for (var key in create_aois.aois._layers) {
-        if (create_aois.aois._layers[key]._layers[e.target._leaflet_id]) {
+        if (create_aois.aois._layers[key]._layers[layer._leaflet_id]) {
             layerParent = create_aois.aois._layers[key];
         }
     }
+    console.log(layerParent);
 
     if (layerParent) {
         var simplerLayer = _.toArray(layer._layers)[0];
@@ -1036,7 +1055,7 @@ create_aois.createWorkCellsFromService = function (data, zoomAfter, skipFeatureS
             layer.on({
                 mouseover: create_aois.highlightFeature,
                 mouseout: create_aois.resetHighlight,
-                click: create_aois.splitFeature
+                click: create_aois.splitOrRemove
             });
         }
     });
@@ -1346,8 +1365,8 @@ create_aois.smoothWorkCells = function (shape_layers) {
 create_aois.initializeFileUploads = function () {
     var holder = document.getElementById('file_holder');
     var $holder = $('#file_holder').popover({
-        title: "Drag zipped shapefile here",
-        content: "You can drag a .zip or .shp file here. All polygons/multipolygons within will be created as work cells. Please make files as small as possible (<5mb).",
+        title: "Drag zipped shapefile or GeoJSON file here",
+        content: "You can drag a .zip or .shp shapefile, or a .json GeoJSON file here. All polygons/multipolygons within will be created as work cells. Please make files as small as possible (<5mb).",
         trigger: "hover",
         placement: "bottom",
         container: 'body'
@@ -1372,6 +1391,7 @@ create_aois.initializeFileUploads = function () {
         $holder.css({backgroundColor: 'lightgreen'});
 
         var file = e.dataTransfer.files[0], reader = new FileReader();
+        var extension = file.name.split('.').slice(-1)[0];
 
         reader.onload = function (event) {
             var size = "";
@@ -1391,17 +1411,28 @@ create_aois.initializeFileUploads = function () {
             $holder.css({backgroundColor: ''});
             create_aois.update_info("Importing Shapes: " + size);
 
-            shp(reader.result).then(function (geojson) {
-                create_aois.createWorkCellsFromService(geojson, true);
+            if (extension === 'json') {
+                create_aois.createWorkCellsFromService(JSON.parse(reader.result), true);
+                create_aois.update_info("GeoJSON Imported");
+            } else {
+                shp(reader.result).then(function (geojson) {
+                    create_aois.createWorkCellsFromService(geojson, true);
 
-                create_aois.update_info("Shapes Imported");
-            }, function (a) {
-                log.log(a);
-            });
+                    create_aois.update_info("Shapes Imported");
+                }, function (a) {
+                    log.log(a);
+                });
+            }
+
             $('#file_holder_edit_btn').attr('disabled', false);
 
         };
-        reader.readAsArrayBuffer(file);
+
+        if ( extension === 'json') {
+            reader.readAsText(file);
+        } else {
+            reader.readAsArrayBuffer(file);
+        }
 
         return false;
     };

@@ -160,6 +160,8 @@ class Job(GeoQBase, Assignment):
 
     GRID_SERVICE_VALUES = ['usng', 'mgrs']
     GRID_SERVICE_CHOICES = [(choice, choice) for choice in GRID_SERVICE_VALUES]
+    EDITORS = ['geoq','osm']
+    EDITOR_CHOICES = [(choice, choice) for choice in EDITORS]
 
     analysts = models.ManyToManyField(User, blank=True, null=True, related_name="analysts")
     teams = models.ManyToManyField(Group, blank=True, null=True, related_name="teams")
@@ -169,6 +171,8 @@ class Job(GeoQBase, Assignment):
     grid = models.CharField(max_length=5, choices=GRID_SERVICE_CHOICES, default=GRID_SERVICE_VALUES[0],
                             help_text='Select usng for Jobs inside the US, otherwise use mgrs')
     tags = models.CharField(max_length=50, blank=True, null=True, help_text='Useful tags to search social media with')
+    editor = models.CharField(max_length=20, help_text='Editor to be used for creating features', choices=EDITOR_CHOICES, default=EDITOR_CHOICES[0])
+    editable_layer = models.ForeignKey( 'maps.EditableMapLayer', blank=True, null=True)
 
     map = models.ForeignKey('maps.Map', blank=True, null=True)
     feature_types = models.ManyToManyField('maps.FeatureType', blank=True, null=True)
@@ -176,7 +180,7 @@ class Job(GeoQBase, Assignment):
 
     class Meta:
         permissions = (
-            ('assign_job', 'Assign Job'),
+
         )
         ordering = ('-created_at',)
 
@@ -377,7 +381,10 @@ class AOI(GeoQBase, Assignment):
     # -- Afterwards -- check how this will work with the views.
 
     def get_absolute_url(self):
-        return reverse('aoi-work', args=[self.id])
+        if self.job.editable_layer_id is None:
+            return reverse('aoi-work', args=[self.id])
+        else:
+            return reverse('aoi-mapedit', args=[self.id])
 
     def geoJSON(self):
         """
@@ -395,9 +402,10 @@ class AOI(GeoQBase, Assignment):
             analyst=(self.analyst.username if self.analyst is not None else 'None'),
             assignee=self.assignee_name,
             priority=self.priority,
-            absolute_url=reverse('aoi-work', args=[self.id]),
             delete_url=reverse('aoi-deleter', args=[self.id]))
         geojson["geometry"] = json.loads(self.polygon.json)
+
+        geojson["properties"]["absolute_url"] = self.get_absolute_url()
 
         return clean_dumps(geojson)
 
@@ -420,6 +428,14 @@ class AOI(GeoQBase, Assignment):
         prop_json = dict(properties_built.items() + properties_main.items())
 
         return clean_dumps(prop_json)
+
+
+    def map_detail(self):
+        """
+        Get map coordinates for MapEdit
+        """
+        center = self.polygon.centroid
+        return "15/%f/%f" % (center.y, center.x)
 
     def grid_geoJSON(self):
         """
@@ -465,7 +481,11 @@ class Comment(models.Model):
 
     def to_dict(self):
         format = "%D %H:%M:%S"
-        o = {'user': self.user.username, 'timestamp': self.created_at.strftime(format), 'text': self.text}
+        if self.user:
+            username = self.user.username
+        else:
+            username = "Anonymous or Removed User"
+        o = {'user': username, 'timestamp': self.created_at.strftime(format), 'text': self.text}
         return o
 
 

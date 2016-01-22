@@ -313,6 +313,9 @@ class CreateFeaturesView(UserAllowedMixin, DetailView):
 
 #TODO: Add Job specific layers, and add these here
 
+        cv['user_custom_params'] =\
+            json.dumps(dict((e['maplayer'], e['values']) for e in
+                            MapLayerUserRememberedParams.objects.filter(user=self.request.user, map=cv['map']).values('maplayer','values')))
         cv['layers_on_map'] = json.dumps(layers)
         cv['base_layer'] = json.dumps(self.object.job.base_layer_object())
 
@@ -505,6 +508,18 @@ class UpdateJobView(UpdateView):
         kwargs = super(UpdateJobView, self).get_form_kwargs()
         kwargs['project'] = kwargs['instance'].project_id if hasattr(kwargs['instance'],'project_id') else 0
         return kwargs
+
+class MapEditView(DetailView):
+    http_method_names = ['get']
+    template_name = 'core/mapedit.html'
+    model = AOI
+
+    def get_context_data(self, **kwargs):
+        cv = super(MapEditView, self).get_context_data(**kwargs)
+        pk = self.kwargs.get('pk')
+        aoi = get_object_or_404(AOI, pk=pk)
+        cv['mapedit_url'] = aoi.job.editable_layer.edit_url + '?#map=' + aoi.map_detail() + '&geojson=' + aoi.grid_geoJSON()
+        return cv
 
 
 class ChangeAOIStatus(View):
@@ -708,6 +723,19 @@ def aoi_delete(request, pk):
     try:
         aoi = AOI.objects.get(pk=pk)
         aoi.delete()
+    except ObjectDoesNotExist:
+        raise Http404
+
+    return HttpResponse(status=200)
+
+@login_required
+def update_priority(request, *args, **kwargs):
+    try:
+        pk = kwargs.get('pk')
+        priority = request.POST.get('priority')
+        aoi = AOI.objects.get(pk=pk)
+        aoi.priority = priority
+        aoi.save()
     except ObjectDoesNotExist:
         raise Http404
 

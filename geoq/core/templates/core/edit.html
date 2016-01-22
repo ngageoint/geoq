@@ -6,7 +6,7 @@
 {% block title %}GeoQ: Workcell {{ object.id }}{% endblock %}
 {% block static_libraries %}
 
-    {% leaflet_js plugins="draw, esri, esriCluster, MakiMarkers" %}
+    {% leaflet_js plugins="draw, esri, esriCluster, MakiMarkers, MediaQ" %}
     {% import_django_select2_js %}
     <script src="{{ STATIC_URL }}core/js/jquery-migrate-1.2.1.min.js"></script>
     <script src="{{ STATIC_URL }}core/js/leaflet_helper.js"></script>
@@ -39,6 +39,11 @@
     <script src="{{ STATIC_URL }}leaflet/leaflet-plugins/layer/tile/Bing.js"></script>
 	<script src="{{ STATIC_URL }}leaflet/leaflet-plugins/layer/tile/Google.js"></script>
     <script src="{{ STATIC_URL }}leaflet/leaflet-plugins/layer/tile/leaflet-tilelayer-wmts.js"></script>
+    <script src="{{ STATIC_URL }}core/js/plugins/geoq.footprintsearch.js"></script>
+    <script src="{{ STATIC_URL }}core/js/pqgrid.dev.js"></script>
+    <script src="{{ STATIC_URL }}core/js/daterangepicker.js"></script>
+
+    <script src="{{ STATIC_URL }}core/js/bootstrap_slider/bootstrap-slider.js" type="text/javascript"></script>
 
     {% for layer in object.job.map.layers %}{% if layer.layer.type == 'Google Maps' %}
     <script src="{{ layer.layer.url }}maps/api/js?v=3&sensor=false"></script>
@@ -79,13 +84,16 @@
         aoi_feature_edit.aoi_map_json = {{ layers_on_map|safe|default:"{}" }}; //This lists all the custom layers for the map
         aoi_feature_edit.aoi_extents_geojson = {{ object.polygon.json|safe }};
         aoi_feature_edit.aoi_properties = {{ object.properties_json|safe }};
-        aoi_feature_edit.priority = {{ object.priority|default:5 }}
+        aoi_feature_edit.priority = {{ object.priority|default:5 }};
+
+        aoi_feature_edit.aoi_user_remembered_params = {{ user_custom_params|safe }};
 
         aoi_feature_edit.api_url_job_kml = "{% url 'kml-job' object.job.id %}";
         aoi_feature_edit.api_url_job_kml_networked = "{% url 'kml-networked-job' object.job.id %}";
         aoi_feature_edit.api_url_job_georss = "{% url 'json-job' object.job.id %}";
         aoi_feature_edit.api_url_aoi_georss = "{% url 'json-workcell' object.id %}";
         aoi_feature_edit.api_url_log = "{% url 'workcell_log' object.id %}";
+        aoi_feature_edit.api_url_user_param = "{% url 'update-user-maplayer-param' %}";
 
         aoi_feature_edit.csrf = '{{ csrf_token }}';
 
@@ -94,7 +102,7 @@
         aoi_feature_edit.edit_feature_url = "{% url 'feature-edit' %}";
         aoi_feature_edit.next_aoi_url = "{% url 'job-next-aoi' object.job.id %}";
 
-        aoi_feature_edit.percent_complete = {% widthratio object.job.complete.count 100 100%};
+        aoi_feature_edit.percent_complete = {{ object.job.complete_percent }};
         aoi_feature_edit.description = "{{ object.description|escapejs}}";
         aoi_feature_edit.static_root = "{{ STATIC_URL }}";
         aoi_feature_edit.help_url = "{% url 'help_page' %}";
@@ -117,6 +125,8 @@
         <link rel="stylesheet" href="{{ STATIC_URL }}bootstrap/css/bootstrap.min.css" />
         <link rel="stylesheet" href="{{ STATIC_URL }}images/maki/maki-sprite.css" />
         <link rel="stylesheet" href="{{ STATIC_URL }}core/edit.css" />
+	<link rel="stylesheet" href="{{ STATIC_URL }}core/css/pqgrid.css" />
+	<link rel="stylesheet" href="{{ STATIC_URL }}core/css/daterangepicker.css" />
 
     {% endcompress %}
 {% endblock %}

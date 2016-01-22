@@ -55,6 +55,9 @@ function mapInit(map, bounds) {
                 .text(job_properties.id)
                 .appendTo($td);
             $('<td>')
+                .text(job_properties.priority)
+                .appendTo($tr);
+            $('<td>')
                 .text(job_properties.status)
                 .appendTo($tr);
             $('<td>')

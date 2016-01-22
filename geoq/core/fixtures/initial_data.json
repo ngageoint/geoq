@@ -20,6 +20,7 @@
     "fields": {
         "map": null, 
         "name": "Exploit CAP Imagery", 
+        "editor": "geoq",
         "feature_types": [
             2
         ], 
@@ -42,7 +43,8 @@
     "model": "core.job", 
     "fields": {
         "map": 2, 
-        "name": "Jersey Shore Damage Assessment", 
+        "name": "Jersey Shore Damage Assessment",
+        "editor": "geoq",
         "feature_types": [
             1, 
             2,
@@ -68,7 +70,8 @@
     "model": "core.job", 
     "fields": {
         "map": 2, 
-        "name": "My test", 
+        "name": "My test",
+        "editor": "geoq",
         "feature_types": [
             1, 
             2, 
@@ -95,7 +98,8 @@
     "model": "core.job", 
     "fields": {
         "map": 2, 
-        "name": "Connecticut Shore", 
+        "name": "Connecticut Shore",
+        "editor": "geoq",
         "feature_types": [
             1, 
             2, 

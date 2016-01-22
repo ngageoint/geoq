@@ -514,13 +514,14 @@ aoi_feature_edit.layer_oversight = {
   failing: []
 };
 aoi_feature_edit.watch_layer = function(layer, watch) {
+    "use strict";
     //TODO: Clean this up
-    oversight = aoi_feature_edit.layer_oversight;
-    name = layer.name;
-    pending = oversight.pending;
-    watched = oversight.watched;
-    failing = oversight.failing;
-    if(watch) {
+    var oversight = aoi_feature_edit.layer_oversight;
+    var name = layer.name;
+    var pending = oversight.pending;
+    var watched = oversight.watched;
+    var failing = oversight.failing;
+    if(name && watch) {
         if(watched.indexOf(name) < 0) watched[watched.length] = name;
         layer.on("loading", function () {
             if(pending.indexOf(name) < 0) {
@@ -552,7 +553,7 @@ aoi_feature_edit.watch_layer = function(layer, watch) {
           toggleDrawer.tooltip();
         });
     } else {
-        if(watched.indexOf(name) > -1) {
+        if(name && watched.indexOf(name) > -1) {
             layer.off("loading");
             layer.off("load");
             layer.off("tileerror");
@@ -563,10 +564,11 @@ aoi_feature_edit.watch_layer = function(layer, watch) {
 aoi_feature_edit._pendingPoints = {};
 aoi_feature_edit.map_init = function (map, bounds) {
 
-    map.on("layer_add", function(e) {
+    // Events to watch layers being added/loaded/etc.
+    map.on("layeradd", function(e) {
         aoi_feature_edit.watch_layer(e.layer, true);
     });
-    map.on("layer_remove", function(e) {
+    map.on("layerremove", function(e) {
         aoi_feature_edit.watch_layer(e.layer, false);
     });
 
@@ -590,10 +592,14 @@ aoi_feature_edit.map_init = function (map, bounds) {
     aoi_feature_edit.layers.overlays = [];
     aoi_feature_edit.layers.jobs = [];
 
-    //Add the Base OSM Layer
+
+    // aoi_feature_edit.map._layers - layers that have been added to the map already
+    // map.options.djoptions.layers - layer options that were passed to django
+    // Set the name for the base layer and add it to our layer map.
+    // TODO: It seems like it's possible to have multiple base maps, but that's not handled here
     var baselayer = _.toArray(aoi_feature_edit.map._layers);
     if (baselayer && baselayer[0]) {
-        baselayer[0].name=baseLayerName;
+        baselayer[0].name=(map.options.djoptions.layers[0]) ? map.options.djoptions.layers[0][0] : "Base Layer";
         aoi_feature_edit.layers.base.push(baselayer[0]);
     }
 
@@ -612,7 +618,7 @@ aoi_feature_edit.map_init = function (map, bounds) {
     //Build a reset button that zooms to the extents of the AOI
     function locateBounds() {
         return aoi_extents.getBounds();
-    }
+    };
     (new L.Control.ResetView(locateBounds)).addTo(aoi_feature_edit.map);
 
     //Zoom to the bounds of the Workcell, then one more level
@@ -631,6 +637,7 @@ aoi_feature_edit.map_init = function (map, bounds) {
             var built_layer = leaflet_helper.layer_conversion(layer_data, map);
             if (! built_layer) {
                 // skip this layer and go to next
+                log.error("Tried to add a layer, but didn't work: "+layer_data.url)
                 return true;
             }
 
@@ -817,7 +824,7 @@ aoi_feature_edit.map_init = function (map, bounds) {
         var headers = {};
         geojson.properties.template = aoi_feature_edit.current_feature_type_id || 1;
         if(geojson.geometry.type === "Point") {
-            icon = null;
+            var icon = null;
             var tmpId = Math.uuidCompact();
             headers = { "Temp-Point-Id": tmpId};
             if(aoi_feature_edit.feature_types[geojson.properties.template]) {
@@ -1004,6 +1011,33 @@ aoi_feature_edit.map_init = function (map, bounds) {
 
     $('div.leaflet-draw.leaflet-control').find('a').popover({trigger:"hover",placement:"right"});
 
+    footprints.init({
+	    url_template: 'http://dev.femadata.com/arcgis/rest/services/ImageEvents/ImageEvents/MapServer/{{layer}}/query?geometry={{bounds}}&geometryType=esriGeometryEnvelope&spatialRel=esriSpatialRelIntersects&outFields=*&outSR=4326&f=json',
+		layerList: [1,2,3,4,5,6,7,8,9],
+		/*promptFields: [
+			       {name: 'mission', title: 'Mission ID#', popover: 'Comma-separated list of missions to search for', default: '75, 76', type: 'integer', format:'where', compare:'='}
+			       ],
+		*/
+		title: 'CAP Image',
+		markerColorMax: '#ffdf00',
+		markerColorMin: '#332200',
+		schema: [
+			 {name: 'Id', id: true, visualize: 'none'},
+			 {name: 'layerId', title:'Image Type', color_by_layerid:true, filter:'options', show: 'small-table'},
+			 {name: 'EXIFCameraMaker', title: 'Camera Type', filter: 'options'},
+			 {name: 'ImageMissionName', title: 'Mission Name', filter: 'options', show: 'small-table', showSizeMultiplier: 2},
+			 {name: 'Altitude', title: 'Alt', type: 'integer', filter: 'slider-max', min: 0, max: 10000, start: 2000, show: 'small-table', sizeMarker: true},
+			 {name: 'Heading', title: 'Dir', type: 'integer', show: 'small-table'},
+			 {name: 'UploadDate', title: 'Date', type: 'date', filter: 'date-range', initialDateRange: 100, colorMarker: true},
+			 {name: 'ThumbnailURL', title: 'Thumbnail', visualize: 'thumbnail', linkField: 'ImageURL'},
+			 {name: 'Filename', title: 'File Name', filter: 'textbox', visualize: 'none', onNotFound: function (name) {
+				 console.log("TODO: Load If not found: " + name)
+				     }}
+			 ],
+		featureSelectFunction: null
+                });
+
+
     //Resize the map
     aoi_feature_edit.mapResize();
     //Resize it on screen resize, but no more than every .3 seconds
@@ -1099,7 +1133,7 @@ aoi_feature_edit.buildDrawingControl = function (drawnItems) {
         });
 
         var setColorBG = true;
-        if ($icon) {
+        if ($icon && ftype && ftype.style) {
             var bg_color = ftype.style.color;
             var bg_image = ftype.icon || ftype.style.iconUrl || ftype.style.icon;
 

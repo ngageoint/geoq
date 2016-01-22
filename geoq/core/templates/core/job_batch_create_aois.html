@@ -2,6 +2,7 @@
 {% load compress %}
 {% load leaflet_tags %}
 {% load dynurl %}
+{% load geoserver_job_link %}
 {% block title %}GeoQ: Draw Workcells for Job #{{ object.id }}{% endblock %}
 {% block static_libraries %}
     {% leaflet_js plugins="draw" %}
@@ -77,7 +78,14 @@
         }
 
     </style>
-    <script src="http://maps.googleapis.com/maps/api/js?sensor=false&libraries=places"></script>
+
+    <script src="{{ STATIC_URL }}core/js/leaflet_helper.js"></script>
+    <script src="{{ STATIC_URL }}bootstrap/js/bootstrap-dialog.js"></script>
+    <script src="{{ STATIC_URL }}core/js/maths.js"></script>
+    <script src="{{ STATIC_URL }}core/js/leafletcontrols/leaflet.simple_button.js"></script>
+    <script src="{{ STATIC_URL }}leaflet/L.Control.Button.js"></script>
+
+    <script src="https://maps.googleapis.com/maps/api/js?sensor=false&libraries=places"></script>
     <script src="{{ STATIC_URL }}core/js/jquery.geocomplete.js" type="text/javascript"></script>
     <script src="{{ STATIC_URL }}core/js/KML.js"></script>
     <script src="{{ STATIC_URL }}core/js/create-aois.js" type="text/javascript"></script>
@@ -87,6 +95,164 @@
 	<script src="{{ STATIC_URL }}core/js/polygon.js"></script>
     <script src="{{ STATIC_URL }}core/js/leafletcontrols/leaflet.simple_button.js" type="text/javascript"></script>
     <script src="{{ STATIC_URL }}core/js/leaflet-shapefile/shp.js" type="text/javascript"></script>
+
+    <script type="text/javascript">
+    var status_colors = [
+        {name:'Assigned', color: leaflet_helper.styles.assigned, slug:'assigned'},  //TODO: Are we still using 'Assigned'?
+        {name:'Completed', color: leaflet_helper.styles.completed, slug:'completed'},
+        {name:'In work', color: leaflet_helper.styles.in_work, slug:'in-work'},
+        {name:'In review', color: leaflet_helper.styles.in_review, slug:'in-review'},
+        {name:'Awaiting review', color: leaflet_helper.styles.awaiting_review, slug:'awaiting-review'},
+        {name:'Unassigned', color: leaflet_helper.styles.extentStyle, slug:'unassigned'}
+    ];
+
+    var aoi_extents;
+
+    function mapInit(map) {
+        //Auto-called after leaflet map is initialized
+        create_aois.map_object = map;
+        
+        aoi_extents = L.geoJson({{ object.geoJSON|default:'[]'|safe }}, {
+            style: function(feature) {
+                var status = _.find(status_colors,function(stat){return stat.name==feature.properties.status});
+                return (status && status.color) ? status.color : '#ffffff';
+            },
+            onEachFeature: function (feature, layer) {
+                var popupContent = "";
+                if (!feature.properties) {
+                    feature.properties = {};
+                }
+                if (_.isString(feature.properties.properties)) {
+                    try {
+                        var newProps = JSON.parse(feature.properties.properties);
+                        feature.properties = $.extend(feature.properties, newProps);
+                        delete(feature.properties.properties);
+                    } catch (ex) {
+                    }
+                }
+                feature.priority = feature.properties.priority = parseInt(feature.properties.priority) || create_aois.priority_to_use;
+                for (var k in feature.properties) {
+                    if (k != "priority") {
+                        popupContent += "<b>" + k + ":</b> " + feature.properties[k] + "<br/>";
+
+                        //Add fields to search if they are numeric
+                        for (var key in feature.properties) {
+                            if ($.isNumeric(feature.properties[key])) {
+                                create_aois.data_fields_obj[key] = true;
+                            }
+                        }
+                    }
+                }
+
+                //Add Size information
+                if (layer.getBounds) {
+                    var bounds = layer.getBounds();
+                    bounds._northWest = new L.LatLng(bounds._northEast.lat, bounds._southWest.lng);
+                    var width_m = bounds._northEast.distanceTo(bounds._northWest);
+                    var height_m = bounds._southWest.distanceTo(bounds._northWest);
+                    popupContent += "<b>Width:</b>: " + L.GeometryUtil.readableDistance(width_m, true) + "<br/>";
+                    popupContent += "<b>Height:</b>: " + L.GeometryUtil.readableDistance(height_m, true) + "<br/>";
+                    try {
+                        var area = L.GeometryUtil.geodesicArea(layer.getLatLngs()[0]);
+                        if (area > 990) {
+                            area = area / 1000;
+                            popupContent += "<b>Area:</b>: " + L.GeometryUtil.readableDistance(area, true) + " sq<br/>";
+                        }
+                    } catch (ex) {
+                    }
+                }
+                layer.popupContent = popupContent;
+
+                layer.on({
+                    mouseover: highlightFeature,
+                    mouseout: resetHighlight,
+                    click: create_aois.splitOrRemove
+                });
+            }
+        });
+    if (aoi_extents) {
+        create_aois.aois.addLayer(aoi_extents);
+        create_aois.map_object.addLayer(create_aois.aois);
+    }
+
+        // Map doesn't update without this delay.
+        setTimeout(function(){
+            try {
+                //AOI is sometimes getting no bounds data, which causes error
+                var test = aoi_extents.getBounds().getCenter();
+                map.fitBounds(aoi_extents.getBounds());
+            } catch(ex){
+                log.error("aoi_extents not being passed in valid bounds");
+            }
+        }, 1);
+
+        //create_aois.drawnItems = new L.FeatureGroup();
+        //map.addLayer(create_aois.drawnItems);
+
+        map.on('zoomend', create_aois.mapWasZoomed);
+        map.on('draw:created', create_aois.somethingWasDrawn);
+
+        create_aois.addDrawingControls(map);
+        create_aois.addLocatorControl(map);
+        create_aois.addPrioritizeControls(map);
+        create_aois.addDeleteControls(map);
+    //    create_aois.buildPriorityBoxes(map);
+        create_aois.setupStatusControls(map);
+        $('div.leaflet-left div.leaflet-draw.leaflet-control').find('a').popover({trigger: "hover", placement: "right"});
+        $('div.leaflet-right div.leaflet-draw.leaflet-control').find('a').popover({trigger: "hover", placement: "left"});
+
+        create_aois.map_updates();
+    }
+
+    function highlightFeature(e) {
+            var layer = e.target;
+            layer.setStyle({
+                color: 'black',
+                weight: 3,
+                opacity: 1,
+                fillOpacity:.3,
+                fillColor: 'gray'
+            });
+    }
+
+    function resetHighlight(e) {
+        aoi_extents.resetStyle(e.target);
+    }
+
+    function deleteAOI(id, delete_url) {
+        BootstrapDialog.confirm('Delete AOI # ' + id + '?',
+                function(result) {
+                    if (result) {
+                        $.ajax({
+                            url: delete_url,
+                            type: 'GET',
+                            success: function(data) {
+                                window.location.reload();
+                            },
+                            failure: function() { log.error('failed');}
+                        })
+                    }
+                }
+        );
+    }
+
+    function configurePageUI () {
+        //Color tabs with same colors as features
+        _.each(status_colors, function(stat){
+            var tab_name = '#tab_'+stat.slug;
+            var $tab = $(tab_name);
+            var bg_color = (stat.color) ? stat.color.fillColor : '';
+            bg_color = bg_color || '#ffffff';
+            var color = maths.idealTextColor(bg_color);
+
+            if ($tab.length && bg_color) {
+                $tab.css({backgroundColor:bg_color, color:color});
+            }
+        });
+
+    };
+    </script>
+
 
     <script type="text/javascript">
         var map_layers = {{ object.map.to_json|safe|default:"{}" }};
@@ -105,7 +271,6 @@
     {% endcompress %}
 {% endblock %}
 
-
 {% block container %}
     <div class="row-fluid container" style="margin:0px 40px 0px 40px;">
     <h2>Add workcells to Job #{{ object.id }}<span style="font-size: 18px"> ({{ object.name }})</span></h2>
@@ -114,7 +279,7 @@
     <div class="btn-group" data-toggle="buttons-radio">
         Draw using:
         <button class="btn active" id="option_polygon">Draw cells</button>
-        <button class="btn" id="option_shapefile">Drag in Shape File</button>
+        <button class="btn" id="option_shapefile">Drag in Shape or GeoJSON File</button>
         <button class="btn" id="option_usng">USNG Cells (US only)</button>
         <button class="btn" id="option_mgrs">MGRS Cells</button>
     </div>
@@ -126,10 +291,11 @@
         </select>
         <span id="poly_split_n_cells">approximately <input type="text" id="split_number" value="4" /> cells</span>
         <span id="poly_split_n_sized_cells" style="display: none;"><input type="text" id="split_sized" value="5000" />-sq-meter cells</span>
-        <button id="poly_split_button" class="btn btn-success" disabled="true">Split</button>
+        <button id="poly_split_button" class="btn btn-success" onclick="create_aois.removeOrSplit = false;">Split</button>
+        <button id="workcell_remove_button" class="btn btn-success" onclick="create_aois.removeOrSplit = true;">Remove</button>
     </div>
     <div style="display:none" id="file_uploader_holder">
-        <div id="file_holder">Drag shapefile here</div>
+        <div id="file_holder">Drag file here</div>
         <select id="file_holder_select" style="width: inherit; margin-bottom: 0px;">
             <option value="holder_smooth">Smooth polygons</option>
             <option value="holder_points">Turn points into</option>

@@ -202,7 +202,7 @@ leaflet_helper.constructors.geojson = function(layerConfig, map, useLayerInstead
         if (_.str.endsWith(url,'/')) url = url.substr(0,url.length-1);
         if (_.str.endsWith(url,'/export')) url = url.substr(0,url.length-7) + '/identity';
         url += '?geometryType=esriGeometryEnvelope&geometry={{bbox}}&mapExtent={{bbox}}';
-        url += '&imageDisplay={{width}},{{height}},96&tolerance={{width}}&f=json&layers='+(layerConfig.layer||"all");
+        url += '&imageDisplay={{width}},{{height}},96&tolerance={{width}}&f=json&layers=visible:'+(layerConfig.layer||"all");
     }
 
     if (useLayerInstead && (useLayerInstead.geojson_layer_count !== undefined)) {
@@ -298,9 +298,7 @@ leaflet_helper.constructors.geojson = function(layerConfig, map, useLayerInstead
     }
 
     var opacity = 1;
-    if (outputLayer.config) {
-        opacity = outputLayer.config.shown ? outputLayer.config.opacity : 0;
-    }
+    if (outputLayer.config) opacity = (outputLayer.config.opacity !== undefined) ? outputLayer.config.opacity : opacity;
 
     outputLayer.options = $.extend(outputLayer.options, layerConfig.layerParams);
 
@@ -318,7 +316,7 @@ leaflet_helper.constructors.geojson = function(layerConfig, map, useLayerInstead
         success: function(data){
             leaflet_helper.constructors.geojson_success(data, proxiedURL, map, outputLayer);
             // try to set correct opacity
-                leaflet_layer_control.setLayerOpacity(outputLayer, outputLayer.options.toShowOnLoad, true);
+                leaflet_layer_control.setLayerOpacity(outputLayer, outputLayer.options.opacity, true);
         },
         error: leaflet_helper.constructors.geojson_error
     });
@@ -432,7 +430,6 @@ leaflet_helper.constructors.geojson_success = function (data, proxiedURL, map, o
     if (outputLayer && !outputLayer.options) {
         outputLayer.options = {};
     }
-    outputLayer.options.opacity = 1;
 
     return outputLayer;
 };
@@ -497,13 +494,17 @@ leaflet_helper.update_tree_title = function(outputLayer) {
 };
 
 leaflet_helper.parsers = {};
-leaflet_helper.parsers.basicJson = function (geojson, map, outputLayer) {
+leaflet_helper.parsers.basicJson = function (geojson, map, outputLayer, keepOld) {
     if (outputLayer) {
+        if (!keepOld) {
+            outputLayer.options.items = [];
+            outputLayer.clearLayers();
+        }
         outputLayer.options.onEachFeature = function(feature, layer) {
             leaflet_helper.parsers.standard_onEachFeature(feature, layer, outputLayer);
         };
         outputLayer.options.pointToLayer = function(feature, latlng) {
-            leaflet_helper.constructors.iconBuilderCallback(feature, latlng, outputLayer);
+            return leaflet_helper.constructors.iconBuilderCallback(feature, latlng, outputLayer);
         };
 
         outputLayer.addData(geojson);
@@ -514,7 +515,7 @@ leaflet_helper.parsers.basicJson = function (geojson, map, outputLayer) {
             },
             style: leaflet_helper.constructors.polygonStyleBuilderCallback,
             pointToLayer: function(feature, latlng) {
-                leaflet_helper.constructors.iconBuilderCallback(feature, latlng, outputLayer);
+                return leaflet_helper.constructors.iconBuilderCallback(feature, latlng, outputLayer);
             }
         }).addTo(map);
     }
@@ -525,12 +526,15 @@ leaflet_helper.parsers.basicJson = function (geojson, map, outputLayer) {
     if (outputLayer && !outputLayer.options) {
         outputLayer.options = {};
     }
-    outputLayer.options.opacity = outputLayer.options.opacity || 1;
 
     return outputLayer;
 };
-leaflet_helper.parsers.fulcrum_exported_json = function (geojson, map, outputLayer) {
+leaflet_helper.parsers.fulcrum_exported_json = function (geojson, map, outputLayer, keepOld) {
     if (outputLayer) {
+        if (!keepOld) {
+            outputLayer.options.items = [];
+            outputLayer.clearLayers();
+        }
         outputLayer.options.onEachFeature = function(feature, layer) {
             aoi_feature_edit.fulcrumfeatureLayer_onEachFeature(feature, layer, outputLayer, true);
         };
@@ -560,8 +564,12 @@ leaflet_helper.parsers.fulcrum_exported_json = function (geojson, map, outputLay
 
     return outputLayer;
 };
-leaflet_helper.parsers.geoq_exported_json = function (geojson, map, outputLayer) {
+leaflet_helper.parsers.geoq_exported_json = function (geojson, map, outputLayer, keepOld) {
     if (outputLayer) {
+        if (!keepOld) {
+            outputLayer.options.items = [];
+            outputLayer.clearLayers();
+        }
         outputLayer.options.onEachFeature = function(feature, layer) {
             aoi_feature_edit.featureLayer_onEachFeature(feature, layer, outputLayer, true);
         };
@@ -599,8 +607,12 @@ leaflet_helper.parsers.geoq_exported_json = function (geojson, map, outputLayer)
 
     return outputLayer;
 };
-leaflet_helper.parsers.leaflet_geojson = function (geojson, map, outputLayer) {
+leaflet_helper.parsers.leaflet_geojson = function (geojson, map, outputLayer, keepOld) {
     if (outputLayer) {
+        if (!keepOld) {
+            outputLayer.options.items = [];
+            outputLayer.clearLayers();
+        }
         outputLayer.options.onEachFeature = function(feature, layer) {
             aoi_feature_edit.featureLayer_onEachFeature(feature, layer, outputLayer, true);
         };
@@ -665,6 +677,21 @@ leaflet_helper.parsers.leaflet_geojson = function (geojson, map, outputLayer) {
 
     return outputLayer;
 };
+
+leaflet_helper.generic_popup_content = function (properties) {
+    var popupContent = document.createElement('div');
+    for (var idx in properties) {
+        if (idx[0] === '_') continue;
+        var entry = document.createElement('div');
+        var label = document.createElement('b');
+        label.appendChild(document.createTextNode(idx+": "));
+        entry.appendChild(label);
+        entry.appendChild(document.createTextNode(properties[idx]));
+        popupContent.appendChild(entry);
+    }
+    return popupContent;
+}
+
 leaflet_helper.parsers.standard_onEachFeature = function (feature, layer, layerConfig) {
     if (feature.properties) {
         var popupContent = "";
@@ -676,19 +703,24 @@ leaflet_helper.parsers.standard_onEachFeature = function (feature, layer, layerC
                 var link = leaflet_helper.clean(feature.properties.link); //Strip out any offending
                 popupContent = "<a href='"+link+"' target='_blank'>"+popupContent+"</a>";
             }
+        } else {
+            popupContent = leaflet_helper.generic_popup_content(feature.properties);
         }
-        if (popupContent && _.isString(popupContent)) {
-
-            if (!popupContent.indexOf("<span class='hide feature-id-hint'>")){
-                if (layerConfig && layerConfig.name) {
-                    if (!feature.properties.id) {
-                        feature.properties.id = leaflet_helper.id_count++;
+        if (popupContent) {
+            if (_.isString(popupContent)) {
+                if (!popupContent.indexOf("<span class='hide feature-id-hint'>")){
+                    if (layerConfig && layerConfig.name) {
+                        if (!feature.properties.id) {
+                            feature.properties.id = leaflet_helper.id_count++;
+                        }
+                        var id = feature.properties.id;
+                        popupContent += leaflet_helper.addLinksToPopup(layerConfig.name, id, true, false);
                     }
-                    var id = feature.properties.id;
-                    popupContent += leaflet_helper.addLinksToPopup(layerConfig.name, id, true, false);
                 }
+                layer.bindPopup(popupContent);
+            } else if (_.isElement(popupContent)) {
+                layer.bindPopup(popupContent);
             }
-            layer.bindPopup(popupContent);
         }
         if (feature.properties.heading && parseInt(feature.properties.heading) && layer.options){
             layer.options.angle = parseInt(feature.properties.heading);
@@ -895,9 +927,15 @@ leaflet_helper.parsers.addFEMAImageEventsData = function (result, map, outputLay
 
     return outputLayer;
 };
-leaflet_helper.parsers.addDynamicCapimageData = function (result, map, outputLayer) {
-    //TODO: Handle de-dupes of all features returned
 
+/**
+ * Adds items from the resulting query. Assumes old data is invalid and clears it out.
+ * @param {[type]} result      [description]
+ * @param {[type]} map         [description]
+ * @param {[type]} outputLayer [description]
+ * @param {boolean} keepOld    true to keep old data (e.g. combinging paginated results)
+ */
+leaflet_helper.parsers.addDynamicCapimageData = function (result, map, outputLayer, keepOld) {
     if (!outputLayer.options) outputLayer.options = {};
     if (!outputLayer.options.items) outputLayer.options.items = [];
 
@@ -905,14 +943,21 @@ leaflet_helper.parsers.addDynamicCapimageData = function (result, map, outputLay
 
     var results = result.features || result.results;
 
+    if (!keepOld) {
+        outputLayer.options.items = [];
+        outputLayer.clearLayers();
+    }
+
     $(results).each(function () {
         var feature = $(this)[0];
         var id = feature.attributes.ID;
 
         var itemFound = false;
-        _.each(outputLayer.options.items,function(item){
-           if (item.id == id) itemFound = true;
-        });
+        if (keepOld) {
+            _.each(outputLayer.options.items,function(item){
+               if (item.attributes.ID == id) itemFound = true;
+            });
+        }
         if (!itemFound) {
             outputLayer.options.items.push(feature);
 
