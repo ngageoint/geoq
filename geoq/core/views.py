@@ -9,6 +9,7 @@ import requests
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User, Group, Permission
 from django.contrib.gis.geos import GEOSGeometry
+from django.contrib.contenttypes.models import ContentType
 from django.core.urlresolvers import reverse, reverse_lazy
 from django.core.exceptions import ObjectDoesNotExist
 from django.db.models import Q
@@ -32,6 +33,7 @@ from geoq.mgrs.exceptions import ProgramException
 from guardian.decorators import permission_required
 from kml_view import *
 from shape_view import *
+from analytics import UserGroupStats
 
 
 class Dashboard(TemplateView):
@@ -676,10 +678,32 @@ class SummaryView(TemplateView):
 class WorkSummaryView(TemplateView):
     http_method_names = ['get']
     template_name = 'core/reports/work_summary.html'
-    model = AOI
+    model = Job
+
+    # we'll use these ContentTypes for filtering
+    ct_user = ContentType.objects.get(app_label="auth",model="user")
+    ct_group = ContentType.objects.get(app_label="auth",model="group")
 
     def get_context_data(self, **kwargs):
         cv = super(WorkSummaryView, self).get_context_data(**kwargs)
+
+        # get users and groups assigned to the Job
+        job = get_object_or_404(Job, pk=self.kwargs.get('job_pk'))
+        job_team_data = dict([(g,UserGroupStats(g)) for g in job.teams.all()])
+        job_analyst_data = dict([(u,UserGroupStats(u)) for u in job.analysts.all()])
+        job_team_data.update(job_analyst_data)
+
+        for uorg in job_team_data:
+            ct = self.ct_group if self.ct_group.model_class() is type(uorg) else self.ct_user
+            their_aois = job.aois.filter(assignee_id=uorg.id, assignee_type = ct)
+            for aoi in their_aois:
+                print "%s %s %s" % (uorg, aoi.analyst, aoi.status)
+                job_team_data[uorg].increment(aoi.analyst, aoi.status)
+
+        cv['data'] = []
+        for key,value in job_team_data.iteritems():
+            cv['data'].append(value.toJSON())
+
         return cv
 
 
