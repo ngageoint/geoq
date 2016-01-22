@@ -97,9 +97,7 @@ STATICFILES_FINDERS = (
     #'django.contrib.staticfiles.finders.DefaultStorageFinder',
     'compressor.finders.CompressorFinder',
 )
-#Change back to True after finishing development to verify it still works
-
-COMPRESS_ENABLED = False
+COMPRESS_ENABLED = True
 COMPRESS_PRECOMPILERS = (
     ('text/less', 'lessc {infile} {outfile}'),
 )
