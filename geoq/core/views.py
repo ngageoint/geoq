@@ -347,7 +347,7 @@ class JobDetailedListView(ListView):
     A mixture between a list view and detailed view.
     """
 
-    paginate_by = 15
+    paginate_by = 1000
     model = Job
     default_status = 'assigned'
     request = None

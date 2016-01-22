@@ -275,6 +275,7 @@
                         <span class="caret"></span>
                     </button>
                     <ul class="dropdown-menu">
+                        <li><a href="{% url 'work-summary' object.id %}">Job Work Summary</a></li>
                         {% if 'core.add_job' in request.base_perms %}
                         <li><a href="{% url 'job-create-aois' object.id%}">Create Workcells</a></li>
                         {% endif %}
