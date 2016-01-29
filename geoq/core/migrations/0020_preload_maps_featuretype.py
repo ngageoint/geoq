@@ -1,25 +1,19 @@
 # -*- coding: utf-8 -*-
 import datetime
 from south.db import db
-from south.v2 import SchemaMigration
+from south.v2 import DataMigration
 from django.db import models
 
-
-class Migration(SchemaMigration):
+class Migration(DataMigration):
 
     def forwards(self, orm):
-        # Adding field 'Job.editable_layer'
-        db.add_column(u'core_job', 'editable_layer',
-                      self.gf('django.db.models.fields.related.ForeignKey')(to=orm['maps.EditableMapLayer'], null=True, blank=True),
-                      keep_default=False)
-
+        from django.core.management import call_command
+        call_command("loaddata", "initial_data_types.json")
 
     def backwards(self, orm):
-        # Deleting field 'Job.editable_layer'
-        db.delete_column(u'core_job', 'editable_layer_id')
+        "Write your backwards methods here."
 
     depends_on = [ ('maps', '0015_auto__add_editablemaplayer'),]
-
 
     models = {
         u'auth.group': {
@@ -164,7 +158,7 @@ class Migration(SchemaMigration):
             'description': ('django.db.models.fields.TextField', [], {'max_length': '800', 'null': 'True', 'blank': 'True'}),
             u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
             'projection': ('django.db.models.fields.CharField', [], {'default': "'EPSG:4326'", 'max_length': '32', 'null': 'True', 'blank': 'True'}),
-            'title': ('django.db.models.fields.CharField', [], {'unique': 'True', 'max_length': '75'}),
+            'title': ('django.db.models.fields.CharField', [], {'max_length': '75'}),
             'updated_at': ('django.db.models.fields.DateTimeField', [], {'auto_now_add': 'True', 'blank': 'True'}),
             'zoom': ('django.db.models.fields.IntegerField', [], {'default': '5', 'null': 'True', 'blank': 'True'})
         },
@@ -185,3 +179,4 @@ class Migration(SchemaMigration):
     }
 
     complete_apps = ['core']
+    symmetrical = True
