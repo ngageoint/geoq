@@ -10,9 +10,7 @@
         "is_superuser": true,
         "is_staff": true,
         "last_login": "2013-12-05T14:56:52.234Z",
-        "groups": [
-            1
-        ],
+        "groups": [],
         "user_permissions": [],
         "password": "pbkdf2_sha256$10000$sAQ1D0P8lLOR$P2NYGVruL9P+BZiYvzbWwVAyAtBb2WzJMGppFa8Y98k=",
         "email": "admin@example.com",
@@ -66,9 +64,7 @@
         "is_superuser": false,
         "is_staff": true,
         "last_login": "2013-12-05T13:40:56.373Z",
-        "groups": [
-            1
-        ],
+        "groups": [],
         "user_permissions": [],
         "password": "pbkdf2_sha256$10000$iRfQVl0fwnxd$F+C1V3AQXBoDxVGHiREPi0r9jsbqUWOJ+HcNoBNUzpo=",
         "email": "",
