@@ -64,12 +64,14 @@ IMAGE_FORMATS = (
 
 SERVICE_TYPES = (
                 ('WMS', 'WMS'),
+                ('WFS', 'WFS'),
                 ('KML', 'KML'),
                 ('GeoRSS', 'GeoRSS'),
                 ('ESRI Identifiable MapServer', 'ESRI Identifiable MapServer'),
                 ('ESRI Tiled Map Service', 'ESRI Tiled Map Service'),
                 ('ESRI Dynamic Map Layer', 'ESRI Dynamic Map Layer'),
                 ('ESRI Feature Layer', 'ESRI Feature Layer'),
+                ('ESRI Shapefile', 'ESRI Shapefile'),
                 ('GeoJSON', 'GeoJSON'),
                 ('ESRI Clustered Feature Layer', 'ESRI Clustered Feature Layer'),
                 #('ArcGIS93Rest', 'ArcGIS93Rest'),
