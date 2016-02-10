@@ -34,6 +34,7 @@
     job_map.token = "{{ csrf_token }}";
     job_map.url = '{{ job_properties.delete_url }}';
 
+    var map_layers = {{ object.map.to_json|safe|default:"{}" }};
 
 
     $(function() {

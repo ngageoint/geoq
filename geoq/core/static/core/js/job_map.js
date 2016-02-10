@@ -92,7 +92,7 @@ function mapInit(map, bounds) {
     map.addLayer(job_map.aois);
     map.on('draw:created', job_map.selectionDrawn);
 
-
+    leaflet_helper.addLayerControl(map);
     job_map.addAssignmentControls(map);
 }
 
