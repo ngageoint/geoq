@@ -28,7 +28,7 @@
 
 <script type="application/javascript">
     job_map.groups_url = "{% url 'list_groups' object.id %}";
-    job_map.users_url = "{% url 'list_users' object.id %}";
+    job_map.home_url = "{% url 'home' %}";
     job_map.data = {{ object.geoJSON|default:'[]'|safe }};
     job_map.popup_template = '{% filter escapejs %}{% include "core/assign_workcell_popup.html" %}{% endfilter %}';
     job_map.token = "{{ csrf_token }}";
