@@ -655,7 +655,7 @@ class AssignWorkcellsView(TemplateView):
                 aoi.save()
 
                 if send_email:
-                    recipient = user if user not None else group
+                    recipient = user if user != None else group
                     send_assignment_email(recipient, job, request)
 
 
