@@ -649,9 +649,9 @@ class AssignWorkcellsView(TemplateView):
             aois = AOI.objects.filter(id__in=workcells)
             for aoi in aois:
                 aoi.assignee_type_id = AssigneeType.GROUP
-                aoi.assignee_id = group.id
+                aoi.assignee = group
                 aoi.status = 'Assigned'
-                aoi.analyst_id = user.id
+                aoi.analyst = user
                 aoi.save()
 
                 if send_email:
