@@ -236,6 +236,8 @@ class CreateFeaturesView(UserAllowedMixin, DetailView):
             aoi.save()
             return True
         elif aoi.status == 'In work':
+            if aoi.started_at is None:
+                aoi.started_at = utils.timezone.now()
             if is_admin:
                 return True
             elif aoi.analyst != self.request.user:
@@ -255,9 +257,6 @@ class CreateFeaturesView(UserAllowedMixin, DetailView):
                 return False
         elif aoi.status == 'Awaiting Analysis':
             if self.request.user in aoi.job.reviewers.all() or is_admin:
-                aoi.status = 'In work'
-                if aoi.started_at is None:
-                    aoi.started_at = utils.timezone.now()
                 aoi.reviewers.add(self.request.user)
                 aoi.save()
                 increment_metric('workcell_analyzed')
@@ -359,7 +358,7 @@ class JobDetailedListView(ListView):
         if self.request.user.has_perm('core.assign_workcells'):
             q_set = AOI.objects.filter(job=self.kwargs.get('pk')).order_by('assignee_id','id')
         else:
-            q_set = AOI.objects.filter(job=self.kwargs.get('pk'),assignee_id=self.request.user.id).order_by('id')
+            q_set = AOI.objects.filter(job=self.kwargs.get('pk'),analyst_id=self.request.user.id).order_by('id')
 
         # # If there is a user logged in, we want to show their stuff
         # # at the top of the list
@@ -649,14 +648,16 @@ class AssignWorkcellsView(TemplateView):
             aois = AOI.objects.filter(id__in=workcells)
             for aoi in aois:
                 aoi.assignee_type_id = AssigneeType.GROUP
-                aoi.assignee = group
-                aoi.status = 'Assigned'
+                aoi.assignee_id = group.id
+                if user is not None and aoi.status in AOI.STATUS_VALUES[:2]:
+                    aoi.status = 'Awaiting Imagery'
+
                 aoi.analyst = user
                 aoi.save()
 
-                if send_email:
-                    recipient = user if user != None else group
-                    send_assignment_email(recipient, job, request)
+            if send_email:
+                recipient = user if user != None else group
+                send_assignment_email(recipient, job, request)
 
 
             return HttpResponse('{"status":"ok"}', status=200)
