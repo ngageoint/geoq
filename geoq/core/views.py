@@ -651,6 +651,8 @@ class AssignWorkcellsView(TemplateView):
                 aoi.assignee_id = group.id
                 if user is not None and aoi.status in AOI.STATUS_VALUES[:2]:
                     aoi.status = 'Awaiting Imagery'
+                    if not user in aoi.job.reviewers.all():
+                        aoi.job.reviewers.add(user)
 
                 aoi.analyst = user
                 aoi.save()
