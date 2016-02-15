@@ -479,7 +479,8 @@ class FeatureType(models.Model):
     properties = JSONField(load_kwargs={}, blank=True, null=True, help_text='Metadata added to properties of individual features. Should be in JSON format, e.g. {"severity":"high", "mapText":"Text to Show instead of icon"}')
     style = JSONField(load_kwargs={}, blank=True, null=True, help_text='Any special CSS style that features of this types should have. e.g. {"opacity":0.7, "color":"red", "backgroundColor":"white", "mapTextStyle":"white_overlay", "iconUrl":"path/to/icon.png"}')
     icon = models.ImageField(upload_to="static/featuretypes/", blank=True, null=True, help_text="Upload an icon (now only in Admin menu) of the FeatureType here, will override style iconUrl if set")
-
+    #property_names = models.TextField(blank=True, null=True)
+    
     def to_json(self):
         icon = ""
         if self.icon:

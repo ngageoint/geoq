@@ -39,6 +39,9 @@ def menu(active=None, request_path=None, request_user=None):
 
     if request_user.has_perm('accounts.view_profile'):
         users_dropdown['All Users'] = {'index':2, 'url': reverse_lazy('userena_profile_list'), 'active':False}
+        
+    if request_user.has_perm('auth.change_group'):
+        users_dropdown['Teams'] = {'index':4, 'url': reverse_lazy('team-list'), 'active':False}
 
     menu_users = {'Users': {'index': 5, 'url': '#', 'active': False, 'dropdown' : order_dict(users_dropdown, sort_key)}}
 
