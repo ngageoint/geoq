@@ -145,9 +145,25 @@ The ``geoq/settings.py`` file contains installation-specific settings. The Datab
 * virtualenv
 * node / npm
 
+The following commands worked on a 64-bit CentOS 6.x system (as a privileged user):
+
+		% yum update
+		% yum localinstall http://yum.postgresql.org/9.4/redhat/rhel-6-x86_64/pgdg-centos94-9.4-1.noarch.rpm
+		% yum install postgresql94-server postgresql94-python postgresql94-devel
+		% rpm -Uvh http://download.fedoraproject.org/pub/epel/6/x86_64/epel-release-6-8.noarch.rpm
+		% yum install postgis2_94 postgis2_94-devel python-virtualenv python-pip nodejs jodejs-devel npm git mod_wsgi
+		% service postgresql-9.4 initdb
+		% service postgresql-9.4 start
+
 From a shell:
 
 ```bash
+* If accessing the Internet through a proxy, set the http_proxy and https_proxy environment settings
+export http_proxy=<your proxy setting>
+export https_proxy=<your proxy setting>
+
+cd /usr/local/src
+mkdir geoq
 virtualenv ~/geoq
 cd ~/geoq
 source bin/activate
@@ -161,16 +177,28 @@ create extension postgis;
 create extension postgis_topology;
 EOF
 
+export PATH=$PATH:/usr/pgsql-9.4/bin
 pip install paver
 paver install_dependencies
+
+* Before executing the following commands, make sure the configuration for PostgreSQL allows the connection
+* This can be done by modifying /var/lib/pgsql/9.4/data and changing the connection METHOD near the bottom of the file for 
+* the 'local' connections. Changing the METHOD from 'ident' to 'md5' should be sufficient
+* Restart postgresql (or reload config) afterwards
+
 paver sync
 paver install_dev_fixtures
 
 npm install -g less
+
+* Static files will be installed in a location where a web server can access them. This can be changed depending on your server
+* If necessary, create the local directory ('/var/www/html' in this case)
 cat << EOF > geoq/local_settings.py
-STATIC_URL_FOLDER = ''
-STATIC_ROOT = '{0}{1}'.format('', STATIC_URL_FOLDER)
+STATIC_URL_FOLDER = '/static'
+STATIC_ROOT = '{0}{1}'.format('/var/www/html', STATIC_URL_FOLDER)
 EOF
+
+python manage.py collectstatic
 
 ```
 
