@@ -6,7 +6,7 @@ from django.conf.urls import patterns, url
 from django.contrib.auth.decorators import login_required
 
 from django.views.generic import CreateView, TemplateView, ListView, UpdateView
-from forms import AOIForm, JobForm, ProjectForm
+from forms import AOIForm, JobForm, ProjectForm, TeamForm
 from models import AOI, Project, Job
 from proxies import proxy_to
 from views import *
@@ -115,6 +115,7 @@ urlpatterns = patterns('',
     url(r'^help/?$', display_help, name='help_page'),
     url(r'^api/jobs/(?P<job_pk>\d+)/users/?$', list_users, name='list_users'),
     url(r'^api/jobs/(?P<job_pk>\d+)/groups/?$', list_groups, name='list_groups'),
+    url(r'^api/group/(?P<group_pk>\d+)/users/?$', list_group_users, name='list_group_users'),
     url(r'^api/geo/usng/?$', 'core.views.usng', name='usng'),
     url(r'^api/geo/mgrs/?$', 'core.views.mgrs', name='mgrs'),
     url(r'^api/test/image_footprints/?$', 'core.views.image_footprints', name='image_footprints'),
@@ -137,6 +138,24 @@ urlpatterns = patterns('',
 
     url(r'^api/prioritize/(?P<method>\w+)?$',
         'core.views.prioritize_cells', name='batch-prioritize-cells'),
+
+    #TEAMS
+    url(r'^admin/jsi18n/$', 'django.views.i18n.javascript_catalog'),
+    url(r'^teams/?$', TeamListView.as_view(template_name='core/team_list.html'), name='team-list'),
+    url(r'^teams/create/?$',
+        login_required(CreateTeamView.as_view(queryset=Group.objects.all(),
+            template_name='core/generic_form.html',
+            form_class=TeamForm)),
+            name='team-create'),
+    url(r'^teams/update/(?P<pk>\d+)/?$',
+        login_required(UpdateTeamView.as_view(queryset=Group.objects.all(),
+            template_name='core/generic_form.html',
+            form_class=TeamForm)),
+            name='team-update'),
+    url(r'^team/delete/(?P<pk>\d+)/?$',
+        login_required(TeamDelete.as_view()),
+        name='team-delete'),
+
     url(r'^api/workcell-image/(?P<id>\w+)?$', 'core.views.create_workcell_image',
         name='create-workcell-image'),
     url(r'^api/workcell-image/(?P<id>\w+)/examined/?$', 'core.views.workcell_image_examined',

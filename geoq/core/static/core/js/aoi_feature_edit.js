@@ -1307,8 +1307,10 @@ aoi_feature_edit.addMapControlButtons = function (map) {
         'doToggle': false,  // bool
         'toggleStatus': false  // bool
     };
-    var titleInfoButton = new L.Control.Button(titleInfoOptions).addTo(map);
 
+    if ($.inArray("Title",aoi_feature_edit.hidden_tools) == -1) {
+        var titleInfoButton = new L.Control.Button(titleInfoOptions).addTo(map);
+    }
 
     //TODO: Fix to make controls positioning more robust (and force to move to top when created)
     // Quick work-around for moving header to top of the page
@@ -1558,7 +1560,7 @@ aoi_feature_edit.buildDropdownMenu = function() {
                 .appendTo($ull);
             $("<a>")
                 .appendTo($li)
-                .text("Insufficient Imagery")
+                .text("Set to Awaiting Imagery")
                 .click(function () {
                     aoi_feature_edit.complete_button_onClick(aoi_feature_edit.awaitingimagery_status_url);
                 });
@@ -1567,25 +1569,25 @@ aoi_feature_edit.buildDropdownMenu = function() {
                 .appendTo($ull);
             $("<a>")
                 .appendTo($li)
-                .text("Ready for Analysis")
+                .text("Set to Awaiting Analysis")
                 .click(function () {
                     aoi_feature_edit.complete_button_onClick(aoi_feature_edit.awaitinganalysis_status_url);
                 });
-        } else if (opt=='unassigned'){
+        } else if (opt=='inwork') {
             $li = $("<li>")
                 .appendTo($ull);
             $("<a>")
                 .appendTo($li)
-                .text("Return for further analysis")
-                .click(function(){
-                    aoi_feature_edit.complete_button_onClick(aoi_feature_edit.unassigned_status_url);
+                .text("Set to In Work")
+                .click(function () {
+                    aoi_feature_edit.complete_button_onClick(aoi_feature_edit.inwork_status_url);
                 });
         } else if (opt=='completed'){
             $li = $("<li>")
                 .appendTo($ull);
             $("<a>")
                 .appendTo($li)
-                .text("Certify as complete")
+                .text("Set to Complete")
                 .click(function(){
                     aoi_feature_edit.complete_button_onClick(aoi_feature_edit.completed_status_url);
                 });

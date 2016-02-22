@@ -418,6 +418,7 @@ class AOI(GeoQBase, Assignment):
             analyst=(self.analyst.username if self.analyst is not None else 'None'),
             assignee=self.assignee_name,
             priority=self.priority,
+            atc_id=self.properties['GEO_ID'] if 'GEO_ID' in self.properties else '000000',
             delete_url=reverse('aoi-deleter', args=[self.id]))
         geojson["geometry"] = json.loads(self.polygon.json)
 

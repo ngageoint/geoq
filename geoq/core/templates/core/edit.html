@@ -39,6 +39,7 @@
     <script src="{{ STATIC_URL }}leaflet/leaflet-plugins/layer/tile/Bing.js"></script>
 	<script src="{{ STATIC_URL }}leaflet/leaflet-plugins/layer/tile/Google.js"></script>
     <script src="{{ STATIC_URL }}leaflet/leaflet-plugins/layer/tile/leaflet-tilelayer-wmts.js"></script>
+    <script src="{{ STATIC_URL }}leaflet/leaflet-plugins/layer/vector/Leaflet-WFST.min.js"></script>
     <script src="{{ STATIC_URL }}core/js/plugins/geoq.footprintsearch.js"></script>
     <script src="{{ STATIC_URL }}core/js/plugins/geoq.imageviewer.js"></script>
     <script src="{{ STATIC_URL }}core/js/pqgrid.dev.js"></script>
@@ -67,13 +68,13 @@
 
         aoi_feature_edit.awaitinganalysis_status_url = "{% url 'aoi-update-status' object.id 'Awaiting Analysis' %}";
         aoi_feature_edit.awaitingimagery_status_url = "{% url 'aoi-update-status' object.id 'Awaiting Imagery' %}";
-        aoi_feature_edit.unassigned_status_url = "{% url 'aoi-update-status' object.id 'Unassigned' %}";
+        aoi_feature_edit.inwork_status_url = "{% url 'aoi-update-status' object.id 'In work' %}";
         aoi_feature_edit.completed_status_url = "{% url 'aoi-update-status' object.id 'Completed' %}";
 
         leaflet_layer_control.finish_options.push('awaitingimagery');
         leaflet_layer_control.finish_options.push('awaitinganalysis');
+        leaflet_layer_control.finish_options.push('inwork');
         {% if request.user in reviewers %}
-            leaflet_layer_control.finish_options.push('unassigned');
             leaflet_layer_control.finish_options.push('completed');
         {% endif %}
 

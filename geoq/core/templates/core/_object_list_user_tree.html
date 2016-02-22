@@ -2,12 +2,15 @@
 <div id="tree">
     <ul id="treeData" style="display:none;">
 
-    {% regroup object_list by assignee_name as assignee_list %}
-
+        {% if 'core.assign_workcells' in request.base_perms %}
+        {% regroup object_list by assignee_name as assignee_list %}
+        {% else %}
+        {% regroup object_list by object.analyst as assignee_list %}
+        {% endif %}
 
     {% for assignee in assignee_list %}
 
-        <li class="folder"> <i class="icon-user" icon-1x pull-left list-icon ></i> {{ assignee.grouper }}
+        <li class="folder"> <i class="icon-user" icon-1x pull-left list-icon ></i> {{ assignee.grouper|default_if_none:"Your Workcells" }}
         <ul>
 
         {% for object in assignee.list %}

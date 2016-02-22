@@ -236,6 +236,8 @@ class CreateFeaturesView(UserAllowedMixin, DetailView):
             aoi.save()
             return True
         elif aoi.status == 'In work':
+            if aoi.started_at is None:
+                aoi.started_at = utils.timezone.now()
             if is_admin:
                 return True
             elif aoi.analyst != self.request.user:
@@ -255,9 +257,6 @@ class CreateFeaturesView(UserAllowedMixin, DetailView):
                 return False
         elif aoi.status == 'Awaiting Analysis':
             if self.request.user in aoi.job.reviewers.all() or is_admin:
-                aoi.status = 'In work'
-                if aoi.started_at is None:
-                    aoi.started_at = utils.timezone.now()
                 aoi.reviewers.add(self.request.user)
                 aoi.save()
                 increment_metric('workcell_analyzed')
@@ -349,13 +348,17 @@ class JobDetailedListView(ListView):
 
     paginate_by = 1000
     model = Job
-    default_status = 'assigned'
+    default_status_assigner = 'assigned'
+    default_status_analyst = 'awaiting imagery'
     request = None
     metrics = False
 
     def get_queryset(self):
         status = getattr(self, 'status', None)
-        q_set = AOI.objects.filter(job=self.kwargs.get('pk')).order_by('assignee_id','id')
+        if self.request.user.has_perm('core.assign_workcells'):
+            q_set = AOI.objects.filter(job=self.kwargs.get('pk')).order_by('assignee_id','id')
+        else:
+            q_set = AOI.objects.filter(job=self.kwargs.get('pk'),analyst_id=self.request.user.id).order_by('id')
 
         # # If there is a user logged in, we want to show their stuff
         # # at the top of the list
@@ -379,7 +382,7 @@ class JobDetailedListView(ListView):
         if self.status and hasattr(self.status, "lower"):
             self.status = self.status.lower()
         else:
-            self.status = self.default_status.lower()
+            self.status = self.default_status_assigner if self.request.user.has_perm('core.assign_workcells') else self.default_status_analyst
 
         self.request = request
 
@@ -389,7 +392,7 @@ class JobDetailedListView(ListView):
         cv = super(JobDetailedListView, self).get_context_data(**kwargs)
         job_id = self.kwargs.get('pk')
         cv['object'] = get_object_or_404(self.model, pk=job_id)
-        cv['statuses'] = AOI.STATUS_VALUES
+        cv['statuses'] = AOI.STATUS_VALUES if self.request.user.has_perm('core.assign_workcells') else AOI.STATUS_VALUES[2:]
         cv['active_status'] = self.status
         cv['workcell_count'] = cv['object'].aoi_count()
         cv['metrics'] = self.metrics
@@ -635,25 +638,28 @@ class AssignWorkcellsView(TemplateView):
         job_id = self.kwargs.get('job_pk')
         job = get_object_or_404(self.model, pk=job_id)
         workcells = request.POST.getlist('workcells[]')
-        utype = request.POST['user_type']
-        id = request.POST['user_data']
+        user_id = request.POST['user']
+        group_id = request.POST['group']
         send_email = request.POST['email'] in ["true","True"]
+        group = Group.objects.get(pk=group_id)
+        user = User.objects.get(pk=user_id) if int(user_id) > 0 else None
 
-        if utype and id and workcells:
-            Type = User if utype == 'user' else Group
-            keyfield = 'username' if utype == 'user' else 'name'
-            q = Q(**{"%s__contains" % keyfield: id})
-            user_or_group = Type.objects.filter(q)
-            if user_or_group.count() > 0:
-                aois = AOI.objects.filter(id__in=workcells)
-                for aoi in aois:
-                    aoi.assignee_type_id = AssigneeType.USER if utype == 'user' else AssigneeType.GROUP
-                    aoi.assignee_id = user_or_group.get().id
-                    aoi.status = 'Assigned'
-                    aoi.save()
+        if group and workcells:
+            aois = AOI.objects.filter(id__in=workcells)
+            for aoi in aois:
+                aoi.assignee_type_id = AssigneeType.GROUP
+                aoi.assignee_id = group.id
+                if user is not None and aoi.status in AOI.STATUS_VALUES[:2]:
+                    aoi.status = 'Awaiting Imagery'
+                    if not user in aoi.job.reviewers.all():
+                        aoi.job.reviewers.add(user)
 
-                if send_email:
-                    send_assignment_email(user_or_group.get(), job, request)
+                aoi.analyst = user
+                aoi.save()
+
+            if send_email:
+                recipient = user if user != None else group
+                send_assignment_email(recipient, job, request)
 
 
             return HttpResponse('{"status":"ok"}', status=200)
@@ -879,12 +885,16 @@ def list_users(request, job_pk):
 @permission_required('core.assign_workcells', return_403=True)
 def list_groups(request, job_pk):
     job = get_object_or_404(Job, pk=job_pk)
-    groupnames = job.teams.all().values('name').order_by('name')
-    groups = []
-    for g in groupnames:
-        groups.append(g['name'])
+    groups = job.teams.values('name','id').order_by('name')
 
-    return HttpResponse(json.dumps(groups), mimetype="application/json")
+    return HttpResponse(json.dumps(list(groups)), mimetype="application/json")
+
+@permission_required('core.assign_workcells', return_403=True)
+def list_group_users(request, group_pk):
+    group = get_object_or_404(Group, pk=group_pk)
+    users = group.user_set.values('username','id').order_by('username')
+
+    return HttpResponse(json.dumps(list(users)), mimetype="application/json")
 
 
 @login_required
@@ -1140,4 +1150,100 @@ class GridGeoJSON(ListView):
         geojson = job.grid_geoJSON()
 
         return HttpResponse(geojson, mimetype="application/json", status=200)
+    
+class TeamListView(ListView):
+    model = Group
+    def get_queryset(self):
+        search = self.request.GET.get('search', None)
+        return Group.objects.all() if search is None else Group.objects.filter(name__iregex=re.escape(search))
+    
+class TeamDetailedListView(ListView):
+    paginate_by = 15
+    model = Group
 
+    def get_queryset(self):
+        return User.objects.filter(groups__id=self.kwargs.get('pk'))
+
+    def get_context_data(self, **kwargs):
+        cv = super(TeamDetailedListView, self).get_context_data(**kwargs)
+        cv['object'] = get_object_or_404(self.model, pk=self.kwargs.get('pk'))
+        return cv
+    
+class CreateTeamView(CreateView):
+    """
+    Create Team
+    """
+
+    def get_form_kwargs(self):
+        kwargs = super(CreateTeamView, self).get_form_kwargs()
+        kwargs['team_id'] = 0
+        return kwargs
+    
+    def get_context_data(self, **kwargs):
+        cv = super(CreateTeamView, self).get_context_data(**kwargs)
+        cv['custom_form'] = "core/_generic_form_onecol.html"
+        return cv
+    
+    def form_valid(self, form):
+        errors = []
+        if not self.request.POST.get('name', ''):
+            errors.append('Select users.')
+        self.object = form.save()
+        users = self.request.POST.getlist('users')
+        usernames = User.objects.filter(id__in=users)
+        if usernames.count() >0:
+            for user in usernames:
+                user.groups.add(Group.objects.get(id=self.object.id))
+
+        return HttpResponseRedirect(reverse('team-list'), )
+        
+class UpdateTeamView(UpdateView):
+    """
+    Update Team
+    """
+
+    def get_form_kwargs(self):
+        kwargs = super(UpdateTeamView, self).get_form_kwargs()
+        kwargs['team_id'] = self.kwargs.get('pk')
+        return kwargs
+    
+    def get_context_data(self, **kwargs):
+        cv = super(UpdateTeamView, self).get_context_data(**kwargs)
+        cv['custom_form'] = "core/_generic_form_onecol.html"
+        return cv
+    
+    def form_valid(self, form):
+        team_id = self.kwargs.get('pk')
+        user_list = self.request.POST.getlist('users')
+        team = Group.objects.get(id=team_id)
+        team.user_set.clear()
+        
+        users = User.objects.filter(id__in=user_list)
+        count = users.count()
+        if users.count() >0:
+            for user in users:
+                team.user_set.add(user);
+                
+        return HttpResponseRedirect(reverse('team-list'))
+    
+    
+class TeamDelete(DeleteView):
+    model = Group
+    template_name = "core/generic_confirm_delete.html"
+    
+    def get_success_url(self):
+        return reverse("team-list")
+    
+def search_form(request):
+    return render(request, 'core/search_form.html')
+
+def search(request):
+    if 'q' in request.GET:
+        message = 'You searched for: %r' % request.GET['q']
+    else:
+        message = 'You submitted an empty form.'
+    return HttpResponse(message)
+
+            
+            
+        

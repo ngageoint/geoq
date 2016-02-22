@@ -55,7 +55,7 @@ function mapInit(map, bounds) {
                 .text(job_properties.id)
                 .appendTo($td);
             $('<td>')
-                .text(job_properties.priority)
+                .text(job_properties.atc_id)
                 .appendTo($tr);
             $('<td>')
                 .text(job_properties.status)
@@ -92,7 +92,7 @@ function mapInit(map, bounds) {
     map.addLayer(job_map.aois);
     map.on('draw:created', job_map.selectionDrawn);
 
-
+    leaflet_helper.addLayerControl(map);
     job_map.addAssignmentControls(map);
 }
 
@@ -242,27 +242,34 @@ job_map.resetHighlight = function(e) {
 
 
 job_map.setList = function(listmembers) {
-    var clist = $('#assign-choices');
+    var clist = $('#analyst-select');
     clist.empty();
+    $option = $('<option>')
+        .attr('value', -1)
+        .text('Select one...')
+        .appendTo(clist);
     _.each(listmembers, function(member) {
         $option = $('<option>')
-            .attr('value', member)
-            .text(member)
+            .attr('value', member['id'])
+            .text(member['username'])
             .appendTo(clist);
     });
 };
 
-job_map.getList = function() {
-    var type = $('#type-select :selected').val();
-    url = (type == 'user') ? job_map.users_url : job_map.groups_url;
+job_map.getUsers = function() {
+    var id = $('#group-select :selected').val();
+    if (id == undefined) {
+        return;
+    }
+
     $.ajax({
-        url: url,
+        url: job_map.home_url + "api/group/" + id + "/users",
         type: 'GET',
         success: function(data) {
             job_map.setList(data);
         },
         failure: function() { log.error('Failed to retrieve user list ');}
-    })
+    });
 };
 
 job_map.assignAOI = function(selected_workcells) {
@@ -283,73 +290,78 @@ job_map.assignAOI = function(selected_workcells) {
             buttonLabel: 'Return'
         })
     } else {
-
-
-        BootstrapDialog.show({
-            message: function (dialogItself) {
-                var $assign_form = $('<form>')
-                    .attr('id', 'assign-workcell');
-                $('<label>Type</label>')
-                    .appendTo($assign_form);
-                var $combo1 = $('<select>')
-                    .attr('id', 'type-select')
-                    .attr('onchange', 'job_map.getList(this);')
-                    .appendTo($assign_form);
-                $('<option>')
-                    .attr('value', 'choose')
-                    .text('Choose one')
-                    .appendTo($combo1);
-                $('<option>')
-                    .attr('value', 'user')
-                    .text('User')
-                    .appendTo($combo1);
-                $('<option>')
-                    .attr('value', 'group')
-                    .text('Group')
-                    .appendTo($combo1);
-                $('<label>Choices</label>')
-                    .appendTo($assign_form);
-                $('<select>')
-                    .attr('id', 'assign-choices')
-                    .appendTo($assign_form);
-                $('<div><label class="checkbox inline"><input id="email-users" type="checkbox">Email User(s)</label></div>')
-                    .appendTo($assign_form);
-                $('<option>')
-
-                return $assign_form;
-            },
-            buttons: [
-                {
-                    label: 'Save',
-                    action: function (dialogItself) {
-                        var data = {};
-                        data.workcells = selected_workcells;
-                        data.email = $('#email-users').filter(':checked').length == 1;
-                        data.user_type = $('#type-select option').filter(':selected').val();
-                        data.user_data = $('#assign-choices option').filter(':selected').val();
-
-                        $.ajax({
-                            type: 'POST',
-                            url: job_map.url,
-                            data: data,
-                            csrfmiddlewaretoken: job_map.token,
-                            success: function() {
-                                dialogItself.close();
-                                location.reload();
-                            },
-                            error: function() {
-                                alert('Failed to update workcell assignments');
-                            }
+        $.ajax({
+            url: job_map.groups_url,
+            type: 'GET',
+            success: function(groups) {
+                BootstrapDialog.show({
+                    message: function (dialogItself) {
+                        var $assign_form = $('<form>')
+                            .attr('id', 'assign-workcell');
+                        $('<label>Assign to Group:</label>')
+                            .appendTo($assign_form);
+                        var $combo1 = $('<select>')
+                            .attr('id', 'group-select')
+                            .attr('onchange', 'job_map.getUsers(this);')
+                            .appendTo($assign_form);
+                        $option = $('<option>')
+                            .attr('value',-1)
+                            .text('Select one...')
+                            .appendTo($combo1);
+                        _.each(groups, function(member) {
+                            $option = $('<option>')
+                                .attr('value', member['id'])
+                                .text(member['name'])
+                                .appendTo($combo1);
                         });
-                    }
-                },
-                {
-                    label: 'Cancel',
-                    action: function (dialogItself) {
-                        dialogItself.close();
-                    }
-                }
-            ]
+                        $('<label>Assign Analyst:</label>')
+                            .appendTo($assign_form);
+                        $('<select>')
+                            .attr('id', 'analyst-select')
+                            .appendTo($assign_form);
+                        $('<div><label class="checkbox inline"><input id="email-users" type="checkbox">Email User(s)</label></div>')
+                            .appendTo($assign_form);
+                        $('<option>')
+
+                        return $assign_form;
+                    },
+                    buttons: [
+                        {
+                            label: 'Save',
+                            action: function (dialogItself) {
+                                var data = {};
+                                data.workcells = selected_workcells;
+                                data.email = $('#email-users').filter(':checked').length == 1;
+                                data.group = $('#group-select option').filter(':selected').val();
+                                data.user = $('#analyst-select option').filter(':selected').val();
+
+                                $.ajax({
+                                    type: 'POST',
+                                    url: job_map.url,
+                                    data: data,
+                                    csrfmiddlewaretoken: job_map.token,
+                                    success: function() {
+                                        dialogItself.close();
+                                        location.reload();
+                                    },
+                                    error: function() {
+                                        alert('Failed to update workcell assignments');
+                                    }
+                                });
+                            }
+                        },
+                        {
+                            label: 'Cancel',
+                            action: function (dialogItself) {
+                                dialogItself.close();
+                            }
+                        }
+                    ]
+                });
+
+                job_map.getUsers();
+            },
+            failure: function() { log.error('Failed to retrieve user list ');}
         });
     }
 };

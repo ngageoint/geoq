@@ -5,13 +5,17 @@
 
     <div class="row-fluid container-narrow">
 
-        <h3> {% if object %}Edit{% else %}Create New {% endif %}{{ form.Meta.model|object_class|title }}</h3>
+        <h3> {% if object %}Edit {% else %}Create New {% endif %}{{ form.Meta.model|object_class|title }}</h3>
         <div class="span12">
              {% crispy form %}
         </div>
     </div>
 
     <script>
+        var currentProperties = null,
+            currentStyle = null,
+            count = 0;
+        
         $(document).ready(function(){
             $('select[multiple="multiple"]').parent().parent()
                 .css('height','200px');
@@ -21,8 +25,144 @@
             if ( $('fieldset#more-options span[id*="error_1_id_"]').length ) {
                 $('p a[data-target="#more-options"]').click();
             }
+            //Set properties of Featuretype 
+            if ($('#property-toggle')) {
+                currentProperties = $('#id_properties').val().toString();
+                if (currentProperties.length > 0) {              
+                    currentProperties = (currentProperties.charAt(0) == "[" ? JSON.parse(currentProperties.substring(1, currentProperties.length-1)) : JSON.parse(currentProperties));
+                }
+                else {
+                    currentProperties = {};
+                }
+                
+                $('#property-toggle').click(function(){
+                    $('#type').val(currentProperties.type);
+                    $('#severity').val(currentProperties.severity);
+                    $('#name').val(currentProperties.name);
+                });
+                
+                $('#property-ok').click(function(){
+                    var newProperties = {};
+                    if ($('#type').val().length > 0) {
+                        newProperties.type = $('#type').val();
+                    }
+                    if ($('#severity').val().length > 0) {
+                        newProperties.severity = $('#severity').val();
+                    }
+                    if ($('#name').val().length > 0) {
+                        newProperties.name = $('#name').val();
+                    }
+                    if ($('#new-property-name0').length > 0) {
+                        newProperties[$('#new-property-name0').val()] = $('#new-property-value0').val();
+                    }
+                    if ($.isEmptyObject(newProperties)) {
+                        $('#id_properties').val(""); 
+                    }
+                    else {
+                        $('#id_properties').val(JSON.stringify(newProperties).split(",").join(",\n"));
+                    }
+                    
+                });
+                
+                $('#property-cancel').click(function(){                  
+                    if ($.isEmptyObject(currentProperties)) {
+                        $('#id_properties').val(""); 
+                    }
+                    else {
+                        $('#id_properties').val(JSON.stringify(currentProperties).split(",").join(",\n"));
+                    }
+                    
+                    $('#type').val(currentProperties.type);
+                    $('#severity').val(currentProperties.severity);
+                    $('#name').val(currentProperties.name);
+                });
+                
+                $('#property-add').click(function(){
+                    var property_name_id = "new-property-name" + count,
+                        property_value_id = "new-property-value" + count,
+                        html = '<tr><td><input type="text" id="' + property_name_id + '"></td><td><input type="text" id="' + property_value_id + '"></td></tr>';
+                    $('#property-table').append(html);
+                    count++;
+                    //$('#property-table').append('<tr><td><input type="text" id="new-property-name"></td><td><input type="text" id="new-property-value"></td></tr>');
+                });
+                
+                $('#id_properties').attr('readonly', 'true');
+            }
+            
+            //Set style of Featuretype
+            if ($('#style-toggle')) {
+                //$("#id_style").css({ 'display': "none" });
+                currentStyle = $('#id_style').val().toString();
+                if (currentStyle.length > 0) {              
+                    currentStyle = (currentStyle.charAt(0) == "[" ? JSON.parse(currentStyle.substring(1, currentStyle.length-1)) : JSON.parse(currentStyle));
+                }
+                else {
+                    currentStyle = {};
+                }
+                
+                $('#style-toggle').click(function(){                  
+                    $('#color').val(currentStyle.color);
+                    $('#opacity').val(currentStyle.opacity);
+                    $('#weight').val(currentStyle.weight);
+                    $('#iconUrl').val(currentStyle.iconUrl);
+                    $('#backgroundColor').val(currentStyle.backgroundColor);
+                    $('#mapTextStyle').val(currentStyle.mapTextStyle);
+                    
+                    if ($('#id_type').val() == 'Point') {
+                        $('#fill-row').css("display", "none"); 
+                    }
+                    if ($('#id_type').val() == 'LineString') {
+                        $('#iconUrl-row').css("display", "none"); 
+                    }
+                    if ($('#id_type').val() == 'Polygon') {
+                        $('#iconUrl-row').css("display", "none"); 
+                    }
+                });
+                
+                $('#style-ok').click(function(){
+                    var newStyle = {};
+                    if ($('#id_type').val() == 'Point') {
+                       
+                    }
+                    if ($('#id_type').val() == 'Line') {
+                        //code
+                    }
+                    if ($('#id_type').val() == 'Polygon') {
+                        //code
+                    }
+                    
+                    newStyle.color = ($('#color').val().length >0 ? $('#color').val() : null);
+                    newStyle.opacity = ($('#opacity').val().length > 0 ? $('#opacity').val() : null);
+                    newStyle.weight = ($('#weight').val().length >0 ? $('#weight').val() : null);
+                    newStyle.fill = ($('#fill').val().length >0 ? $('#fill').val() : null);
+                    newStyle.iconUrl = ($('#iconUrl').val().length >0 ? $('#iconUrl').val() : null);
+                    
+                    if ($.isEmptyObject(newStyle)) {
+                        $('#id_style').val(""); 
+                    }
+                    else {
+                        $('#id_style').val(JSON.stringify(newStyle).split(",").join(",\n"));
+                    }
+                });
+                
+                $('#style-cancel').click(function(){
+                    if ($.isEmptyObject(currentStyle)) {
+                        $('#id_style').val(""); 
+                    }
+                    else {
+                        $('#id_style').val(JSON.stringify(currentStyle).split(",").join(",\n"));
+                    }
+                    
+                    $('#color').val(currentStyle.color);
+                    $('#opacity').val(currentStyle.opacity);
+                    $('#weight').val(currentStyle.weight);
+                    $('#iconUrl').val(currentStyle.iconUrl);
+                    $('#backgroundColor').val(currentStyle.backgroundColor);
+                    $('#mapTextStyle').val(currentStyle.mapTextStyle);
+                });
+            }
         });
+        
         $('input, select, textarea').css('width','80%');
-
     </script>
 {% endblock %}

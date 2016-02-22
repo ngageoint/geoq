@@ -19,14 +19,22 @@
 
     <script src="{{ STATIC_URL }}core/js/job_map.js"></script>
 
+<style>
+    table th:nth-child(2),
+    table td:nth-child(2) {
+        display: none;
+    }
+</style>
+
 <script type="application/javascript">
     job_map.groups_url = "{% url 'list_groups' object.id %}";
-    job_map.users_url = "{% url 'list_users' object.id %}";
+    job_map.home_url = "{% url 'home' %}";
     job_map.data = {{ object.geoJSON|default:'[]'|safe }};
     job_map.popup_template = '{% filter escapejs %}{% include "core/assign_workcell_popup.html" %}{% endfilter %}';
     job_map.token = "{{ csrf_token }}";
     job_map.url = '{{ job_properties.delete_url }}';
 
+    var map_layers = {{ object.map.to_json|safe|default:"{}" }};
 
 
     $(function() {
@@ -98,21 +106,20 @@
             </div>
             <div class="row body">
                 <div id="workcells" class="row-fluid">
-                    <div id="c_form" class="span9 offset1">
+                    <div id="c_form" style="margin-left: 0" class="span9 offset1">
                         <table class="tablesorter" id="workcell-list">
                             <colgroup>
-                                <col width="10" />
-                                <col width="10" />
-                                <col width="40" />
-                                <col width="60" />
-                                <col width="60" />
-                                <col width="60" />
+                                <col width="5%" />
+                                <col width="20%" />
+                                <col width="15%" />
+                                <col width="30%" />
+                                <col width="25%" />
                             </colgroup>
                             <thead>
                             <tr>
                                 <th><input type="checkbox"></th>
                                 <th>ID</th>
-                                <th>Priority</th>
+                                <th>ATC ID</th>
                                 <th>Status</th>
                                 <th>Assigned To</th>
                                 <th>Analyst</th>
@@ -135,8 +142,6 @@
             {% endif %}
             </div>
         {% endif %}
-
-            {% include "core/_object_list.html" %}
 
         </div>
 
