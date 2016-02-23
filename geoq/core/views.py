@@ -1155,7 +1155,7 @@ class TeamListView(ListView):
     model = Group
     def get_queryset(self):
         search = self.request.GET.get('search', None)
-        return Group.objects.all() if search is None else Group.objects.filter(name__iregex=re.escape(search))
+        return Group.objects.all().order_by('name') if search is None else Group.objects.filter(name__iregex=re.escape(search)).order_by('name')
     
 class TeamDetailedListView(ListView):
     paginate_by = 15
