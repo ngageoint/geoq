@@ -248,9 +248,7 @@ class CreateFeaturesView(UserAllowedMixin, DetailView):
         elif aoi.status == 'Assigned' or aoi.status == 'Awaiting Imagery':
             if is_admin:
                 return True
-            elif aoi.assignee_type.model_class() is Permission and aoi.assignee_id == self.request.user.id:
-                return True
-            elif aoi.assignee_type.model_class() is Group and self.request.user.groups.filter(name=aoi.assignee_name).count() > 0:
+            elif aoi.analyst_id == self.request.user.id:
                 return True
             else:
                 kwargs['error'] = "Another analyst has been assigned that workcell. Please select another workcell"
