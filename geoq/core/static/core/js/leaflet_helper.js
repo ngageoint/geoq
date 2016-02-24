@@ -245,7 +245,7 @@ leaflet_helper.toWKT = function (layer) {
 
 leaflet_helper.addLayerControl = function (map) {
     var layers = _.filter(map_layers.layers, function (l) {
-        return l.type == "WMS" || l.type == "KML";
+        return l.type == "WMS" || l.type == "KML" || l.type == "ESRI Shapefile";
     });
 
     var overlayMaps = {
@@ -273,8 +273,40 @@ leaflet_helper.addLayerControl = function (map) {
                 overlayMaps[layer.name] = mykml;
             }
             else if (layer.type == "ESRI Shapefile") {
-                var myshape = L.Shapefile(layer.url);
-                overlayMaps[layer.name] = myshape;
+                var options = {};
+                if (layer.layerParams && layer.layerParams.style) {
+                    var style = layer.layerParams.style;
+                    options.style = function (feature) {
+                        return style;
+                    };
+                }
+                var labels;
+                if (layer.layerParams && layer.layerParams.label) {
+                    var labelstring = layer.layerParams.label;
+                    labels = L.layerGroup();
+                    options.onEachFeature = function(feature, layer) {
+                        var mlabel;
+                        try {
+                            mlabel = eval(labelstring);
+                        } catch (e) {
+                            mlabel = "Unknown";
+                        }
+                        var l = L.marker(layer.getBounds().getCenter(), {
+                            icon: L.divIcon({
+                                className: 'markerlabelClass',
+                                html: mlabel
+                            })
+                        });
+                        labels.addLayer(l);
+                    };
+                }
+                var myshape = L.shapefile(layer.url, options);
+                if (myshape) {
+                    if (labels) {
+                        myshape.addLayer(labels);
+                    }
+                    overlayMaps[layer.name] = myshape;
+                }
             }
         }
     });
