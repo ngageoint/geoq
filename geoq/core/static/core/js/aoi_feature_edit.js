@@ -750,7 +750,7 @@ aoi_feature_edit.map_init = function (map, bounds) {
                     built_layer.options.toShowOnLoad = shownAmount;
                     built_layer.options.setInitialOpacity = false;
 
-                    leaflet_layer_control.setLayerOpacity(built_layer, shownAmount, true);
+                    // leaflet_layer_control.setLayerOpacity(built_layer, shownAmount, true);
                 } catch (e) {
                     log.warn("Error trying to add layer: " + built_layer.name);
                 }
@@ -1089,6 +1089,13 @@ aoi_feature_edit.map_init = function (map, bounds) {
 
     map.on('locationerror', function(e) {
         alert('Sorry, but we are not able to determine your location');
+    });
+
+    map.on('layeradd', function(e) {
+        var layer = e.layer;
+        if (layer.options && layer.options.opacity >= 0) {
+            leaflet_layer_control.setLayerOpacity(layer, layer.options.opacity);
+        }
     });
 
     $('div.leaflet-draw.leaflet-control').find('a').popover({trigger:"hover",placement:"right"});
