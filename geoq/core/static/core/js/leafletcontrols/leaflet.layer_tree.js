@@ -63,7 +63,7 @@ leaflet_layer_control.initDrawer = function(){
 
 leaflet_layer_control.addPreferenceListener = function($accordion){
     var lastOpened = store.get('leaflet_layer_control.layer_accordion');
-    if (lastOpened) {
+    if (lastOpened && $('#'+lastOpened).is(":visible")) {
         $('#'+lastOpened).collapse('toggle');
     } else {
         // by default, open work cell details
@@ -351,7 +351,7 @@ leaflet_layer_control.buildAccordionPanel = function($accordion,title){
         .addClass('accordion-inner')
         .appendTo($contentHolder);
 
-    leaflet_layer_control.accordion_sections.push('#collapse'+sectionName)
+    leaflet_layer_control.accordion_sections.push('#collapse'+sectionName);
 
     return $content;
 };
