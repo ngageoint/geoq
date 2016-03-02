@@ -63,6 +63,23 @@ leaflet_helper.layer_conversion = function (lyr, map) {
     layerOptions = _.extend(options, layerParams);
     if (lyr.type == 'WMS') {
         outputLayer = new L.tileLayer.wms(lyr.url, layerOptions);
+    } else if (lyr.type == 'WFS') {
+
+        try {          
+            if (layerOptions.crs) {
+                var crs = layerOptions.crs.replace(/::/g, ':').split(':');
+                layerOptions.crs = eval('L.CRS.' + crs[crs.length - 2] + crs[crs.length - 1]);
+            }
+            else
+               layerOptions.crs = L.CRS.EPSG4326;
+
+            outputLayer = new L.WFS(layerOptions);
+            
+        }
+        catch (e) {
+            alert('Unable to create WFS layer: ' + e.toString());
+        }
+    
     } else if (lyr.type == 'WMTS') {
         // this seems a bit fussy, so will make sure we can create this without errors
         try {
@@ -227,7 +244,7 @@ leaflet_helper.toWKT = function (layer) {
                 lng = latlngs[i].lng;
                 lat = latlngs[i].lat;
             }
-        }
+        } 
         if (layer instanceof L.Polygon) {
             return "POLYGON((" + coords.join(",") + "," + lng + " " + lat + "))";
         } else if (layer instanceof L.Polyline) {

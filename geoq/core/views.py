@@ -1065,6 +1065,9 @@ def search(request):
         message = 'You submitted an empty form.'
     return HttpResponse(message)
 
+def wfst(request):
+    return render(request, 'core/wfst_test.html')
+
             
             
         
