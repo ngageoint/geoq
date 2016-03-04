@@ -1055,15 +1055,6 @@ class TeamDelete(DeleteView):
     def get_success_url(self):
         return reverse("team-list")
     
-def search_form(request):
-    return render(request, 'core/search_form.html')
-
-def search(request):
-    if 'q' in request.GET:
-        message = 'You searched for: %r' % request.GET['q']
-    else:
-        message = 'You submitted an empty form.'
-    return HttpResponse(message)
 
             
             
