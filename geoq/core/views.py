@@ -694,14 +694,11 @@ class WorkSummaryView(TemplateView):
         # get users and groups assigned to the Job
         job = get_object_or_404(Job, pk=self.kwargs.get('job_pk'))
         job_team_data = dict([(g,UserGroupStats(g)) for g in job.teams.all()])
-        job_analyst_data = dict([(u,UserGroupStats(u)) for u in job.analysts.all()])
-        job_team_data.update(job_analyst_data)
 
         for uorg in job_team_data:
-            ct = self.ct_group if self.ct_group.model_class() is type(uorg) else self.ct_user
+            ct = self.ct_group
             their_aois = job.aois.filter(assignee_id=uorg.id, assignee_type = ct)
             for aoi in their_aois:
-                print "%s %s %s" % (uorg, aoi.analyst, aoi.status)
                 job_team_data[uorg].increment(aoi.analyst, aoi.status)
 
         cv['object'] = job
@@ -1232,15 +1229,6 @@ class TeamDelete(DeleteView):
     def get_success_url(self):
         return reverse("team-list")
     
-def search_form(request):
-    return render(request, 'core/search_form.html')
-
-def search(request):
-    if 'q' in request.GET:
-        message = 'You searched for: %r' % request.GET['q']
-    else:
-        message = 'You submitted an empty form.'
-    return HttpResponse(message)
 
             
             
