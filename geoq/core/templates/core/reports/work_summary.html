@@ -130,7 +130,7 @@
             function mouseover(d){  // utility function to be called on mouseover.
                 // filter for selected state.
                 var st = fData.filter(function(s){ return s.Group == d[0];})[0],
-                        nD = d3.keys(st.state).map(function(s){ return {type:s, state:st.state[s]};});
+                        nD = ['assigned','awaiting_imagery','awaiting_analysis','in_work','complete'].map(function(s){ return {type:s, state:st.state[s]};});
 
                 // call update functions of pie-chart and legend.
                 pC.update(nD);
@@ -375,8 +375,16 @@
         ]}
     ];
 
-    var Data = {{ data|safe }};
+    var dData = {{ data|safe }};
 
-    dashboard('#dashboard',workData, groupData);
+    fData = dData.map(function(s) {
+        return {state: s.state, Group: s.Group};
+    });
+
+    gData = dData.map(function(s) {
+        return {Group: s.Group, Users: s.Users};
+    });
+
+    dashboard('#dashboard',fData, gData);
 </script>
 {% endblock %}
