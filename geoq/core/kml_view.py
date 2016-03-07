@@ -195,7 +195,7 @@ class JobKML(ListView):
                 style = 'inwork'
             if aoi.status == 'Unassigned':
                 style = 'unassigned'
-            aoi_name = "#"+str(aoi.id)+", "+str(aoi.status)+" - Priority:"+str(aoi.priority)
+            aoi_name = "#"+str(aoi.id)+", Status: "+str(aoi.status)
 
             kml = str(aoi.polygon.simplify(0.0002).kml)
             if '<Polygon><outerBoundaryIs><LinearRing><coordinates>' in kml:
@@ -205,6 +205,7 @@ class JobKML(ListView):
             output += '    <Placemark>\n'
             output += '      <name>'+aoi_name+'</name>\n'
             output += '      <styleUrl>#geoq_'+style+'</styleUrl>\n'
+            output += get_extended_data(aoi)
             output += '      '+kml+'\n'
             output += '    </Placemark>\n'
 
@@ -226,6 +227,19 @@ def get_cookie_trailer(request):
     if cookie_url_trailer:
         cookie_url_trailer = "?" + cookie_url_trailer
     return cookie_url_trailer
+
+
+def get_extended_data(aoi):
+    output = '<ExtendedData>\n'
+    for key,val in aoi.properties.iteritems():
+        output += '<Data name="{0}">\n<value>{1}</value>\n</Data>\n'.format(key,val)
+
+    if aoi.analyst is not None:
+        output += '<Data name="Analyst">\n<value>{0}</value>\n</Data>\n'.format(aoi.analyst.username)
+
+    output += '</ExtendedData>\n'
+
+    return output
 
 
 class JobKMLNetworkLink(ListView):

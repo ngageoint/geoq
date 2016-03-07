@@ -236,8 +236,6 @@ class CreateFeaturesView(UserAllowedMixin, DetailView):
             aoi.save()
             return True
         elif aoi.status == 'In work':
-            if aoi.started_at is None:
-                aoi.started_at = utils.timezone.now()
             if is_admin:
                 return True
             elif aoi.analyst != self.request.user:
@@ -257,6 +255,9 @@ class CreateFeaturesView(UserAllowedMixin, DetailView):
                 return False
         elif aoi.status == 'Awaiting Analysis':
             if self.request.user in aoi.job.reviewers.all() or is_admin:
+                aoi.status = 'In work'
+                if aoi.started_at is None:
+                    aoi.started_at = utils.timezone.now()
                 aoi.reviewers.add(self.request.user)
                 aoi.save()
                 increment_metric('workcell_analyzed')
@@ -348,17 +349,13 @@ class JobDetailedListView(ListView):
 
     paginate_by = 1000
     model = Job
-    default_status_assigner = 'assigned'
-    default_status_analyst = 'awaiting imagery'
+    default_status = 'assigned'
     request = None
     metrics = False
 
     def get_queryset(self):
         status = getattr(self, 'status', None)
-        if self.request.user.has_perm('core.assign_workcells'):
-            q_set = AOI.objects.filter(job=self.kwargs.get('pk')).order_by('assignee_id','id')
-        else:
-            q_set = AOI.objects.filter(job=self.kwargs.get('pk'),analyst_id=self.request.user.id).order_by('id')
+        q_set = AOI.objects.filter(job=self.kwargs.get('pk')).order_by('assignee_id','id')
 
         # # If there is a user logged in, we want to show their stuff
         # # at the top of the list
@@ -696,14 +693,11 @@ class WorkSummaryView(TemplateView):
         # get users and groups assigned to the Job
         job = get_object_or_404(Job, pk=self.kwargs.get('job_pk'))
         job_team_data = dict([(g,UserGroupStats(g)) for g in job.teams.all()])
-        job_analyst_data = dict([(u,UserGroupStats(u)) for u in job.analysts.all()])
-        job_team_data.update(job_analyst_data)
 
         for uorg in job_team_data:
-            ct = self.ct_group if self.ct_group.model_class() is type(uorg) else self.ct_user
+            ct = self.ct_group
             their_aois = job.aois.filter(assignee_id=uorg.id, assignee_type = ct)
             for aoi in their_aois:
-                print "%s %s %s" % (uorg, aoi.analyst, aoi.status)
                 job_team_data[uorg].increment(aoi.analyst, aoi.status)
 
         cv['object'] = job
@@ -888,6 +882,13 @@ def list_groups(request, job_pk):
     groups = job.teams.values('name','id').order_by('name')
 
     return HttpResponse(json.dumps(list(groups)), mimetype="application/json")
+
+@permission_required('core.assign_workcells', return_403=True)
+def list_group_users(request, group_pk):
+    group = get_object_or_404(Group, pk=group_pk)
+    users = group.user_set.values('username','id').order_by('username')
+
+    return HttpResponse(json.dumps(list(users)), mimetype="application/json")
 
 @permission_required('core.assign_workcells', return_403=True)
 def list_group_users(request, group_pk):
@@ -1150,4 +1151,14 @@ class GridGeoJSON(ListView):
         geojson = job.grid_geoJSON()
 
         return HttpResponse(geojson, mimetype="application/json", status=200)
+    
+class TeamListView(ListView):
+    model = Group
+    def get_queryset(self):
+        search = self.request.GET.get('search', None)
+        return Group.objects.all().order_by('name') if search is None else Group.objects.filter(name__iregex=re.escape(search)).order_by('name')
+    
+class TeamDetailedListView(ListView):
+    paginate_by = 15
+    model = Group
 

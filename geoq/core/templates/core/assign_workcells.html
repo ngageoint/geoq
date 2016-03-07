@@ -16,6 +16,8 @@
     <script src="{{ STATIC_URL }}js/jquery.tablesorter.min.js"></script>
     <script src="{{ STATIC_URL }}js/jquery.tablesorter.widgets.min.js"></script>
     <script src="{{ STATIC_URL }}js/widget-scroller.js"></script>
+    <script src="{{ STATIC_URL }}leaflet/leaflet-plugins/leaflet.shapefile-gh-pages/leaflet.shpfile.js" type="text/javascript"></script>
+    <script src="{{ STATIC_URL }}leaflet/leaflet-plugins/leaflet.shapefile-gh-pages/shp.js" type="text/javascript"></script>
 
     <script src="{{ STATIC_URL }}core/js/job_map.js"></script>
 
@@ -23,6 +25,11 @@
     table th:nth-child(2),
     table td:nth-child(2) {
         display: none;
+    }
+    .markerlabelClass{
+        white-space: nowrap;
+        text-shadow: 0 0 0.1em black, 0 0 0.1em black, 0 0 0.1em black, 0 0 0.1em black, 0 0 0.1em;
+        color: yellow;
     }
 </style>
 

@@ -77,6 +77,8 @@
         var barColor = 'steelblue';
         function segColor(c){ return {assigned:"#d2b48c", awaiting_imagery:"#c6c1fa",awaiting_analysis:"#cf6201",in_work:"#eaed21",completed:"#58de4b"}[c]; }
         var columns = ["name", "assigned", "awaiting_imagery", "awaiting_analysis", "in_work", "completed", "avgtime"];
+        var STATES = ["assigned", "awaiting_imagery", "awaiting_analysis", "in_work", "completed"];
+        var OUTPUT_STATES = ["awaiting_imagery", "in_work", "completed"];
 
         // compute total for each state.
         fData.forEach(function(d){d.total=d.state.assigned+d.state.awaiting_imagery+d.state.awaiting_analysis+ d.state.in_work+ d.state.completed;});
@@ -130,7 +132,7 @@
             function mouseover(d){  // utility function to be called on mouseover.
                 // filter for selected state.
                 var st = fData.filter(function(s){ return s.Group == d[0];})[0],
-                        nD = d3.keys(st.state).map(function(s){ return {type:s, state:st.state[s]};});
+                        nD = STATES.map(function(s){ return {type:s, state:st.state[s]};});
 
                 // call update functions of pie-chart and legend.
                 pC.update(nD);
@@ -166,7 +168,7 @@
                 bars.select("text").transition().duration(500)
                         .text(function(d){ return d3.format(",")(d[1])})
                         .attr("y", function(d) {return y(d[1])-5; });
-            }
+            };
             return hG;
         }
 
@@ -196,7 +198,7 @@
             pC.update = function(nD){
                 piesvg.selectAll("path").data(pie(nD)).transition().duration(500)
                         .attrTween("d", arcTween);
-            }
+            };
             // Utility function to be called on mouseover a pie slice.
             function mouseover(d){
                 // call the update function of histogram with new data.
@@ -324,10 +326,24 @@
             return ut;
         }
 
+        function reduceStates(dt) {
+            var ntt = _.filter(dt, function(o) {
+                return o.type == 'awaiting_imagery' || o.type == 'in_work' || o.type == 'completed';
+            });
+
+            // since this is sorted already, just pick out what we're combining
+            ntt[0].state += dt[0].state;   // add 'assigned' values to 'awaiting_imagery'
+            ntt[1].state += dt[2].state;   // add 'awaiting_analysis' to 'in_work'
+
+            return ntt;
+        };
+
         // calculate total frequency by segment for all state.
-        var tF = ['assigned','awaiting_imagery','awaiting_analysis','in_work','completed'].map(function(d){
+        var tF = STATES.map(function(d){
             return {type:d, state: d3.sum(fData.map(function(t){ return t.state[d];}))};
         });
+
+        // var tFF = reduceStates(tF);
 
         // calculate total frequency by state for all segment.
         var sF = fData.map(function(d){return [d.Group,d.total];});
@@ -375,8 +391,16 @@
         ]}
     ];
 
-    var Data = {{ data|safe }};
+    var dData = {{ data|safe }};
 
-    dashboard('#dashboard',workData, groupData);
+    fData = dData.map(function(s) {
+        return {state: s.state, Group: s.Group};
+    });
+
+    gData = dData.map(function(s) {
+        return {Group: s.Group, Users: s.Users};
+    });
+
+    dashboard('#dashboard',fData, gData);
 </script>
 {% endblock %}

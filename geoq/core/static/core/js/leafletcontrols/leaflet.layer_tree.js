@@ -63,7 +63,7 @@ leaflet_layer_control.initDrawer = function(){
 
 leaflet_layer_control.addPreferenceListener = function($accordion){
     var lastOpened = store.get('leaflet_layer_control.layer_accordion');
-    if (lastOpened) {
+    if (lastOpened && $('#'+lastOpened).is(":visible")) {
         $('#'+lastOpened).collapse('toggle');
     } else {
         // by default, open work cell details
@@ -351,7 +351,7 @@ leaflet_layer_control.buildAccordionPanel = function($accordion,title){
         .addClass('accordion-inner')
         .appendTo($contentHolder);
 
-    leaflet_layer_control.accordion_sections.push('#collapse'+sectionName)
+    leaflet_layer_control.accordion_sections.push('#collapse'+sectionName);
 
     return $content;
 };
@@ -1469,7 +1469,8 @@ leaflet_layer_control.addLayerControl = function (map, options, $accordion) {
                 leaflet_layer_control.show_info(node.data, node);
             }
         },
-        deactivate: function (event, data) {},
+        deactivate: function (event, data) {
+        },
         select: function (event, data) {
             // A checkbox has been checked or unchecked
             leaflet_layer_control.drawEachLayer(data,map);
@@ -1499,6 +1500,16 @@ leaflet_layer_control.addLayerControl = function (map, options, $accordion) {
     var idt = document.getElementById("importDragTarget");
     fileDragHelper.stopWindowDrop();
     fileDragHelper.watchFor(idt, leaflet_layer_control.handleDrop, true);
+
+
+    // if we aren't showing the layer panel, uncheck 'Data Feeds'
+    var hidden = $.inArray("Geo Layers for Map", leaflet_layer_control.hidden_panels) > -1;
+    if (hidden) {
+        var df = _.findWhere(leaflet_layer_control.lastSelectedNodes, {title: "Data Feeds"});
+        if (df) {
+            df.setSelected(false);
+        }
+    }
 
 
     //If it was open last time, open it again

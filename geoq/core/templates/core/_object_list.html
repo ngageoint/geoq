@@ -16,16 +16,27 @@
 
         <h3 style="display: inline-block; margin:0px;">
             <span class="title pull-left">
-                <i class="icon-{% if object_type == "project" %}briefcase{% elif object_type == "job"%}inbox{% elif object_type == "aoi"%}th{% endif %} icon-1x pull-left list-icon"></i>
+                <i class="icon-{% if object_type == "project" %}briefcase{% elif object_type == "job"%}inbox{% elif object_type == "aoi"%}th{% elif object_type == "group"%}group{% endif %} icon-1x pull-left list-icon"></i>
                 {% if object.status == 'In work' %}
                     {% if request.user == object.analyst %}
                     <a href="{{ object.get_absolute_url|default:'#' }}">
                     {% endif %}
                 {% else %}
+                    {% if object_type == "group" %}
+                    <a href="{%url 'team-update' object.id %}">
+                    {% elif object_type == "user" %}
+                    {% else %}
                     <a href="{{ object.get_absolute_url|default:'#' }}">
+                    {% endif %}
                 {% endif %}
 
-                {{ object.name }} {% if object_type == "aoi" %}{{ object.id }}{% endif %}
+                {% if object_type == "user" %}
+                    {{object.username}}
+                {% else %}
+                    {{ object.name }}
+                {% endif %}
+                
+                {% if object_type == "aoi" %}{{ object.id }}{% endif %}
 
                 {% if object.status == 'In work' %}{% if request.user == object.analyst %}
                 </a>
@@ -49,6 +60,7 @@
         {% endif %}
         {% if object_type == "aoi" %}
             <b>Workcell Description</b>: <span class="project-description">{{ object.description }}</span>
+        {% elif object_type == "group" or object_type == "user" %}     
         {% else %}
             <b>{{ object_type|title }} Description</b>: <span class="project-description">{{ object.description }}</span>
         {% endif %}

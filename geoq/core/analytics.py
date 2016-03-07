@@ -20,12 +20,13 @@ class UserGroupStats(object):
         k = key.lower().replace(' ','_')
         self.stats[k] += 1
 
-        if user is not None:
-            if not user.username in self.users:
-                self.users[user.username] = dict([(s.lower().replace(" ","_"),0) for s in STATUS_VALUES_LIST])
-                self.users[user.username]['name'] = str(user.username)
+        username = "No assigned analyst" if user is None else user.username
 
-            self.users[user.username][k] += 1
+        if not username in self.users:
+            self.users[username] = dict([(s.lower().replace(" ","_"),0) for s in STATUS_VALUES_LIST])
+            self.users[username]['name'] = str(username)
+
+        self.users[username][k] += 1
 
     def add_user_to_group(self, user_stats):
         self.users[user.name] = user_stats
@@ -33,7 +34,7 @@ class UserGroupStats(object):
     def toJSON(self):
         output = {}
         output['Group'] = str(self.name)
-        output['Stats'] = self.stats
+        output['state'] = self.stats
         output['Users'] = []
         for key, value in self.users.iteritems():
             output['Users'].append(value)

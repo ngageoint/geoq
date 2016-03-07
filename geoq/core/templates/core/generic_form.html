@@ -1,15 +1,17 @@
 {% extends "core/base.html" %}
 {% load object_class %}
 {% block container %}
+{% with object_type=object|object_class|lower %}
 
     <div class="container-fluid">
         <div class="row-fluid">
 
             <div class="span12">
-                <h3> {% if object %}Edit {% else %}Create New {% endif %}{{ form.Meta.model|object_class|title }}</h3>
-                 {% include custom_form|default:"core/_generic_form_twocol.html" %}
+                <h3> {% if object %}Edit {% else %}Create New {% endif %}{% if object_type == "group" %} Team {% elif form.Meta.model %} {{ form.Meta.model|object_class}} {% else %} Team {% endif %}</h3>
+                
+                        {% include custom_form|default:"core/_generic_form_twocol.html" %}
             </div>
         </div>
     </div>
-
+{% endwith %}
 {% endblock %}
