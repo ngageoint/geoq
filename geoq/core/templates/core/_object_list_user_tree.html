@@ -30,7 +30,7 @@
                     <a href="{{ object.get_absolute_url|default:'#' }}">
                 {% endif %}
 
-                {{ object.name }} {% if object_type == "aoi" %}{{ object.id }}{% endif %}
+                {{ object.name }} {% if object_type == "aoi" %}{{ object.properties.ATC_ID|default:object.id }}{% endif %}
 
                 </a>
             </span>
