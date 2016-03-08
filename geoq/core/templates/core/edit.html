@@ -9,6 +9,7 @@
     {% leaflet_js plugins="draw, esri, esriCluster, MakiMarkers, MediaQ" %}
     {% import_django_select2_js %}
     <script src="{{ STATIC_URL }}core/js/jquery-migrate-1.2.1.min.js"></script>
+	<script src="{{ STATIC_URL }}core/js/Leaflet-WFST.min.js"></script> 
     <script src="{{ STATIC_URL }}core/js/leaflet_helper.js"></script>
     <script src="{{ STATIC_URL }}core/js/leaflet_helper.parsers.js"></script>
     <script src="{{ STATIC_URL }}core/js/KML.js"></script>
@@ -39,6 +40,7 @@
     <script src="{{ STATIC_URL }}leaflet/leaflet-plugins/layer/tile/Bing.js"></script>
 	<script src="{{ STATIC_URL }}leaflet/leaflet-plugins/layer/tile/Google.js"></script>
     <script src="{{ STATIC_URL }}leaflet/leaflet-plugins/layer/tile/leaflet-tilelayer-wmts.js"></script>
+    <script src="{{ STATIC_URL }}leaflet/leaflet-plugins/layer/vector/Leaflet-WFST.min.js"></script>
     <script src="{{ STATIC_URL }}core/js/plugins/geoq.footprintsearch.js"></script>
     <script src="{{ STATIC_URL }}core/js/pqgrid.dev.js"></script>
     <script src="{{ STATIC_URL }}core/js/daterangepicker.js"></script>
@@ -125,7 +127,6 @@
         <link rel="stylesheet" href="{{ STATIC_URL }}bootstrap/css/bootstrap.min.css" />
         <link rel="stylesheet" href="{{ STATIC_URL }}images/maki/maki-sprite.css" />
         <link rel="stylesheet" href="{{ STATIC_URL }}core/edit.css" />
-	<link rel="stylesheet" href="{{ STATIC_URL }}core/css/pqgrid.dev.css" />
 	<link rel="stylesheet" href="{{ STATIC_URL }}core/css/pqgrid.css" />
 	<link rel="stylesheet" href="{{ STATIC_URL }}core/css/daterangepicker.css" />
 

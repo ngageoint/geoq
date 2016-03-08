@@ -18,6 +18,8 @@ class Migration(SchemaMigration):
         # Deleting field 'Job.editable_layer'
         db.delete_column(u'core_job', 'editable_layer_id')
 
+    depends_on = [ ('maps', '0015_auto__add_editablemaplayer'),]
+
 
     models = {
         u'auth.group': {

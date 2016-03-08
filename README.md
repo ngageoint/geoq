@@ -65,14 +65,23 @@ The ``geoq/settings.py`` file contains installation-specific settings. The Datab
 
 1. Install PostGIS 2.0 using instructions at [https://docs.djangoproject.com/en/dev/ref/contrib/gis/install/#macosx](https://docs.djangoproject.com/en/dev/ref/contrib/gis/install/#macosx). There are several options there, but for most, the easiest option is to follow the Homebrew instructions. If you don't have Homebrew installed, you can either buid it securely yourself or follow the quick (yet not secure) one line instruction at [http://brew.sh](http://brew.sh).
 
-	One exception: Instead of using brew to install postgres, it's usually easier to install Postgres.app from [postgresapp.com](http://postgresapp.com). After installing, add the app's bin directory (``/Applications/Postgres.app/Contents/MacOS/bin``) to your PATH.
+	Note for MITRE users: To install software by downloading from Internet, the computer should be connected to Outernet. 
+
+	One exception: Instead of using brew to install postgres, it's usually easier to install Postgres.app from [postgresapp.com](http://postgresapp.com). After installing, add the app's bin directory (``/Applications/Postgres.app/Contents/Versions/X.Y/bin``) to your PATH.  After Postgres.app is installed, postGIS, gdal, and libgeoip need to be installed using the following commands:
+
+		$ brew install postgis
+		$ brew install gdal
+		$ brew install libgeoip
+
+	Note: Homebrew needs to be installed to run these commands.
+
 
 2. (Optional) Install a Geoserver (we recommend the OGC Geoserver at [https://github.com/geoserver](https://github.com/geoserver))
 
 3. Make sure Python, Virtualenv, npm, and Git are installed
 
         % Note that some distros (Debian) might need additional libraries:
-        % sudo apt-get build-dep python-psycopg2
+        % sudo pip install psycopg2
         % (optional) sudo apt-get install sendmail
 
 4. Install and setup geoq:
@@ -91,7 +100,7 @@ The ``geoq/settings.py`` file contains installation-specific settings. The Datab
         % paver create_db_user
         % paver sync
 
-6. Modify local settings (modify entries below based on your system settings):
+6. Modify local settings (Modify entries below based on your system settings. Hit Ctl + D to save local settings file.):
 
         % cd geoq
         % cat > local_settings.py
@@ -107,6 +116,9 @@ The ``geoq/settings.py`` file contains installation-specific settings. The Datab
           GAMIFICATION_PROJECT = ''
           GEOSERVER_WFS_JOB_LAYER = ''
 
+	Note: To test GeoQ front page after starting GeoQ server, set STATIC_ROOT as follows:
+		STATIC_ROOT = '{0}{1}'.format('~/geoq-static/static/', STATIC_URL_FOLDER)
+
 6. (Optional) Load development fixtures:
 
         % paver install_dev_fixtures # creates an admin/admin superuser
@@ -117,8 +129,8 @@ The ``geoq/settings.py`` file contains installation-specific settings. The Datab
 
 8. Install less and add its folder ("type -p less") to your bash profile:
 
-        % npm install -g less
-        % python manage.py collectstatic
+        % sudo npm install -g less
+        % sudo python manage.py collectstatic
 
 9. Start it up!
 
@@ -133,9 +145,25 @@ The ``geoq/settings.py`` file contains installation-specific settings. The Datab
 * virtualenv
 * node / npm
 
+The following commands worked on a 64-bit CentOS 6.x system (as a privileged user):
+
+		% yum update
+		% yum localinstall http://yum.postgresql.org/9.4/redhat/rhel-6-x86_64/pgdg-centos94-9.4-1.noarch.rpm
+		% yum install postgresql94-server postgresql94-python postgresql94-devel
+		% rpm -Uvh http://download.fedoraproject.org/pub/epel/6/x86_64/epel-release-6-8.noarch.rpm
+		% yum install postgis2_94 postgis2_94-devel python-virtualenv python-pip nodejs jodejs-devel npm git mod_wsgi
+		% service postgresql-9.4 initdb
+		% service postgresql-9.4 start
+
 From a shell:
 
 ```bash
+* If accessing the Internet through a proxy, set the http_proxy and https_proxy environment settings
+export http_proxy=<your proxy setting>
+export https_proxy=<your proxy setting>
+
+cd /usr/local/src
+mkdir geoq
 virtualenv ~/geoq
 cd ~/geoq
 source bin/activate
@@ -149,16 +177,28 @@ create extension postgis;
 create extension postgis_topology;
 EOF
 
+export PATH=$PATH:/usr/pgsql-9.4/bin
 pip install paver
 paver install_dependencies
+
+* Before executing the following commands, make sure the configuration for PostgreSQL allows the connection
+* This can be done by modifying /var/lib/pgsql/9.4/data and changing the connection METHOD near the bottom of the file for 
+* the 'local' connections. Changing the METHOD from 'ident' to 'md5' should be sufficient
+* Restart postgresql (or reload config) afterwards
+
 paver sync
 paver install_dev_fixtures
 
 npm install -g less
+
+* Static files will be installed in a location where a web server can access them. This can be changed depending on your server
+* If necessary, create the local directory ('/var/www/html' in this case)
 cat << EOF > geoq/local_settings.py
-STATIC_URL_FOLDER = ''
-STATIC_ROOT = '{0}{1}'.format('', STATIC_URL_FOLDER)
+STATIC_URL_FOLDER = '/static'
+STATIC_ROOT = '{0}{1}'.format('/var/www/html', STATIC_URL_FOLDER)
 EOF
+
+python manage.py collectstatic
 
 ```
 

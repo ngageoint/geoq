@@ -279,7 +279,7 @@
     <div class="btn-group" data-toggle="buttons-radio">
         Draw using:
         <button class="btn active" id="option_polygon">Draw cells</button>
-        <button class="btn" id="option_shapefile">Drag in Shape File</button>
+        <button class="btn" id="option_shapefile">Drag in Shape or GeoJSON File</button>
         <button class="btn" id="option_usng">USNG Cells (US only)</button>
         <button class="btn" id="option_mgrs">MGRS Cells</button>
     </div>
@@ -295,7 +295,7 @@
         <button id="workcell_remove_button" class="btn btn-success" onclick="create_aois.removeOrSplit = true;">Remove</button>
     </div>
     <div style="display:none" id="file_uploader_holder">
-        <div id="file_holder">Drag shapefile here</div>
+        <div id="file_holder">Drag file here</div>
         <select id="file_holder_select" style="width: inherit; margin-bottom: 0px;">
             <option value="holder_smooth">Smooth polygons</option>
             <option value="holder_points">Turn points into</option>

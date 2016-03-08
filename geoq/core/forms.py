@@ -5,12 +5,13 @@
 from django import forms
 from django.forms.widgets import (RadioInput, RadioSelect, CheckboxInput,
     CheckboxSelectMultiple)
-from django.contrib.auth.models import User
+from django.contrib.auth.models import User, Group
 from django.utils.html import escape, conditional_escape
 from django.db.models import Max
 from itertools import chain
 from models import AOI, Job, Project
 from maps.models import Layer, MapLayer
+from django.contrib.admin.widgets import FilteredSelectMultiple
 
 no_style = [RadioInput, RadioSelect, CheckboxInput, CheckboxSelectMultiple]
 
@@ -146,3 +147,47 @@ class ProjectForm(StyledModelForm):
     class Meta:
         fields = ('name', 'description', 'project_type', 'active', 'private')
         model = Project
+        
+        
+class TeamForm(StyledModelForm):
+    users = forms.ModelMultipleChoiceField(
+        queryset=[],
+        required=False,
+        widget=FilteredSelectMultiple(
+            "Users",
+            is_stacked=False
+        )
+    )
+    
+    class Media:
+        css = {
+            'all':('/static/admin/css/widgets.css',),
+        }
+        
+        js = ('/admin/jsi18n',)
+
+    class Meta:
+
+        fields = ('name', 'users',)
+        model = Group
+        
+    def __init__(self, *args, **kwargs):
+        self.team_id = kwargs.pop('team_id')
+        super(TeamForm, self).__init__(*args, **kwargs)
+        self.fields['name'].required = True
+        other_teams = Group.objects.exclude(id=self.team_id).values_list('name', flat=True)
+        self.fields['users'].queryset = User.objects.exclude(groups__name__in=other_teams)
+        self.fields['users'].initial = User.objects.filter(groups__id=self.team_id)
+            
+        def remove_anonymous(field):
+            """ Removes anonymous from choices in form. """
+            field_var = self.fields[field].queryset.exclude(id=-1)
+            self.fields[field].queryset = field_var
+            return None
+        remove_anonymous('users')
+
+          
+        
+    
+
+    

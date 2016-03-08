@@ -163,10 +163,9 @@ def feature_delete(request, pk):
     return HttpResponse( content=pk, status=200 )
 
 @login_required
-def create_update_map(request, pk=None):
-
-    if pk:
-        map_obj = Map.objects.get(pk=pk)
+def create_update_map(request, job_id, map_id):
+    if map_id:
+        map_obj = Map.objects.get(pk=map_id)
     else:
         map_obj = None
 
@@ -178,7 +177,7 @@ def create_update_map(request, pk=None):
             form.save()
             maplayers_formset.instance = form.instance
             maplayers_formset.save()
-            return HttpResponseRedirect(reverse('map-list'))
+            return HttpResponseRedirect(reverse('job-detail', kwargs = {'pk': job_id}))
     else:
         form = MapForm(prefix='map', instance=map_obj)
         maplayers_formset = MapInlineFormset(prefix='layers', instance=map_obj)

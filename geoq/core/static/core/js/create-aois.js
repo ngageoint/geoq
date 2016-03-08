@@ -1365,8 +1365,8 @@ create_aois.smoothWorkCells = function (shape_layers) {
 create_aois.initializeFileUploads = function () {
     var holder = document.getElementById('file_holder');
     var $holder = $('#file_holder').popover({
-        title: "Drag zipped shapefile here",
-        content: "You can drag a .zip or .shp file here. All polygons/multipolygons within will be created as work cells. Please make files as small as possible (<5mb).",
+        title: "Drag zipped shapefile or GeoJSON file here",
+        content: "You can drag a .zip or .shp shapefile, or a .json GeoJSON file here. All polygons/multipolygons within will be created as work cells. Please make files as small as possible (<5mb).",
         trigger: "hover",
         placement: "bottom",
         container: 'body'
@@ -1391,6 +1391,7 @@ create_aois.initializeFileUploads = function () {
         $holder.css({backgroundColor: 'lightgreen'});
 
         var file = e.dataTransfer.files[0], reader = new FileReader();
+        var extension = file.name.split('.').slice(-1)[0];
 
         reader.onload = function (event) {
             var size = "";
@@ -1410,17 +1411,28 @@ create_aois.initializeFileUploads = function () {
             $holder.css({backgroundColor: ''});
             create_aois.update_info("Importing Shapes: " + size);
 
-            shp(reader.result).then(function (geojson) {
-                create_aois.createWorkCellsFromService(geojson, true);
+            if (extension === 'json') {
+                create_aois.createWorkCellsFromService(JSON.parse(reader.result), true);
+                create_aois.update_info("GeoJSON Imported");
+            } else {
+                shp(reader.result).then(function (geojson) {
+                    create_aois.createWorkCellsFromService(geojson, true);
 
-                create_aois.update_info("Shapes Imported");
-            }, function (a) {
-                log.log(a);
-            });
+                    create_aois.update_info("Shapes Imported");
+                }, function (a) {
+                    log.log(a);
+                });
+            }
+
             $('#file_holder_edit_btn').attr('disabled', false);
 
         };
-        reader.readAsArrayBuffer(file);
+
+        if ( extension === 'json') {
+            reader.readAsText(file);
+        } else {
+            reader.readAsArrayBuffer(file);
+        }
 
         return false;
     };
