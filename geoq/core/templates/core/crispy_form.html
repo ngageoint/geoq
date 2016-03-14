@@ -14,7 +14,16 @@
     <script>
         var currentProperties = null,
             currentStyle = null,
-            count = 0;
+            baseProperties = [
+                'type',
+                'severity',
+                'name'],
+            baseStyle = [
+                'color',
+                'opacity',
+                'weight',
+                'fill',
+                'icon url'];
         
         $(document).ready(function(){
             $('select[multiple="multiple"]').parent().parent()
@@ -27,139 +36,208 @@
             }
             //Set properties of Featuretype 
             if ($('#property-toggle')) {
+                var html = null;
                 currentProperties = $('#id_properties').val().toString();
-                if (currentProperties.length > 0) {              
+                if (currentProperties.length > 0) {
                     currentProperties = (currentProperties.charAt(0) == "[" ? JSON.parse(currentProperties.substring(1, currentProperties.length-1)) : JSON.parse(currentProperties));
                 }
                 else {
                     currentProperties = {};
                 }
                 
-                $('#property-toggle').click(function(){
-                    $('#type').val(currentProperties.type);
-                    $('#severity').val(currentProperties.severity);
-                    $('#name').val(currentProperties.name);
+                $.each(currentProperties, function(k, v) {
+                        if (k.toLowerCase()=="name") {
+                            $('#name').val(v);
+                        }
+                        else if (k.toLowerCase()=="severity") {
+                            $('#severity').val(v);
+                        }
+                        else if (k.toLowerCase()=="type") {
+                            $('#type').val(v);
+                        }
+                        else {
+                            html = '<tr><td class="key">' + k + '</td><td><input type="text" class="value" value="' + v + '"></td></tr>';
+                            $('#property-table').append(html);
+                        }               
                 });
                 
                 $('#property-ok').click(function(){
                     var newProperties = {};
-                    if ($('#type').val().length > 0) {
-                        newProperties.type = $('#type').val();
-                    }
-                    if ($('#severity').val().length > 0) {
-                        newProperties.severity = $('#severity').val();
-                    }
-                    if ($('#name').val().length > 0) {
-                        newProperties.name = $('#name').val();
-                    }
-                    if ($('#new-property-name0').length > 0) {
-                        newProperties[$('#new-property-name0').val()] = $('#new-property-value0').val();
-                    }
+                    var tableRows = $('#property-table tr');
+                    
+                    $.each(tableRows, function(r){
+                        var value = $('.value', this).val();
+                        if (value) {
+                            var key = $('.key', this).text() || $('.key', this).val();
+                            newProperties[key] = value;
+                        }
+                    })
+                    
                     if ($.isEmptyObject(newProperties)) {
                         $('#id_properties').val(""); 
                     }
                     else {
                         $('#id_properties').val(JSON.stringify(newProperties).split(",").join(",\n"));
-                    }
-                    
+                    }                   
                 });
                 
-                $('#property-cancel').click(function(){                  
+                $('#property-cancel').click(function(){
+                    var html = null;
+
                     if ($.isEmptyObject(currentProperties)) {
                         $('#id_properties').val(""); 
                     }
                     else {
                         $('#id_properties').val(JSON.stringify(currentProperties).split(",").join(",\n"));
                     }
+                                       
+                    var tableRows = $('#property-table tr');
                     
-                    $('#type').val(currentProperties.type);
-                    $('#severity').val(currentProperties.severity);
-                    $('#name').val(currentProperties.name);
+                    $.each(tableRows, function(r){
+                        var key = $('.key', this).text() || $('.key', this).val();
+                        if (key) {
+                            if (baseProperties.indexOf(key.toLowerCase()) < 0 ) {
+                                $(this).remove();
+                            }
+                            else {
+                                $('.value', this).val('');
+                            }
+                        }
+                    });
+                    
+                   $.each(currentProperties, function(k, v) {
+
+                        if (k.toLowerCase()=="name") {
+                            $('#name').val(v);
+                        }
+                        else if (k.toLowerCase()=="severity") {
+                            $('#severity').val(v);
+                        }
+                        else if (k.toLowerCase()=="type") {
+                            $('#type').val(v);
+                        }
+                        else {
+                            html = '<tr><td class="key">' + k + '</td><td><input type="text" class="value" value="' + v + '"></td></tr>';
+                            $('#property-table').append(html);
+                        }
+                        
+                    });
                 });
                 
                 $('#property-add').click(function(){
-                    var property_name_id = "new-property-name" + count,
-                        property_value_id = "new-property-value" + count,
-                        html = '<tr><td><input type="text" id="' + property_name_id + '"></td><td><input type="text" id="' + property_value_id + '"></td></tr>';
+                    html = '<tr><td><input type="text" class="key"></td><td><input type="text" class="value"></td></tr>';
                     $('#property-table').append(html);
-                    count++;
-                    //$('#property-table').append('<tr><td><input type="text" id="new-property-name"></td><td><input type="text" id="new-property-value"></td></tr>');
-                });
+                 });
                 
                 $('#id_properties').attr('readonly', 'true');
             }
             
             //Set style of Featuretype
             if ($('#style-toggle')) {
-                //$("#id_style").css({ 'display': "none" });
                 currentStyle = $('#id_style').val().toString();
-                if (currentStyle.length > 0) {              
+                if (currentStyle.length > 0) {
                     currentStyle = (currentStyle.charAt(0) == "[" ? JSON.parse(currentStyle.substring(1, currentStyle.length-1)) : JSON.parse(currentStyle));
                 }
                 else {
                     currentStyle = {};
                 }
                 
-                $('#style-toggle').click(function(){                  
-                    $('#color').val(currentStyle.color);
-                    $('#opacity').val(currentStyle.opacity);
-                    $('#weight').val(currentStyle.weight);
-                    $('#iconUrl').val(currentStyle.iconUrl);
-                    $('#backgroundColor').val(currentStyle.backgroundColor);
-                    $('#mapTextStyle').val(currentStyle.mapTextStyle);
-                    
-                    if ($('#id_type').val() == 'Point') {
-                        $('#fill-row').css("display", "none"); 
+                $.each(currentStyle, function(k, v) {
+                    if (k.toLowerCase()=="color") {
+                        $('#color').val(v);
                     }
-                    if ($('#id_type').val() == 'LineString') {
-                        $('#iconUrl-row').css("display", "none"); 
+                    else if (k.toLowerCase()=="opacity") {
+                        $('#opacity').val(v);
                     }
-                    if ($('#id_type').val() == 'Polygon') {
-                        $('#iconUrl-row').css("display", "none"); 
+                    else if (k.toLowerCase()=="weight") {
+                        $('#weight').val(v);
                     }
+                    else if (k.toLowerCase()=="fill") {
+                        $('#fill').val(v);
+                    }
+                    else if (k.toLowerCase()=="icon url" || k.toLowerCase()=="iconurl") {
+                        $('#iconUrl').val(v);
+                    }
+                    else {
+                        html = '<tr><td class="key">' + k + '</td><td><input type="text" class="value" value="' + v + '"></td></tr>';
+                        $('#style-table').append(html);
+                    }               
                 });
                 
                 $('#style-ok').click(function(){
                     var newStyle = {};
-                    if ($('#id_type').val() == 'Point') {
-                       
-                    }
-                    if ($('#id_type').val() == 'Line') {
-                        //code
-                    }
-                    if ($('#id_type').val() == 'Polygon') {
-                        //code
-                    }
+                    var tableRows = $('#style-table tr');
                     
-                    newStyle.color = ($('#color').val().length >0 ? $('#color').val() : null);
-                    newStyle.opacity = ($('#opacity').val().length > 0 ? $('#opacity').val() : null);
-                    newStyle.weight = ($('#weight').val().length >0 ? $('#weight').val() : null);
-                    newStyle.fill = ($('#fill').val().length >0 ? $('#fill').val() : null);
-                    newStyle.iconUrl = ($('#iconUrl').val().length >0 ? $('#iconUrl').val() : null);
+                    
+                    $.each(tableRows, function(r){
+                        var value = $('.value', this).val();
+                        if (value) {
+                            var key = $('.key', this).text() || $('.key', this).val();
+                            newStyle[key] = value;
+                        }
+                    })
                     
                     if ($.isEmptyObject(newStyle)) {
                         $('#id_style').val(""); 
                     }
                     else {
                         $('#id_style').val(JSON.stringify(newStyle).split(",").join(",\n"));
-                    }
+                    }     
                 });
                 
                 $('#style-cancel').click(function(){
+                    var html = null;
+
                     if ($.isEmptyObject(currentStyle)) {
                         $('#id_style').val(""); 
                     }
                     else {
                         $('#id_style').val(JSON.stringify(currentStyle).split(",").join(",\n"));
                     }
+                                       
+                    var tableRows = $('#style-table tr');
                     
-                    $('#color').val(currentStyle.color);
-                    $('#opacity').val(currentStyle.opacity);
-                    $('#weight').val(currentStyle.weight);
-                    $('#iconUrl').val(currentStyle.iconUrl);
-                    $('#backgroundColor').val(currentStyle.backgroundColor);
-                    $('#mapTextStyle').val(currentStyle.mapTextStyle);
+                    $.each(tableRows, function(r){
+                        var key = $('.key', this).text() || $('.key', this).val();
+                        if (key) {
+                            if (baseStyle.indexOf(key.toLowerCase()) < 0 ) {
+                                $(this).remove();
+                            }
+                            else {
+                                $('.value', this).val('');
+                            }
+                        }
+                    });
+                    
+                    $.each(currentStyle, function(k, v) {
+                        if (k.toLowerCase()=="color") {
+                            $('#color').val(v);
+                        }
+                        else if (k.toLowerCase()=="opacity") {
+                            $('#opacity').val(v);
+                        }
+                        else if (k.toLowerCase()=="weight") {
+                            $('#weight').val(v);
+                        }
+                        else if (k.toLowerCase()=="fill") {
+                            $('#fill').val(v);
+                        }
+                        else if (k.toLowerCase()=="icon url" || k.toLowerCase()=="iconurl") {
+                            $('#iconUrl').val(v);
+                        }
+                        else {
+                            html = '<tr><td class="key">' + k + '</td><td><input type="text" class="value" value="' + v + '"></td></tr>';
+                            $('#style-table').append(html);
+                        }               
+                    });
                 });
+                
+                $('#style-add').click(function(){
+                    html = '<tr><td><input type="text" class="key"></td><td><input type="text" class="value"></td></tr>';
+                    $('#style-table').append(html);
+                });
+                
+                $('#id_style').attr('readonly', 'true'); 
             }
         });
         
