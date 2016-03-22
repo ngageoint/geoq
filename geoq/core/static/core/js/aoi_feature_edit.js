@@ -788,6 +788,12 @@ aoi_feature_edit.map_init = function (map, bounds) {
     if ($.inArray("Drawing",aoi_feature_edit.hidden_tools) == -1) {
         aoi_feature_edit.buildDrawingControl(aoi_feature_edit.drawnItems);
     }
+    if ($.inArray("Select", aoi_feature_edit.hidden_tools) == -1) {
+        aoi_feature_edit.addSelectControl(map);
+    }
+    if ($.inArray("Delete", aoi_feature_edit.hidden_tools) == -1) {
+        aoi_feature_edit.addDeleteControl(map);
+    }
     if ($.inArray("Geocoder",aoi_feature_edit.hidden_tools) == -1) {
         leaflet_helper.addGeocoderControl(map);
     }

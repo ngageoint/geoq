@@ -77,7 +77,7 @@ leaflet_helper.layer_conversion = function (lyr, map) {
             
         }
         catch (e) {
-            alert('Unable to create WFS layer: ' + e.toString());
+            console.error('Unable to create WFS layer: ' + e.toString());
         }
     
     } else if (lyr.type == 'WMTS') {
