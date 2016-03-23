@@ -1501,7 +1501,7 @@ leaflet_layer_control.drawEachLayer=function(data,map,doNotMoveToTop){
     var layersUnClicked = _.difference(leaflet_layer_control.lastSelectedNodes, selectedLayers);
     // Layers that used to be unchecked, but now are.
     var layersClicked = _.difference(selectedLayers, leaflet_layer_control.lastSelectedNodes);
-
+    
     _.each(layersUnClicked,function(layer_obj){
         if (layer_obj && layer_obj.data && _.toArray(layer_obj.data).length) {
             var layer = layer_obj.data;
@@ -1509,9 +1509,14 @@ leaflet_layer_control.drawEachLayer=function(data,map,doNotMoveToTop){
             leaflet_layer_control.setLayerOpacity(layer,0,doNotMoveToTop);
         } else if (layer_obj.children && layer_obj.children.length) {
             //A category was clicked
-            _.each(layer_obj.children, function(layer_obj_item){
-                layer_obj_item.setSelected(false);
-            });
+            if (layer_obj.partsel) {
+                _.each(layer_obj.children, function(layer_obj_item){
+                    if (!layer_obj_item.selected) {
+                        layer_obj_item.setSelected(false);
+                    }                   
+                });
+            }
+            
         }
     });
 
