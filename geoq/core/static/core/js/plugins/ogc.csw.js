@@ -15,6 +15,17 @@ ogc_csw.validated_server;
 
 ogc_csw.current_layer_list = [];
 
+ogc_csw.schema = {
+    'imageId': { key: 'identifier', default: 'unknown'},
+    'layerId': { key: 'title', default: 'unknown'},
+    'wms': { key: 'references', default: null },
+    'ObservationDate': { key: null, default: moment().format('YYYYMMDD')},
+    'maxCloudCoverPercentageRate': { key: null, default: 1},
+    'platformCode': { key: null, default: 'abc123'},
+    'layerName': {key: 'title', default: 'Unknown'},
+    'status': {key: null, default: 'Accepted'}
+};
+
 ogc_csw.init = function(options) {
 // initialize
     if (options) ogc_csw = $.extend(ogc_csw, options);
@@ -46,18 +57,8 @@ ogc_csw.getCapabilities = function() {
     });
 };
 
-ogc_csw.getRecords = function() {
+ogc_csw.getRecords = function(params,callback) {
     var proxy = leaflet_helper.proxy_path || '/geoq/proxy';
-
-    var params = {
-        service: "CSW",
-        version: "2.0.2",
-        request: "GetRecords",
-        typeNames: "csw:Record",
-        resultType: "results",
-        elementSetName: "full",
-        outputSchema: "http://www.opengis.net/cat/csw/2.0.2"
-    };
 
     var url = ogc_csw.protocol + "://" + ogc_csw.server + ":" + ogc_csw.port + ogc_csw.path + "/csw?" + $.param(params);
 
@@ -65,14 +66,11 @@ ogc_csw.getRecords = function() {
         type: 'GET',
         url: proxy + url,
         dataType: 'xml',
-        success: function (xml,lang) {
-            var $xml = $(xml);
-            ogc_csw.current_layer_list = $xml.find('Record');
-        },
+        success: callback,
         failure: function () {
             alert('unable to retrieve csw records');
         }
-    })
+    });
 
 };
 
@@ -80,7 +78,7 @@ ogc_csw.createWMSLayerFromRecord = function(record) {
     var newlayer = {};
     try {
         var parser = document.createElement('a');
-        parser.href = record.getElementsByTagName('references')[0].innerHTML;
+        parser.href = $(record).find('references').text();
         var search = parser.search.substring(1);
         var parts = JSON.parse('{"' + decodeURI(search).replace(/"/g, '\\"').replace(/&amp;/g, '","').replace(/=/g,'":"') + '"}');
         if (parts.service === 'WMS') {
@@ -88,7 +86,7 @@ ogc_csw.createWMSLayerFromRecord = function(record) {
                 layers: parts.layers,
                 format: 'image/png',
                 transparent: true,
-                attribution: record.getElementsByTagName('creator')[0].innerHTML
+                attribution: $(record).find('creator').text()
             });
         }
     } catch (e) {
@@ -98,16 +96,56 @@ ogc_csw.createWMSLayerFromRecord = function(record) {
     return newlayer;
 };
 
-ogc_csw.createOutlineBoxFromRecord = function(record) {
+ogc_csw.getRecordValue = function(record, attribute) {
+
+    if (ogc_csw.schema[attribute].key) {
+        return $(record).find(ogc_csw.schema[attribute].key).text() || 'unknown';
+    } else {
+        return ogc_csw.schema[attribute].default;
+    }
+};
+
+// take a CSW xml object in and create an object we can use
+ogc_csw.parseCSWRecord = function(record) {
+    var oRecord = {};
+    oRecord.options = {};
+
+    try {
+        var $box = $(record).find('BoundingBox');
+        oRecord.uc = $box.find('UpperCorner').text();
+        oRecord.lc = $box.find('LowerCorner').text();
+
+        oRecord.options.imageId = ogc_csw.getRecordValue(record, 'imageId');
+        oRecord.options.wms = ogc_csw.getRecordValue(record, 'wms');
+        oRecord.options.layerId = ogc_csw.getRecordValue(record, 'layerId');
+        oRecord.options.ObservationDate = ogc_csw.getRecordValue(record, 'ObservationDate');
+        oRecord.options.maxCloudCoverPercentageRate = ogc_csw.getRecordValue(record, 'maxCloudCoverPercentageRate');
+        oRecord.options.platformCode = ogc_csw.getRecordValue(record, 'platformCode');
+
+        oRecord.layerName = ogc_csw.getRecordValue(record, 'layerName');
+        oRecord.options.status = ogc_csw.getRecordValue(record, 'status');
+    } catch (e) {
+        console.error(e);
+    }
+
+    return oRecord;
+};
+
+ogc_csw.createOutlineBoxFromRecord = function(record, style) {
     var outlineLayer = {};
     try {
-        var box = record.getElementsByTagName('BoundingBox')[0];
-        var uc = box.getElementsByTagName('UpperCorner')[0].innerHTML;
-        var lc = box.getElementsByTagName('LowerCorner')[0].innerHTML;
+        outlineLayer = L.rectangle([record.lc.split(' ').map(Number),record.uc.split(' ').map(Number)],
+            style);
+        $.extend(outlineLayer.options,record.options);
 
-        outlineLayer = L.rectangle([lc.split(' ').map(Number),uc.split(' ').map(Number)],
-            {color:'red', weight: 1});
-        outlineLayer.bindPopup(record.getElementsByTagName('title')[0] || 'Unknown');
+        var layerName = outlineLayer.layerName;
+        var func = 'footprints.removeCSWOutline("' + outlineLayer.options.imageId + '")';
+        var func2 = 'footprints.replaceCSWOutlineWithLayer("' + outlineLayer.options.imageId + '")';
+        var html = "<p>Name: " + layerName + "<br/><a href=\'#\' onclick=\'" + func + "\'>Remove Outline</a><br/>" +
+            "<a href=\'#\' onclick=\'" + func2 + "\'>Replace with WMS</a>";
+
+
+        outlineLayer.bindPopup(html);
     } catch (e) {
         console.error(e);
     }
@@ -115,12 +153,13 @@ ogc_csw.createOutlineBoxFromRecord = function(record) {
     return outlineLayer;
 };
 
-//ogc_csw.init({
-//    server: 'centos.mitre.org',
-//    port: '8080',
-//    protocol: 'http',
-//    path: '/geoserver'
-//});
-//
+ogc_csw.init({
+    server: 'centos.mitre.org',
+    port: '8080',
+    protocol: 'http',
+    path: '/geoserver'
+});
+
+//{color:'red', weight: 1}
 //ogc_csw.getCapabilities();
 //ogc_csw.getRecords();

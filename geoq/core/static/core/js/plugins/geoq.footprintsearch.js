@@ -25,7 +25,9 @@ footprints.$matching_count = null;
 footprints.$matching_total = null;
 footprints.$error_div = null;
 
-footprints.schema = [
+footprints.outline_layer_group = null;
+
+footprints.old_schema = [
     {name: 'image_id', id: true},
     {name: 'layerId', title: 'Platform', filter: 'options', show: 'small-table', showSizeMultiplier: 2},
     {name: 'image_sensor', title: 'Sensor', filter: 'options'},
@@ -57,6 +59,38 @@ footprints.schema = [
         name: 'value', title: 'NEF name', filter: 'textbox', onNotFound: function (name) {
         console.log("TODO: Load If not found: " + name)
     }
+    }
+];
+
+footprints.schema = [
+    {name: 'imageId', id: true, cswid: 'identifier'},
+    {name: 'layerId', title: 'Layer ID', filter: 'options', show: 'small-table', showSizeMultiplier: 2, cswid: ''},
+    {name: 'platformCode', title: 'Platform', filter: 'options', cswid: 'creator'},
+    //TODO: Show image name as mouseover or small text field?
+    {
+        name: 'maxCloudCoverPercentageRate',
+        cswid: '',
+        title: 'Cloud%',
+        type: 'integer',
+        filter: 'slider-max',
+        min: 0,
+        max: 100,
+        start: 10,
+        show: 'small-table',
+        sizeMarker: true
+    },
+    {name: 'status', title: 'Status', filter: 'options'},
+    {
+        name: 'ObservationDate',
+        title: 'Observation Date',
+        cswid: '',
+        type: 'date',
+        filter: 'date-range',
+        transform: 'day',
+        show: 'small-table',
+        showSizeMultiplier: 2,
+        initialDateRange: 30,
+        colorMarker: true
     }
 ];
 
@@ -135,7 +169,7 @@ footprints.addInitialImages = function () {
 
         //Convert the json output from saved images into the format the list is expecting
         var data = {
-            attributes:{
+            options:{
                 id: data_row.image_id,
                 image_id: data_row.image_id,
                 layerId: data_row.platform, //TODO: Was this saved?
@@ -168,7 +202,7 @@ footprints.buildAccordionPanel = function () {
     footprints.addFilterButton(footprints.$content);
 
     //Build Toggled Filter Holder
-    footprints.$filter_holder = $("<div>").css({display: 'none'}).appendTo(footprints.$title);
+    footprints.$filter_holder = $("<div>").appendTo(footprints.$title);
 
     //Show count of items returned
     footprints.addResultCount(footprints.$filter_holder);
@@ -395,6 +429,50 @@ footprints.updateFootprintDataFromMap = function () {
         });
     });
 };
+footprints.updateFootprintDataFromCSWServer = function () {
+    var proxy = leaflet_helper.proxy_path || '/geoq/proxy/';
+    var bounds = footprints.map.getBounds();
+    var geom_string = footprints.boundsToGeometryPolygon(bounds);
+
+    var layers = footprints.layerList || [1];
+    _.each(layers, function (layer, layer_id) {
+        var inputs = {
+            geometryPolygon: geom_string,
+            responseFormat: 'xml',
+            outputSchema: 'RESTfulView-1.1',
+            streamable: 'immediate'
+        };
+        var params = {
+            service: "CSW",
+            version: "2.0.2",
+            request: "GetRecords",
+            typeNames: "csw:Record",
+            resultType: "results",
+            elementSetName: "full",
+            outputSchema: "http://www.opengis.net/cat/csw/2.0.2"
+        };
+        var callback = function (xml,lang) {
+            var $xml = $(xml);
+            var data = $xml.find('Record') || [];
+            footprints.newCSWFeaturesArrived(data);
+        };
+        //If there are any WHERE clauses, add those in
+        _.each(footprints.promptFields, function (field) {
+            inputs[field.name] = footprints.expandPromptSettings(field);
+        });
+
+        ogc_csw.getRecords(params, callback);
+    });
+};
+footprints.boundsToGeometryPolygon = function(bounds) {
+    var polygon = {};
+    var sw = bounds.getSouthWest();
+    var nw = bounds.getNorthWest();
+    var ne = bounds.getNorthEast();
+    var se = bounds.getSouthEast();
+    polygon.rings = [[[sw.lng,sw.lat],[nw.lng,nw.lat],[ne.lng,ne.lat],[se.lng,se.lat]]];
+    return JSON.stringify(polygon);
+};
 footprints.expandPromptSettings = function (field) {
     //If the prompt is a 'where', turns a comma-seperated list into a proper where clause
     var name = field.name;
@@ -508,6 +586,116 @@ footprints.newFeaturesArrived = function (data, url, layer_id, layer_name) {
         }
     }
 };
+footprints.newCSWFeaturesArrived = function (items) {
+
+    var field_id = _.find(footprints.schema, function (s) {
+        return s.id
+    }).name || "id";
+
+    var count_added = 0;
+    if (items.length > 0) {
+        if (footprints.outline_layer_group == null) {
+            footprints.outline_layer_group = L.layerGroup();
+            footprints.outline_layer_group.addTo(footprints.map);
+        }
+
+        _.each(items, function(layer) {
+            var found = false;
+            var record = ogc_csw.parseCSWRecord(layer);
+
+            for (var j = 0; j < footprints.features.length; j++) {
+                if (record.options["imageId"]) {
+                    if (record.options["imageId"] == footprints.features[j].imageId) {
+                        found = true;
+                        break;
+                    }
+                } else {
+                    console.log('Footprints Plugin - Incoming feature does not have a known ID.')
+                }
+            }
+            if (!found) {
+
+
+                var wms = ogc_csw.createOutlineBoxFromRecord(record, {color: 'red', weight: 1});
+
+                // add geometry of layer to record
+                record.geometry = wms.getLatLngs();
+
+                footprints.outline_layer_group.addLayer(wms);
+
+                footprints.features.push(wms.options);
+                count_added++;
+            }
+
+            if (count_added) {
+                footprints.updateFeatureMinMaxes();
+
+                //Add the feature to the map
+//                for (var i = 0; i < footprints.features.length; i++) {
+//                    var feature = footprints.features[i];
+//                    if (!feature._geojson) {
+//                        feature._geojson = footprints.convertFeatureToGeoJson(feature);
+//                        feature._geojson.layer_id = layer_id;
+//                        feature._geojson.layer_name = layer_name;
+//
+//                        if (feature._geojson.geometry) {
+//                            footprints.layerHolder.addData(feature._geojson);
+//                            feature._marker = footprints.findMarkerByFeature(feature);
+//                            footprints.setOpacity(feature._marker, 0);
+//                        }
+//                    }
+//                }
+
+                //Update the filter controls
+                _.each(footprints.schema, function (schema_item) {
+                    if (schema_item.update) schema_item.update();
+                });
+                footprints.showFilterBoxes();
+                footprints.updateFootprintFilteredResults();
+            }
+            footprints.userMessage(count_added + ' new ' + footprints.title + 's added', 'yellow');
+
+        });
+
+        //footprints.showFilterBoxes();
+        //footprints.updateFootprintFilteredResults();
+        //footprints.outline_layer_group.addTo(footprints.map);
+    }
+};
+footprints.removeCSWOutline = function (identifier) {
+    _.each(footprints.outline_layer_group.getLayers(), function(layer) {
+        if (layer.options.imageId === identifier) {
+            footprints.outline_layer_group.removeLayer(layer);
+            return;
+        }
+    });
+};
+footprints.replaceCSWOutlineWithLayer = function (identifier) {
+    _.each(footprints.outline_layer_group.getLayers(), function(layer) {
+        if (layer.options.imageId === identifier) {
+            try {
+                // remove footprint, then add wms image
+                footprints.outline_layer_group.removeLayer(layer);
+
+                var parser = document.createElement('a');
+                parser.href = layer.options.wms;
+                var search = parser.search.substring(1);
+                var parts = JSON.parse('{"' + decodeURI(search).replace(/"/g, '\\"').replace(/&amp;/g, '&').replace(/&/g, '","').replace(/=/g,'":"') + '"}');
+                if (parts.service === 'WMS') {
+                    newlayer = L.tileLayer.wms(parser.protocol + "//" + parser.host + parser.pathname, {
+                        layers: parts.layers,
+                        format: 'image/png',
+                        transparent: true,
+                        attribution: layer.options.identifier
+                    });
+                    footprints.outline_layer_group.addLayer(newlayer);
+                }
+            } catch (e) {
+                console.error(e);
+            }
+        }
+    })
+}
 footprints.updateFeatureMinMaxes = function () {
     //If it's a number or date, find the min and max and save it with the schema
 
@@ -523,7 +711,7 @@ footprints.updateFeatureMinMaxes = function () {
             if ((schema_item.type && schema_item.type == 'integer') || (schema_item.filter && schema_item.filter == 'slider-max')) {
                 for (var i = 0; i < footprints.features.length; i++) {
                     var feature = footprints.features[i];
-                    var val = feature.attributes[schema_item.name] || feature[schema_item.name];
+                    var val = feature[schema_item.name] || feature.options[schema_item.name];
                     val = parseFloat(val);
                     if (val > max) max = val;
                     if (val < min) min = val;
@@ -532,7 +720,7 @@ footprints.updateFeatureMinMaxes = function () {
             } else if ((schema_item.type && schema_item.type == 'date') || (schema_item.filter && schema_item.filter == 'date-range')) {
                 for (var i = 0; i < footprints.features.length; i++) {
                     var feature = footprints.features[i];
-                    var val = feature.attributes[schema_item.name] || feature[schema_item.name];
+                    var val = feature[schema_item.name] || feature.options[schema_item.name];
                     var date_val = val;
                     var date_format = null;
                     if (schema_item.transform == 'day') {
@@ -772,7 +960,7 @@ footprints.updateFootprintFilteredResults = function (options) {
         }
 
         //Check if item has been rejected and rejects shouldn't be shown
-        if (feature.attributes.status && feature.attributes.status == "RejectedQuality" && !footprints.filters.previously_rejected) {
+        if (feature.status && feature.status == "RejectedQuality" && !footprints.filters.previously_rejected) {
             matched = false;
         }
         //TODO: Make sure previous data is returned from AOIs
@@ -782,7 +970,7 @@ footprints.updateFootprintFilteredResults = function (options) {
             if (schema_item.filter && matched) {
                 var fieldToCheck = schema_item.name;
                 var filterSetting = footprints.filters[fieldToCheck];
-                var val = feature[fieldToCheck] || feature.attributes[fieldToCheck] || feature._geojson[fieldToCheck];
+                var val = feature[fieldToCheck] || feature.attributes[fieldToCheck];
 
                 if (typeof val != "undefined") {
                     //Check all possible options and see if the feature has that setting
@@ -843,7 +1031,7 @@ footprints.updateFootprintFilteredResults = function (options) {
         //Only store in the array items mentioned in the schema
         _.each(footprints.schema, function (schema_item) {
             var fieldToCheck = schema_item.name;
-            var val = feature[fieldToCheck] || feature.attributes[fieldToCheck] || feature._geojson[fieldToCheck];
+            var val = feature[fieldToCheck] || feature.options[fieldToCheck];
 
             if ((schema_item.type && schema_item.type == 'date') || (schema_item.filter && schema_item.filter == 'date-range')) {
                 var date_format = null;
@@ -1186,9 +1374,9 @@ footprints.addFilterButton = function ($holder) {
     $('<button>')
         .addClass('btn btn-info')
         .attr({type: 'button'})
-        .html('<i class="icon-filter"></i>&nbspLoad ' + footprints.title + ' within view extents')
+        .html('<i class="icon-filter"></i>&nbspSearch for ' + footprints.title + ' within view extents')
         .on('click', function () {
-            footprints.updateFootprintDataFromMap();
+            footprints.updateFootprintDataFromCSWServer();
         })
         .appendTo($holder);
     footprints.$error_div = $('<div>')
@@ -1212,6 +1400,7 @@ footprints.addFilterSliderMax = function ($holder, schema_item) {
     footprints.filters[schema_item.name] = schema_item._max || schema_item.start || 10;
 
     var $input = $('<input>')
+        .attr('type', 'range')
         .on('input', _.debounce(function () {
             footprints.filters[schema_item.name] = this.value;
             footprints.updateFootprintFilteredResults();
@@ -1257,7 +1446,7 @@ footprints.addFilterOptions = function ($holder, schema_item) {
         var option_ids = [];
 
         _.each(footprints.features, function (feature) {
-            var val = feature[fieldToUpdate] || feature.attributes[fieldToUpdate] || feature._geojson[fieldToUpdate];
+            var val = feature[fieldToUpdate] || feature.options[fieldToUpdate];
             if (val) {
                 option_items[val] = feature._geojson ? feature._geojson.layer_id : true;
             }
