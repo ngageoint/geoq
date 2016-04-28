@@ -1,0 +1,9 @@
+[submodule "openshift/containers/s2i-python"]
+	path = openshift/containers/s2i-python
+	url = https://github.com/jason-callaway/s2i-python.git
+[submodule "openshift/containers/s2i-base"]
+	path = openshift/containers/s2i-base
+	url = https://github.com/jason-callaway/s2i-base.git
+[submodule "openshift/containers/rhscl-dockerfiles"]
+	path = openshift/containers/rhscl-dockerfiles
+	url = https://github.com/stephenrjones/rhscl-dockerfiles.git

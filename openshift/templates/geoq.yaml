@@ -1,0 +1,271 @@
+apiVersion: v1
+kind: Template
+labels:
+  template: geoq
+metadata:
+  annotations:
+    description: An example GeoQ application with a PostgreSQL database
+    iconClass: icon-python
+    tags: quickstart,python,django,postgresql
+  name: geoq
+  namespace: openshift
+objects:
+- apiVersion: v1
+  kind: Service
+  metadata:
+    annotations:
+      description: Exposes and load balances the application pods
+    name: ${NAME}
+  spec:
+    ports:
+    - name: web
+      port: 80
+      targetPort: 8000
+    selector:
+      name: ${NAME}
+- apiVersion: v1
+  kind: Route
+  metadata:
+    name: ${NAME}
+  spec:
+    host: ${APPLICATION_DOMAIN}
+    to:
+      kind: Service
+      name: ${NAME}
+- apiVersion: v1
+  kind: ImageStream
+  metadata:
+    annotations:
+      description: Keeps track of changes in the application image
+    name: ${NAME}
+- apiVersion: v1
+  kind: BuildConfig
+  metadata:
+    annotations:
+      description: Defines how to build the application
+    name: ${NAME}
+  spec:
+    output:
+      to:
+        kind: ImageStreamTag
+        name: ${NAME}:latest
+    postCommit:
+      script: ./openshift/setup.sh
+    source:
+      contextDir: ${CONTEXT_DIR}
+      git:
+        ref: ${SOURCE_REPOSITORY_REF}
+        uri: ${SOURCE_REPOSITORY_URL}
+      type: Git
+    strategy:
+      sourceStrategy:
+        from:
+          kind: ImageStreamTag
+          name: python-node:latest
+          namespace: ${NAMESPACE}
+      type: Source
+    triggers:
+    - type: ImageChange
+    - type: ConfigChange
+    - github:
+        secret: ${GITHUB_WEBHOOK_SECRET}
+      type: GitHub
+- apiVersion: v1
+  kind: DeploymentConfig
+  metadata:
+    annotations:
+      description: Defines how to deploy the application server
+    name: ${NAME}
+  spec:
+    replicas: 1
+    selector:
+      name: ${NAME}
+    strategy:
+      type: Rolling
+#      rollingParams:
+#        post:
+#          failurePolicy: "Abort"
+#          execNewPod:
+#            containerName: "geoq"
+#            command:
+#              - "/opt/app-root/src/openshift/setup.sh"
+    template:
+      metadata:
+        labels:
+          name: ${NAME}
+        name: ${NAME}
+      spec:
+        containers:
+        - env:
+          - name: DATABASE_SERVICE_NAME
+            value: ${DATABASE_SERVICE_NAME}
+          - name: DATABASE_ENGINE
+            value: ${DATABASE_ENGINE}
+          - name: DATABASE_NAME
+            value: ${DATABASE_NAME}
+          - name: DATABASE_USER
+            value: ${DATABASE_USER}
+          - name: DATABASE_PASSWORD
+            value: ${DATABASE_PASSWORD}
+          - name: APP_CONFIG
+            value: ${APP_CONFIG}
+          - name: APP_FILE
+            value: ${APP_FILE}
+          - name: DJANGO_SECRET_KEY
+            value: ${DJANGO_SECRET_KEY}
+          image: geoq
+          livenessProbe:
+            exec:
+              command:
+                - ls
+                - /opt/app-root/src
+            initialDelaySeconds: 15
+            timeoutSeconds: 1
+          name: geoq
+          ports:
+          - containerPort: 8000
+          resources:
+            limits:
+              memory: ${MEMORY_LIMIT}
+    triggers:
+    - imageChangeParams:
+        automatic: true
+        containerNames:
+        - geoq
+        from:
+          kind: ImageStreamTag
+          name: ${NAME}:latest
+      type: ImageChange
+    - type: ConfigChange
+- apiVersion: v1
+  kind: Service
+  metadata:
+    labels:
+      name: pg-master
+    name: pg-master
+  spec:
+    portalIP: None
+    ports:
+    - nodePort: 0
+      port: 5432
+      protocol: TCP
+      targetPort: 5432
+    selector:
+      name: pg-master
+    sessionAffinity: None
+    type: ClusterIP
+  status:
+    loadBalancer: {}
+- apiVersion: v1
+  kind: Pod
+  metadata:
+    labels:
+      name: pg-master
+    name: pg-master
+  spec:
+    containers:
+    - env:
+      - name: PG_MASTER_USER
+        value: ${PG_MASTER_USER}
+      - name: PG_MODE
+        value: master
+      - name: PG_MASTER_PASSWORD
+        value: ${PG_MASTER_PASSWORD}
+      - name: PG_USER
+        value: ${DATABASE_USER}
+      - name: PG_PASSWORD
+        value: ${DATABASE_PASSWORD}
+      - name: PG_DATABASE
+        value: ${DATABASE_NAME}
+      - name: PG_ROOT_PASSWORD
+        value: ${DATABASE_PASSWORD}
+      image: crunchydata/crunchy-pg
+      name: pg-master
+      ports:
+      - containerPort: 5432
+        protocol: TCP
+      securityContext:
+        capabilities: {}
+      volumeMounts:
+      - mountPath: /pgdata
+        name: pgdata
+        readOnly: false
+    volumes:
+    - emptyDir: {}
+      name: pgdata
+parameters:
+- description: The name assigned to all of the frontend objects defined in this template.
+  displayName: Name
+  name: NAME
+  required: true
+  value: geoq
+- description: The OpenShift Namespace where the ImageStream resides.
+  displayName: Namespace
+  name: NAMESPACE
+  value: openshift
+- description: Maximum amount of memory the Django container can use.
+  displayName: Memory Limit
+  name: MEMORY_LIMIT
+  value: 512Mi
+- description: Maximum amount of memory the PostgreSQL container can use.
+  displayName: Memory Limit (PostgreSQL)
+  name: MEMORY_POSTGRESQL_LIMIT
+  value: 512Mi
+- description: The URL of the repository with your application source code.
+  displayName: Git Repository URL
+  name: SOURCE_REPOSITORY_URL
+  value: https://github.com/jason-callaway/geoq.git
+- description: Set this to a branch name, tag or other ref of your repository if you
+    are not using the default branch.
+  displayName: Git Reference
+  name: SOURCE_REPOSITORY_REF
+  value: "develop"
+- description: Set this to the relative path to your project if it is not in the root
+    of your repository.
+  displayName: Context Directory
+  name: CONTEXT_DIR
+- description: The exposed hostname that will route to the Django service, if left
+    blank a value will be defaulted.
+  displayName: Application Hostname
+  name: APPLICATION_DOMAIN
+- description: The command to be run by the Python container
+  displayName: Application File
+  name: APP_FILE
+  value: "/opt/app-root/src/openshift/start.py"
+- description: A secret string used to configure the GitHub webhook.
+  displayName: GitHub Webhook Secret
+  from: '[a-zA-Z0-9]{40}'
+  generate: expression
+  name: GITHUB_WEBHOOK_SECRET
+- displayName: Database Service Name
+  name: DATABASE_SERVICE_NAME
+  value: pg-master
+- description: 'Database engine: postgresql, mysql or sqlite (default).'
+  displayName: Database Engine
+  name: DATABASE_ENGINE
+  value: postgresql
+- displayName: Database Name
+  name: DATABASE_NAME
+  value: default
+- displayName: Database Username
+  name: DATABASE_USER
+  value: django
+- displayName: Database User Password
+  from: '[a-zA-Z0-9]{16}'
+  generate: expression
+  name: DATABASE_PASSWORD
+- description: Relative path to Gunicorn configuration file (optional).
+  displayName: Application Configuration File Path
+  name: APP_CONFIG
+- description: Set this to a long random string.
+  displayName: Djange Secret Key
+  from: '[\w]{50}'
+  generate: expression
+  name: DJANGO_SECRET_KEY
+- description: The username used for master-slave replication
+  name: PG_MASTER_USER
+  value: master
+- description: The password for the PG master user
+  from: '[a-zA-Z0-9]{12}'
+  generate: expression
+  name: PG_MASTER_PASSWORD
