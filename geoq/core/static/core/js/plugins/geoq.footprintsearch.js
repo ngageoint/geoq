@@ -27,6 +27,9 @@ footprints.$error_div = null;
 
 footprints.outline_layer_group = null;
 
+footprints.defaultFootprintStyle = {color: 'red', weight: 1};
+footprints.selectedFootprintStyle = {color: 'yellow', weight: 1};
+
 footprints.old_schema = [
     {name: 'image_id', id: true},
     {name: 'layerId', title: 'Platform', filter: 'options', show: 'small-table', showSizeMultiplier: 2},
@@ -596,6 +599,7 @@ footprints.newCSWFeaturesArrived = function (items) {
     if (items.length > 0) {
         if (footprints.outline_layer_group == null) {
             footprints.outline_layer_group = L.layerGroup();
+            footprints.outline_layer_group.lastHighlight = undefined;
             footprints.outline_layer_group.addTo(footprints.map);
         }
 
@@ -616,7 +620,7 @@ footprints.newCSWFeaturesArrived = function (items) {
             if (!found) {
 
 
-                var wms = ogc_csw.createOutlineBoxFromRecord(record, {color: 'red', weight: 1});
+                var wms = ogc_csw.createOutlineBoxFromRecord(record, footprints.defaultFootprintStyle);
 
                 // add geometry of layer to record
                 record.geometry = wms.getLatLngs();
@@ -666,6 +670,18 @@ footprints.removeCSWOutline = function (identifier) {
     _.each(footprints.outline_layer_group.getLayers(), function(layer) {
         if (layer.options.imageId === identifier) {
             footprints.outline_layer_group.removeLayer(layer);
+
+            // now remove from table
+            var data = footprints.$grid.pqGrid("option","dataModel");
+            for (var index = 0; index < data.data.length; index++) {
+                if (data.data[index]['imageId'] == identifier) {
+                    data.data.splice(index,1);
+                    index--;
+                    break;
+                }
+            }
+
+            footprints.$grid.pqGrid("option","dataModel", {data: data.data });
             return;
         }
     });
@@ -1222,6 +1238,27 @@ footprints.addResultTable = function ($holder) {
             } else if (val && footprints.featureSelectFunction) {
                 footprints.featureSelectFunction(ui, val);
             }
+        };
+        obj.rowClick = function( evt, ui ) {
+            var imageid = ui.dataModel.data[ui.rowIndx].imageId;
+            var last_index = footprints.outline_layer_group.lastHighlight;
+            var outlinelayers = footprints.outline_layer_group.getLayers();
+
+            // change back previous selection if necessary
+            if ( footprints.outline_layer_group.lastHighlight ) {
+                var player = outlinelayers.filter(function(e) {return e.options.imageId == footprints.outline_layer_group.lastHighlight})[0];
+                if (player) {
+                    player.setStyle(footprints.defaultFootprintStyle);
+                }
+            }
+
+            // change the color of the selected image
+            var layer = outlinelayers.filter(function(e) { return e.options.imageId == imageid; })[0];
+            if (layer) {
+                layer.setStyle(footprints.selectedFootprintStyle);
+            }
+
+            footprints.outline_layer_group.lastHighlight = imageid;
         };
     }
     obj.colModel = obj.colModel.concat(columns);

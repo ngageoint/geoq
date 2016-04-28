@@ -88,6 +88,9 @@ ogc_csw.createWMSLayerFromRecord = function(record) {
                 transparent: true,
                 attribution: $(record).find('creator').text()
             });
+
+            var html = "<p>Image</p>";
+            newlayer.bindPopup(html);
         }
     } catch (e) {
         console.error(e);
@@ -160,6 +163,3 @@ ogc_csw.init({
     path: '/geoserver'
 });
 
-//{color:'red', weight: 1}
-//ogc_csw.getCapabilities();
-//ogc_csw.getRecords();
