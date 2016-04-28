@@ -23,8 +23,8 @@ DATABASES = {
         'NAME': 'geoq',  # Or path to database file if using sqlite3.
         # The following settings are not used with sqlite3:
         'USER': 'geoq',
-        'PASSWORD': 'geoq',
-        'HOST': 'localhost',  # Empty for localhost through domain sockets or '127.0.0.1' for localhost through TCP.
+        'PASSWORD': os.environ.get('DATABASE_PASSWORD'),
+        'HOST': os.environ.get('DATABASE_SERVICE_NAME'),  # Empty for localhost through domain sockets or '127.0.0.1' for localhost through TCP.
         'PORT': '5432',  # Set to empty string for default.
     }
 }
@@ -144,7 +144,7 @@ LEAFLET_CONFIG = {
 
 
 # Make this unique, and don't share it with anybody.
-SECRET_KEY = '2t=^l2e$e5!du$0^c@3&qk4h_*stwwgp#1o$*n7#eisc)^2(wk'
+SECRET_KEY = os.environ.get('DJANGO_SECRET_KEY')
 
 # List of callables that know how to import templates from various sources.
 TEMPLATE_LOADERS = (
