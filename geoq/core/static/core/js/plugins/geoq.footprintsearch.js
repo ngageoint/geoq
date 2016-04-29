@@ -26,6 +26,7 @@ footprints.$matching_total = null;
 footprints.$error_div = null;
 
 footprints.outline_layer_group = null;
+footprints.image_layer_group = null;
 
 footprints.defaultFootprintStyle = {color: 'red', weight: 1};
 footprints.selectedFootprintStyle = {color: 'yellow', weight: 1};
@@ -623,7 +624,11 @@ footprints.newCSWFeaturesArrived = function (items) {
                 var wms = ogc_csw.createOutlineBoxFromRecord(record, footprints.defaultFootprintStyle);
 
                 // add geometry of layer to record
-                record.geometry = wms.getLatLngs();
+                var latlngs = wms.getLatLngs();
+                wms.options.geometry = {};
+                wms.options.geometry.rings = [];
+                wms.options.geometry.rings.push(latlngs.map(function(ll) {return [ll.lng, ll.lat]}));
+                wms.options.geometry.rings[0].push(wms.options.geometry.rings[0][0]);
 
                 footprints.outline_layer_group.addLayer(wms);
 
@@ -669,6 +674,11 @@ footprints.newCSWFeaturesArrived = function (items) {
 footprints.removeCSWOutline = function (identifier) {
     _.each(footprints.outline_layer_group.getLayers(), function(layer) {
         if (layer.options.imageId === identifier) {
+            // see if there's an image layer as well. If so, remove it
+            if (layer.image_layer) {
+                footprints.image_layer_group.removeLayer(layer.image_layer);
+            }
+
             footprints.outline_layer_group.removeLayer(layer);
 
             // now remove from table
@@ -686,12 +696,38 @@ footprints.removeCSWOutline = function (identifier) {
         }
     });
 };
+footprints.saveInspectedImage = function (identifier, accepted) {
+    _.each(footprints.outline_layer_group.getLayers(), function(layer) {
+        if (layer.options.imageId === identifier) {
+            // find the correct row in the table, then click the save radio button
+            var data = footprints.$grid.pqGrid("option", "dataModel");
+            for (var index = 0; index < data.data.length; index++) {
+                if (data.data[index]['imageId'] == identifier) {
+                    // index is the row. if accepted is true, we want to keep it. Otherwise reject
+                    if (accepted) {
+                        $('#r1-'+index).click();
+                    } else {
+                        $('#r3-'+index).click();
+
+                        // since we're not keeping this one, go ahead and clear from map
+                        footprints.removeCSWOutline(identifier);
+                    }
+                }
+            }
+        }
+    })
+};
 footprints.replaceCSWOutlineWithLayer = function (identifier) {
     _.each(footprints.outline_layer_group.getLayers(), function(layer) {
         if (layer.options.imageId === identifier) {
             try {
-                // remove footprint, then add wms image
-                footprints.outline_layer_group.removeLayer(layer);
+                // hide footprint, then add wms image
+                layer.setStyle({opacity: 0, fillOpacity: 0});
+                layer.unbindPopup();
+                var func = 'footprints.saveInspectedImage("' + layer.options.imageId + '", ' + true + ')';
+                var func2 = 'footprints.saveInspectedImage("' + layer.options.imageId + '", ' + false + ')';
+                var html = "<p><a href=\'#\' onclick=\'" + func + "\'>Save Image for Analysis</a><br/><a href=\'#\' onclick=\'" + func2 + "\'>Remove Image</a></p>";
+                layer.bindPopup(html);
 
                 var parser = document.createElement('a');
                 parser.href = layer.options.wms;
@@ -704,7 +740,13 @@ footprints.replaceCSWOutlineWithLayer = function (identifier) {
                         transparent: true,
                         attribution: layer.options.identifier
                     });
-                    footprints.outline_layer_group.addLayer(newlayer);
+                    if (footprints.image_layer_group == null) {
+                        footprints.image_layer_group = L.layerGroup();
+                        footprints.image_layer_group.lastHighlight = undefined;
+                        footprints.image_layer_group.addTo(footprints.map);
+                    }
+                    footprints.image_layer_group.addLayer(newlayer);
+                    layer.image_layer = newlayer;
                 }
             } catch (e) {
                 console.error(e);
@@ -1166,7 +1208,7 @@ footprints.addResultTable = function ($holder) {
                     var c3 = (data.status && data.status == 'RejectedQuality') ? 'checked' : '';
 
                     var bg = '<input class="accept" id="r1-' + id + '" type="radio" name="acceptance-' + id + '" '+c1+' value="Accepted"/><label for="r1-' + id + '"></label>';
-                    bg += '<input class="unsure" id="r2-' + id + '" type="radio" name="acceptance-' + id + '" '+c2+' value="NotEvaluated"/>';
+                    bg += '<input class="unsure" id="r2-' + id + '" type="radio" name="acceptance-' + id + '" '+c2+' value="NotEvaluated" checked="checked"/>';
                     bg += '<input class="reject" id="r3-' + id + '" type="radio" name="acceptance-' + id + '" '+c3+' value="RejectedQuality"/><label for="r3-' + id + '"></label>';
 
                     return bg;
@@ -1190,10 +1232,10 @@ footprints.addResultTable = function ($holder) {
             var val = $target.val();
             if (val && footprints.featureSelectUrl) {
                 var data_row = ui.dataModel.data[ui.rowIndx];
-                var image_id = data_row.image_id;
+                var image_id = data_row.imageId;
 
                 var inputs = {
-                    id: image_id,
+                    id: encodeURIComponent(image_id),
                     evaluation: val
                 };
 
@@ -1213,12 +1255,12 @@ footprints.addResultTable = function ($holder) {
                 });
 
                 var data = {
-                    image_id: data_row.image_id,
+                    image_id: data_row.imageId,
                     nef_name: data_row.value,
                     sensor: data_row.image_sensor,
-                    platform: data_row.layerId,
-                    cloud_cover: data_row.cloud_cover,
-                    acq_date: data_row.date_image,
+                    platform: data_row.platformCode,
+                    cloud_cover: data_row.maxCloudCoverPercentageRate,
+                    acq_date: data_row.ObservationDate,
                     img_geom: JSON.stringify(geometry),
                     area: 1,
                     status: val,
