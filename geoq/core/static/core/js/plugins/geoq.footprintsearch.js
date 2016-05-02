@@ -1235,7 +1235,7 @@ footprints.addResultTable = function ($holder) {
                 var image_id = data_row.imageId;
 
                 var inputs = {
-                    id: encodeURIComponent(image_id),
+                    id: image_id.replace(/:/g, "_"),
                     evaluation: val
                 };
 
