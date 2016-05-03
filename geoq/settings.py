@@ -138,6 +138,11 @@ LEAFLET_CONFIG = {
             'css': [],
             'js': [STATIC_URL + 'leaflet/Leaflet.MediaQ.js'],
             'repo': 'https://github.com/stephenrjones/Leaflet.MediaQ'
+        },
+        'OpenSensorHub': {
+            'css': [],
+            'js': [STATIC_URL + 'leaflet/Leaflet.SOS.min.js'],
+            'repo': 'https://github.com/opensensorhub/osh-js'
         }
     }
 }
