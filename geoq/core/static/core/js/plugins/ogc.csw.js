@@ -22,6 +22,8 @@ ogc_csw.schema = {
     'ObservationDate': { key: null, default: moment().format('YYYYMMDD')},
     'maxCloudCoverPercentageRate': { key: null, default: 1},
     'platformCode': { key: null, default: 'abc123'},
+    'sensor': {key: null, default: 'def456'},
+    'nef_name': {key: null, default: 'unknown'},
     'layerName': {key: 'title', default: 'Unknown'},
     'status': {key: null, default: 'Accepted'}
 };

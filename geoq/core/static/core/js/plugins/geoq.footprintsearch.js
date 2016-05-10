@@ -27,6 +27,7 @@ footprints.$error_div = null;
 
 footprints.outline_layer_group = null;
 footprints.image_layer_group = null;
+footprints.border_layer_group = null;
 
 footprints.defaultFootprintStyle = {color: 'red', weight: 1};
 footprints.selectedFootprintStyle = {color: 'yellow', weight: 1};
@@ -453,6 +454,7 @@ footprints.updateFootprintDataFromCSWServer = function () {
             typeNames: "csw:Record",
             resultType: "results",
             elementSetName: "full",
+            maxRecords: 50,
             outputSchema: "http://www.opengis.net/cat/csw/2.0.2"
         };
         var callback = function (xml,lang) {
@@ -602,6 +604,9 @@ footprints.newCSWFeaturesArrived = function (items) {
             footprints.outline_layer_group = L.layerGroup();
             footprints.outline_layer_group.lastHighlight = undefined;
             footprints.outline_layer_group.addTo(footprints.map);
+        }
+        if (footprints.border_layer_group == null) {
+            footprints.border_layer_group = L.layerGroup();
         }
 
         _.each(items, function(layer) {
