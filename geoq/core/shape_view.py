@@ -222,7 +222,7 @@ class ShpResponder(object):
                 features_points.append(f)
             elif f.the_geom.geom_type == 'Polygon':
                 features_polys.append(f)
-            elif f.the_geom.geom_type == 'Line':
+            elif f.the_geom.geom_type == 'LineString':
                 features_lines.append(f)
 
         # This builds the array twice. It's duplicative, but works
