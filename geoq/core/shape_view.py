@@ -57,7 +57,11 @@ class JobAsShape(ListView):
                 shape_out = shape_response.work_cells()
 
         except Exception, e:
-            shape_out = None
+            import traceback
+
+            output = json.dumps(dict(message='Generic Exception', details=traceback.format_exc(), exception=str(e),
+                                     last_data=shape_response.last_data))
+            shape_out = HttpResponse(output, mimetype="application/json", status=200)
 
         return shape_out
 
