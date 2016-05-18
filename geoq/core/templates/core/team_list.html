@@ -1,0 +1,24 @@
+{% extends "core/base.html" %}
+{% block title %}GeoQ Projects{% endblock %}
+
+{% block container %}
+
+    <div class="row-fluid container-narrow">
+
+        <div class="span12">
+            <div class="span8 list-view-header">Teams</div>
+            <div class="span4">
+            {% if 'auth.change_group' in request.base_perms %}
+            <span><a class="btn btn-mini pull-right" style="margin-top:10px" href="{% url 'team-create' %}">Add New</a></span>
+            {% endif %}
+            </div>
+            
+            <div style="clear:both"></div>
+            <br>
+
+            {% include "core/_object_list.html" %}
+
+        </div>
+
+    </div>
+{% endblock %}

@@ -15,3 +15,5 @@ dev-geoq-django/*
 *.DS_Store
 *.swp
 *~
+geoq.komodoproject
+workcell_log.txt

@@ -11,3 +11,11 @@ def version_date():
     except:
         timestamp = ""
     return timestamp
+
+__version__ = "2.0"
+
+@register.simple_tag
+def version_number():
+    
+    return  "Version: " + __version__
+        

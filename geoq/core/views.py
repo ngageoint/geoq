@@ -971,4 +971,91 @@ class GridGeoJSON(ListView):
         geojson = job.grid_geoJSON()
 
         return HttpResponse(geojson, mimetype="application/json", status=200)
+    
+class TeamListView(ListView):
+    model = Group
+    def get_queryset(self):
+        search = self.request.GET.get('search', None)
+        return Group.objects.all() if search is None else Group.objects.filter(name__iregex=re.escape(search))
+    
+class TeamDetailedListView(ListView):
+    paginate_by = 15
+    model = Group
 
+    def get_queryset(self):
+        return User.objects.filter(groups__id=self.kwargs.get('pk'))
+
+    def get_context_data(self, **kwargs):
+        cv = super(TeamDetailedListView, self).get_context_data(**kwargs)
+        cv['object'] = get_object_or_404(self.model, pk=self.kwargs.get('pk'))
+        return cv
+    
+class CreateTeamView(CreateView):
+    """
+    Create Team
+    """
+
+    def get_form_kwargs(self):
+        kwargs = super(CreateTeamView, self).get_form_kwargs()
+        kwargs['team_id'] = 0
+        return kwargs
+    
+    def get_context_data(self, **kwargs):
+        cv = super(CreateTeamView, self).get_context_data(**kwargs)
+        cv['custom_form'] = "core/_generic_form_onecol.html"
+        return cv
+    
+    def form_valid(self, form):
+        errors = []
+        if not self.request.POST.get('name', ''):
+            errors.append('Select users.')
+        self.object = form.save()
+        users = self.request.POST.getlist('users')
+        usernames = User.objects.filter(id__in=users)
+        if usernames.count() >0:
+            for user in usernames:
+                user.groups.add(Group.objects.get(id=self.object.id))
+
+        return HttpResponseRedirect(reverse('team-list'), )
+        
+class UpdateTeamView(UpdateView):
+    """
+    Update Team
+    """
+
+    def get_form_kwargs(self):
+        kwargs = super(UpdateTeamView, self).get_form_kwargs()
+        kwargs['team_id'] = self.kwargs.get('pk')
+        return kwargs
+    
+    def get_context_data(self, **kwargs):
+        cv = super(UpdateTeamView, self).get_context_data(**kwargs)
+        cv['custom_form'] = "core/_generic_form_onecol.html"
+        return cv
+    
+    def form_valid(self, form):
+        team_id = self.kwargs.get('pk')
+        user_list = self.request.POST.getlist('users')
+        team = Group.objects.get(id=team_id)
+        team.user_set.clear()
+        
+        users = User.objects.filter(id__in=user_list)
+        count = users.count()
+        if users.count() >0:
+            for user in users:
+                team.user_set.add(user);
+                
+        return HttpResponseRedirect(reverse('team-list'))
+    
+    
+class TeamDelete(DeleteView):
+    model = Group
+    template_name = "core/generic_confirm_delete.html"
+    
+    def get_success_url(self):
+        return reverse("team-list")
+    
+
+            
+            
+        
