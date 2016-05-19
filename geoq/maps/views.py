@@ -310,4 +310,7 @@ class JSONLayerImport(ListView):
         return context
 
     def post(self, request, *args, **kwargs):
+
+
+
         return HttpResponseRedirect(reverse('layer-list'))

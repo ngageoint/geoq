@@ -66,6 +66,9 @@ class UploadKMZForm(forms.Form):
     title = forms.CharField(max_length=50)
     kmzfile = forms.FileField()
 
+class UploadJSONForm(forms.Form):
+    title = forms.CharField(max_length=50)
+    jsonfile = forms.FileField()
 
 class LayerForm(StyledModelForm):
     class Meta:
