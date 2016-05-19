@@ -625,8 +625,17 @@ footprints.newCSWFeaturesArrived = function (items) {
             }
             if (!found) {
 
-
-                var wms = ogc_csw.createOutlineBoxFromRecord(record, footprints.defaultFootprintStyle);
+                var wms = {};
+                if (record.uc && record.lc) {
+                    // this is a BoundingBox
+                    wms = ogc_csw.createRectangleFromBoundingBox(record, footprints.defaultFootprintStyle);
+                } else if (record.rings) {
+                    wms = ogc_csw.createPolygonFromCoordinates(record);
+                } else {
+                    console.error("No coordinates found. Skipping this layer");
+                    return;
+                }
+                wms.bindPopup(ogc_csw.createLayerPopup(record.layerName, record.options));
 
                 // add geometry of layer to record
                 var latlngs = wms.getLatLngs();

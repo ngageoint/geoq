@@ -136,26 +136,48 @@ ogc_csw.parseCSWRecord = function(record) {
     return oRecord;
 };
 
-ogc_csw.createOutlineBoxFromRecord = function(record, style) {
+ogc_csw.createRectangleFromBoundingBox = function(box, style) {
     var outlineLayer = {};
     try {
-        outlineLayer = L.rectangle([record.lc.split(' ').map(Number),record.uc.split(' ').map(Number)],
+        outlineLayer = L.rectangle([box.lc.split(' ').map(Number),box.uc.split(' ').map(Number)],
             style);
-        $.extend(outlineLayer.options,record.options);
-
-        var layerName = outlineLayer.layerName;
-        var func = 'footprints.removeCSWOutline("' + outlineLayer.options.imageId + '")';
-        var func2 = 'footprints.replaceCSWOutlineWithLayer("' + outlineLayer.options.imageId + '")';
-        var html = "<p>Name: " + layerName + "<br/><a href=\'#\' onclick=\'" + func + "\'>Remove Outline</a><br/>" +
-            "<a href=\'#\' onclick=\'" + func2 + "\'>Replace with WMS</a>";
-
-
-        outlineLayer.bindPopup(html);
+        $.extend(outlineLayer.options,box.options);
     } catch (e) {
         console.error(e);
     }
 
     return outlineLayer;
+};
+
+ogc_csw.createPolygonFromCoordinates = function(coordinates, style) {
+    // create a polygon from a space-delimited list of x y (lon lat) coordinates
+    // e.g. "135.75 34.75 136.82 34.75 136.86 33.57 135.75 33.57"
+    var outlineLayer  = {};
+    try {
+        var coordArray = coordinates.split(' ');
+        var latlonArray = [];
+
+        for (var i = 0; i < coordArray.length; i+=2 ) {
+            var latlng = L.latLng(coordArray[i+1],coordArray[i]);
+            latlonArray.push(latlng);
+        }
+
+        outlineLayer = L.polygon(latlonArray, style);
+    } catch (e) {
+        console.error(e);
+    }
+
+    return outlineLayer;
+};
+
+ogc_csw.createLayerPopup = function(name,options) {
+    var layerName = name;
+    var func = 'footprints.removeCSWOutline("' + options.imageId + '")';
+    var func2 = 'footprints.replaceCSWOutlineWithLayer("' + options.imageId + '")';
+    var html = "<p>Name: " + layerName + "<br/><a href=\'#\' onclick=\'" + func + "\'>Remove Outline</a><br/>" +
+        "<a href=\'#\' onclick=\'" + func2 + "\'>Replace with WMS</a>";
+
+    return html;
 };
 
 ogc_csw.init({
