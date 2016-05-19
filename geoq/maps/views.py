@@ -15,13 +15,14 @@ from django.template import RequestContext
 from django.views.generic import ListView, View, DeleteView
 from django.views.decorators.http import require_http_methods
 
-from forms import MapForm, MapInlineFormset, UploadKMZForm
+from forms import MapForm, MapInlineFormset, UploadKMZForm, UploadJSONForm
 
 from geoq.core.models import AOI
 from geoq.locations.models import Counties
 
 from models import Feature, FeatureType, Map, Layer, MapLayerUserRememberedParams, MapLayer, GeoeventsSource
 from kmz_handler import save_kmz_file
+from json_handler import handleUploadedJSON
 
 import logging
 
@@ -310,7 +311,11 @@ class JSONLayerImport(ListView):
         return context
 
     def post(self, request, *args, **kwargs):
+        form = UploadJSONForm(request.POST, request.FILES)
+        dataFromFile = handleUploadedJSON(request.FILES["jsonfile"])
 
-
+        if dataFromFile != None:
+            #We could also pull the title from the file not the box
+            layer = Layer.objects.create(name = request.POST['title'], type=dataFromFile["type"],url=dataFromFile["url"],layer="",styles="",description="")
 
         return HttpResponseRedirect(reverse('layer-list'))
