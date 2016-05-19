@@ -300,4 +300,14 @@ class KMZLayerImport(ListView):
 
 
 
+class JSONLayerImport(ListView):
 
+    model = Layer
+    template_name = "maps/json_upload.hmtl"
+
+    def get_context_data(self, **kwargs):
+        context = super(JSONLayerImport, self).get_context_data(**kwargs)
+        return context
+
+    def post(self, request, *args, **kwargs):
+        return HttpResponseRedirect(reverse('layer-list'))
