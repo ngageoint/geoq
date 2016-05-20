@@ -35,10 +35,11 @@
                 txt += "Please make sure your file is in valid JSON format and less than 2 MB.\n\n";
                 alert(txt);
             } else {
+                var jsonIsValid = false;
                 try {
                     var reader = new FileReader();
                     reader.onload = function(e){
-                        var jsonIsValid = checkJSON(e.target.result)
+                        jsonIsValid = checkJSON(e.target.result);
                         console.log(e.target.result);
                     };
                     reader.readAsText(file);
