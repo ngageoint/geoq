@@ -4,5 +4,4 @@ from pprint import pprint
 def handleUploadedJSON(f):
     data = load(f)
     jsonDictionary = {"name":data["name"], "type":data["type"], "url":data["url"]}
-    pprint(data)
     return jsonDictionary
