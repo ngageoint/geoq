@@ -90,7 +90,9 @@ urlpatterns = patterns('',
         LayerImport.as_view(),
         name='layer-import'),
 
-
+    url(r'^layers/export/(?P<pk>\d+)/?$',
+        login_required(JSONLayerExport.as_view()),
+        name='layer-export'),
 
     # MapLayer CRUD Views
 
@@ -114,4 +116,6 @@ urlpatterns = patterns('',
     url(r'^api/map-layers[s ]?/create/create-kml-layer', KMZLayerImport.as_view(), name='create-kml-layer'),
 
     url(r'^api/map-layers[s ]?/create/create-json-layer', JSONLayerImport.as_view(), name='create-json-layer'),
+
+
 )

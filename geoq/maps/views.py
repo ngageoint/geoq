@@ -319,3 +319,8 @@ class JSONLayerImport(ListView):
             layer = Layer.objects.create(name = request.POST['title'], type=dataFromFile["type"],url=dataFromFile["url"],layer="",styles="",description="")
 
         return HttpResponseRedirect(reverse('layer-list'))
+
+class JSONLayerExport(View):
+
+    def get_success_url(self):
+        return reverse('layer-list')
