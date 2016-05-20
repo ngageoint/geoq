@@ -90,9 +90,6 @@ urlpatterns = patterns('',
         LayerImport.as_view(),
         name='layer-import'),
 
-    url(r'^layers/export/(?P<pk>\d+)/?$',
-        login_required(JSONLayerExport.as_view()),
-        name='layer-export'),
 
     # MapLayer CRUD Views
 

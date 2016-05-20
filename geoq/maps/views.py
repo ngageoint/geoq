@@ -322,5 +322,7 @@ class JSONLayerImport(ListView):
 
 class JSONLayerExport(View):
 
+    model = Layer
+
     def get_success_url(self):
         return HttpResponseRedirect(reverse('layer-list'))
