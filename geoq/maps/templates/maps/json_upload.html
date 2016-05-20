@@ -18,4 +18,49 @@
         <input class="btn" type="button" value="Clear" onclick="$('#import_form')[0].reset();">
     </form>
 </div>
+
+     <script>
+        document.getElementById('jsonfile').addEventListener('change', checkFile, false);
+
+        function checkFile(e) {
+            var file = e.target.files[0];
+            var sFileName = file.name;
+            var sFileExtension = sFileName.split('.')[sFileName.split('.').length - 1].toLowerCase();
+            var iFileSize = file.size;
+            var iConvert = (file.size / 10485760).toFixed(2);
+
+            if (!(sFileExtension === "json") || iFileSize > 10485760) {
+                txt = "File type : " + sFileExtension + "\n\n";
+                txt += "Size: " + iConvert + " MB \n\n";
+                txt += "Please make sure your file is in valid JSON format and less than 2 MB.\n\n";
+                alert(txt);
+            } else {
+                try {
+                    var reader = new FileReader();
+                    reader.onload = function(e){
+                        var jsonIsValid = checkJSON(e.target.result);
+                    };
+                    reader.readAsText(file);
+                } catch (exception){
+                    alert(exception);
+                }
+
+                if (jsonIsValid != true) {
+                    alert("bad JSON");
+                }
+            }
+        }
+
+        function checkJSON() {
+            try {
+                var o = JSON.parse(jsonString);
+                if (o && typeof o === "object" && o !== null) {
+                    return true;
+                }
+            }
+            catch (e) { }
+            return false;
+        }
+
+    </script>
 {% endblock %}
