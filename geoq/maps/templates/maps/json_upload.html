@@ -14,7 +14,7 @@
             <input type="file" id="jsonfile" name="jsonfile" accept="application/json">
         </fieldset>
 
-        <input class="btn" type="submit" value="Import" data-role="button" />
+        <input id="submitButton" class="btn" type="submit" value="Import" data-role="button" />
         <input class="btn" type="button" value="Clear" onclick="$('#import_form')[0].reset();">
     </form>
 </div>
@@ -23,6 +23,7 @@
         document.getElementById('jsonfile').addEventListener('change', checkFile, false);
 
         function checkFile(e) {
+            $('submitButton').button("disable");
             var file = e.target.files[0];
             var sFileName = file.name;
             var sFileExtension = sFileName.split('.')[sFileName.split('.').length - 1].toLowerCase();
@@ -49,6 +50,8 @@
 
                 if (jsonIsValid != true) {
                     alert("bad JSON");
+                } else {
+                    $('submitButton').button("enable");
                 }
             }
         }
