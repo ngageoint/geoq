@@ -7,7 +7,7 @@ from django.conf.urls import patterns, url
 from django.views.generic import CreateView, UpdateView, ListView
 from forms import FeatureTypeForm, MapForm, LayerForm, MapLayerForm
 from views import CreateFeatures, EditFeatures, create_update_map, FeatureTypeListView, FeatureTypeDelete, MapListView,\
- MapDelete, LayerListView, LayerDelete, LayerImport, KMZLayerImport, JSONLayerImport, update_user_maplayer_param
+ MapDelete, LayerListView, LayerDelete, LayerImport, KMZLayerImport, JSONLayerImport, JSONLayerExport, update_user_maplayer_param
 from models import FeatureType, Map, Layer
 
 urlpatterns = patterns('',
