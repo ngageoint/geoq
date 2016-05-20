@@ -38,7 +38,8 @@
                 try {
                     var reader = new FileReader();
                     reader.onload = function(e){
-                        var jsonIsValid = checkJSON(e.target.result);
+                        var jsonIsValid = checkJSON(e.target.result)
+                        console.log(e.target.result);
                     };
                     reader.readAsText(file);
                 } catch (exception){
@@ -51,7 +52,7 @@
             }
         }
 
-        function checkJSON() {
+        function checkJSON(jsonString) {
             try {
                 var o = JSON.parse(jsonString);
                 if (o && typeof o === "object" && o !== null) {
