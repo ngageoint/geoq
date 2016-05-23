@@ -10,7 +10,7 @@ from django.core import serializers
 from django.core.exceptions import ValidationError, ObjectDoesNotExist
 from django.core.urlresolvers import reverse
 from django.http import HttpResponse, HttpResponseRedirect, Http404
-from django.shortcuts import render_to_response
+from django.shortcuts import render_to_response, get_object_or_404
 from django.template import RequestContext
 from django.views.generic import ListView, View, DeleteView
 from django.views.decorators.http import require_http_methods
@@ -324,5 +324,7 @@ class JSONLayerExport(View):
 
     model = Layer
 
-    def get_success_url(self):
-        return HttpResponseRedirect(reverse('layer-list'))
+    def get(self, request, *args, **kwargs):
+        layer = get_object_or_404(Layer, pk=self.kwargs.get('pk'))
+        layerJson = Layer.layer_json();
+        return HttpResponse(layerJson, mimetype="application/json", status=200)
