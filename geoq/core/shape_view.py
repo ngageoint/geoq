@@ -95,10 +95,6 @@ class JobAsShape(ListView):
 
         return shape_out
 
-   # def get_context_data(self, **kwargs):
-        # todo provide context data
-    #    return
-
 
 # Updated From Django Shapes 0.2.0
 class ShpResponder(object):
