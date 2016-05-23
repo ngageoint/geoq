@@ -316,7 +316,14 @@ class JSONLayerImport(ListView):
 
         if dataFromFile != None:
             #We could also pull the title from the file not the box
-            layer = Layer.objects.create(name = request.POST['title'], type=dataFromFile["type"],url=dataFromFile["url"],layer="",styles="",description="")
+            layer = Layer.objects.create(id=dataFromFile["id"], name = dataFromFile["name"], format=dataFromFile["format"], type=dataFromFile["type"],
+                                         url=dataFromFile["url"], subdomains=dataFromFile["subdomains"], layer=dataFromFile["layer"], transparent=dataFromFile["transparent"],
+                                         layerParams=dataFromFile["layerParams"], dynamicParams=dataFromFile["dynamicParams"], refreshrate=dataFromFile["refreshrate"],
+                                         token=dataFromFile["token"], attribution=dataFromFile["attribution"], spatialReference=dataFromFile["spatialReference"],
+                                         layerParsingFunction=dataFromFile["layerParsingFunction"], enableIdentify=dataFromFile["enableIdentify"],
+                                         rootField=dataFromFile["rootField"], infoFormat=dataFromFile["infoFormat"], fieldsToShow=dataFromFile["fieldsToShow"],
+                                         description=dataFromFile["description"], downloadableLink=dataFromFile["downloadableLink"], layer_info_link=dataFromFile["layer_info_link"],
+                                         styles=dataFromFile["styles"])
 
         return HttpResponseRedirect(reverse('layer-list'))
 
