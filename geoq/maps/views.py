@@ -326,5 +326,5 @@ class JSONLayerExport(ListView):
 
     def get(self, request, *args, **kwargs):
         layer = get_object_or_404(Layer, pk=self.kwargs.get('pk'))
-        layerJson = layer.layer_json();
+        layerJson = json.dumps(layer.layer_json(), indent=2);
         return HttpResponse(layerJson, mimetype="application/json", status=200)
