@@ -22,7 +22,6 @@ from geoq.locations.models import Counties
 
 from models import Feature, FeatureType, Map, Layer, MapLayerUserRememberedParams, MapLayer, GeoeventsSource
 from kmz_handler import save_kmz_file
-from json_handler import handleUploadedJSON
 from json import load
 
 import logging
@@ -313,20 +312,17 @@ class JSONLayerImport(ListView):
 
     def post(self, request, *args, **kwargs):
         form = UploadJSONForm(request.POST, request.FILES)
-        #dataFromFile = handleUploadedJSON(request.FILES["jsonfile"])
-        
         try:
             dataFromFile = load(request.FILES["jsonfile"])
         except ValueError as e:
-                ##This is a bad jsonFile
+                ##This is a bad jsonFile, We should never get to this point but it is the last layer of defense.
                 return HttpResponseRedirect(reverse('layer-list'))
-
-
+        #Check to make sure that we actually have data
         if dataFromFile != None:
             layerName = request.POST['title']
-            if not layerName:
+            if not layerName.strip():
                 layerName = dataFromFile["name"]
-            #We could also pull the title from the file not the box
+            #Due to the naming errors between the actual DB names and the exporting function built in the maps/models.py file for layers we have to do this in one line and not pretty.
             layer = Layer.objects.create(id=dataFromFile["id"], name = layerName, image_format=dataFromFile["format"], type=dataFromFile["type"],
                                          url=dataFromFile["url"], additional_domains=dataFromFile["subdomains"], layer=dataFromFile["layer"], transparent=dataFromFile["transparent"],
                                          layer_params=dataFromFile["layerParams"], dynamic_params=dataFromFile["dynamicParams"], refreshrate=dataFromFile["refreshrate"],
