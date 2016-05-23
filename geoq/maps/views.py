@@ -23,6 +23,7 @@ from geoq.locations.models import Counties
 from models import Feature, FeatureType, Map, Layer, MapLayerUserRememberedParams, MapLayer, GeoeventsSource
 from kmz_handler import save_kmz_file
 from json_handler import handleUploadedJSON
+from json import load
 
 import logging
 
@@ -312,16 +313,26 @@ class JSONLayerImport(ListView):
 
     def post(self, request, *args, **kwargs):
         form = UploadJSONForm(request.POST, request.FILES)
-        dataFromFile = handleUploadedJSON(request.FILES["jsonfile"])
+        #dataFromFile = handleUploadedJSON(request.FILES["jsonfile"])
+        
+        try:
+            dataFromFile = load(request.FILES["jsonfile"])
+        except ValueError as e:
+                ##This is a bad jsonFile
+                return HttpResponseRedirect(reverse('layer-list'))
+
 
         if dataFromFile != None:
+            layerName = request.POST['title']
+            if not layerName:
+                layerName = dataFromFile["name"]
             #We could also pull the title from the file not the box
-            layer = Layer.objects.create(id=dataFromFile["id"], name = dataFromFile["name"], format=dataFromFile["format"], type=dataFromFile["type"],
-                                         url=dataFromFile["url"], subdomains=dataFromFile["subdomains"], layer=dataFromFile["layer"], transparent=dataFromFile["transparent"],
-                                         layerParams=dataFromFile["layerParams"], dynamicParams=dataFromFile["dynamicParams"], refreshrate=dataFromFile["refreshrate"],
-                                         token=dataFromFile["token"], attribution=dataFromFile["attribution"], spatialReference=dataFromFile["spatialReference"],
-                                         layerParsingFunction=dataFromFile["layerParsingFunction"], enableIdentify=dataFromFile["enableIdentify"],
-                                         rootField=dataFromFile["rootField"], infoFormat=dataFromFile["infoFormat"], fieldsToShow=dataFromFile["fieldsToShow"],
+            layer = Layer.objects.create(id=dataFromFile["id"], name = layerName, image_format=dataFromFile["format"], type=dataFromFile["type"],
+                                         url=dataFromFile["url"], additional_domains=dataFromFile["subdomains"], layer=dataFromFile["layer"], transparent=dataFromFile["transparent"],
+                                         layer_params=dataFromFile["layerParams"], dynamic_params=dataFromFile["dynamicParams"], refreshrate=dataFromFile["refreshrate"],
+                                         token=dataFromFile["token"], attribution=dataFromFile["attribution"], spatial_reference=dataFromFile["spatialReference"],
+                                         layer_parsing_function=dataFromFile["layerParsingFunction"], enable_identify=dataFromFile["enableIdentify"],
+                                         root_field=dataFromFile["rootField"], info_format=dataFromFile["infoFormat"], fields_to_show=dataFromFile["fieldsToShow"],
                                          description=dataFromFile["description"], downloadableLink=dataFromFile["downloadableLink"], layer_info_link=dataFromFile["layer_info_link"],
                                          styles=dataFromFile["styles"])
 
