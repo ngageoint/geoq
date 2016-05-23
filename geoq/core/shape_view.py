@@ -44,6 +44,10 @@ class JobAsShape(ListView):
         job_pk = self.kwargs.get('pk')
         content_type = self.kwargs.get('type')
 
+        if self.queryset is None:
+            print  'Goodbye, cruel world!'
+            return HttpResponse("Not found", content_type="text/plain", status=404)
+
         try:
             shape_response = ShpResponder(job_pk=job_pk)
 
@@ -64,7 +68,6 @@ class JobAsShape(ListView):
             shape_out = HttpResponse(output, mimetype="application/json", status=200)
 
         return shape_out
-
 
 # Updated From Django Shapes 0.2.0
 class ShpResponder(object):
