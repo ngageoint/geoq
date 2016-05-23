@@ -114,5 +114,5 @@ urlpatterns = patterns('',
 
     url(r'^api/map-layers[s ]?/create/create-json-layer', JSONLayerImport.as_view(), name='create-json-layer'),
 
-    url(r'^api/map-layers[s ]?/', JSONLayerExport.as_view(), name='json-layer-export'),
+    url(r'^api/map-layers[s ]?/(?P<pk>\d+).json', JSONLayerExport.as_view(), name='json-layer-export'),
 )
