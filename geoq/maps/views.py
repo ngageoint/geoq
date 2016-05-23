@@ -320,7 +320,7 @@ class JSONLayerImport(ListView):
 
         return HttpResponseRedirect(reverse('layer-list'))
 
-class JSONLayerExport(View):
+class JSONLayerExport(ListView):
 
     model = Layer
 
