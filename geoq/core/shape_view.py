@@ -45,7 +45,7 @@ class JobAsShape(ListView):
         feature_type = self.kwargs.get('type')
 
         FEATURES = {
-            'points':'Points',
+            'points':'Point',
             'polygons':'Polygon',
             'lines':'LineString'
         }
