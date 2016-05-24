@@ -40,7 +40,7 @@ if platform.architecture()[0] == '64bit':
 class JobAsShape(ListView):
     model = Job
     
-    import pdb; pdb.set_trace()
+    #import pdb; pdb.set_trace()
 
     def get_queryset(self):
         job_pk = self.kwargs.get('pk')
