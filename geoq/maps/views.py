@@ -339,6 +339,7 @@ class JSONLayerExport(ListView):
     model = Layer
 
     def get(self, request, *args, **kwargs):
-        layer = get_object_or_404(Layer, pk=self.kwargs.get('pk'))
+        name = self.kwargs.get('pk').replace("%20", " ");
+        layer = Layer.objects.get(name__iexact = name)
         layerJson = json.dumps(layer.layer_json(), indent=2);
         return HttpResponse(layerJson, mimetype="application/json", status=200)

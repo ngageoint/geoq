@@ -24,6 +24,7 @@
      	document.getElementById('clearButton').addEventListener('click', function(){
      		$('#import_form')[0].reset();
      		hideSubmitButtion(true);
+        showError(false);
      	});
 
         document.getElementById('jsonfile').addEventListener('change', function(e) {

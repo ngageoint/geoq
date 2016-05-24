@@ -7,7 +7,7 @@
     </li>
     <li title="Export this Layer">
         <i class="icon-share"></i>
-        	<a href="{% url 'json-layer-export' object.id %}" title="Export in JSON format" target="_new">Export</a>
+        	<a href="{% url 'json-layer-export' object.name %}" title="Export in JSON format" target="_new">Export</a>
     </li>
     {% endif %}
     {% if 'maps.delete_layer' in request.base_perms %}
