@@ -17,4 +17,5 @@ dev-geoq-django/*
 *~
 geoq.komodoproject
 workcell_log.txt
-runGeo.sh
+start.sh
+
