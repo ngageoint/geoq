@@ -73,8 +73,7 @@ leaflet_helper.layer_conversion = function (lyr, map) {
             else
                layerOptions.crs = L.CRS.EPSG4326;
 
-            outputLayer = new L.WFS(layerOptions);
-            
+            outputLayer = new L.WFS(layerOptions);           
         }
         catch (e) {
             console.error('Unable to create WFS layer: ' + e.toString());
