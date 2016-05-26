@@ -27,28 +27,18 @@ imageviewer.displayed_layers = {};
 imageviewer.schema = [
     {name: 'id', title: 'id', filter: 'hidden', show: 'small-table', index: 5, type: 'int', showSizeMultiplier: 0 },
     {name: 'image_id', title: 'image_id', filter: 'hidden', show: 'small-table', index: 6, type: 'string', showSizeMultiplier: 0},
-    {name: 'nef_name', title: 'NEF name', filter: 'options', show: 'small-table', index: 0, type:'string',showSizeMultiplier: 3},
     {name: 'sensor', title: 'Sensor', filter: 'options', show: 'small-table', index: 1, type:'string',showSizeMultiplier: 2},
     {name: 'acq_date',title: 'Date Taken',filter: 'options', show: 'small-table', index: 2, type:'date',showSizeMultiplier: 2},
-    {name: 'examined', title: 'Done', filter: 'checkbox', show: 'small-table', index:3, type:'bool',showSizeMultiplier: 1}
+    {name: 'status', title: 'Done', filter: 'checkbox', show: 'small-table', index:3, type:'bool',showSizeMultiplier: 1}
 ];
 
-
-//imageviewer.featureSelectFunction = function (feature) {
-//    console.log("Lookup more info on " + feature.name);
-//};
 imageviewer.finishImageUrl = null;
-//imageviewer.filters = {in_bounds: true, previously_rejected: false};
-//imageviewer.prompts = {};
-//imageviewer.features = [];
-//
-//imageviewer.markerRadiusMax = 12;
-//imageviewer.markerColorMin = "#333333";
-//imageviewer.markerColorMax = "#ff9000";
 
 imageviewer.map = aoi_feature_edit.map;
 imageviewer.layerHolder = null;
 imageviewer.workcellGeojson = aoi_feature_edit.aoi_extents_geojson;
+
+imageviewer.image_layer_group = null;
 
 imageviewer.init = function (options) {
 
@@ -88,6 +78,48 @@ imageviewer.init = function (options) {
     } else {
         console.error("Imageviewer Plugin could not load layerHolder");
     }
+
+    // Set up layers for overlays
+    if (imageviewer.map) {
+        imageviewer.image_layer_group = L.layerGroup();
+        imageviewer.image_layer_group.lastHighlight = undefined;
+        imageviewer.image_layer_group.addTo(imageviewer.map);
+    }
+
+
+};
+
+imageviewer.addInitialImages = function () {
+    _.each(aoi_feature_edit.workcell_images, function(data_row){
+        var layer_id = data_row.sensor;
+        var geo_json = JSON.parse(data_row.img_geom);
+        var rings = [];
+        _.each(geo_json.coordinates[0], function(point){
+            rings.push(point);
+        });
+
+        //Convert the json output from saved images into the format the list is expecting
+        var data = {
+            options:{
+                id: data_row.image_id,
+                image_id: data_row.image_id,
+                platformCode: data_row.platform, //TODO: Was this saved?
+                image_sensor: data_row.sensor,
+                maxCloudCoverPercentageRate : data_row.cloud_cover,
+                ObservationDate: data_row.acq_date,
+                value: data_row.nef_name,
+                area: data_row.area,
+                geometry: { rings: [rings]},
+                status: data_row.status
+            }
+        };
+
+        var layer_name = "Layer";
+        if (footprints.layerNames && footprints.layerNames.length && footprints.layerNames.length >= layer_id) {
+            layer_name = footprints.layerNames[layer_id];
+        }
+        imageviewer.newFeaturesArrived({features:[data]}, "[initial]", layer_id, layer_name);
+    });
 
 };
 
@@ -136,7 +168,7 @@ imageviewer.updateImageList = function(options) {
         //Only store in the array items mentioned in the schema
         _.each(imageviewer.schema, function (schema_item) {
             var fieldToCheck = schema_item.name;
-            var val = feature[fieldToCheck] || feature.attributes[fieldToCheck] || feature._geojson[fieldToCheck];
+            var val = feature[fieldToCheck];
 
             if ((schema_item.type && schema_item.type == 'date') || (schema_item.filter && schema_item.filter == 'date-range')) {
                 var date_format = null;

@@ -511,7 +511,7 @@ class WorkcellImage(models.Model):
             sensor=str(self.sensor),
             cloud_cover=int(self.cloud_cover),
             platform=str(self.platform),
-            acq_date=format(self.acq_date, '%Y-%m%d'),
+            acq_date=format(self.acq_date, '%Y-%m-%d'),
             examined=str(self.exam_date is not None).lower(),
             exam_date=format(self.exam_date, '%Y%m%dT%H%M%S') if self.exam_date is not None else '',
             img_geom=str(self.img_geom.geojson),

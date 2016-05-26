@@ -30,47 +30,12 @@ footprints.image_layer_group = null;
 footprints.border_layer_group = null;
 
 footprints.defaultFootprintStyle = {color: 'red', weight: 1};
+footprints.savedFootprintStyle = {color: 'blue', weight: 1};
 footprints.selectedFootprintStyle = {color: 'yellow', weight: 1};
 
-footprints.old_schema = [
-    {name: 'image_id', id: true},
-    {name: 'layerId', title: 'Platform', filter: 'options', show: 'small-table', showSizeMultiplier: 2},
-    {name: 'image_sensor', title: 'Sensor', filter: 'options'},
-    //TODO: Show image name as mouseover or small text field?
-    {
-        name: 'cloud_cover',
-        title: 'Cloud%',
-        type: 'integer',
-        filter: 'slider-max',
-        min: 0,
-        max: 100,
-        start: 10,
-        show: 'small-table',
-        sizeMarker: true
-    },
-    {name: 'status', title: 'Status', filter: 'options'},
-    {
-        name: 'date_image',
-        title: 'Date Taken',
-        type: 'date',
-        filter: 'date-range',
-        transform: 'day',
-        show: 'small-table',
-        showSizeMultiplier: 2,
-        initialDateRange: 30,
-        colorMarker: true
-    },
-    {
-        name: 'value', title: 'NEF name', filter: 'textbox', onNotFound: function (name) {
-        console.log("TODO: Load If not found: " + name)
-    }
-    }
-];
-
 footprints.schema = [
-    {name: 'imageId', id: true, cswid: 'identifier'},
-    {name: 'layerId', title: 'Layer ID', filter: 'options', show: 'small-table', showSizeMultiplier: 2, cswid: ''},
-    {name: 'platformCode', title: 'Platform', filter: 'options', cswid: 'creator'},
+    {name: 'image_id', title: 'Id', id: true, cswid: 'identifier', show: 'small-table'},
+    {name: 'platformCode', title: 'Pltfrm', filter: 'options', cswid: 'creator', show: 'small-table'},
     //TODO: Show image name as mouseover or small text field?
     {
         name: 'maxCloudCoverPercentageRate',
@@ -87,7 +52,7 @@ footprints.schema = [
     {name: 'status', title: 'Status', filter: 'options'},
     {
         name: 'ObservationDate',
-        title: 'Observation Date',
+        title: 'Observe Date',
         cswid: '',
         type: 'date',
         filter: 'date-range',
@@ -159,43 +124,15 @@ footprints.init = function (options) {
         console.error("Footprint Plugin could not load layerHolder");
     }
 
-    if (aoi_feature_edit.workcell_images && aoi_feature_edit.workcell_images.length) {
-        footprints.addInitialImages();
+    // Set up layers for overlays
+    if (footprints.map) {
+        footprints.outline_layer_group = L.layerGroup();
+        footprints.outline_layer_group.lastHighlight = undefined;
+        footprints.outline_layer_group.addTo(footprints.map);
     }
-};
-footprints.addInitialImages = function () {
-    _.each(aoi_feature_edit.workcell_images, function(data_row){
-        var layer_id = data_row.sensor;
-        var geo_json = JSON.parse(data_row.img_geom);
-        var rings = [];
-        _.each(geo_json.coordinates[0], function(point){
-            rings.push(point);
-        });
-
-        //Convert the json output from saved images into the format the list is expecting
-        var data = {
-            options:{
-                id: data_row.image_id,
-                image_id: data_row.image_id,
-                layerId: data_row.platform, //TODO: Was this saved?
-                image_sensor: data_row.sensor,
-                cloud_cover : data_row.cloud_cover,
-                date_image: data_row.acq_date,
-                value: data_row.nef_name,
-                area: data_row.area,
-                status: data_row.status
-            },
-            geometry: {rings: [rings]}
-        };
-
-        var layer_name = "Layer";
-        if (footprints.layerNames && footprints.layerNames.length && footprints.layerNames.length >= layer_id) {
-            layer_name = footprints.layerNames[layer_id];
-        }
-        footprints.newFeaturesArrived({features:[data]}, "[initial]", layer_id, layer_name);
-    });
 
 };
+
 footprints.buildAccordionPanel = function () {
     footprints.$title = leaflet_layer_control.buildAccordionPanel(footprints.$accordion, footprints.plugin_title);
 
@@ -528,7 +465,7 @@ footprints.newFeaturesArrived = function (data, url, layer_id, layer_name) {
         var count_added = 0;
         var features = returned.features || returned.results || [];
 
-        if (features.length && ((features[0].attributes && features[0].attributes[field_id]) || features[0][field_id])) {
+        if (features.length && ((features[0].options && features[0].options[field_id]) || features[0][field_id])) {
             //Valid features returned
 
             var found = false;
@@ -537,8 +474,8 @@ footprints.newFeaturesArrived = function (data, url, layer_id, layer_name) {
             for (var i = 0; i < features.length; i++) {
                 var feature = features[i];
                 for (var j = 0; j < footprints.features.length; j++) {
-                    if (feature.attributes[field_id]) {
-                        if (feature.attributes[field_id] == footprints.features[j].attributes[field_id]) {
+                    if (feature.options[field_id]) {
+                        if (feature.options[field_id] == footprints.features[j].options[field_id]) {
                             found = true;
                             break;
                         }
@@ -552,7 +489,7 @@ footprints.newFeaturesArrived = function (data, url, layer_id, layer_name) {
                     }
                 }
                 if (!found) {
-                    footprints.features.push(feature);
+                    //footprints.features.push(feature);
                     count_added++;
                 }
             }
@@ -560,20 +497,24 @@ footprints.newFeaturesArrived = function (data, url, layer_id, layer_name) {
             if (count_added) {
                 footprints.updateFeatureMinMaxes();
 
-                //Add the feature to the map
-                for (var i = 0; i < footprints.features.length; i++) {
-                    var feature = footprints.features[i];
-                    if (!feature._geojson) {
-                        feature._geojson = footprints.convertFeatureToGeoJson(feature);
-                        feature._geojson.layer_id = layer_id;
-                        feature._geojson.layer_name = layer_name;
+                for (var i = 0; i <  features.length; i++) {
+                    var record = features[i];
 
-                        if (feature._geojson.geometry) {
-                            footprints.layerHolder.addData(feature._geojson);
-                            feature._marker = footprints.findMarkerByFeature(feature);
-                            footprints.setOpacity(feature._marker, 0);
-                        }
+                    if (record.uc && record.lc) {
+                        // this is a BoundingBox
+                        wms = ogc_csw.createRectangleFromBoundingBox(record, footprints.savedFootprintStyle);
+                    } else if (record.options.geometry) {
+                        wms = ogc_csw.createPolygonFromGeometry(record.options.geometry);
+                    } else {
+                        console.error("No coordinates found. Skipping this layer");
+                        break;
                     }
+                    wms.bindPopup(ogc_csw.createLayerPopup(record.layerName, record.options));
+
+                    footprints.outline_layer_group.addLayer(wms);
+
+                    footprints.features.push(feature.options);
+                    count_added++;
                 }
 
                 //Update the filter controls
@@ -600,11 +541,6 @@ footprints.newCSWFeaturesArrived = function (items) {
 
     var count_added = 0;
     if (items.length > 0) {
-        if (footprints.outline_layer_group == null) {
-            footprints.outline_layer_group = L.layerGroup();
-            footprints.outline_layer_group.lastHighlight = undefined;
-            footprints.outline_layer_group.addTo(footprints.map);
-        }
         if (footprints.border_layer_group == null) {
             footprints.border_layer_group = L.layerGroup();
         }
@@ -614,8 +550,8 @@ footprints.newCSWFeaturesArrived = function (items) {
             var record = ogc_csw.parseCSWRecord(layer);
 
             for (var j = 0; j < footprints.features.length; j++) {
-                if (record.options["imageId"]) {
-                    if (record.options["imageId"] == footprints.features[j].imageId) {
+                if (record.options["image_id"]) {
+                    if (record.options["image_id"] == footprints.features[j].image_id) {
                         found = true;
                         break;
                     }
@@ -650,44 +586,25 @@ footprints.newCSWFeaturesArrived = function (items) {
                 count_added++;
             }
 
-            if (count_added) {
-                footprints.updateFeatureMinMaxes();
-
-                //Add the feature to the map
-//                for (var i = 0; i < footprints.features.length; i++) {
-//                    var feature = footprints.features[i];
-//                    if (!feature._geojson) {
-//                        feature._geojson = footprints.convertFeatureToGeoJson(feature);
-//                        feature._geojson.layer_id = layer_id;
-//                        feature._geojson.layer_name = layer_name;
-//
-//                        if (feature._geojson.geometry) {
-//                            footprints.layerHolder.addData(feature._geojson);
-//                            feature._marker = footprints.findMarkerByFeature(feature);
-//                            footprints.setOpacity(feature._marker, 0);
-//                        }
-//                    }
-//                }
-
-                //Update the filter controls
-                _.each(footprints.schema, function (schema_item) {
-                    if (schema_item.update) schema_item.update();
-                });
-                footprints.showFilterBoxes();
-                footprints.updateFootprintFilteredResults();
-            }
-            footprints.userMessage(count_added + ' new ' + footprints.title + 's added', 'yellow');
-
         });
 
-        //footprints.showFilterBoxes();
-        //footprints.updateFootprintFilteredResults();
-        //footprints.outline_layer_group.addTo(footprints.map);
+
+        if (count_added) {
+            footprints.updateFeatureMinMaxes();
+
+            //Update the filter controls
+            _.each(footprints.schema, function (schema_item) {
+                if (schema_item.update) schema_item.update();
+            });
+            footprints.showFilterBoxes();
+            footprints.updateFootprintFilteredResults();
+        }
+        footprints.userMessage(count_added + ' new ' + footprints.title + 's added', 'yellow');
     }
 };
 footprints.removeCSWOutline = function (identifier) {
     _.each(footprints.outline_layer_group.getLayers(), function(layer) {
-        if (layer.options.imageId === identifier) {
+        if (layer.options.image_id === identifier) {
             // see if there's an image layer as well. If so, remove it
             if (layer.image_layer) {
                 footprints.image_layer_group.removeLayer(layer.image_layer);
@@ -698,7 +615,7 @@ footprints.removeCSWOutline = function (identifier) {
             // now remove from table
             var data = footprints.$grid.pqGrid("option","dataModel");
             for (var index = 0; index < data.data.length; index++) {
-                if (data.data[index]['imageId'] == identifier) {
+                if (data.data[index]['image_id'] == identifier) {
                     data.data.splice(index,1);
                     index--;
                     break;
@@ -712,11 +629,11 @@ footprints.removeCSWOutline = function (identifier) {
 };
 footprints.saveInspectedImage = function (identifier, accepted) {
     _.each(footprints.outline_layer_group.getLayers(), function(layer) {
-        if (layer.options.imageId === identifier) {
+        if (layer.options.image_id === identifier) {
             // find the correct row in the table, then click the save radio button
             var data = footprints.$grid.pqGrid("option", "dataModel");
             for (var index = 0; index < data.data.length; index++) {
-                if (data.data[index]['imageId'] == identifier) {
+                if (data.data[index]['image_id'] == identifier) {
                     // index is the row. if accepted is true, we want to keep it. Otherwise reject
                     if (accepted) {
                         $('#r1-'+index).click();
@@ -733,13 +650,13 @@ footprints.saveInspectedImage = function (identifier, accepted) {
 };
 footprints.replaceCSWOutlineWithLayer = function (identifier) {
     _.each(footprints.outline_layer_group.getLayers(), function(layer) {
-        if (layer.options.imageId === identifier) {
+        if (layer.options.image_id === identifier) {
             try {
                 // hide footprint, then add wms image
                 layer.setStyle({opacity: 0, fillOpacity: 0});
                 layer.unbindPopup();
-                var func = 'footprints.saveInspectedImage("' + layer.options.imageId + '", ' + true + ')';
-                var func2 = 'footprints.saveInspectedImage("' + layer.options.imageId + '", ' + false + ')';
+                var func = 'footprints.saveInspectedImage("' + layer.options.image_id + '", ' + true + ')';
+                var func2 = 'footprints.saveInspectedImage("' + layer.options.image_id + '", ' + false + ')';
                 var html = "<p><a href=\'#\' onclick=\'" + func + "\'>Save Image for Analysis</a><br/><a href=\'#\' onclick=\'" + func2 + "\'>Remove Image</a></p>";
                 layer.bindPopup(html);
 
@@ -828,7 +745,7 @@ footprints.findMarkerByFeature = function (feature_search) {
     for (var j = markers.length - 1; j >= 0; j--) {
         var marker = markers[j];
         if (marker.feature.properties[field_id]) {
-            if (marker.feature.properties[field_id] == feature_search.attributes[field_id]) {
+            if (marker.feature.properties[field_id] == feature_search.options[field_id]) {
                 marker_found = marker;
                 break;
             }
@@ -887,19 +804,19 @@ footprints.setOpacity = function (layer, amount) {
 footprints.popupContentOfFeature = function (feature) {
     var out = "";
     _.each(footprints.schema, function (schema_item) {
-        var val = (feature.attributes[schema_item.name] || feature[schema_item.name]);
+        var val = (feature.options[schema_item.name] || feature[schema_item.name]);
         var title = (schema_item.title || schema_item.name);
 
         if (val && schema_item.visualize == 'thumbnail') {
             var val_url = val;
             if (schema_item.linkField) {
-                val_url = (feature.attributes[schema_item.linkField] || feature[schema_item.linkField]) || val;
+                val_url = (feature.options[schema_item.linkField] || feature[schema_item.linkField]) || val;
             }
             out += "<a href='" + val_url + "' target='_blank'><img src='" + val + "' style='height:60'></a><br/>";
         } else if (val && schema_item.visualize == 'link') {
             var val_url = val;
             if (schema_item.linkField) {
-                val_url = (feature.attributes[schema_item.linkField] || feature[schema_item.linkField]) || val;
+                val_url = (feature.options[schema_item.linkField] || feature[schema_item.linkField]) || val;
             }
             out += "<b>" + title + ":</b> <a href='" + val_url + "' target='_blank'>Link</a><br/>";
         } else if (val && (schema_item.type && schema_item.type == 'date') || (schema_item.filter && schema_item.filter == 'date-range')) {
@@ -927,14 +844,14 @@ footprints.popupContentOfFeature = function (feature) {
 footprints.convertFeatureToGeoJson = function (feature) {
     var geojsonFeature = {
         "type": "Feature",
-        "properties": feature.attributes,
+        "properties": feature.options,
         "popupContent": footprints.popupContentOfFeature(feature)
     };
 
     var field_id = _.find(footprints.schema, function (s) {
             return s.id
         }).name || "id";
-    geojsonFeature.name = feature[field_id] || feature.attributes[field_id];
+    geojsonFeature.name = feature[field_id] || feature.options[field_id];
     if (feature.geometry && feature.geometry.x && feature.geometry.y) {
         geojsonFeature.geometry = {
             "type": "Point",
@@ -1042,7 +959,7 @@ footprints.updateFootprintFilteredResults = function (options) {
             if (schema_item.filter && matched) {
                 var fieldToCheck = schema_item.name;
                 var filterSetting = footprints.filters[fieldToCheck];
-                var val = feature[fieldToCheck] || feature.attributes[fieldToCheck];
+                var val = feature[fieldToCheck] || feature.options[fieldToCheck];
 
                 if (typeof val != "undefined") {
                     //Check all possible options and see if the feature has that setting
@@ -1063,10 +980,9 @@ footprints.updateFootprintFilteredResults = function (options) {
                         }
                     } else if (schema_item.filter == 'date-range') {
                         var val_date = val;
-                        var date_format = null;
-                        if (schema_item.transform == 'day') {
+                        var date_format = 'YYYY-MM-DD';
+                        if (schema_item.transform == 'day' && val.indexOf('-') < 0) {
                             val_date = val.substr(0, 4) + '-' + val.substr(4, 2) + '-' + val.substr(6, 2);
-                            date_format = "YYYY-MM-DD";
                         } else if (schema_item.transform == 'thousands') {
                             //No problem if there are miliseconds in the field, moment should interpret it correctly
                         }
@@ -1108,7 +1024,9 @@ footprints.updateFootprintFilteredResults = function (options) {
             if ((schema_item.type && schema_item.type == 'date') || (schema_item.filter && schema_item.filter == 'date-range')) {
                 var date_format = null;
                 if (schema_item.transform == 'day') {
-                    val = val.substr(0, 4) + '-' + val.substr(4, 2) + '-' + val.substr(6, 2);
+                    if (val.indexOf('-') < 0) {
+                        val = val.substr(0, 4) + '-' + val.substr(4, 2) + '-' + val.substr(6, 2);
+                    }
                     date_format = "YYYY-MM-DD";
                 }
                 var date_val = moment(val, date_format);
@@ -1167,6 +1085,7 @@ footprints.addResultCount = function ($holder) {
 };
 footprints.addResultTable = function ($holder) {
     var $grid = $("<div>")
+        .css({overflow: 'scroll'})
         .appendTo($holder);
 
     //Set up table
@@ -1176,7 +1095,7 @@ footprints.addResultTable = function ($holder) {
     }
     var obj = {
         width: width, height: 180, title: "Matched " + footprints.title + "s", editable: false,
-        flexHeight: false, topVisible: false, bottomVisible: false, flexWidth: true, numberCell: false
+        flexHeight: false, topVisible: false, bottomVisible: false, flexWidth: false, numberCell: false
     };
 
 
@@ -1246,7 +1165,7 @@ footprints.addResultTable = function ($holder) {
             var val = $target.val();
             if (val && footprints.featureSelectUrl) {
                 var data_row = ui.dataModel.data[ui.rowIndx];
-                var image_id = data_row.imageId;
+                var image_id = data_row.image_id;
 
                 var inputs = {
                     id: image_id.replace(/:/g, "_"),
@@ -1269,7 +1188,7 @@ footprints.addResultTable = function ($holder) {
                 });
 
                 var data = {
-                    image_id: data_row.imageId,
+                    image_id: data_row.image_id,
                     nef_name: data_row.value,
                     sensor: data_row.image_sensor,
                     platform: data_row.platformCode,
@@ -1296,20 +1215,20 @@ footprints.addResultTable = function ($holder) {
             }
         };
         obj.rowClick = function( evt, ui ) {
-            var imageid = ui.dataModel.data[ui.rowIndx].imageId;
+            var imageid = ui.dataModel.data[ui.rowIndx].image_id;
             var last_index = footprints.outline_layer_group.lastHighlight;
             var outlinelayers = footprints.outline_layer_group.getLayers();
 
             // change back previous selection if necessary
             if ( footprints.outline_layer_group.lastHighlight ) {
-                var player = outlinelayers.filter(function(e) {return e.options.imageId == footprints.outline_layer_group.lastHighlight})[0];
+                var player = outlinelayers.filter(function(e) {return e.options.image_id == footprints.outline_layer_group.lastHighlight})[0];
                 if (player) {
                     player.setStyle(footprints.defaultFootprintStyle);
                 }
             }
 
             // change the color of the selected image
-            var layer = outlinelayers.filter(function(e) { return e.options.imageId == imageid; })[0];
+            var layer = outlinelayers.filter(function(e) { return e.options.image_id == imageid; })[0];
             if (layer) {
                 layer.setStyle(footprints.selectedFootprintStyle);
             }
@@ -1332,8 +1251,8 @@ footprints.getFeatureFromTable = function (rowData) {
     var feature = null;
     for (var j = 0; j < footprints.features.length; j++) {
         feature = footprints.features[j];
-        if (feature.attributes[field_id]) {
-            if (feature.attributes[field_id] == rowData[field_id]) {
+        if (feature.options[field_id]) {
+            if (feature.options[field_id] == rowData[field_id]) {
                 break;
             }
         } else if (feature[field_id]) {
