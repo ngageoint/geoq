@@ -761,7 +761,6 @@ aoi_feature_edit.map_init = function (map, bounds) {
             }
         });
 
-        var featu0reLayer = aoi_feature_edit.featureLayers[tnum];
         var featureType = aoi_feature_edit.feature_types[tnum];
 
         if (featureLayer && featureType) {
