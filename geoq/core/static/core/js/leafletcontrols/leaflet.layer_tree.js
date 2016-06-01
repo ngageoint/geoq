@@ -1370,13 +1370,20 @@ leaflet_layer_control.stringHelper = function(binary, encoding) {
     return converted;
 
 }
+//Testing new addTo definition. No luck so far
+  // leaflet_layer_control.addTo = function(map){
+  //    map.addLayer(this);
+  //    return this;
+  //  },
+
 leaflet_layer_control.handleDrop = function(result, fileHandle) {
 
-    console.log("function has begun");
+  var holder = document.getElementById('importDragTarget');
   var foundLayers = [];
+  result.preventDefault();
+  var file = result.dataTransfer.files[0], reader = new FileReader();
 
   if(leaflet_layer_control.filetypeHelper(fileHandle, "kml", "kml")) {
-    console.log("kml file dropped.");
     // we are making assumptions about the kml encoding
     // introspect the file encoding for i18n.
     var kmlString = leaflet_layer_control.stringHelper(result, "utf-8");
@@ -1386,13 +1393,10 @@ leaflet_layer_control.handleDrop = function(result, fileHandle) {
     var foundLayers = L.KML.parseKML(kmlDOM);
 
   } else if(leaflet_layer_control.filetypeHelper(fileHandle, [], "zip")) {
-    console.log("Zip file dropped");
-   
-    console.log("Result:" + result);
-    console.log("test");
-    foundLayers = L.shapefile(result); // we'll get an unpopulated geojson layer even if this ISN'T a shape file
+    
+    foundLayers = shp(result); // we'll get an unpopulated geojson layer even if this ISN'T a shape file
   
-    console.log("foundLayers: " + foundLayers);
+   
    // console.log(foundLayers.getLayers().length);
    // console.log(foundLayers.getLayers);    
 
@@ -1400,7 +1404,7 @@ leaflet_layer_control.handleDrop = function(result, fileHandle) {
       
         foundLayers = null;
     }
-    console.log("test3");
+    
   } else  if(leaflet_layer_control.filetypeHelper(fileHandle, ["geojson", "json"], "json")) {
     var jsonString = leaflet_layer_control.stringHelper(result, "utf-8");
     var json = JSON.parse(jsonString);
@@ -1413,22 +1417,29 @@ leaflet_layer_control.handleDrop = function(result, fileHandle) {
 
   if(foundLayers !== null && !(foundLayers instanceof Array)) {
     foundLayers = [foundLayers];
-    console.log("Testing1");
   }
   if(foundLayers !== null) {
-    console.log("Testing2");
     var name =  fileHandle.name;
-    console.log("Are we not null?");
-    for(var i=0; i<foundLayers.length; i++) {
-        var layerName = name;
-        if(i > 0) layerName = layerName + "-" + (i+1);
-        var layer = foundLayers[i];
-        if(layer.options)
-          layer.options.name = layerName;
-        layer.addTo(aoi_feature_edit.map);
-        leaflet_layer_control.importNode.addChildren({title:layerName, folder:false, data:layer, selected:true});
+    // for(var i=0; i<foundLayers.length; i++) {
+    //     var layerName = name;
+    //     if(i > 0) layerName = layerName + "-" + (i+1);
+    //     var layer = foundLayers[i];
+    //     if(layer.options)
+    //       layer.options.name = layerName;
+    //     var layerTest = L.layerGroup(layer);
+    //   //  layerTest.addLayer(layer);
+    //     console.log(layerTest);
+    //     layerTest.onAdd(aoi_feature_edit.map);
+    //     leaflet_layer_control.importNode.addChildren({title:layerName, folder:false, data:layer, selected:true});
 
-        }
+    
+
+   //shp(reader.result).then(function (geojson) {
+       reader.readAsArrayBuffer(file);
+       var shape = shp(reader.result);
+       shape.addTo(aoi_feature_edit.map);
+     //   })  
+
     } else {
         alert("Sorry, I couldn't find anything to import.");
     }
@@ -1505,8 +1516,8 @@ leaflet_layer_control.addLayerControl = function (map, options, $accordion) {
 
     var idt = document.getElementById("importDragTarget");
     
-    // fileDragHelper.stopWindowDrop();
-    // fileDragHelper.watchFor(idt, leaflet_layer_control.initializeFileUploads, true);
+    //fileDragHelper.stopWindowDrop();
+    //fileDragHelper.watchFor(idt, leaflet_layer_control.handleDrop, true);
 
     leaflet_layer_control.initializeFileUploads();
 
@@ -1775,6 +1786,55 @@ leaflet_layer_control.turnPolygonsIntoMultis = function (layers) {
     return geoJSONFeatures;
 };
 
+leaflet_layer_control.redrawStyles = function () {
+    var m = leaflet_layer_control.map_object;
+    if (m && (m._container.id == 'map') && (m.hasLayer(leaflet_layer_control.aois))) {
+        _.each(leaflet_layer_control.aois.getLayers(), function (l) {
+            _.each(l.getLayers(), function (f) {
+                if (f.setStyle && f.feature) {
+                    f.setStyle(leaflet_layer_control.styleFromPriority(f.feature));
+                }
+            });
+        });
+    }
+};
+
+leaflet_layer_control.updateCellCount = function () {
+    var aoi_count = 0;
+    var counts = [0, 0, 0, 0, 0, 0];
+    //TODO: Have a count for points?
+
+    _.each(leaflet_layer_control.aois._layers, function (layergroup) {
+        if (layergroup && layergroup._layers) {
+            aoi_count += _.toArray(layergroup._layers).length;
+
+            _.each(layergroup._layers, function (layer) {
+                if (layer.feature && layer.feature.properties && layer.feature.properties.priority) {
+                    var pri = layer.feature.properties.priority;
+                    if (_.isNumber(pri) && pri > 0 && pri < 6) counts[pri]++;
+                }
+            });
+        }
+    });
+    $('#num_workcells').text(aoi_count);
+    $("#save-aois-button").attr('disabled', (aoi_count == 0));
+
+    //Update Priority on-map Buttons
+    _.each([1, 2, 3, 4, 5], function (num) {
+        var $bottomBtn = $("#priority-map-" + num);
+        var helpText = leaflet_layer_control.helpText[num];
+
+        var text = helpText + ' Priority: (' + counts[num] + ')';
+        $bottomBtn.text(text);
+    });
+
+    //Fill in bottom text area with geojson
+    var boundaries = JSON.stringify(leaflet_layer_control.getBoundaries());
+    if (boundaries == "false") boundaries = '{"message":"No cells entered"}';
+    $('#current-aois')
+        .val(boundaries);
+};
+
 leaflet_layer_control.createWorkCellsFromService = function (data, zoomAfter, skipFeatureSplitting) {
 
     if (!skipFeatureSplitting) {
@@ -1842,8 +1902,10 @@ leaflet_layer_control.createWorkCellsFromService = function (data, zoomAfter, sk
 
     if (features && !skipFeatureSplitting) {
         leaflet_layer_control.aois.addLayer(features);
-        leaflet_layer_control.map_object.addLayer(leaflet_layer_control.aois);
+        leaflet_layer_control.addLayer(leaflet_layer_control.aois);
 
+
+//-------DON'T FORGET TO UNCOMMENT THIS -------------------------------
         if (zoomAfter) {
             leaflet_layer_control.map_object.fitBounds(features.getBounds());
         }
@@ -1863,22 +1925,40 @@ leaflet_layer_control.update_info = function (html) {
     }
 };
 
+leaflet_layer_control.buildFilterDropdown = function () {
+    var $prioritizeSelector = $('#prioritize-selector').empty();
+    if (leaflet_layer_control.data_fields_obj) {
+        $('<option>')
+            .text("--select--")
+            .appendTo($prioritizeSelector);
+        for (var key in leaflet_layer_control.data_fields_obj) {
+            if (key != "priority") {
+                $('<option>')
+                    .text(_.str.capitalize(key))
+                    .appendTo($prioritizeSelector);
+            }
+        }
+        $('<option>')
+            .text("Random")
+            .appendTo($prioritizeSelector);
+    }
 
+}
 //Upload file funcction here. This could work. --------------------------------------------------
 leaflet_layer_control.initializeFileUploads = function () {
-    console.log("Are we here");
+    
     var holder = document.getElementById('importDragTarget');
-    var $holder = $('#importDragTarget').popover({
-        title: "Drag zipped shapefile or GeoJSON file here",
-        content: "You can drag a .zip or .shp shapefile, or a .json GeoJSON file here. All polygons/multipolygons within will be created as work cells. Please make files as small as possible (<5mb).",
-        trigger: "hover",
-        placement: "bottom",
-        container: 'body'
-    });
+     var $holder = $('#importDragTarget');//.popover({
+    //     title: "Drag zipped shapefile or GeoJSON file here",
+    //     content: "You can drag a .zip or .shp shapefile, or a .json GeoJSON file here. All polygons/multipolygons within will be created as work cells. Please make files as small as possible (<5mb).",
+    //     trigger: "hover",
+    //     placement: "bottom",
+    //     container: 'body'
+    // });
 
-    if (typeof window.FileReader === 'undefined') {
-        $("#option_shapefile").css('display', 'none');
-    }
+    // if (typeof window.FileReader === 'undefined') {
+    //     $("#option_shapefile").css('display', 'none');
+    // }
 
     holder.ondragover = function () {
         this.className = 'hover';
@@ -1891,13 +1971,13 @@ leaflet_layer_control.initializeFileUploads = function () {
     holder.ondrop = function (e) {
         this.className = '';
         e.preventDefault();
-        leaflet_layer_control.update_info("Loading File...");
         $holder.css({backgroundColor: 'lightgreen'});
-        console.log("Did we see the drop?");
+       
         var file = e.dataTransfer.files[0], reader = new FileReader();
         var extension = file.name.split('.').slice(-1)[0];
 
         reader.onload = function (event) {
+         
             var size = "";
             if (event.loaded) {
                 var kb = event.loaded / 1024;
@@ -1913,30 +1993,34 @@ leaflet_layer_control.initializeFileUploads = function () {
             }
 
             $holder.css({backgroundColor: ''});
-            leaflet_layer_control.update_info("Importing Shapes: " + size);
-
-            if (extension === 'json') {
-                leaflet_layer_control.createWorkCellsFromService(JSON.parse(reader.result), true);
-                leaflet_layer_control.update_info("GeoJSON Imported");
-            } else {
-                shp(reader.result).then(function (geojson) {
-                    leaflet_layer_control.createWorkCellsFromService(geojson, true);
-
-                    leaflet_layer_control.update_info("Shapes Imported");
-                }, function (a) {
-                    log.log(a);
+            
+           shp(reader.result).then(function (geojson) {
+                var jsonLayer = L.geoJson(geojson);
+                jsonLayer.addTo(aoi_feature_edit.map);
                 });
-            }
+            
+            
+            // if (extension === 'json') {
+            //   //  leaflet_layer_control.createWorkCellsFromService(JSON.parse(reader.result), true);
+            //     leaflet_layer_control.update_info("GeoJSON Imported");
+            // } else {
+            //     shp(reader.result).then(function (geojson) {
+            //         leaflet_layer_control.createWorkCellsFromService(geojson, true);
 
-            $('#file_holder_edit_btn').attr('disabled', false);
+            //         leaflet_layer_control.update_info("Shapes Imported");
+            //     }, function (a) {
+            //         log.log(a);
+            //     });
+            // }
 
         };
+        reader.readAsArrayBuffer(file);
 
-        if ( extension === 'json') {
-            reader.readAsText(file);
-        } else {
-            reader.readAsArrayBuffer(file);
-        }
+        // if ( extension === 'json') {
+        //     reader.readAsText(file);
+        // } else {
+        //     reader.readAsArrayBuffer(file);
+        // }
 
         return false;
     };
