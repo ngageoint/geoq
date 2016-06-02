@@ -44,6 +44,7 @@ leaflet_layer_control.initDrawer = function(){
     leaflet_layer_control.addLayerComparison($accordion);
     leaflet_layer_control.addGeoOverview($accordion);
     leaflet_layer_control.addRotationHelper($accordion);
+    leaflet_layer_control.addYouTube($accordion);
 
 
     //The Layer Controls should also be built and added later in another script, something like:
@@ -124,6 +125,71 @@ leaflet_layer_control.addRotationHelper = function($accordion) {
     $("#spinnerResetButton").click(function(evt) { leaflet_layer_control.rotateMap(0); $("#roseSpinnerInput").val(0); });
 
 };
+
+
+leaflet_layer_control._youTubeLayer = null;
+
+leaflet_layer_control.addYouTube = function ($accordion) {
+	if (leaflet_layer_control._youTubeLayer == null) {
+		leaflet_layer_control._youTubeLayer = aoi_feature_edit.map;
+	}
+
+	var yt = leaflet_layer_control.buildAccordionPanel($accordion, "YouTube");
+	var ytHTML = '<form id="search" action="javascript:void(0)">' +
+			'Keywords: <input id="keyword" type="text" name="keyword" value="" placeholder="eg: Flood, Crash..."><br>' +
+			'Start Date: <input id="startDate" type="text" name="startDate" value="" placeholder="mm-dd-yyyy" style="margin-right:20px"><br>' +
+			'End Date: <input id="endDate" type="text" name="endDate" value="" placeholder="mm-dd-yyyy"><br>' +
+			'<input type="submit" value="Submit"></form>';
+
+	var ytdom = $(ytHTML);
+
+	ytdom.appendTo(yt);
+
+    $("#search").submit(function () {
+
+       	var boundingPoints = [];
+       	var videoLocationPoints = [];
+        for (var i = 0; i < aoi_feature_edit.aoi_extents_geojson["coordinates"][0][0].length; i++) {
+        	boundingPoints.push(new Point(aoi_feature_edit.aoi_extents_geojson["coordinates"][0][0][i][1],aoi_feature_edit.aoi_extents_geojson["coordinates"][0][0][i][0]));
+        }
+
+        var search = new YouTubeSearch();
+
+		//search.generateCircle(pointArray);
+		var request = search.search(boundingPoints);
+
+		search.processYouTubeRequest(request, boundingPoints, function (videoResults) {
+			console.log(videoResults);
+			var marker = [];
+			for (var i = 0; i < videoResults.length; i++) {
+				marker[i] = new L.Marker([videoResults[i].lat, videoResults[i].long]).bindPopup('<b>' + videoResults[i].title + '</b><br>' + videoResults[i].displayTimeStamp +
+																								'<br> <p>Play-circle icon as a link:<a href="#"><span class="glyphicon glyphicon-play-circle"></span></a></p>');
+				aoi_feature_edit.YouTube.addLayer(marker[i]);
+
+				/*
+			      	console.log("Video Title: " + videoResults[i].title);
+					console.log(videoResults[i].lat);
+					console.log(videoResults[i].long);
+					console.log(videoResults[i].publishTimeStamp);
+				*/
+			}
+		});
+        
+        /*
+        var frame = document.getElementById("myIframe");
+        if (frame.style.display == "none"){
+            frame.style.display = "block";
+        } else {
+            frame.style.display = "none";
+        }
+        */
+    });
+
+}
+
+
+
+
 leaflet_layer_control.addGeoOverview = function($accordion) {
     var go = leaflet_layer_control.buildAccordionPanel($accordion,"Geo Overview");
     var ghtml = "<div id='goMap'></div><div id='goMapStatus' "

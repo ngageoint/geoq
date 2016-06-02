@@ -30,6 +30,7 @@ aoi_feature_edit.MapIcon = null;
 aoi_feature_edit.findMePoint = null;
 aoi_feature_edit.findMeCircle = null;
 aoi_feature_edit.showMyLocation = false;
+aoi_feature_edit.YouTube = null;
 
 aoi_feature_edit.init = function () {
     aoi_feature_edit.drawcontrol = null;
@@ -810,6 +811,10 @@ aoi_feature_edit.map_init = function (map, bounds) {
     var options = aoi_feature_edit.buildTreeLayers();
     leaflet_layer_control.addLayerControl(map, options, $accordion);
     leaflet_layer_control.addPreferenceListener($accordion);
+
+
+
+    aoi_feature_edit.YouTube = L.layerGroup().addTo(map);
 
     function help_onclick() {
         window.open(aoi_feature_edit.help_url);
