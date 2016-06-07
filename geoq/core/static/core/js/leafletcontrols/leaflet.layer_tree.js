@@ -135,18 +135,20 @@ leaflet_layer_control.addYouTube = function ($accordion) {
 	}
 
 	var yt = leaflet_layer_control.buildAccordionPanel($accordion, "YouTube");
-	var ytHTML = '<form id="search" action="javascript:void(0)">' +
+    //The youtube image is to preload the logo, without this it will not show up right away when you first click the popup.
+	var ytHTML = '<div>' +
+            '<img id="youTube" src="/static/images/YouTube.png" alt="Play Video" style="display:none"><iframe id="youTubeIframe" width="230px" height="200" style="display:none" src="" allowfullscreen></iframe>' + 
+            '<form id="search" action="javascript:void(0)">' +
 			'Keywords: <input id="keyword" type="text" name="keyword" value="" placeholder="eg: Flood, Crash..."><br>' +
 			'Start Date: <input id="startDate" type="text" name="startDate" value="" placeholder="mm-dd-yyyy" style="margin-right:20px"><br>' +
 			'End Date: <input id="endDate" type="text" name="endDate" value="" placeholder="mm-dd-yyyy"><br>' +
-			'<input type="submit" value="Submit"></form>';
+			'<input type="submit" value="Submit" style="margin-right:20px"><input id="clearButton" type="button" value="Clear" style="visibility:hidden"></form></div>';
 
 	var ytdom = $(ytHTML);
 
 	ytdom.appendTo(yt);
-
     $("#search").submit(function () {
-
+        $("#clearButton").css('visibility', 'visible');
        	var boundingPoints = [];
        	var videoLocationPoints = [];
         for (var i = 0; i < aoi_feature_edit.aoi_extents_geojson["coordinates"][0][0].length; i++) {
@@ -163,30 +165,29 @@ leaflet_layer_control.addYouTube = function ($accordion) {
 			var marker = [];
 			for (var i = 0; i < videoResults.length; i++) {
 				marker[i] = new L.Marker([videoResults[i].lat, videoResults[i].long]).bindPopup('<b>' + videoResults[i].title + '</b><br>' + videoResults[i].displayTimeStamp +
-																								'<br> <p>Play-circle icon as a link:<a href="#"><span class="glyphicon glyphicon-play-circle"></span></a></p>');
+																								'<br> <img id="youTube" src="/static/images/YouTube.png" alt="Play Video" ' + 
+                                                                                                ' onclick="playVideo(&quot;http://youtube.com/embed/'+videoResults[i].videoID+'?autoplay=1&quot;)">');
 				aoi_feature_edit.YouTube.addLayer(marker[i]);
-
-				/*
-			      	console.log("Video Title: " + videoResults[i].title);
-					console.log(videoResults[i].lat);
-					console.log(videoResults[i].long);
-					console.log(videoResults[i].publishTimeStamp);
-				*/
 			}
 		});
-        
-        /*
-        var frame = document.getElementById("myIframe");
-        if (frame.style.display == "none"){
-            frame.style.display = "block";
-        } else {
-            frame.style.display = "none";
-        }
-        */
     });
+
+    $("#clearButton").click(function () {
+        aoi_feature_edit.YouTube.clearLayers();
+        $('#youTubeIframe').attr('src', "");
+        $('#youTubeIframe').css('display', 'none');
+    });
+
+    $(function() {
+   		$( "#startDate" ).datepicker();
+  	});
 
 }
 
+function playVideo(video) {
+    $('#youTubeIframe').attr('src', video);
+    $('#youTubeIframe').css('display', 'block');
+}
 
 
 

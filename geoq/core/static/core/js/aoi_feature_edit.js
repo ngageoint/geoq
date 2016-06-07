@@ -815,6 +815,8 @@ aoi_feature_edit.map_init = function (map, bounds) {
 
 
     aoi_feature_edit.YouTube = L.layerGroup().addTo(map);
+    //aoi_feature_edit.YouTube = L.markerClusterGroup({
+    //}).addTo(map);
 
     function help_onclick() {
         window.open(aoi_feature_edit.help_url);
