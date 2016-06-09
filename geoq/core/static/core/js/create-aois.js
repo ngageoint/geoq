@@ -1007,6 +1007,7 @@ create_aois.createWorkCellsFromService = function (data, zoomAfter, skipFeatureS
             return create_aois.styleFromPriority(feature);
         },
         onEachFeature: function (feature, layer) {
+            
             var popupContent = "";
             if (!feature.properties) {
                 feature.properties = {};
