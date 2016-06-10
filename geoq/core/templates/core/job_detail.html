@@ -27,7 +27,12 @@
 
         var aoi_extents;
         function mapInit(map, bounds) {
-            map_object = map;
+            map_object = map;  
+            map_object.on('popupopen', function(e) {
+                var px = map_object.project(e.popup._latlng);
+                px.y -= e.popup._container.clientHeight/2 ;
+                map_object.panTo(map_object.unproject(px),{animate: true});
+            });
             aoi_extents = L.geoJson({{ object.geoJSON|default:'[]'|safe }}, {
                 style: function(feature) {
                     var status = _.find(status_colors,function(stat){return stat.name==feature.properties.status});
