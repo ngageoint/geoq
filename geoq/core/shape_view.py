@@ -40,9 +40,39 @@ if platform.architecture()[0] == '64bit':
 class JobAsShape(ListView):
     model = Job
 
+    def get_queryset(self):
+        job_pk = self.kwargs.get('pk')
+        feature_type = self.kwargs.get('type')
+
+        FEATURES = {
+            'points':'Points',
+            'polygons':'Polygon',
+            'lines':'LineString'
+        }
+
+        # Work cell
+        if not feature_type:
+            job_workcells = Job.objects.filter(id=job_pk)
+            if not job_workcells[0]:
+                return None
+            else:
+                # num of aoi's
+                if job_workcells[0].total_count() > 0:
+                    return job_workcells
+                else:
+                    return None
+
+        # Others
+        features = Feature.objects.filter(job=job_pk).filter(template__type=FEATURES[feature_type])
+
+        return features
+
     def get(self, request, *args, **kwargs):
         job_pk = self.kwargs.get('pk')
         content_type = self.kwargs.get('type')
+
+        if not self.get_queryset():
+            return HttpResponse("Object Not Found", content_type="text/plain", status=404)
 
         try:
             shape_response = ShpResponder(job_pk=job_pk)
