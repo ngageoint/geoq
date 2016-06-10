@@ -613,7 +613,7 @@ aoi_feature_edit.map_init = function (map, bounds) {
     });
 
     // for some reason nginx isn't keeping MAX_ZOOM defined in settings.py. TODO: Figure out why
-    // map.options.maxZoom = 21;
+    map.options.maxZoom = 18;
 
     var custom_map = aoi_feature_edit.aoi_map_json || {};
     aoi_feature_edit.map = map;
@@ -814,9 +814,12 @@ aoi_feature_edit.map_init = function (map, bounds) {
 
 
 
-    aoi_feature_edit.YouTube = L.layerGroup().addTo(map);
-    //aoi_feature_edit.YouTube = L.markerClusterGroup({
-    //}).addTo(map);
+    //aoi_feature_edit.YouTube = L.layerGroup().addTo(map);
+    aoi_feature_edit.YouTube = L.markerClusterGroup({
+        spiderfyDistanceMultiplier: 2,
+        spiderLegPolylineOptions: { weight: 2, color: '#000', opacity: 1.0},
+    }).addTo(map);
+    
 
     function help_onclick() {
         window.open(aoi_feature_edit.help_url);

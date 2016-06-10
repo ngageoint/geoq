@@ -54,12 +54,15 @@ leaflet_layer_control.initDrawer = function(){
     return $accordion;
 };
 
+
+
 leaflet_layer_control.addPreferenceListener = function($accordion){
+    
     var lastOpened = store.get('leaflet_layer_control.layer_accordion');
     if (lastOpened) {
         $('#'+lastOpened).collapse('toggle');
     } else {
-        // by default, open work cell details
+         //by default, open work cell details
         $('#collapse-work-cell-details').collapse('toggle');
     }
 
@@ -67,6 +70,8 @@ leaflet_layer_control.addPreferenceListener = function($accordion){
     $accordion.on("shown",function(event){
         store.set('leaflet_layer_control.layer_accordion',event.target.id);
     });
+
+
 };
 
 leaflet_layer_control.addFeatureInfo = function($accordion){
@@ -127,13 +132,12 @@ leaflet_layer_control.addRotationHelper = function($accordion) {
 };
 
 
-leaflet_layer_control._youTubeLayer = null;
+
 
 leaflet_layer_control.addYouTube = function ($accordion) {
-	if (leaflet_layer_control._youTubeLayer == null) {
-		leaflet_layer_control._youTubeLayer = aoi_feature_edit.map;
-	}
-
+	/*
+		Add html to accordion and bind accordion to the panel
+	*/
 	var yt = leaflet_layer_control.buildAccordionPanel($accordion, "YouTube");
     //The youtube image is to preload the logo, without this it will not show up right away when you first click the popup.
 	var ytHTML = '<div>' +
@@ -147,7 +151,37 @@ leaflet_layer_control.addYouTube = function ($accordion) {
 	var ytdom = $(ytHTML);
 
 	ytdom.appendTo(yt);
+
+    /*
+        Creating Icon to use.
+    */
+	var youtubeIcon = L.icon({
+		iconUrl: '/static/images/youtubemarker.png',
+        iconSize: [30, 85],
+        iconAnchor: [19, 91],
+        popupAnchor: [-3, -73]
+	});
+	/*
+		Set up date pickers
+	*/
+	$('#startDate').datepicker( {
+		dateFormat: "mm-dd-yy",
+		onSelect: function(dateText, inst) {
+	        var date = $.datepicker.parseDate('mm-dd-yy', dateText);
+	        var $endDate = $("#endDate");
+	        $endDate.datepicker("option", "defaultDate", date);
+		}
+	});
+
+	$('#endDate').datepicker({
+		dateFormat: "mm-dd-yy"
+	});
+
+	/*
+		Submit functionality
+	*/
     $("#search").submit(function () {
+    	stopVideo();
         $("#clearButton").css('visibility', 'visible');
        	var boundingPoints = [];
        	var videoLocationPoints = [];
@@ -161,29 +195,61 @@ leaflet_layer_control.addYouTube = function ($accordion) {
 		var request = search.search(boundingPoints);
 
 		search.processYouTubeRequest(request, boundingPoints, function (videoResults) {
-			console.log(videoResults);
 			var marker = [];
-			for (var i = 0; i < videoResults.length; i++) {
-				marker[i] = new L.Marker([videoResults[i].lat, videoResults[i].long]).bindPopup('<b>' + videoResults[i].title + '</b><br>' + videoResults[i].displayTimeStamp +
-																								'<br> <img id="youTube" src="/static/images/YouTube.png" alt="Play Video" ' + 
-                                                                                                ' onclick="playVideo(&quot;http://youtube.com/embed/'+videoResults[i].videoID+'?autoplay=1&quot;)">');
-				aoi_feature_edit.YouTube.addLayer(marker[i]);
+            var cleanResults = [];
+
+            if ($('#keyword').val() == "") {
+                for (var i = 0; i < videoResults.length; i++) {
+                    if (cleanVideoResults(videoResults[i])) {
+                        cleanResults.push(videoResults[i]);
+                    }
+                } 
+            } else {
+                cleanResults = videoResults;
+            }
+
+			for (var i = 0; i < cleanResults.length; i++) {
+                marker[i] = new L.Marker([cleanResults[i].lat, cleanResults[i].long], {icon: youtubeIcon}).bindPopup('<b>' + cleanResults[i].title + '</b><br>' + cleanResults[i].displayTimeStamp +
+                                                                                            '<br> <img id="youTube" src="/static/images/YouTube.png" alt="Play Video" ' + 
+                                                                                            ' onclick="playVideo(&quot;http://youtube.com/embed/'+cleanResults[i].videoID+'?autoplay=1&quot;)">');
+                aoi_feature_edit.YouTube.addLayer(marker[i]);
 			}
 		});
     });
 
+    /*
+    	Clearing functionality
+    */
     $("#clearButton").click(function () {
-        aoi_feature_edit.YouTube.clearLayers();
-        $('#youTubeIframe').attr('src', "");
-        $('#youTubeIframe').css('display', 'none');
+    	stopVideo();
+        $('#startDate').val('');
+        $('#endDate').val('');
+
     });
 
-    $(function() {
-   		$( "#startDate" ).datepicker();
-  	});
+    function stopVideo() {
+    	aoi_feature_edit.YouTube.clearLayers();
+    	$('#youTubeIframe').attr('src', "");
+        $('#youTubeIframe').css('display', 'none');
+    }
 
+    function cleanVideoResults(video) {
+        var cleanUpKeywords = site_settings.YouTube["exclusionKeywords"].split(",");
+        var title = video.title.toLowerCase();
+        if (cleanUpKeywords != "") {
+        	for (var i = 0; i < cleanUpKeywords.length; i++) {
+	            if (title.indexOf(cleanUpKeywords[i]) > -1) {
+	                return false;
+	            }
+        	}
+        }
+        return true;
+    }
 }
 
+/*
+	Video Playing
+*/
 function playVideo(video) {
     $('#youTubeIframe').attr('src', video);
     $('#youTubeIframe').css('display', 'block');

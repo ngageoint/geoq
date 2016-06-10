@@ -44,7 +44,7 @@ Vector.prototype.dot = function (P1, P2) {
 **************************************************************************************************/
 
 function YouTubeSearch() {
-	this.API_ACCESS_KEY = 'AIzaSyAIvD-9GxbyI2QRrQYcnJTchXfaJ1K4nAI';
+	this.API_ACCESS_KEY = site_settings.YouTube["key"];
 	this.searchResults = [];
 	this.inputObject = {};
 	
@@ -185,14 +185,25 @@ YouTubeSearch.prototype.search = function (pointArray) {
 	
 	this.getPublishBeforeAndAfterTime();
 
+	var finalQuery = this.inputObject.inputQuery;
+
+	if (finalQuery != "") {
+		if (site_settings.YouTube["exclusionKeywords"] != "") {
+			var keywords = site_settings.YouTube["exclusionKeywords"].split(",");
+			for (var i = 0; i < keywords.length; i++) {
+				finalQuery = finalQuery + " -" + keywords[i];
+			}
+		}
+	}
+
 	
 	try {
 		 var request = gapi.client.youtube.search.list({
-          q: this.inputObject.inputQuery,
+          q: finalQuery,
           order: "date",
           type: 'video',
           part: 'snippet',
-          maxResults: '25',
+          maxResults: site_settings.YouTube["maxResults"],
           videoLiscense: 'any',
           //This might have to change if we only want embeddable videos
           videoEmbeddable: 'any',
@@ -323,6 +334,10 @@ YouTubeSearch.prototype.processYouTubeRequest = function (request, pointArray, c
 }
 
 
+YouTubeSearch.prototype.filterIrrelevantResults = function (finalResults) {
+
+}
+
 
 /*************************************************************************************************
 
@@ -340,7 +355,7 @@ $(document).ready(function() {
 function loadGAPI() {
 	gapi.client.load('youtube', 'v3', function() {
 		console.log("Google Youtube API Loaded.....");
-		gapi.client.setApiKey("AIzaSyAIvD-9GxbyI2QRrQYcnJTchXfaJ1K4nAI", function() {
+		gapi.client.setApiKey(site_settings.YouTube["key"], function() {
 			console.log("api key loaded");
 		});
 	});
