@@ -14,7 +14,9 @@ leaflet_layer_control.$drawer = undefined;
 leaflet_layer_control.$drawer_tray = undefined;
 leaflet_layer_control.$tree = undefined;
 leaflet_layer_control.accordion_sections = [];
-leaflet_layer_control.$feature_info = null;
+
+ //Commenting this out to replace $feature_info with popup
+// leaflet_layer_control.$feature_info = null;
 leaflet_layer_control.finish_options = [];
 leaflet_layer_control.highlightMode = 'delete';
 leaflet_layer_control.data_fields_obj = {};
@@ -114,17 +116,17 @@ leaflet_layer_control.rotateMap = function(deg) {
 };
 
 leaflet_layer_control.addRotationHelper = function($accordion) {
-   var rh = leaflet_layer_control.buildAccordionPanel($accordion,"Rotation Helper");
-   var rhHTML = '<div style="overflow:hidden;background-color: white;"><div id="roseHolder" >'+
-   '<div><span onclick="leaflet_layer_control.pan(0)">N</span></div>'+
-   '<div><span onclick="leaflet_layer_control.pan(270)">E</span>'+
-   '<img src="/static/images/200px-rose-bw.png " /><span onclick="leaflet_layer_control.pan(90)">W</span></div>'+
-   '<div><span onclick="leaflet_layer_control.pan(180)">S</span></div></div></div>'+
-   '<div id="roseSpinner" style="background-color: white;"><input id="roseSpinnerInput" type="range" min="-180" max="180" value="0" oninput="leaflet_layer_control.rotateMap(this.value)" />' +
-   '&nbsp;<button id="spinnerResetButton">Reset</button></div>';
-   var rhdom = $(rhHTML);
-   rhdom.appendTo(rh);
-   $("#spinnerResetButton").click(function(evt) { leaflet_layer_control.rotateMap(0); $("#roseSpinnerInput").val(0); });
+ var rh = leaflet_layer_control.buildAccordionPanel($accordion,"Rotation Helper");
+ var rhHTML = '<div style="overflow:hidden;background-color: white;"><div id="roseHolder" >'+
+ '<div><span onclick="leaflet_layer_control.pan(0)">N</span></div>'+
+ '<div><span onclick="leaflet_layer_control.pan(270)">E</span>'+
+ '<img src="/static/images/200px-rose-bw.png " /><span onclick="leaflet_layer_control.pan(90)">W</span></div>'+
+ '<div><span onclick="leaflet_layer_control.pan(180)">S</span></div></div></div>'+
+ '<div id="roseSpinner" style="background-color: white;"><input id="roseSpinnerInput" type="range" min="-180" max="180" value="0" oninput="leaflet_layer_control.rotateMap(this.value)" />' +
+ '&nbsp;<button id="spinnerResetButton">Reset</button></div>';
+ var rhdom = $(rhHTML);
+ rhdom.appendTo(rh);
+ $("#spinnerResetButton").click(function(evt) { leaflet_layer_control.rotateMap(0); $("#roseSpinnerInput").val(0); });
 
 };
 leaflet_layer_control.addGeoOverview = function($accordion) {
@@ -221,9 +223,9 @@ leaflet_layer_control.addLayerComparison = function($accordion) {
     aoi_feature_edit.startOrEndComparison = function(b) {
         $("#comparisonSlider").toggle();
         if(b.innerHTML === "Reset") {
-           b.innerHTML = "Start";
-           aoi_feature_edit.resetOverlays();
-       } else {
+         b.innerHTML = "Start";
+         aoi_feature_edit.resetOverlays();
+     } else {
         var overlay1 = overlays[$("#comparisonLayer1").val()];
         var overlay2 = overlays[$("#comparisonLayer2").val()];
         overlay1.setOpacity(.5);
@@ -675,8 +677,8 @@ leaflet_layer_control.featureSchemaSelect = function (feature, index) {
             settings.type = "select";
             settings.data = {};
             _.each(schemaInfo.options, function(opt){
-             settings.data[opt] = opt;
-         });
+               settings.data[opt] = opt;
+           });
         } else if (schemaInfo && schemaInfo.text) {
             //TODO: check
             settings.type = "text";
@@ -1373,83 +1375,8 @@ leaflet_layer_control.filetypeHelper = function(fileHandle, mimes,fileSuffix) {
         return converted;
 
     }
-//Testing new addTo definition. No luck so far
-  // leaflet_layer_control.addTo = function(map){
-  //    map.addLayer(this);
-  //    return this;
-  //  },
 
-// leaflet_layer_control.handleDrop = function(result, fileHandle) {
-
-//   var holder = document.getElementById('importDragTarget');
-//   var foundLayers = [];
-//   result.preventDefault();
-//   var file = result.dataTransfer.files[0], reader = new FileReader();
-
-//   if(leaflet_layer_control.filetypeHelper(fileHandle, "kml", "kml")) {
-//     // we are making assumptions about the kml encoding
-//     // introspect the file encoding for i18n.
-//     var kmlString = leaflet_layer_control.stringHelper(result, "utf-8");
-
-//     var parser = new DOMParser();
-//     var kmlDOM = parser.parseFromString(kmlString, "text/xml");
-//     var foundLayers = L.KML.parseKML(kmlDOM);
-
-//   } else if(leaflet_layer_control.filetypeHelper(fileHandle, [], "zip")) {
-
-//     foundLayers = shp(result); // we'll get an unpopulated geojson layer even if this ISN'T a shape file
-
-
-//    // console.log(foundLayers.getLayers().length);
-//    // console.log(foundLayers.getLayers);    
-
-//     if(foundLayers && foundLayers.getLayers && foundLayers.getLayers().length == 0) {
-
-//         foundLayers = null;
-//     }
-
-//   } else  if(leaflet_layer_control.filetypeHelper(fileHandle, ["geojson", "json"], "json")) {
-//     var jsonString = leaflet_layer_control.stringHelper(result, "utf-8");
-//     var json = JSON.parse(jsonString);
-//     foundLayers = L.geoJson(json);
-
-//   } else {
-
-//     alert("Sorry, only GeoSJON, KML, and shapefile zip archives are supported at the moment.");
-//   }
-
-//   if(foundLayers !== null && !(foundLayers instanceof Array)) {
-//     foundLayers = [foundLayers];
-//   }
-//   if(foundLayers !== null) {
-//     var name =  fileHandle.name;
-//     // for(var i=0; i<foundLayers.length; i++) {
-//     //     var layerName = name;
-//     //     if(i > 0) layerName = layerName + "-" + (i+1);
-//     //     var layer = foundLayers[i];
-//     //     if(layer.options)
-//     //       layer.options.name = layerName;
-//     //     var layerTest = L.layerGroup(layer);
-//     //   //  layerTest.addLayer(layer);
-//     //     console.log(layerTest);
-//     //     layerTest.onAdd(aoi_feature_edit.map);
-//     //     leaflet_layer_control.importNode.addChildren({title:layerName, folder:false, data:layer, selected:true});
-
-
-
-//    //shp(reader.result).then(function (geojson) {
-//        reader.readAsArrayBuffer(file);
-//        var shape = shp(reader.result);
-//        shape.addTo(aoi_feature_edit.map);
-//      //   })  
-
-//     } else {
-//         alert("Sorry, I couldn't find anything to import.");
-//     }
-
-
-// };
-leaflet_layer_control.addLayerControl = function (map, options, $accordion) {
+    leaflet_layer_control.addLayerControl = function (map, options, $accordion) {
 
     //Hide the existing layer control
     $('.leaflet-control-layers.leaflet-control').css({display: 'none'});
@@ -1515,13 +1442,7 @@ leaflet_layer_control.addLayerControl = function (map, options, $accordion) {
     .appendTo($content);
 
     leaflet_layer_control.addLayerControlInfoPanel($content);
-    //This is where the drop import happens ----------------------------------------------------------------
-
-    var idt = document.getElementById("importDragTarget");
     
-    //fileDragHelper.stopWindowDrop();
-    //fileDragHelper.watchFor(idt, leaflet_layer_control.handleDrop, true);
-
     leaflet_layer_control.initializeFileUploads();
 
     //If it was open last time, open it again
@@ -1740,25 +1661,7 @@ leaflet_layer_control.toggleDrawer = function() {
     }
     setTimeout(aoi_feature_edit.mapResize, 400);
 };
-//Test code begins here ------------------------------------------------------------------------------
-leaflet_layer_control.highlightFeature = function (e) {
-    var layer = e.target;
 
-    if (layer._icon) {
-        layer.oldIcon = layer._icon.getAttribute('src');
-        layer.setIcon(L.icon({iconUrl: "/static/leaflet/images/red-marker-icon.png"}));
-    }
-};
-
-leaflet_layer_control.resetHighlight = function (e) {
-    var layer = e.target;
-
-    if (layer.oldIcon) {
-        layer.setIcon(L.icon({iconUrl: layer.oldIcon}));
-    }
-};
-
-// 
 leaflet_layer_control.buildFilterDropdown = function () {
     var $prioritizeSelector = $('#prioritize-selector').empty();
     if (leaflet_layer_control.data_fields_obj) {
@@ -1779,37 +1682,45 @@ leaflet_layer_control.buildFilterDropdown = function () {
 
 }
 
-leaflet_layer_control.setupStatusControls = function (map) {
-    leaflet_layer_control.$feature_info = $('<div>')
-    .addClass('feature_info');
+//Code for Shapefile uploads------------------------------------------------------------------------------
 
-    var status_control = new L.Control.Button({
-        html: leaflet_layer_control.$feature_info,
-        hideText: false,
-        doToggle: false,
-        toggleStatus: false,
-        position: 'bottomright'
-    });
-    status_control.addTo(map);
+//Function for showing marker is highlighted
+leaflet_layer_control.highlightFeature = function (e) {
+    var layer = e.target;
+
+    if (layer._icon) {
+        layer.oldIcon = layer._icon.getAttribute('src');
+        layer.setIcon(L.icon({iconUrl: "/static/leaflet/images/red-marker-icon.png"}));
+    }
 };
 
+//Function for unhighlighting marker
+leaflet_layer_control.resetHighlight = function (e) {
+    var layer = e.target;
+
+    if (layer.oldIcon) {
+        layer.setIcon(L.icon({iconUrl: layer.oldIcon}));
+    }
+};
+
+ //Function that gets popup content and binds it to the Shapefile markers
  function onEachFeature (feature, layer) {
-            var popupContent = "";
-            if (!feature.properties) {
-                feature.properties = {};
-            }
-            if (_.isString(feature.properties.properties)) {
-                try {
-                    var newProps = JSON.parse(feature.properties.properties);
-                    feature.properties = $.extend(feature.properties, newProps);
-                    delete(feature.properties.properties);
-                } catch (ex) {
-                }
-            }
-            feature.priority = feature.properties.priority = parseInt(feature.properties.priority) || leaflet_layer_control.priority_to_use;
-            for (var k in feature.properties) {
-                if (k != "priority") {
-                    popupContent += "<b>" + k + ":</b> " + feature.properties[k] + "<br/>";
+    var popupContent = "";
+    if (!feature.properties) {
+        feature.properties = {};
+    }
+    if (_.isString(feature.properties.properties)) {
+        try {
+            var newProps = JSON.parse(feature.properties.properties);
+            feature.properties = $.extend(feature.properties, newProps);
+            delete(feature.properties.properties);
+        } catch (ex) {
+        }
+    }
+    feature.priority = feature.properties.priority = parseInt(feature.properties.priority) || leaflet_layer_control.priority_to_use;
+    for (var k in feature.properties) {
+        if (k != "priority") {
+            popupContent += "<b>" + k + ":</b> " + feature.properties[k] + "<br/>";
 
                     //Add fields to search if they are numeric
                     for (var key in feature.properties) {
@@ -1839,25 +1750,18 @@ leaflet_layer_control.setupStatusControls = function (map) {
             }
             layer.popupContent = popupContent;
 
-
             //Creates a popup for each marker    
             layer.bindPopup(layer.popupContent).openPopup();
 
            //These change the marker when hovered on
-            layer.on({
-                mouseover: leaflet_layer_control.highlightFeature,
-                mouseout: leaflet_layer_control.resetHighlight,
-            });
+           layer.on({
+            mouseover: leaflet_layer_control.highlightFeature,
+            mouseout: leaflet_layer_control.resetHighlight,
+        });
 
-            //create_aois.aois.addLayer(features);
-            //aoi_feature_edit.addLayer(create_aois.aois);
+       };
 
-           
-
-           // aoi_feature_edit.map.fitBounds(features.getBounds());
-        };
- 
-//Upload file funcction here. This could work. --------------------------------------------------
+//Function that gets the dragged Shapefile and adds it to the map
 leaflet_layer_control.initializeFileUploads = function () {
 
     var holder = document.getElementById('importDragTarget');
@@ -1909,15 +1813,16 @@ leaflet_layer_control.initializeFileUploads = function () {
                 var features = L.geoJson(geojson, {
                     onEachFeature: onEachFeature
                     
-           })
-               features.addTo(aoi_feature_edit.map);
+                })
+                //adds to the map
+                features.addTo(aoi_feature_edit.map);
+
+               //sets zoom to the coordinates of the shapefile
                aoi_feature_edit.map.fitBounds(features.getBounds());
-});
+           });
 
-           // }
-
-       };
-       reader.readAsArrayBuffer(file);
+        };
+        reader.readAsArrayBuffer(file);
 
         // if ( extension === 'json') {
         //     reader.readAsText(file);

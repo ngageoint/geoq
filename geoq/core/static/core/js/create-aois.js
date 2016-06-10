@@ -914,10 +914,12 @@ create_aois.highlightFeature = function (e) {
             }
         }
     }
-    if (layer.popupContent) {
-        create_aois.update_info(layer.popupContent);
-    }
+     //Commenting this out to replace $feature_info with popup
+    // if (layer.popupContent) {
+    //     create_aois.update_info(layer.popupContent);
+    // }
 };
+
 
 create_aois.update_info = function (html) {
     if (create_aois.$feature_info) {
@@ -936,8 +938,8 @@ create_aois.resetHighlight = function (e) {
             layer.setIcon(L.icon({iconUrl: layer.oldIcon}));
         }
     }
-
-    create_aois.update_info("");
+ //Commenting this out to replace $feature_info with popup
+ //   create_aois.update_info("");
 };
 
 create_aois.splitOrRemove = function (e) {
@@ -1052,6 +1054,8 @@ create_aois.createWorkCellsFromService = function (data, zoomAfter, skipFeatureS
                 }
             }
             layer.popupContent = popupContent;
+
+            layer.bindPopup(layer.popupContent).openPopup();
 
             layer.on({
                 mouseover: create_aois.highlightFeature,
