@@ -39,13 +39,15 @@ if platform.architecture()[0] == '64bit':
 
 class JobAsShape(ListView):
     model = Job
+    
+    #import pdb; pdb.set_trace()
 
     def get_queryset(self):
         job_pk = self.kwargs.get('pk')
         feature_type = self.kwargs.get('type')
 
         FEATURES = {
-            'points':'Points',
+            'points':'Point',
             'polygons':'Polygon',
             'lines':'LineString'
         }
@@ -64,7 +66,6 @@ class JobAsShape(ListView):
 
         # Others
         features = Feature.objects.filter(job=job_pk).filter(template__type=FEATURES[feature_type])
-
         return features
 
     def get(self, request, *args, **kwargs):
@@ -82,15 +83,15 @@ class JobAsShape(ListView):
             elif content_type == 'polygons':
                 shape_out = shape_response.polygons()
             elif content_type == 'lines':
-                shape_out = shape_response.lines()
+                shape_out = shape_response.lines() 
             else:
                 shape_out = shape_response.work_cells()
 
         except Exception, e:
             import traceback
 
-            output = json.dumps(dict(message='Generic Exception', details=traceback.format_exc(), exception=str(e),
-                                     last_data=shape_response.last_data))
+            output = json.dumps(dict(message='Generic Exception In JobAsShape.get()', details=traceback.format_exc(), exception=str(e),
+                                     last_data=shape_response.last_data), indent=6)
             shape_out = HttpResponse(output, mimetype="application/json", status=200)
 
         return shape_out
@@ -252,7 +253,7 @@ class ShpResponder(object):
                 features_points.append(f)
             elif f.the_geom.geom_type == 'Polygon':
                 features_polys.append(f)
-            elif f.the_geom.geom_type == 'Line':
+            elif f.the_geom.geom_type == 'LineString':
                 features_lines.append(f)
 
         # This builds the array twice. It's duplicative, but works
