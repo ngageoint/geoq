@@ -1224,6 +1224,7 @@ footprints.addResultTable = function ($holder) {
                 var player = outlinelayers.filter(function(e) {return e.options.image_id == footprints.outline_layer_group.lastHighlight})[0];
                 if (player) {
                     player.setStyle(footprints.defaultFootprintStyle);
+                    player.bringToBack();
                 }
             }
 
@@ -1231,6 +1232,7 @@ footprints.addResultTable = function ($holder) {
             var layer = outlinelayers.filter(function(e) { return e.options.image_id == imageid; })[0];
             if (layer) {
                 layer.setStyle(footprints.selectedFootprintStyle);
+                layer.bringToFront();
             }
 
             footprints.outline_layer_group.lastHighlight = imageid;
