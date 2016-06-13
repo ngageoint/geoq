@@ -28,12 +28,14 @@
 
         var aoi_extents;
         function mapInit(map, bounds) {
-            map_object = map;  
-            map_object.on('popupopen', function(e) {
-                var px = map_object.project(e.popup._latlng);
-                px.y -= e.popup._container.clientHeight/2 ;
-                map_object.panTo(map_object.unproject(px),{animate: true});
-            });
+            map_object = map;
+          	/*
+          		The Map_object is not consistant with the css that is rendering the map on the intial loading and what the CSS looks like on refresh. 
+          		Changing these two values creates a consistant mapsize between all states. This may want to be looked into eventually.
+          	*/
+
+          	map_object._size.y = 193;
+          	map_object._zoom = 12;
             aoi_extents = L.geoJson({{ object.geoJSON|default:'[]'|safe }}, {
                 style: function(feature) {
                     var status = _.find(status_colors,function(stat){return stat.name==feature.properties.status});
@@ -50,7 +52,8 @@
                     layer.on({
                         mouseover: highlightFeature,
                         mouseout: resetHighlight,
-                        click: cellClick
+                        click: cellClick,
+                        popupopen: recenter
                     });
                 }
             }).addTo(map);
@@ -125,6 +128,15 @@
                 fillColor: 'gray'
             });
         }
+
+       function recenter(e) {
+        	
+            var px = map_object.project(e.popup._latlng);
+   
+            px.y -= (e.popup._container.clientHeight/2);
+            map_object.panTo(map_object.unproject(px),{animate: true});
+        }
+     
 
         function resetHighlight(e) {
             aoi_extents.resetStyle(e.target);
