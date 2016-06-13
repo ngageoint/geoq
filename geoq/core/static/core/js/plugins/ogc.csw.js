@@ -79,7 +79,7 @@ ogc_csw.createWMSLayerFromRecord = function(record) {
     var newlayer = {};
     try {
         var parser = document.createElement('a');
-        parser.href = $(record).find('references').text();
+        parser.href = ogc_csw.getRecordValue(record, 'wms');
         var search = parser.search.substring(1);
         var parts = JSON.parse('{"' + decodeURI(search).replace(/"/g, '\\"').replace(/&amp;/g, '","').replace(/=/g,'":"') + '"}');
         if (parts.service === 'WMS') {
