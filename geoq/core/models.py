@@ -496,6 +496,7 @@ class WorkcellImage(models.Model):
     cloud_cover = models.IntegerField(default=0, null=True, blank=True)
     acq_date = models.DateTimeField(auto_now_add=False)
     img_geom = models.GeometryField(blank=True, null=True)
+    wmsUrl = models.CharField(max_length=300, null=True)
     area = models.DecimalField(max_digits=10,decimal_places=3)
     status = models.CharField(max_length=20, choices=EVALUATION_CHOICES, default='NotEvaluated')
     workcell = models.ForeignKey(AOI)
@@ -517,6 +518,7 @@ class WorkcellImage(models.Model):
             img_geom=str(self.img_geom.geojson),
             area=float(area),
             status=str(self.status),
+            wmsUrl=str(self.wmsUrl),
             workcell=int(self.workcell.id)
         )
         return _json
