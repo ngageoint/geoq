@@ -68,7 +68,7 @@
                     $.each(tableRows, function(r){
                         var value = $('.value', this).val();
                         if (value) {
-                            var key = $('.key', this).text() || $('.key', this).val();
+                            var key = $('.key', this).text().toLowerCase() || $('.key', this).val().toLowerCase();
                             newProperties[key] = value;
                         }
                     })
@@ -167,12 +167,30 @@
                 $('#style-ok').click(function(){
                     var newStyle = {};
                     var tableRows = $('#style-table tr');
+                          console.log ("opacity= " + $('#opacity').val());
+                        console.log ("weight= " + $('#weight').val());
+            
+                    if(!($('#opacity').val() == "")) {
+                        if ($('#opacity').val() < 0 || $('#opacity').val() > 1) {
+                            $('#opacity').val("");
+                            return;
+                        }
+                    }
                     
-                    
+                    if(!($('#weight').val() == "")) {
+                        if ($('#weight').val() < 1 || $('#weight').val() > 6) {
+                            $('#weight').val("");
+                            return;
+                        }
+                    }
+
                     $.each(tableRows, function(r){
                         var value = $('.value', this).val();
                         if (value) {
-                            var key = $('.key', this).text() || $('.key', this).val();
+                            var key = $('.key', this).text().toLowerCase() || $('.key', this).val().toLowerCase();
+                            if (key == "icon url") {
+                                key = "iconUrl";
+                            }
                             newStyle[key] = value;
                         }
                     })
