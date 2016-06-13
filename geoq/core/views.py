@@ -394,7 +394,7 @@ class JobDetailedListView(ListView):
         for i in temp_id:
             key = User.objects.filter(id=i).values_list('username', flat=True)[0]
             cv['dict'][key] = cv['dict'].get(key, 0) + 1
-
+      
         #TODO: Add feature_count
 
         cv['completed'] = cv['object'].complete_percent()

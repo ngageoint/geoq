@@ -10,6 +10,7 @@
     <script src="{{ STATIC_URL }}core/js/maths.js"></script>
     <script src="{{ STATIC_URL }}core/js/leafletcontrols/leaflet.simple_button.js"></script>
     <script src="{{ STATIC_URL }}leaflet/L.Control.Button.js"></script>
+<script src="{{ STATIC_URL }}core/js/readmore.js"></script> <!--Readmore plugin -->
     <script type="text/javascript">
 
         var map_object;
@@ -234,8 +235,65 @@
             </h3>
 
             <p class="body project-description">
-                <b>Job Details:</b> {{ object.description }}
+                <b>Job Details:</b>
+
+            <div class="description_body">
+                {{ object.description }}
+
+            </div>
             </p>
+            <script type="text/javascript">
+             console.log("Job testing");
+             $( document ).ready(function() {
+                  var showChar = 300;  // How many characters are shown by default
+                  var ellipses_text = "..."; //used to show where content is truncated
+                  var more_text = "<br/>Show more >"; //show more link
+                  var less_text = "<br/>Show less"; //show less link
+
+                    //goes through the description
+                    $('.description_body').each(function() {
+                        var content = $(this).html(); //gets the description body
+
+                        //if the description length is more than the max char number
+                        if(content.length > showChar) {
+
+                            //stores the new, smaller content
+                            var less_content = content.substr(0, showChar);
+
+                            //stores what is cut off
+                            var cutoff_content = content.substr(showChar, content.length - showChar);
+
+                            //causes only the less_content to be visible and makes the rest hidden
+                            var html = less_content + '<span class="more_ellipses">' + ellipses_text+ '&nbsp;</span><span class="more_content"><span>' + cutoff_content + '</span>&nbsp;&nbsp;<a href="" class="more_link">' + more_text + '</a></span>';
+
+                            //appends new html
+                            $(this).html(html);
+                        }
+
+                    });
+
+                    $(".more_link").click(function(){
+
+                        //if less content is being shown, then show more
+                        if($(this).hasClass("less")) {
+                            $(this).removeClass("less");
+                            $(this).html(more_text);
+
+                         //else the full content is being shown, so show less
+                        } else {
+                            $(this).addClass("less");
+                            $(this).html(less_text);
+                        }
+                        //toggles between the two stages
+                        $(this).parent().prev().toggle();
+                        $(this).prev().toggle();
+                        return false;
+                    });
+
+             });
+
+
+            </script>
 
             <div class="row body" style="height:250px; margin-top:25px; margin-left:5px;">
                 <div class="span4 thumbnail" id="map" style="height:290px; margin-left: 0px; width: 400px;">
