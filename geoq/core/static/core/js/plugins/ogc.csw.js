@@ -150,13 +150,14 @@ ogc_csw.createRectangleFromBoundingBox = function(box, style) {
 ogc_csw.createPolygonFromCoordinates = function(coordinates, style) {
     // create a polygon from a space-delimited list of x y (lon lat) coordinates
     // e.g. "135.75 34.75 136.82 34.75 136.86 33.57 135.75 33.57"
+    // 6/13 -- need to reverse the ordering, actually coming in [lat lon lat lon...]
     var outlineLayer  = {};
     try {
         var coordArray = coordinates.split(' ');
         var latlonArray = [];
 
         for (var i = 0; i < coordArray.length; i+=2 ) {
-            var latlng = L.latLng(coordArray[i+1],coordArray[i]);
+            var latlng = L.latLng(coordArray[i],coordArray[i+1]);
             latlonArray.push(latlng);
         }
 
