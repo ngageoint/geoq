@@ -49,6 +49,7 @@ leaflet_layer_control.initDrawer = function(){
     leaflet_layer_control.addLayerComparison($accordion);
     leaflet_layer_control.addGeoOverview($accordion);
     leaflet_layer_control.addRotationHelper($accordion);
+    leaflet_layer_control.addYouTube($accordion);
 
 
     //The Layer Controls should also be built and added later in another script, something like:
@@ -58,12 +59,15 @@ leaflet_layer_control.initDrawer = function(){
     return $accordion;
 };
 
+
+
 leaflet_layer_control.addPreferenceListener = function($accordion){
+    
     var lastOpened = store.get('leaflet_layer_control.layer_accordion');
     if (lastOpened) {
         $('#'+lastOpened).collapse('toggle');
     } else {
-        // by default, open work cell details
+         //by default, open work cell details
         $('#collapse-work-cell-details').collapse('toggle');
     }
 
@@ -71,6 +75,8 @@ leaflet_layer_control.addPreferenceListener = function($accordion){
     $accordion.on("shown",function(event){
         store.set('leaflet_layer_control.layer_accordion',event.target.id);
     });
+
+
 };
 
 leaflet_layer_control.addFeatureInfo = function($accordion){
@@ -129,6 +135,133 @@ leaflet_layer_control.addRotationHelper = function($accordion) {
  $("#spinnerResetButton").click(function(evt) { leaflet_layer_control.rotateMap(0); $("#roseSpinnerInput").val(0); });
 
 };
+
+
+
+
+leaflet_layer_control.addYouTube = function ($accordion) {
+	/*
+		Add html to accordion and bind accordion to the panel
+	*/
+	var yt = leaflet_layer_control.buildAccordionPanel($accordion, "YouTube");
+    //The youtube image is to preload the logo, without this it will not show up right away when you first click the popup.
+	var ytHTML = '<div>' +
+            '<img id="youTube" src="/static/images/YouTube.png" alt="Play Video" style="display:none"><iframe id="youTubeIframe" width="230px" height="200" style="display:none" src="" allowfullscreen></iframe>' + 
+            '<form id="search" action="javascript:void(0)">' +
+			'Keywords: <input id="keyword" type="text" name="keyword" value="" placeholder="eg: Flood, Crash..."><br>' +
+			'Start Date: <input id="startDate" type="text" name="startDate" value="" placeholder="mm-dd-yyyy" style="margin-right:20px"><br>' +
+			'End Date: <input id="endDate" type="text" name="endDate" value="" placeholder="mm-dd-yyyy"><br>' +
+			'<input type="submit" value="Submit" style="margin-right:20px"><input id="clearButton" type="button" value="Clear" style="visibility:hidden"></form></div>';
+
+	var ytdom = $(ytHTML);
+
+	ytdom.appendTo(yt);
+
+    /*
+        Creating Icon to use.
+    */
+	var youtubeIcon = L.icon({
+		iconUrl: '/static/images/youtubemarker.png',
+        iconSize: [30, 85],
+        iconAnchor: [19, 91],
+        popupAnchor: [-3, -73]
+	});
+	/*
+		Set up date pickers
+	*/
+	$('#startDate').datepicker( {
+		dateFormat: "mm-dd-yy",
+		onSelect: function(dateText, inst) {
+	        var date = $.datepicker.parseDate('mm-dd-yy', dateText);
+	        var $endDate = $("#endDate");
+	        $endDate.datepicker("option", "defaultDate", date);
+		}
+	});
+
+	$('#endDate').datepicker({
+		dateFormat: "mm-dd-yy"
+	});
+
+	/*
+		Submit functionality
+	*/
+    $("#search").submit(function () {
+    	stopVideo();
+        $("#clearButton").css('visibility', 'visible');
+       	var boundingPoints = [];
+       	var videoLocationPoints = [];
+        for (var i = 0; i < aoi_feature_edit.aoi_extents_geojson["coordinates"][0][0].length; i++) {
+        	boundingPoints.push(new Point(aoi_feature_edit.aoi_extents_geojson["coordinates"][0][0][i][1],aoi_feature_edit.aoi_extents_geojson["coordinates"][0][0][i][0]));
+        }
+
+        var search = new YouTubeSearch();
+
+		//search.generateCircle(pointArray);
+		var request = search.search(boundingPoints);
+
+		search.processYouTubeRequest(request, boundingPoints, function (videoResults) {
+			var marker = [];
+            var cleanResults = [];
+
+            if ($('#keyword').val() == "") {
+                for (var i = 0; i < videoResults.length; i++) {
+                    if (cleanVideoResults(videoResults[i])) {
+                        cleanResults.push(videoResults[i]);
+                    }
+                } 
+            } else {
+                cleanResults = videoResults;
+            }
+
+			for (var i = 0; i < cleanResults.length; i++) {
+                marker[i] = new L.Marker([cleanResults[i].lat, cleanResults[i].long], {icon: youtubeIcon}).bindPopup('<b>' + cleanResults[i].title + '</b><br>' + cleanResults[i].displayTimeStamp +
+                                                                                            '<br> <img id="youTube" src="/static/images/YouTube.png" alt="Play Video" ' + 
+                                                                                            ' onclick="playVideo(&quot;http://youtube.com/embed/'+cleanResults[i].videoID+'?autoplay=1&quot;)">');
+                aoi_feature_edit.YouTube.addLayer(marker[i]);
+			}
+		});
+    });
+
+    /*
+    	Clearing functionality
+    */
+    $("#clearButton").click(function () {
+    	stopVideo();
+        $('#startDate').val('');
+        $('#endDate').val('');
+
+    });
+
+    function stopVideo() {
+    	aoi_feature_edit.YouTube.clearLayers();
+    	$('#youTubeIframe').attr('src', "");
+        $('#youTubeIframe').css('display', 'none');
+    }
+
+    function cleanVideoResults(video) {
+        var cleanUpKeywords = site_settings.YouTube["exclusionKeywords"].split(",");
+        var title = video.title.toLowerCase();
+        if (cleanUpKeywords != "") {
+        	for (var i = 0; i < cleanUpKeywords.length; i++) {
+	            if (title.indexOf(cleanUpKeywords[i]) > -1) {
+	                return false;
+	            }
+        	}
+        }
+        return true;
+    }
+}
+
+/*
+	Video Playing
+*/
+function playVideo(video) {
+    $('#youTubeIframe').attr('src', video);
+    $('#youTubeIframe').css('display', 'block');
+}
+
+
+
 leaflet_layer_control.addGeoOverview = function($accordion) {
     var go = leaflet_layer_control.buildAccordionPanel($accordion,"Geo Overview");
     var ghtml = "<div id='goMap'></div><div id='goMapStatus' "

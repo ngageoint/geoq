@@ -29,7 +29,6 @@ create_aois.highlightMode = 'delete';
 function mapInit(map) {
     //Auto-called after leaflet map is initialized
     create_aois.map_object = map;
-
     setTimeout(function () {
         var startingBounds = site_settings.map_starting_bounds || [
             [52.429222277955134, -51.50390625],
