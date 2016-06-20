@@ -352,6 +352,19 @@ class AOI(GeoQBase, Assignment):
     priority = models.SmallIntegerField(choices=PRIORITIES, max_length=1, default=5)
     status = models.CharField(max_length=15, choices=STATUS_CHOICES, default='Unassigned')
 
+    #Signifies When the work cell is created
+    cellCreated_at = models.DateTimeField(blank=True,null=True)
+    #signifies when the work cell enters the assigned state
+    cellAssigned_at = models.DateTimeField(blank=True,null=True)
+    #signifies when the work cell enters the "In Work " state
+    cellStarted_at = models.DateTimeField(blank=True,null=True)	
+    #Cell enters the waiting for review state
+    cellWaitingReview_at = models.DateTimeField(blank=True,null=True)
+    #cell enters QA
+    cellInReview_at = models.DateTimeField(blank=True,null=True)
+    #cell enters completed state
+    cellFinished_at = models.DateTimeField(blank=True,null=True)	
+
     class Meta:
         permissions = (
             ('assign_workcells', 'Assign Workcells'), ('certify_workcells', 'Certify Workcells'),

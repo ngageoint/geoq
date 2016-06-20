@@ -5,6 +5,7 @@
 import json
 import re
 import requests
+import pytz
 
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User, Group, Permission
@@ -28,6 +29,7 @@ from geoq.core.utils import send_aoi_create_event
 from geoq.core.middleware import Http403
 from geoq.mgrs.exceptions import ProgramException
 from guardian.decorators import permission_required
+
 from kml_view import *
 from shape_view import *
 
@@ -229,6 +231,9 @@ class CreateFeaturesView(UserAllowedMixin, DetailView):
         if aoi.status == 'Unassigned':
             aoi.analyst = self.request.user
             aoi.status = 'In work'
+            aoi.cellStarted_at = datetime.now(tz=pytz.timezone('UTC'));
+            print "Given Date: " + str(aoi.cellStarted_at)
+            print "Cell ID: " + str(aoi.id)
             aoi.save()
             return True
         elif aoi.status == 'In work':
@@ -527,18 +532,34 @@ class ChangeAOIStatus(View):
 
     def _get_aoi_and_update(self, pk):
         aoi = get_object_or_404(AOI, pk=pk)
+        print "_get_aoi_and_update"
         status = self.kwargs.get('status')
         return status, aoi
 
     def _update_aoi(self, request, aoi, status):
         aoi.analyst = request.user
         aoi.status = status
+        timestamp = datetime.now(tz=pytz.timezone('UTC'));
+        if status == "Assigned":
+        	aoi.cellAssigned_at = timestamp
+        elif status == "In work":
+        	aoi.cellStarted_at = timestamp
+        elif status == "Awaiting review":
+        	aoi.cellWaitingReview_at = timestamp
+        elif status == "In review":
+        	aoi.cellInReview_at = timestamp
+        elif status == "Completed":
+        	aoi.cellFinished_at = timestamp
+        else:
+        	print "Update AOI hit end of if statement BAD"
+
+
         aoi.save()
         return aoi
 
     def get(self, request, **kwargs):
         # Used to unassign tasks on the job detail, 'in work' tab
-
+        print "GET in AOI Status"
         status, aoi = self._get_aoi_and_update(self.kwargs.get('pk'))
 
         if aoi.user_can_complete(request.user):
@@ -550,7 +571,7 @@ class ChangeAOIStatus(View):
     def post(self, request, **kwargs):
 
         status, aoi = self._get_aoi_and_update(self.kwargs.get('pk'))
-
+        print "POST in AOI Status"
         if aoi.user_can_complete(request.user):
             aoi = self._update_aoi(request, aoi, status)
             Comment(aoi=aoi,user=request.user,text='changed status to %s' % status).save()
@@ -639,6 +660,7 @@ class AssignWorkcellsView(TemplateView):
                     aoi.assignee_type_id = AssigneeType.USER if utype == 'user' else AssigneeType.GROUP
                     aoi.assignee_id = user_or_group.get().id
                     aoi.status = 'Assigned'
+                    print "Status being set to Assigned"
                     aoi.save()
 
                 if send_email:
@@ -776,6 +798,7 @@ def update_job_data(request, *args, **kwargs):
 
         if attribute == 'status':
             aoi.status = value
+            print "Update Job Data chaning aoi.Status"
         elif attribute == 'priority':
             aoi.priority = int(value)
         else:
