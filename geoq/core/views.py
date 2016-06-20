@@ -257,6 +257,7 @@ class CreateFeaturesView(UserAllowedMixin, DetailView):
         elif aoi.status == 'Awaiting review':
             if self.request.user in aoi.job.reviewers.all() or is_admin:
                 aoi.status = 'In review'
+                aoi.cellInReview_at = datetime.now(tz=pytz.timezone('UTC'))
                 aoi.reviewers.add(self.request.user)
                 aoi.save()
                 increment_metric('workcell_analyzed')
@@ -539,7 +540,7 @@ class ChangeAOIStatus(View):
     def _update_aoi(self, request, aoi, status):
         aoi.analyst = request.user
         aoi.status = status
-        timestamp = datetime.now(tz=pytz.timezone('UTC'));
+        timestamp = datetime.now(tz=pytz.timezone('UTC'))
         if status == "Assigned":
         	aoi.cellAssigned_at = timestamp
         elif status == "In work":
@@ -660,7 +661,7 @@ class AssignWorkcellsView(TemplateView):
                     aoi.assignee_type_id = AssigneeType.USER if utype == 'user' else AssigneeType.GROUP
                     aoi.assignee_id = user_or_group.get().id
                     aoi.status = 'Assigned'
-                    print "Status being set to Assigned"
+                    aoi.cellAssigned_at = datetime.now(tz=pytz.timezone('UTC'))
                     aoi.save()
 
                 if send_email:
@@ -795,10 +796,19 @@ def update_job_data(request, *args, **kwargs):
     value = request.POST.get('value')
     if attribute and value:
         aoi = get_object_or_404(AOI, pk=aoi_pk)
-
         if attribute == 'status':
             aoi.status = value
-            print "Update Job Data chaning aoi.Status"
+            timestamp = datetime.now(tz=pytz.timezone('UTC'))
+            if value == "Assigned":
+            	aoi.cellAssigned_at = timestamp
+            elif value == "In Work":
+            	aoi.cellStarted_at = timestamp
+            elif value == "Awaiting review":
+            	aoi.cellWaitingReview_at = timestamp
+            elif value == "In review":
+            	aoi.cellInReview_at = timestamp
+            elif value == "Completed":
+            	aoi.cellFinished_at = timestamp
         elif attribute == 'priority':
             aoi.priority = int(value)
         else:

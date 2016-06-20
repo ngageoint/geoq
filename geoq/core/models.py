@@ -415,7 +415,14 @@ class AOI(GeoQBase, Assignment):
             analyst=(self.analyst.username if self.analyst is not None else 'None'),
             assignee=self.assignee_name,
             priority=self.priority,
-            delete_url=reverse('aoi-deleter', args=[self.id]))
+            delete_url=reverse('aoi-deleter', args=[self.id]),
+            time=dict(
+                assigned=str(self.cellAssigned_at), 
+                in_work=str(self.cellStarted_at),
+                waiting_review=str(self.cellWaitingReview_at),
+                in_review=str(self.cellInReview_at),
+                finished=str(self.cellFinished_at)
+                ))
         geojson["geometry"] = json.loads(self.polygon.json)
 
         geojson["properties"]["absolute_url"] = self.get_absolute_url()
