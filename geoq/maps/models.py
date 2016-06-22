@@ -200,7 +200,7 @@ class Map(models.Model):
     title = models.CharField(max_length=75)
     description = models.TextField(max_length=800, blank=True, null=True)
     zoom = models.IntegerField(help_text='Sets the default zoom level of the map.', default=5, blank=True, null=True)
-    projection = models.CharField(max_length=32, blank=True, null=True, default="EPSG:4326", help_text='Set the default projection for layers added to this map. Note that the projection of the map is usually determined by that of the current baseLayer')
+    projection = models.CharField(max_length=32, blank=True, null=True, default="EPSG:3857", help_text='Set the default projection for layers added to this map. Note that the projection of the map is usually determined by that of the current baseLayer')
     center_x = models.FloatField(default=0.0, help_text='Sets the center x coordinate of the map.  Maps on event pages default to the location of the event.', blank=True, null=True)
     center_y = models.FloatField(default=0.0, help_text='Sets the center y coordinate of the map.  Maps on event pages default to the location of the event.', blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
