@@ -120,6 +120,13 @@
         {% if 'permissions_granted' in request.base_perms %}aoi_feature_edit.permissions_granted = true;{% endif %}
         {% if request.user in reviewers %}aoi_feature_edit.permissions_review = true;{% endif %}
 
+        // add in the following function to help us find namespaced nodes with jQuery
+            $.fn.filterNode = function(name) {
+                return this.find('*').filter(function() {
+                    return this.nodeName === name;
+                });
+            };
+
 
         aoi_feature_edit.init();
 

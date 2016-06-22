@@ -16,14 +16,14 @@ ogc_csw.validated_server;
 ogc_csw.current_layer_list = [];
 
 ogc_csw.schema = {
-    'image_id': { key: 'identifier', default: 'unknown'},
-    'wms': { key: 'references', default: null },
+    'image_id': { key: 'dc:identifier', default: 'unknown'},
+    'wms': { key: 'dct:references', default: null },
     'ObservationDate': { key: null, default: moment().format('YYYY-MM-DD')},
     'maxCloudCoverPercentageRate': { key: null, default: 1},
     'platformCode': { key: null, default: 'abc123'},
     'sensor': {key: null, default: 'def456'},
     'nef_name': {key: null, default: 'unknown'},
-    'layerName': {key: 'title', default: 'Unknown'},
+    'layerName': {key: 'dc:title', default: 'Unknown'},
     'status': {key: null, default: 'Accepted'}
 };
 
@@ -103,7 +103,7 @@ ogc_csw.createWMSLayerFromRecord = function(record) {
 ogc_csw.getRecordValue = function(record, attribute) {
 
     if (ogc_csw.schema[attribute].key) {
-        return $(record).find(ogc_csw.schema[attribute].key).text() || 'unknown';
+        return $(record).filterNode(ogc_csw.schema[attribute].key).text() || 'unknown';
     } else {
         return ogc_csw.schema[attribute].default;
     }
@@ -115,9 +115,9 @@ ogc_csw.parseCSWRecord = function(record) {
     oRecord.options = {};
 
     try {
-        var $box = $(record).find('BoundingBox');
-        oRecord.uc = $box.find('UpperCorner').text();
-        oRecord.lc = $box.find('LowerCorner').text();
+        var $box = $(record).filterNode('ows:BoundingBox');
+        oRecord.uc = $box.filterNode('ows:UpperCorner').text();
+        oRecord.lc = $box.filterNode('ows:LowerCorner').text();
 
         oRecord.options.image_id = ogc_csw.getRecordValue(record, 'image_id');
         oRecord.options.wms = ogc_csw.getRecordValue(record, 'wms');
@@ -147,13 +147,13 @@ ogc_csw.createRectangleFromBoundingBox = function(box, style) {
     return outlineLayer;
 };
 
-ogc_csw.createPolygonFromCoordinates = function(coordinates, style) {
+ogc_csw.createPolygonFromCoordinates = function(record, style) {
     // create a polygon from a space-delimited list of x y (lon lat) coordinates
     // e.g. "135.75 34.75 136.82 34.75 136.86 33.57 135.75 33.57"
     // 6/13 -- need to reverse the ordering, actually coming in [lat lon lat lon...]
     var outlineLayer  = {};
     try {
-        var coordArray = coordinates.split(' ');
+        var coordArray = record.posList.split(' ');
         var latlonArray = [];
 
         for (var i = 0; i < coordArray.length; i+=2 ) {
@@ -162,6 +162,7 @@ ogc_csw.createPolygonFromCoordinates = function(coordinates, style) {
         }
 
         outlineLayer = L.polygon(latlonArray, style);
+        $.extend(outlineLayer.options,record.options)
     } catch (e) {
         console.error(e);
     }

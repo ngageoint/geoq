@@ -396,7 +396,7 @@ footprints.updateFootprintDataFromCSWServer = function () {
         };
         var callback = function (xml,lang) {
             var $xml = $(xml);
-            var data = $xml.find('Record') || [];
+            var data = $xml.filterNode('csw:Record') || [];
             footprints.newCSWFeaturesArrived(data);
         };
         //If there are any WHERE clauses, add those in
@@ -1195,6 +1195,7 @@ footprints.addResultTable = function ($holder) {
                     cloud_cover: data_row.maxCloudCoverPercentageRate,
                     acq_date: data_row.ObservationDate,
                     img_geom: JSON.stringify(geometry),
+                    wms_url: data_row.wmsUrl,
                     area: 1,
                     status: val,
                     workcell: aoi_feature_edit.aoi_id
