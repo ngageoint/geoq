@@ -29,8 +29,9 @@ footprints.outline_layer_group = null;
 footprints.image_layer_group = null;
 footprints.border_layer_group = null;
 
-footprints.defaultFootprintStyle = {color: 'red', weight: 1};
-footprints.savedFootprintStyle = {color: 'blue', weight: 1};
+footprints.defaultFootprintStyle = {color: 'blue', weight: 1};
+footprints.savedFootprintStyle = {color: 'green', weight: 1};
+footprints.rejectedFootprintStyle = {color: 'red', weight: 1};
 footprints.selectedFootprintStyle = {color: 'yellow', weight: 1};
 
 footprints.schema = [
@@ -50,6 +51,7 @@ footprints.schema = [
         sizeMarker: true
     },
     {name: 'status', title: 'Status', filter: 'options'},
+    {name: 'wmsUrl', title: "WMS Url"},
     {
         name: 'ObservationDate',
         title: 'Observe Date',
@@ -131,6 +133,9 @@ footprints.init = function (options) {
         footprints.outline_layer_group.addTo(footprints.map);
     }
 
+    // finally add any layers that have already been vetted
+    footprints.addInitialImages();
+
 };
 
 footprints.buildAccordionPanel = function () {
@@ -196,6 +201,41 @@ footprints.colorBlendFromAmountRange = function (color_start, color_end, amount,
     var rgb = maths.decimalToHex(n_r) + maths.decimalToHex(n_g) + maths.decimalToHex(n_b);
 
     return "#" + rgb;
+};
+
+footprints.addInitialImages = function () {
+    _.each(aoi_feature_edit.workcell_images, function(data_row){
+        var layer_id = data_row.sensor;
+        var geo_json = JSON.parse(data_row.img_geom);
+        var rings = [];
+        _.each(geo_json.coordinates[0], function(point){
+            rings.push(point);
+        });
+
+        //Convert the json output from saved images into the format the list is expecting
+        var data = {
+            options:{
+                id: data_row.image_id,
+                image_id: data_row.image_id,
+                platformCode: data_row.platform, //TODO: Was this saved?
+                image_sensor: data_row.sensor,
+                maxCloudCoverPercentageRate : data_row.cloud_cover,
+                ObservationDate: data_row.acq_date,
+                value: data_row.nef_name,
+                area: data_row.area,
+                geometry: { rings: [rings]},
+                status: data_row.status,
+                wmsUrl: data_row.wmsUrl
+            }
+        };
+
+        var layer_name = "Layer";
+        if (footprints.layerNames && footprints.layerNames.length && footprints.layerNames.length >= layer_id) {
+            layer_name = footprints.layerNames[layer_id];
+        }
+        footprints.newFeaturesArrived({features:[data]}, "[initial]", layer_id, layer_name);
+    });
+
 };
 
 footprints.polyToLayer = function (feature) {
@@ -475,7 +515,7 @@ footprints.newFeaturesArrived = function (data, url, layer_id, layer_name) {
                 var feature = features[i];
                 for (var j = 0; j < footprints.features.length; j++) {
                     if (feature.options[field_id]) {
-                        if (feature.options[field_id] == footprints.features[j].options[field_id]) {
+                        if (feature.options[field_id] == footprints.features[j][field_id]) {
                             found = true;
                             break;
                         }
@@ -566,7 +606,7 @@ footprints.newCSWFeaturesArrived = function (items) {
                     // this is a BoundingBox
                     wms = ogc_csw.createRectangleFromBoundingBox(record, footprints.defaultFootprintStyle);
                 } else if (record.rings) {
-                    wms = ogc_csw.createPolygonFromCoordinates(record);
+                    wms = ogc_csw.createPolygonFromCoordinates(record, footprints.defaultFootprintStyle);
                 } else {
                     console.error("No coordinates found. Skipping this layer");
                     return;
@@ -632,18 +672,22 @@ footprints.saveInspectedImage = function (identifier, accepted) {
         if (layer.options.image_id === identifier) {
             // find the correct row in the table, then click the save radio button
             var data = footprints.$grid.pqGrid("option", "dataModel");
-            for (var index = 0; index < data.data.length; index++) {
-                if (data.data[index]['image_id'] == identifier) {
-                    // index is the row. if accepted is true, we want to keep it. Otherwise reject
-                    if (accepted) {
-                        $('#r1-'+index).click();
-                    } else {
-                        $('#r3-'+index).click();
-
-                        // since we're not keeping this one, go ahead and clear from map
-                        footprints.removeCSWOutline(identifier);
+            if (data.data && data.data.length > 0) {
+                for (var index = 0; index < data.data.length; index++) {
+                    if (data.data[index]['image_id'] == identifier) {
+                        // index is the row. if accepted is true, we want to keep it. Otherwise reject
+                        if (accepted) {
+                            $('#r1-'+index).click();
+                        } else {
+                            $('#r3-'+index).click();
+                        }
                     }
                 }
+            }
+            // remove outline
+            // since we're not keeping this one, go ahead and clear from map
+            if (! accepted) {
+                footprints.removeCSWOutline(identifier);
             }
         }
     })
@@ -661,7 +705,7 @@ footprints.replaceCSWOutlineWithLayer = function (identifier) {
                 layer.bindPopup(html);
 
                 var parser = document.createElement('a');
-                parser.href = layer.options.wms;
+                parser.href = layer.options.wmsUrl;
                 var search = parser.search.substring(1);
                 var parts = JSON.parse('{"' + decodeURI(search).replace(/"/g, '\\"').replace(/&amp;/g, '&').replace(/&/g, '","').replace(/=/g,'":"') + '"}');
                 if (parts.service === 'WMS') {
@@ -961,7 +1005,7 @@ footprints.updateFootprintFilteredResults = function (options) {
                 var filterSetting = footprints.filters[fieldToCheck];
                 var val = feature[fieldToCheck] || feature.options[fieldToCheck];
 
-                if (typeof val != "undefined") {
+                if (typeof val != "unknown") {
                     //Check all possible options and see if the feature has that setting
                     if (schema_item.filter == 'options') {
                         var option_found = false;
@@ -1141,7 +1185,7 @@ footprints.addResultTable = function ($holder) {
                     var c3 = (data.status && data.status == 'RejectedQuality') ? 'checked' : '';
 
                     var bg = '<input class="accept" id="r1-' + id + '" type="radio" name="acceptance-' + id + '" '+c1+' value="Accepted"/><label for="r1-' + id + '"></label>';
-                    bg += '<input class="unsure" id="r2-' + id + '" type="radio" name="acceptance-' + id + '" '+c2+' value="NotEvaluated" checked="checked"/>';
+                    bg += '<input class="unsure" id="r2-' + id + '" type="radio" name="acceptance-' + id + '" '+c2+' value="NotEvaluated" />';
                     bg += '<input class="reject" id="r3-' + id + '" type="radio" name="acceptance-' + id + '" '+c3+' value="RejectedQuality"/><label for="r3-' + id + '"></label>';
 
                     return bg;
@@ -1168,7 +1212,7 @@ footprints.addResultTable = function ($holder) {
                 var image_id = data_row.image_id;
 
                 var inputs = {
-                    id: image_id.replace(/:/g, "_"),
+                    id: encodeURIComponent(image_id),
                     evaluation: val
                 };
 
@@ -1195,7 +1239,7 @@ footprints.addResultTable = function ($holder) {
                     cloud_cover: data_row.maxCloudCoverPercentageRate,
                     acq_date: data_row.ObservationDate,
                     img_geom: JSON.stringify(geometry),
-                    wms_url: data_row.wmsUrl,
+                    wmsUrl: data_row.wmsUrl,
                     area: 1,
                     status: val,
                     workcell: aoi_feature_edit.aoi_id
