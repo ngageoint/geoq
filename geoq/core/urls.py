@@ -156,7 +156,7 @@ urlpatterns = patterns('',
         login_required(TeamDelete.as_view()),
         name='team-delete'),
 
-    url(r'^api/workcell-image/(?P<id>\w+)?$', 'core.views.create_workcell_image',
+    url(r'^api/workcell-image/(?P<id>\S+)?$', 'core.views.create_workcell_image',
         name='create-workcell-image'),
     url(r'^api/workcell-image/(?P<id>\w+)/examined/?$', 'core.views.workcell_image_examined',
         name='workcell-image-examined'),
