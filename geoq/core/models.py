@@ -329,6 +329,14 @@ class Job(GeoQBase, Assignment):
         """
 
         obj = {}
+        try:
+            proj = int(self.map.projection[-4:])
+        except ValueError:
+            proj = 3857
+
+        if (proj != 3857):
+            obj['srid'] = proj
+
         if len(self.base_layer) > 0:
             obj["layers"] = [self.base_layer]
 
