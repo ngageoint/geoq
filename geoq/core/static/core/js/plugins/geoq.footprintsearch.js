@@ -34,6 +34,29 @@ footprints.savedFootprintStyle = {color: 'green', weight: 1};
 footprints.rejectedFootprintStyle = {color: 'red', weight: 1};
 footprints.selectedFootprintStyle = {color: 'yellow', weight: 1};
 
+footprints.selectStyle = function(status) {
+    switch(status) {
+        case 'Accepted':
+            return footprints.savedFootprintStyle;
+        case 'RejectedQuality':
+            return footprints.rejectedFootprintStyle;
+        case 'Selected':
+            return footprints.selectedFootprintStyle;
+        default:
+            return footprints.defaultFootprintStyle;
+
+    }
+};
+
+footprints.getLayerGroup = function(status) {
+    switch(status) {
+        case 'RejectedQuality':
+            return footprints.rejected_layer_group;
+        default:
+            return footprints.outline_layer_group;
+    }
+};
+
 footprints.schema = [
     {name: 'image_id', title: 'Id', id: true, cswid: 'identifier', show: 'small-table'},
     {name: 'platformCode', title: 'Pltfrm', filter: 'options', cswid: 'creator', show: 'small-table'},
@@ -129,11 +152,9 @@ footprints.init = function (options) {
     // Set up layers for overlays
     if (footprints.map) {
         footprints.outline_layer_group = L.layerGroup();
-        footprints.outline_layer_group.lastHighlight = undefined;
+        footprints.outline_layer_group.lastHighlight = {'id': undefined, 'status': undefined};
         footprints.outline_layer_group.addTo(footprints.map);
         footprints.rejected_layer_group = L.layerGroup();
-        footprints.rejected_layer_group.lastHighlight = undefined;
-
     }
 
     // finally add any layers that have already been vetted
@@ -542,12 +563,7 @@ footprints.newFeaturesArrived = function (data, url, layer_id, layer_name) {
 
                 for (var i = 0; i <  features.length; i++) {
                     var record = features[i];
-                    var style = footprints.defaultFootprintStyle;
-                    if (record.options && record.options.status === 'Accepted') {
-                        style = footprints.savedFootprintStyle;
-                    } else if (record.options && record.options.status === 'RejectedQuality') {
-                        style = footprints.rejectedFootprintStyle;
-                    }
+                    var style = footprints.selectStyle(record.options.status);
 
                     if (record.uc && record.lc) {
                         // this is a BoundingBox
@@ -653,15 +669,15 @@ footprints.newCSWFeaturesArrived = function (items) {
         footprints.userMessage(count_added + ' new ' + footprints.title + 's added', 'yellow');
     }
 };
-footprints.removeCSWOutline = function (identifier) {
-    _.each(footprints.outline_layer_group.getLayers(), function(layer) {
+footprints.removeCSWOutline = function (identifier,status) {
+    _.each(footprints.getLayerGroup(status).getLayers(), function(layer) {
         if (layer.options.image_id === identifier) {
             // see if there's an image layer as well. If so, remove it
             if (layer.image_layer) {
                 footprints.image_layer_group.removeLayer(layer.image_layer);
             }
 
-            footprints.outline_layer_group.removeLayer(layer);
+            footprints.getLayerGroup(status).removeLayer(layer);
 
             // now remove from table
             var data = footprints.$grid.pqGrid("option","dataModel");
@@ -728,7 +744,7 @@ footprints.replaceCSWOutlineWithLayer = function (identifier) {
                     });
                     if (footprints.image_layer_group == null) {
                         footprints.image_layer_group = L.layerGroup();
-                        footprints.image_layer_group.lastHighlight = undefined;
+                        footprints.image_layer_group.lastHighlight = {'id': undefined, 'status': undefined};
                         footprints.image_layer_group.addTo(footprints.map);
                     }
                     footprints.image_layer_group.addLayer(newlayer);
@@ -1287,26 +1303,26 @@ footprints.addResultTable = function ($holder) {
         };
         obj.rowClick = function( evt, ui ) {
             var imageid = ui.dataModel.data[ui.rowIndx].image_id;
-            var last_index = footprints.outline_layer_group.lastHighlight;
-            var outlinelayers = footprints.outline_layer_group.getLayers();
+            var image_status = ui.dataModel.data[ui.rowIndx].status;
 
             // change back previous selection if necessary
-            if ( footprints.outline_layer_group.lastHighlight ) {
-                var player = outlinelayers.filter(function(e) {return e.options.image_id == footprints.outline_layer_group.lastHighlight})[0];
+            if ( footprints.outline_layer_group.lastHighlight.id ) {
+                var pastlayers = footprints.getLayerGroup(footprints.outline_layer_group.lastHighlight.status).getLayers();
+                var player = pastlayers.filter(function(e) {return e.options.image_id == footprints.outline_layer_group.lastHighlight.id})[0];
                 if (player) {
-                    player.setStyle(footprints.defaultFootprintStyle);
+                    player.setStyle(footprints.selectStyle(player.options.status));
                     player.bringToBack();
                 }
             }
 
             // change the color of the selected image
-            var layer = outlinelayers.filter(function(e) { return e.options.image_id == imageid; })[0];
+            var newlayers = footprints.getLayerGroup(image_status).getLayers();
+            var layer = newlayers.filter(function(e) { return e.options.image_id == imageid; })[0];
             if (layer) {
-                layer.setStyle(footprints.selectedFootprintStyle);
+                layer.setStyle(footprints.selectStyle('Selected'));
                 layer.bringToFront();
+                footprints.outline_layer_group.lastHighlight = {'id': imageid, 'status': layer.options.status};
             }
-
-            footprints.outline_layer_group.lastHighlight = imageid;
         };
     }
     obj.colModel = obj.colModel.concat(columns);
