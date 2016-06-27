@@ -27,7 +27,7 @@ footprints.$error_div = null;
 
 footprints.outline_layer_group = null;
 footprints.image_layer_group = null;
-footprints.border_layer_group = null;
+footprints.rejected_layer_group = null;
 
 footprints.defaultFootprintStyle = {color: 'blue', weight: 1};
 footprints.savedFootprintStyle = {color: 'green', weight: 1};
@@ -131,6 +131,9 @@ footprints.init = function (options) {
         footprints.outline_layer_group = L.layerGroup();
         footprints.outline_layer_group.lastHighlight = undefined;
         footprints.outline_layer_group.addTo(footprints.map);
+        footprints.rejected_layer_group = L.layerGroup();
+        footprints.rejected_layer_group.lastHighlight = undefined;
+
     }
 
     // finally add any layers that have already been vetted
@@ -539,19 +542,31 @@ footprints.newFeaturesArrived = function (data, url, layer_id, layer_name) {
 
                 for (var i = 0; i <  features.length; i++) {
                     var record = features[i];
+                    var style = footprints.defaultFootprintStyle;
+                    if (record.options && record.options.status === 'Accepted') {
+                        style = footprints.savedFootprintStyle;
+                    } else if (record.options && record.options.status === 'RejectedQuality') {
+                        style = footprints.rejectedFootprintStyle;
+                    }
 
                     if (record.uc && record.lc) {
                         // this is a BoundingBox
-                        wms = ogc_csw.createRectangleFromBoundingBox(record, footprints.savedFootprintStyle);
+                        wms = ogc_csw.createRectangleFromBoundingBox(record, style);
                     } else if (record.options.geometry) {
-                        wms = ogc_csw.createPolygonFromGeometry(record.options.geometry);
+                        wms = ogc_csw.createPolygonFromGeometry(record.options.geometry, record.options, style);
                     } else {
                         console.error("No coordinates found. Skipping this layer");
                         break;
                     }
-                    wms.bindPopup(ogc_csw.createLayerPopup(record.layerName, record.options));
+                    wms.bindPopup(ogc_csw.createLayerPopup(record.options.image_id, record.options));
 
-                    footprints.outline_layer_group.addLayer(wms);
+                    if (style == footprints.rejectedFootprintStyle) {
+                        footprints.rejected_layer_group.addLayer(wms);
+                    }
+                    else {
+                        footprints.outline_layer_group.addLayer(wms);
+                    }
+
 
                     footprints.features.push(feature.options);
                     count_added++;
@@ -581,10 +596,6 @@ footprints.newCSWFeaturesArrived = function (items) {
 
     var count_added = 0;
     if (items.length > 0) {
-        if (footprints.border_layer_group == null) {
-            footprints.border_layer_group = L.layerGroup();
-        }
-
         _.each(items, function(layer) {
             var found = false;
             var record = ogc_csw.parseCSWRecord(layer);
@@ -980,6 +991,13 @@ footprints.updateFootprintFilteredResults = function (options) {
 
     var workcellGeojson = footprints.workcellGeojson;
 
+    // check whether to show rejected outlines or not
+    if (footprints.filters.previously_rejected && !footprints.map.hasLayer(footprints.rejected_layer_group)) {
+        footprints.map.addLayer(footprints.rejected_layer_group);
+    } else if (!footprints.filters.previously_rejected && footprints.map.hasLayer(footprints.rejected_layer_group)) {
+        footprints.map.removeLayer(footprints.rejected_layer_group);
+    }
+
     //Check every feature against filters, then exclude features that don't match
     for (var i = 0; i < footprints.features.length; i++) {
         var matched = true;
@@ -1244,6 +1262,14 @@ footprints.addResultTable = function ($holder) {
                     status: val,
                     workcell: aoi_feature_edit.aoi_id
                 };
+
+                // find that layer in footprints.features and update
+                for (var i = 0; i < footprints.features.length; i++) {
+                    if (data_row.image_id == footprints.features[i].image_id) {
+                        footprints.features[i].status = val;
+                        break;
+                    }
+                }
 
                 console.log(url);
                 $.ajax({

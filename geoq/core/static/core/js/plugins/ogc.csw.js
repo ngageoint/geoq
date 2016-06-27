@@ -170,7 +170,7 @@ ogc_csw.createPolygonFromCoordinates = function(record, style) {
     return outlineLayer;
 };
 
-ogc_csw.createPolygonFromGeometry = function(geometry, style) {
+ogc_csw.createPolygonFromGeometry = function(geometry, options, style) {
     // create a polygon from a geometry with a rings array
     var outlineLayer = {};
     try {
@@ -182,6 +182,7 @@ ogc_csw.createPolygonFromGeometry = function(geometry, style) {
                 latlonArray.push(latlng);
             }
             outlineLayer = L.polygon(latlonArray, style);
+            $.extend(outlineLayer.options, options);
         }
     } catch (e) {
         console.error(e);
