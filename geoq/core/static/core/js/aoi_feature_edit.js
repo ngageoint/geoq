@@ -706,7 +706,14 @@ aoi_feature_edit.map_init = function (map, bounds) {
            return (l.type!="Social Networking Link" && l.type!="Web Data Link")
         });
         _.each(layers, function (layer_data) {
-            var built_layer = leaflet_helper.layer_conversion(layer_data, map);
+            var built_layer;
+
+            // only load layers if we're actually going to display them in the panel
+            if (site_settings.hidden_panels && site_settings.hidden_panels[aoi_feature_edit.status]) {
+                if ($.inArray("Geo Layers for Map", site_settings.hidden_panels[aoi_feature_edit.status]) < 0) {
+                    built_layer = leaflet_helper.layer_conversion(layer_data, map);
+                }
+            }
             if (! built_layer) {
                 // skip this layer and go to next
                 log.error("Tried to add a layer, but didn't work: "+layer_data.url)
