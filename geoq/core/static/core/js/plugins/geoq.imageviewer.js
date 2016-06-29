@@ -26,10 +26,10 @@ imageviewer.displayed_layers = {};
 
 imageviewer.schema = [
     {name: 'id', title: 'id', filter: 'hidden', show: 'small-table', index: 5, type: 'int', showSizeMultiplier: 0 },
-    {name: 'url', title: 'URL', filter: 'hidden', type: 'string'},
-    {name: 'image_id', title: 'ID', filter: 'options', show: 'small-table', index: 6, type: 'string', showSizeMultiplier: 3},
+    {name: 'wmsUrl', title: 'URL', filter: 'hidden', type: 'string'},
+    {name: 'image_id', title: 'ID', filter: 'options', show: 'small-table', index: 6, type: 'string', showSizeMultiplier: 6},
     {name: 'sensor', title: 'Sensor', filter: 'options', show: 'small-table', index: 1, type:'string',showSizeMultiplier: 2},
-    {name: 'acq_date',title: 'Date Taken',filter: 'options', show: 'small-table', index: 2, type:'date',showSizeMultiplier: 2},
+    {name: 'acq_date',title: 'Date Taken',filter: 'datetime', show: 'small-table', index: 2, type:'date',showSizeMultiplier: 4},
     {name: 'status', title: 'Done', filter: 'checkbox', show: 'small-table', index:3, type:'bool',showSizeMultiplier: 1}
 ];
 
@@ -91,7 +91,8 @@ imageviewer.init = function (options) {
 };
 
 imageviewer.addInitialImages = function () {
-    _.each(aoi_feature_edit.workcell_images, function(data_row){
+    var accepted_images = _.where(aoi_feature_edit.workcell_images, {status: 'Accepted'});
+    _.each(accepted_images, function(data_row){
         var layer_id = data_row.sensor;
         var geo_json = JSON.parse(data_row.img_geom);
         var rings = [];
@@ -156,7 +157,7 @@ imageviewer.userMessage = function (text, color) {
 imageviewer.updateImageList = function(options) {
     var width = 280;
     if (aoi_feature_edit.workcell_images && aoi_feature_edit.workcell_images.length) {
-        var matched_list = aoi_feature_edit.workcell_images;
+        var matched_list = _.where(aoi_feature_edit.workcell_images,{status: "Accepted"});
     } else {
         return [];
     }
@@ -383,8 +384,9 @@ imageviewer.addResultTable = function ($holder) {
     //    width -= 40;
     //}
     var obj = {
-        width: width, height: 180, editable: false, resizeable: true,
-        flexHeight: true, topVisible: false, bottomVisible: false, flexWidth: true, numberCell: false
+        width: width, height: 180, editable: false, resizeable: false,
+        flexHeight: true, topVisible: false, bottomVisible: false, numberCell: false,
+        scrollModel: {horizontal: true, autoFit: false, lastColumn: 'none'}
     };
 
 
@@ -403,10 +405,10 @@ imageviewer.addResultTable = function ($holder) {
         minWidth: cell_width,
         render: function (ui) {
             var rowData = ui.rowData;
-            var imid = rowData["image_id"] || "unknown";
+            var url = rowData["wmsUrl"] || undefined;
             var id = rowData["id"];
 
-            return ("<input type='checkbox' id='show-checkbox-" + id + "' onclick='imageviewer.displayImage(\"" + id + "\", \"" + imid + "\")' />");
+            return ("<input type='checkbox' id='show-checkbox-" + id + "' onclick='imageviewer.displayImage(\"" + id + "\", \"" + url + "\")' />");
         }
     });
     column_count++;
@@ -457,6 +459,14 @@ imageviewer.addResultTable = function ($holder) {
                     dataIndx: schema_item.name,
                     sortable: false
                 });
+            } else if (schema_item.filter && schema_item.filter == 'datetime') {
+                // TODO: create datetime filter object
+                columns.push({
+                    title: schema_item.title || "Date",
+                    dataIndx: schema_item.name,
+                    width: cell_width * schema_item.showSizeMultiplier,
+                    minWidth: cell_width * schema_item.showSizeMultiplier
+                });
             }
 
             column_count += schema_item.showSizeMultiplier || 1;
@@ -464,10 +474,10 @@ imageviewer.addResultTable = function ($holder) {
     });
 
     //Shrink them to fit width, apply showSizeMultiplier
-    _.each(columns, function (column) {
-        column.width = parseInt((width / column_count) - 10);
-        if (column.showSizeMultiplier) column.width *= column.showSizeMultiplier;
-    });
+    //_.each(columns, function (column) {
+    //    column.width = parseInt((width / column_count) - 10);
+    //    if (column.showSizeMultiplier) column.width *= column.showSizeMultiplier;
+    //});
 
     //If featureSelectFunction exists as a function, have a checkbox
     obj.colModel = [];
@@ -587,39 +597,40 @@ imageviewer.finishImage = function(id) {
     });
 };
 
-imageviewer.displayImage = function(id, imageId) {
-    var showImage = $('#show-checkbox-'+id).is(':checked');
-
-    if (site_settings.image_server && site_settings.image_server["url"]) {
-        var imageServer = site_settings.image_server["url"];
-    } else {
-        // let them know that we weren't able to find a server to retrieve images from
-        console.log("No imagery server available, so unable to create layer");
-        console.log("Look at the site_settings.image_server setting");
+imageviewer.displayImage = function(id, url) {
+    if (! url) {
         return;
     }
-
-    //TODO: figure out how we translate imageId to a layerId
-    var layerId = imageId;
-
+    var showImage = $('#show-checkbox-'+id).is(':checked');
 
     if (showImage) {
         // if a layer for this image has already been created, then display it again.
         // else go ahead and create a WMS layer using a layer name we get from somewhere...
         var layerOptions = {};
-        if (imageviewer.displayed_layers[layerId]) {
-            imageviewer.displayed_layers[layerId].opacity = 1.0;
+        if (imageviewer.displayed_layers[id]) {
+            imageviewer.displayed_layers[id].setOpacity(1.0);
         } else {
-            var url = imageServer + layerId;
-            var outputLayer = new L.tileLayer.wms(url, layerOptions);
-            outputLayer.addTo(imageviewer.map);
-            imageviewer.displayed_layers[layerId] = outputLayer;
+            var parser = document.createElement('a');
+            parser.href = url;
+            var search = parser.search.substring(1);
+            var parts = JSON.parse('{"' + decodeURI(search).replace(/"/g, '\\"').replace(/&amp;/g, '&').replace(/&/g, '","').replace(/=/g,'":"') + '"}');
+            if (parts.service === 'WMS') {
+                newlayer = L.tileLayer.wms(parser.protocol + "//" + parser.host + parser.pathname, {
+                    layers: parts.layers,
+                    format: 'image/png',
+                    transparent: true,
+                    attribution: parser.host
+                });
+
+                newlayer.addTo(imageviewer.map);
+                imageviewer.displayed_layers[id] = newlayer;
+            }
         }
 
     } else {
         // make sure we have a handle to the layer
-        if (imageviewer.displayed_layers[layerId]) {
-            imageviewer.displayed_layers[layerId].opacity = 0.0;
+        if (imageviewer.displayed_layers[id]) {
+            imageviewer.displayed_layers[id].setOpacity(0.0);
         }
     }
 };
