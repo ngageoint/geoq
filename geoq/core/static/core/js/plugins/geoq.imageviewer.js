@@ -26,7 +26,8 @@ imageviewer.displayed_layers = {};
 
 imageviewer.schema = [
     {name: 'id', title: 'id', filter: 'hidden', show: 'small-table', index: 5, type: 'int', showSizeMultiplier: 0 },
-    {name: 'image_id', title: 'image_id', filter: 'hidden', show: 'small-table', index: 6, type: 'string', showSizeMultiplier: 0},
+    {name: 'url', title: 'URL', filter: 'hidden', type: 'string'},
+    {name: 'image_id', title: 'ID', filter: 'options', show: 'small-table', index: 6, type: 'string', showSizeMultiplier: 3},
     {name: 'sensor', title: 'Sensor', filter: 'options', show: 'small-table', index: 1, type:'string',showSizeMultiplier: 2},
     {name: 'acq_date',title: 'Date Taken',filter: 'options', show: 'small-table', index: 2, type:'date',showSizeMultiplier: 2},
     {name: 'status', title: 'Done', filter: 'checkbox', show: 'small-table', index:3, type:'bool',showSizeMultiplier: 1}
@@ -382,7 +383,7 @@ imageviewer.addResultTable = function ($holder) {
     //    width -= 40;
     //}
     var obj = {
-        width: width, height: 180, editable: false,
+        width: width, height: 180, editable: false, resizeable: true,
         flexHeight: true, topVisible: false, bottomVisible: false, flexWidth: true, numberCell: false
     };
 
@@ -390,6 +391,7 @@ imageviewer.addResultTable = function ($holder) {
     //Pull out just the columns that will be shown
     var columns = [];
     var column_count = 0;
+    var cell_width = 25;
 
     // Add a 'Load' checkbox to each image
     columns.push({
@@ -397,8 +399,8 @@ imageviewer.addResultTable = function ($holder) {
         type: 'checkBoxSelection',
         align: "center",
         sortable: false,
-        width: 25,
-        minWidth: 25,
+        width: cell_width,
+        minWidth: cell_width,
         render: function (ui) {
             var rowData = ui.rowData;
             var imid = rowData["image_id"] || "unknown";
@@ -416,7 +418,8 @@ imageviewer.addResultTable = function ($holder) {
                     title: schema_item.title || schema_item.name,
                     dataType: 'string',
                     dataIndx: schema_item.name,
-                    showSizeMultiplier: schema_item.showSizeMultiplier
+                    width: cell_width * schema_item.showSizeMultiplier,
+                    minWidth: cell_width * schema_item.showSizeMultiplier
                 });
             }
             else if (schema_item.filter && schema_item.filter == 'checkbox') {
@@ -425,10 +428,9 @@ imageviewer.addResultTable = function ($holder) {
                     type: 'checkBoxSelection',
                     dataIndx: schema_item.name,
                     cls: 'checkboxColumn',
-                    showSizeMultiplier: schema_item.showSizeMultiplier,
                     align: "center",
                     sortable: false,
-                    width:25,
+                    width:cell_width * schema_item.showSizeMultiplier,
                     render: function (ui) {
                         try {
                             var rowData = ui.rowData, dataIndx = ui.dataIndx;
