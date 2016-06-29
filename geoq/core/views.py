@@ -31,6 +31,8 @@ from guardian.decorators import permission_required
 from kml_view import *
 from shape_view import *
 
+from django.views.generic.detail import SingleObjectTemplateResponseMixin
+from django.views.generic.edit import ModelFormMixin, ProcessFormView
 
 class Dashboard(TemplateView):
 
@@ -466,7 +468,6 @@ class CreateProjectView(CreateView):
         self.object.save()
         return HttpResponseRedirect(self.get_success_url())
 
-
 class CreateJobView(CreateView):
     """
     Create view that adds the user that created the job as a reviewer.
@@ -508,6 +509,62 @@ class UpdateJobView(UpdateView):
         kwargs = super(UpdateJobView, self).get_form_kwargs()
         kwargs['project'] = kwargs['instance'].project_id if hasattr(kwargs['instance'],'project_id') else 0
         return kwargs
+
+#This class is used for the ExportJobView
+class CreateUpdateView(SingleObjectTemplateResponseMixin, ModelFormMixin,
+                       ProcessFormView):
+
+    def get_object(self, queryset=None):
+        try:
+            return super(CreateUpdateView, self).get_object(queryset)
+        except AttributeError:
+            return None
+
+
+    def get(self, request, *args, **kwargs):
+        self.object = self.get_object()
+        return super(CreateUpdateView, self).get(request, *args, **kwargs)
+
+
+    def post(self, request, *args, **kwargs):
+        self.object = self.get_object()
+        return super(CreateUpdateView, self).post(request, *args, **kwargs)
+
+class ExportJobView(CreateUpdateView):
+    """
+    Export Job
+    """
+
+    def get_form_kwargs(self):
+        kwargs = super(ExportJobView, self).get_form_kwargs()
+        kwargs['project'] = self.request.GET['project'] if 'project' in self.request.GET else 0
+       # kwargs['project'] = kwargs['instance'].project_id if hasattr(kwargs['instance'],'project_id') else 0
+
+        return kwargs
+
+    def form_valid(self, form):
+        """
+        If the form is valid, save the associated model and add the current user as a reviewer.
+        """
+        obj = form.save(commit=False)
+        obj.pk = None
+        self.object = form.save()
+        self.object.reviewers.add(self.request.user)
+
+        # Create a new map for each job
+        map = Map(**{'title': self.object.name + ' Map', 'description': 'map for %s project' % self.object.name})
+        map.save()
+        n = 2
+        for layer in form.cleaned_data['layers']:
+            map_layer = MapLayer(**{'map': map, 'layer': layer, 'stack_order': n})
+            map_layer.save()
+            n += 1
+
+        self.object.map = map
+        self.object.save()
+
+        return HttpResponseRedirect(self.get_success_url())
+
 
 class MapEditView(DetailView):
     http_method_names = ['get']
