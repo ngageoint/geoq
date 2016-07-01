@@ -85,6 +85,7 @@ SERVICE_TYPES = (
                 ('Yandex', 'Yandex'),
                 ('Leaflet Tile Layer', 'Leaflet Tile Layer'),
                 ('MediaQ', 'MediaQ'),
+                ('NWS Weather Alerts', 'NWS Weather Alerts'),
                 #('MapBox', 'MapBox'),
                 #('TileServer','TileServer'),
                 #('GetCapabilities', 'GetCapabilities'),
@@ -104,17 +105,17 @@ class Layer(models.Model):
     A layer object that can be added to any map.
     """
 
-    name = models.CharField(max_length=200, help_text='Name that will be displayed within GeoQ')
-    type = models.CharField(choices=SERVICE_TYPES, max_length=75)
-    url = models.CharField(help_text='URL of service. If WMS or ESRI, can be any valid URL. Otherwise, the URL will require a local proxy', max_length=500)
-    layer = models.CharField(max_length=800, null=True, blank=True, help_text='Layer names can sometimes be comma-separated, and are not needed for data layers (KML, GeoRSS, GeoJSON...)')
+    name = models.CharField(max_length=200, help_text='Name that will be displayed within GeoQ.')
+    type = models.CharField(choices=SERVICE_TYPES, max_length=75, help_text='Type of service for the new layer.')
+    url = models.CharField(help_text='URL of service. If WMS or ESRI, can be any valid URL. Otherwise, the URL will require a local proxy.', max_length=500)
+    layer = models.CharField(max_length=800, null=True, blank=True, help_text='Layer names can sometimes be comma-separated, and are not needed for data layers (KML, GeoRSS, GeoJSON...).')
     image_format = models.CharField(null=True, blank=True, choices=IMAGE_FORMATS, max_length=75, help_text='The MIME type of the image format to use for tiles on WMS layers (image/png, image/jpeg image/gif...). Double check that the server exposes this exactly - some servers push png instead of image/png.')
-    styles = models.CharField(null=True, blank=True, max_length=200, help_text='The name of a style to use for this layer (only useful for WMS layers if the server exposes it.)')
+    styles = models.CharField(null=True, blank=True, max_length=200, help_text='The name of a style to use for this layer (only useful for WMS layers if the server exposes it).')
     transparent = models.BooleanField(default=True, help_text='If WMS or overlay, should the tiles be transparent where possible?')
-    refreshrate = models.PositiveIntegerField(blank=True, null=True, verbose_name="Layer Refresh Rate", help_text='Layer refresh rate in seconds for vector/data layers (will not refresh WMS layers)')
-    description = models.TextField(max_length=800, null=True, blank=True, help_text='Text to show in layer chooser, please be descriptive - this will soon be searchable')
+    refreshrate = models.PositiveIntegerField(blank=True, null=True, verbose_name="Layer Refresh Rate", help_text='Layer refresh rate in seconds for vector/data layers (will not refresh WMS layers).')
+    description = models.TextField(max_length=800, null=True, blank=True, help_text='Text to show in layer chooser, please be descriptive - this will soon be searchable.')
     attribution = models.CharField(max_length=200, null=True, blank=True, help_text="Attribution from layers to the map display (will show in bottom of map when layer is visible).")
-    token = models.CharField(max_length=400, null=True, blank=True, help_text='Authentication token, if required (usually only for secure layer servers)')
+    token = models.CharField(max_length=400, null=True, blank=True, help_text='Authentication token, if required (usually only for secure layer servers).')
 
     ## Advanced layer options
     objects = models.GeoManager()
