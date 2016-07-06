@@ -122,21 +122,21 @@ class Layer(models.Model):
     extent = models.PolygonField(null=True, blank=True, help_text='Extent of the layer.')
     layer_parsing_function = models.CharField(max_length=100, blank=True, null=True,  help_text='Advanced - The javascript function used to parse a data service (GeoJSON, GeoRSS, KML), needs to be an internally known parser. Contact an admin if you need data parsed in a new way.')
     enable_identify = models.BooleanField(default=False, help_text='Advanced - Allow user to click map to query layer for details. The map server must support queries for this layer.')
-    info_format = models.CharField(max_length=75, null=True, blank=True, choices=INFO_FORMATS, help_text='Advanced - what format the server returns for an WMS-I query')
+    info_format = models.CharField(max_length=75, null=True, blank=True, choices=INFO_FORMATS, help_text='Advanced - what format the server returns for an WMS-I query.')
     root_field = models.CharField(max_length=100, null=True, blank=True, help_text='Advanced - For WMS-I (queryable) layers, the root field returned by server. Leave blank for default (will usually be "FIELDS" in returned XML).')
     fields_to_show = models.CharField(max_length=200, null=True, blank=True, help_text='Fields to show when someone uses the identify tool to click on the layer. Leave blank for all.')
-    downloadableLink = models.URLField(max_length=400, null=True, blank=True, help_text='URL of link to supporting tool (such as a KML document that will be shown as a download button)')
-    layer_params = JSONField(null=True, blank=True, help_text='JSON key/value pairs to be sent to the web service.  ex: {"crs":"urn:ogc:def:crs:EPSG::4326"}')
+    downloadableLink = models.URLField(max_length=400, null=True, blank=True, help_text='URL of link to supporting tool (such as a KML document that will be shown as a download button).')
+    layer_params = JSONField(null=True, blank=True, help_text='JSON key/value pairs to be sent to the web service. ex: {"crs":"urn:ogc:def:crs:EPSG::4326"}')
     dynamic_params = JSONField(null=True, blank=True, help_text='URL Variables that may be modified by the analyst. ex: "date"')
-    spatial_reference = models.CharField(max_length=32, blank=True, null=True, default="EPSG:4326", help_text='The spatial reference of the service.  Should be in ESPG:XXXX format.')
+    spatial_reference = models.CharField(max_length=32, blank=True, null=True, default="EPSG:4326", help_text='The spatial reference of the service. Should be in ESPG:XXXX format.')
     constraints = models.TextField(null=True, blank=True, help_text='Constrain layer data displayed to certain feature types')
-    disabled = models.BooleanField(default=False, blank=True, help_text="If unchecked, Don't show this layer when listing all layers")
-    layer_info_link = models.URLField(null=True, blank=True, help_text='URL of info about the service, or a help doc or something', max_length=500)
+    disabled = models.BooleanField(default=False, blank=True, help_text="If unchecked, don't show this layer when listing all layers.")
+    layer_info_link = models.URLField(null=True, blank=True, help_text='URL of info about the service, or a help doc or something.', max_length=500)
     created_at = models.DateTimeField(auto_now_add=True, null=True)
     updated_at = models.DateTimeField(auto_now_add=True, null=True)
 
     ## Primarily for http://trac.osgeo.org/openlayers/wiki/OpenLayersOptimization
-    additional_domains = models.TextField(null=True, blank=True, help_text='Semicolon seperated list of additional domains for the layer. Only used if you want to cycle through domains for load-balancing')
+    additional_domains = models.TextField(null=True, blank=True, help_text='Semicolon seperated list of additional domains for the layer. Only used if you want to cycle through domains for load-balancing.')
 
     def __unicode__(self):
         return '{0}'.format(self.name)

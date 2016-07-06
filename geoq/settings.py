@@ -138,6 +138,11 @@ LEAFLET_CONFIG = {
             'css': [],
             'js': [STATIC_URL + 'leaflet/Leaflet.MediaQ.js'],
             'repo': 'https://github.com/stephenrjones/Leaflet.MediaQ'
+        },
+        'AutoResizeSVG': {
+            'css': [],
+            'js': [STATIC_URL + 'leaflet/marker-resize-svg.js'],
+            'repo': 'https://github.com/john-kilgo/L.Marker.AutoResizeSVG'
         }
     }
 }
