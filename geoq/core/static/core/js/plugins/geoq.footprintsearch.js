@@ -196,6 +196,7 @@ footprints.buildAccordionPanel = function () {
     if (footprints.showRejectOption) footprints.addRejectButton(footprints.$filter_holder);
 
     footprints.addResultTable(footprints.$filter_holder);
+    footprints.addHideButton(footprints.$filter_holder);
 };
 footprints.clamp = function (num, min, max) {
     return num < min ? min : (num > max ? max : num);
@@ -1355,7 +1356,7 @@ footprints.getFeatureFromTable = function (rowData) {
 };
 
 footprints.addWorkcellBounds = function ($holder) {
-    var $div = $("<div><b>Show items in workcell:</b> </div>")
+    var $div = $("<div><b>Only show items in workcell:</b> </div>")
         .appendTo($holder);
     $('<input>')
         .attr({type: 'checkbox', value: 'in-geo', checked: true})
@@ -1379,6 +1380,27 @@ footprints.addRejectButton = function ($holder) {
             footprints.updateFootprintFilteredResults();
         })
         .appendTo($div);
+};
+footprints.addHideButton = function ($holder) {
+    var $div = $("<div><b>Hide all footprints:</b></div>")
+        .appendTo($holder);
+    $('<input>')
+        .attr({type: 'checkbox', value: 'hide_footprints', checked: false})
+        .css({fontSize: '12px', padding: '2px'})
+        .on('change', function () {
+            var val = $(this).attr('checked');
+            footprints.hideFootprints(!!val);
+        })
+        .appendTo($div);
+};
+footprints.hideFootprints = function (hide) {
+    footprints.outline_layer_group.eachLayer( function(layer) {
+        if (hide) {
+            layer.setStyle({fillOpacity:0, opacity: 0});
+        } else {
+            layer.setStyle({fillOpacity:.5, opacity:.6});
+        }
+    })
 };
 footprints.addFilterPrompts = function ($content) {
     _.each(footprints.promptFields || [], function (prompt_item) {
