@@ -35,8 +35,8 @@ L.NWSIconsLayer = L.GeoJSON.extend({
         //query_link: "rectangle_query?swlat={SWLAT}&swlng={SWLNG}&nelat={NELAT}&nelng={NELNG}",
         //metadata_link: "video_metadata?vid={VID}",
         key: "PUT_KEY_HERE",
-        icon: new L.Icon.Default(),
-        pointToLayer: this.iconCallback,
+        //icon: new L.Icon.Default(),
+        //pointToLayer: this.iconCallback,
         iconPath: '/static/leaflet/NWSIcons/'
     },
 
@@ -72,12 +72,16 @@ L.NWSIconsLayer = L.GeoJSON.extend({
         this._layers = {}; // Icons to add to map
         this._map = map; // Our map
         if (this._map) { // Current bounds of map, bounds are pixel coordinates (rectangular)
+            
             this._bounds = map.getBounds();
             var ourmap = this._map;
-            this.mediaqLayerGroup.addTo(this._map);
+            
+            this.NWSLayerGroup.addTo(this._map);
+            
             this._map.on('moveend', function() {
                 this._bounds = ourmap.getBounds();
             });
+        
         }
 
         if (load) {
@@ -89,21 +93,23 @@ L.NWSIconsLayer = L.GeoJSON.extend({
         if (options === undefined) options = this.options;
 
         if (! options.url ) {
-            log.error("No url set for MediaQ server");
+            log.error("No URL set for NWS Cap messages");
+            console.error("No URL set for NWS Cap messages");
             return;
         }
 
+        // Todo: URL
         var proxiedURL = L.MediaQLayer.buildURL(this.options.url+this.options.query_link, this._bounds);
 
         $.ajax({
             type: 'GET',
             url: proxiedURL,
-            headers: {
+            //headers: {
                 //'X-API-KEY': this.options.key
-            },
-            dataType: 'json',
+            //},
+            dataType: 'xml',
             success: cb,
-            error: this.geojson_error
+            error: this.nwscap_error
         });
     },
     // On add of the layer
@@ -120,11 +126,11 @@ L.NWSIconsLayer = L.GeoJSON.extend({
         this.addTo(this._map);
     },
     // If an error occurs:
-    geojson_error: function (resultobj){
+    nwscap_error: function (resultobj){
         log.error ("A JSON layer was requested, but no valid response was received from the server, result:", resultobj);
     },
     // Where icons/paths are stored
-    mediaqLayerGroup: L.layerGroup(),
+    NWSLayerGroup: L.layerGroup(),
     // IDs of layers??
     layer_ids: {}
 
@@ -158,9 +164,9 @@ L.NWSIconsLayer.extend({
 
         layer.addData(data);
     },
-
+    // Builds URL based on bounds, which we may not have access to in FEMA api
     buildURL: function( url, bounds ) {
-        if (! bounds) {
+        /*if (! bounds) {
             return undefined;
         }
 
@@ -177,7 +183,7 @@ L.NWSIconsLayer.extend({
         var url = url.replace(/{[^{}]+}/g, function(k) {
             return params[k.replace(/[{}]+/g, "")] || "";
         });
-
+        */
         return leaflet_helper.proxify(url);
     },
     // Make icon and place in marker.
@@ -203,7 +209,7 @@ L.NWSIconsLayer.extend({
         return L.rotatedMarker(latlng, {icon: icon});
     },
     // Polygon Style
-    polygonStyleBuilderCallback: function(feature) {
+    /*polygonStyleBuilderCallback: function(feature) {
         var polyFillColor = '#ff0000';
 
         var style = {
@@ -214,10 +220,10 @@ L.NWSIconsLayer.extend({
             fillColor: polyFillColor};
 
         return style;
-    },
+    },*/
     // Assign popups to each feature
     onEachFeature: function (feature, layer, layerConfig, mediaqOptions) {
-        if (feature.properties) {
+        /*if (feature.properties) {
             var popupContent = "";
             if (feature.properties.popupContent) {
                 popupContent = feature.properties.popupContent;
@@ -249,11 +255,10 @@ L.NWSIconsLayer.extend({
             if (feature.properties.heading && parseInt(feature.properties.heading) && layer.options){
                 layer.options.angle = parseInt(feature.properties.heading);
             }
-        }
-
+        }*/
     },
     // Path of video
-    displayHidePath: function(vid, queryurl, key) {
+    /* displayHidePath: function(vid, queryurl, key) {
         var layer_ids = this.prototype.layer_ids;
         var ourlayergroup = this.prototype.mediaqLayerGroup;
 
@@ -301,9 +306,9 @@ L.NWSIconsLayer.extend({
             success: cb,
             error: error
         });
-    },
+    },*/
     // Add links to popup (not needed)
-    addLinksToPopup: function (layerName,id,useMove,useHide,useDrop) {
+    /*addLinksToPopup: function (layerName,id,useMove,useHide,useDrop) {
 
         var spanLink = "<span class='hide layer-name-hint'>"+layerName+"</span>";
         spanLink += "<span class='hide feature-id-hint'>"+id+"</span>";
@@ -321,13 +326,13 @@ L.NWSIconsLayer.extend({
 
         return output;
 
-    },
+    },*/
     // Rewrite to clean once data received
     clean: function (text) {
         return jQuery("<div>"+text+"</div>").text() || "";
     },
     // ??????
-    getLatLngs: function (json) {
+    getLatLngs: function (xml) {
         var el = xml.getElementsByTagName('coordinates');
         var coords = [];
         for (var j = 0; j < el.length; j++) {
