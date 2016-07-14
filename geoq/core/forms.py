@@ -15,7 +15,6 @@ from django.contrib.admin.widgets import FilteredSelectMultiple
 
 no_style = [RadioInput, RadioSelect, CheckboxInput, CheckboxSelectMultiple]
 
-
 class StyledModelForm(forms.ModelForm):
     """
     Adds the span5 (in reference to the Twitter Bootstrap element)
@@ -78,9 +77,10 @@ class ItemSelectWidget(forms.SelectMultiple):
             return u'\n'.join(output)
 
 class JobForm(StyledModelForm):
+
     analysts = forms.ModelMultipleChoiceField(
         queryset = User.objects.all(),
-        widget = ItemSelectWidget(option_title_field='email')
+
     )
     layers = forms.ModelMultipleChoiceField(
         queryset = Layer.objects.all(),
@@ -110,6 +110,9 @@ class JobForm(StyledModelForm):
             # If we're creating Job, we don't have a map
             if self.instance.map == None:
                 return;
+
+            # if AOI:
+            #     queryset = AOI.objects.filter(job=kwargs.get('pk')),
 
             self.fields['analysts'].initial = kwargs['data'].getlist('analysts',None)
             # must be a better way, but figure out the layers to display
@@ -142,73 +145,11 @@ class JobForm(StyledModelForm):
             if hasattr(kwargs['instance'],'map') and kwargs['instance'].map and kwargs['instance'].map.layers:
                 self.fields['layers'].initial = [x.layer_id for x in kwargs['instance'].map.layers]
 
-
 # #form extending original job form to export old job data into new job
-# class ExportJobForm(StyledModelForm):
-#     analysts = forms.ModelMultipleChoiceField(
-#         queryset=User.objects.all(),
-#         widget=ItemSelectWidget(option_title_field='email')
-#     )
-#     layers = forms.ModelMultipleChoiceField(
-#         queryset=Layer.objects.all(),
-#         widget=ItemSelectWidget()
-#     )
-#
-#     class Meta:
-#
-#         fields = ('name', 'description', 'project', 'analysts',
-#                   'teams', 'reviewers', 'feature_types', 'required_courses', 'tags', 'layers', 'editor',
-#                   'editable_layer')
-#         model = Job
-#
-#     def __init__(self, project, *args, **kwargs):
-#         super(ExportJobForm, self).__init__(*args, **kwargs)
-#
-#         def remove_anonymous(field):
-#             """ Removes anonymous from choices in form. """
-#             field_var = self.fields[field].queryset.exclude(id=-1)
-#             self.fields[field].queryset = field_var
-#             return None
-#
-#         remove_anonymous('reviewers')
-#         remove_anonymous('analysts')
-#         self.fields['project'].initial = project
-#
-#         if 'data' in kwargs:
-#             # If we're creating Job, we don't have a map
-#             if self.instance.map == None:
-#                 return;
-#
-#             self.fields['analysts'].initial = kwargs['data'].getlist('analysts', None)
-#             # must be a better way, but figure out the layers to display
-#             layers_selected = set(kwargs['data']).getlist('layers', None)
-#             layers_current_int = MapLayer.objects.filter(map=self.instance.map.id).values_list('layer_id', flat=True)
-#             layers_current = set([unicode(i) for i in layers_current_int])
-#
-#             if layers_selected != layers_current:
-#                 # resolve differences
-#                 # first take out ones we want to remove
-#                 for x in layers_current - layers_selected:
-#                     MapLayer.objects.filter(map=self.instance.map.id, layer_id=x).delete()
-#                 # now add in new ones
-#                 layers = MapLayer.objects.filter(map=self.instance.map.id)
-#                 if layers.count() > 0:
-#                     max_stack_order = layers.aggregate(Max('stack_order')).values()[0]
-#                 else:
-#                     max_stack_order = 0
-#
-#                 for x in layers_selected - layers_current:
-#                     max_stack_order += 1
-#                     ml = MapLayer.objects.create(map=self.instance.map, layer_id=int(x), stack_order=max_stack_order)
-#                     ml.save()
-#         else:
-#             if hasattr(kwargs['instance'], 'analysts'):
-#                 self.fields['analysts'].initial = kwargs['instance'].analysts.all().values_list('id', flat=True)
-#             else:
-#                 self.fields['analysts'].initial = []
-#
-#             if hasattr(kwargs['instance'], 'map') and kwargs['instance'].map and kwargs['instance'].map.layers:
-#                 self.fields['layers'].initial = [x.layer_id for x in kwargs['instance'].map.layers]
+class ExportJobForm(JobForm):
+    class Meta:
+      #  fields = ('workcells')
+        model = Job
 
 class ProjectForm(StyledModelForm):
     class Meta:

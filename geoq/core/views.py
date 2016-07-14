@@ -5,6 +5,7 @@
 import json
 import re
 import requests
+import logging
 
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User, Group, Permission
@@ -16,6 +17,7 @@ from django.forms.util import ValidationError
 from django.http import Http404, HttpResponse, HttpResponseRedirect, HttpResponseForbidden
 from django.shortcuts import get_object_or_404, redirect, render
 from django.views.generic import DetailView, ListView, TemplateView, View, DeleteView, CreateView, UpdateView
+
 from datetime import datetime
 
 from models import Project, Job, AOI, Comment, AssigneeType, Organization
@@ -466,6 +468,7 @@ class CreateProjectView(CreateView):
         self.object = form.save()
         self.object.project_admins.add(self.request.user)
         self.object.save()
+
         return HttpResponseRedirect(self.get_success_url())
 
 class CreateJobView(CreateView):
@@ -520,14 +523,15 @@ class CreateUpdateView(SingleObjectTemplateResponseMixin, ModelFormMixin,
         except AttributeError:
             return None
 
-
     def get(self, request, *args, **kwargs):
         self.object = self.get_object()
         return super(CreateUpdateView, self).get(request, *args, **kwargs)
 
-
     def post(self, request, *args, **kwargs):
         self.object = self.get_object()
+        # if 'Workcell' in request.POST:
+        #     aoi = AOI.objects.filter(job__id=1)
+
         return super(CreateUpdateView, self).post(request, *args, **kwargs)
 
 class ExportJobView(CreateUpdateView):
@@ -535,10 +539,32 @@ class ExportJobView(CreateUpdateView):
     Export Job
     """
 
+     # if 'Workcell' in request.POST:
+
+
     def get_form_kwargs(self):
+
         kwargs = super(ExportJobView, self).get_form_kwargs()
-        kwargs['project'] = self.request.GET['project'] if 'project' in self.request.GET else 0
-       # kwargs['project'] = kwargs['instance'].project_id if hasattr(kwargs['instance'],'project_id') else 0
+      #  kwargs['project'] = self.request.GET['project'] if 'project' in self.request.GET else 0
+        kwargs['project'] = kwargs['instance'].project_id if hasattr(kwargs['instance'],'project_id') else 0
+
+        if 'Workcell' in self.request.POST:
+            aois = AOI.objects.filter(job__id=self.object.id)
+            #aoi = AOI.objects.get(job__id=self.object.id)
+            for aoi in aois:
+
+                print aoi
+
+                print aoi.job.id
+
+                aoi.pk = None
+                aoi.id = None
+                aoi.job.id = 70
+                print aoi.job.id
+                aoi.save();
+
+            #print aois
+
 
         return kwargs
 

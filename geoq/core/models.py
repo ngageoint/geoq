@@ -207,7 +207,7 @@ class Job(GeoQBase, Assignment):
         return self.aois.count()
 
     def aois(self):
-        return self.aoi.objects.filter(job__project__id=self.id)
+        return self.aois.all()
 
     @property
     def aoi_counts_html(self):
@@ -338,7 +338,6 @@ class Job(GeoQBase, Assignment):
             obj["layers"] = [self.base_layer]
 
         return obj
-
 
 class AOI(GeoQBase, Assignment):
     """
