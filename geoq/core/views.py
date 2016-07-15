@@ -548,33 +548,31 @@ class ExportJobView(CreateUpdateView):
       #  kwargs['project'] = self.request.GET['project'] if 'project' in self.request.GET else 0
         kwargs['project'] = kwargs['instance'].project_id if hasattr(kwargs['instance'],'project_id') else 0
 
-        if 'Workcell' in self.request.POST:
-            aois = AOI.objects.filter(job__id=self.object.id)
-            #aoi = AOI.objects.get(job__id=self.object.id)
-            for aoi in aois:
-
-                print aoi
-
-                print aoi.job.id
-
-                aoi.pk = None
-                aoi.id = None
-                aoi.job.id = 70
-                print aoi.job.id
-                aoi.save();
-
-            #print aois
-
-
         return kwargs
 
     def form_valid(self, form):
         """
         If the form is valid, save the associated model and add the current user as a reviewer.
         """
+        aois = None
+        if "Workcell" in self.request.POST:
+            aois = AOI.objects.filter(job__id=self.object.id)
+            print aois
+
+        print self.object.id
         obj = form.save(commit=False)
         obj.pk = None
+
         self.object = form.save()
+
+        if aois != None:
+            for aoi in aois:
+                aoi.pk = None
+
+                aoi.job = self.object
+                aoi.save()
+
+        print self.object.id
         self.object.reviewers.add(self.request.user)
 
         # Create a new map for each job
