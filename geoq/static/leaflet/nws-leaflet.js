@@ -26,17 +26,21 @@ SOFTWARE.
 
 /* Dependent on L.Marker.AutoResizeSVG found at 
    http://github.com/john-kilgo/L.Marker.AutoResizeSVG
-    nclude marker-resize-svg.js in your HTML document */
+    Include marker-resize-svg.js in your HTML document */
 
 L.NWSIconsLayer = L.GeoJSON.extend({
     options: {
         debug: true,
         url: "FEMA SERVER URL",
+        test__url: "/geoq/proxy/https://alerts.weather.gov/cap/us.php?x=0",
         //query_link: "rectangle_query?swlat={SWLAT}&swlng={SWLNG}&nelat={NELAT}&nelng={NELNG}",
         //metadata_link: "video_metadata?vid={VID}",
         key: "PUT_KEY_HERE",
         //icon: new L.Icon.Default(),
         //pointToLayer: this.iconCallback,
+
+        // Icon path on server from root of server (eg: https://myserver/path), 
+        // prepending slash is important
         iconPath: '/static/leaflet/NWSIcons/'
     },
 
@@ -68,16 +72,28 @@ L.NWSIconsLayer = L.GeoJSON.extend({
     },
 
     initialize: function (load, map, options) {
+        // Merge options together
         L.Util.setOptions(this, options);
-        this._layers = {}; // Icons to add to map
-        this._map = map; // Our map
-        if (this._map) { // Current bounds of map, bounds are pixel coordinates (rectangular)
+
+        // Markers to add to map
+        this._layers = {};
+        // Our map
+        this._map = map;
+
+        //var test = new YouTubeSearch();
+
+
+       // this._searchCoordinates = new YouTubeSearch();
+
+        // Current bounds of map, bounds are pixel coordinates (rectangular)
+        if (this._map) { 
             
             this._bounds = map.getBounds();
             var ourmap = this._map;
             
             this.NWSLayerGroup.addTo(this._map);
             
+            // When map moves update bounds
             this._map.on('moveend', function() {
                 this._bounds = ourmap.getBounds();
             });
@@ -85,7 +101,7 @@ L.NWSIconsLayer = L.GeoJSON.extend({
         }
 
         if (load) {
-            this.addMediaQ(options);
+            //this.addMediaQ(options);
         }
     },
     // Loads the server
@@ -99,11 +115,11 @@ L.NWSIconsLayer = L.GeoJSON.extend({
         }
 
         // Todo: URL
-        var proxiedURL = L.MediaQLayer.buildURL(this.options.url+this.options.query_link, this._bounds);
+        //var proxiedURL = L.NWSIconsLayer.buildURL(this.options.url+this.options.query_link, this._bounds);
 
         $.ajax({
             type: 'GET',
-            url: proxiedURL,
+            url: this.options.test__url, //proxiedURL,
             //headers: {
                 //'X-API-KEY': this.options.key
             //},
@@ -115,6 +131,7 @@ L.NWSIconsLayer = L.GeoJSON.extend({
     // On add of the layer
     addMediaQ: function(options) {
         var _this = this;
+        // Below is the function called on each piece of data.
         var cb = function(data) { _this._addMediaQ(data, this.options); };
         this.loadMediaQ(cb, options);
     },
@@ -136,7 +153,7 @@ L.NWSIconsLayer = L.GeoJSON.extend({
 
 });
 
-// Extending MediaQLayer.
+// Extending NWSIconsLayer
 //L.Util.extend(L.NWSIconsLayer, {
 L.NWSIconsLayer.extend({
 
@@ -166,7 +183,7 @@ L.NWSIconsLayer.extend({
     },
     // Builds URL based on bounds, which we may not have access to in FEMA api
     buildURL: function( url, bounds ) {
-        /*if (! bounds) {
+        if (! bounds) {
             return undefined;
         }
 
@@ -183,7 +200,7 @@ L.NWSIconsLayer.extend({
         var url = url.replace(/{[^{}]+}/g, function(k) {
             return params[k.replace(/[{}]+/g, "")] || "";
         });
-        */
+
         return leaflet_helper.proxify(url);
     },
     // Make icon and place in marker.
@@ -209,7 +226,7 @@ L.NWSIconsLayer.extend({
         return L.rotatedMarker(latlng, {icon: icon});
     },
     // Polygon Style
-    /*polygonStyleBuilderCallback: function(feature) {
+    polygonStyleBuilderCallback: function(feature) {
         var polyFillColor = '#ff0000';
 
         var style = {
@@ -220,10 +237,10 @@ L.NWSIconsLayer.extend({
             fillColor: polyFillColor};
 
         return style;
-    },*/
+    },  
     // Assign popups to each feature
     onEachFeature: function (feature, layer, layerConfig, mediaqOptions) {
-        /*if (feature.properties) {
+        if (feature.properties) {
             var popupContent = "";
             if (feature.properties.popupContent) {
                 popupContent = feature.properties.popupContent;
@@ -255,7 +272,7 @@ L.NWSIconsLayer.extend({
             if (feature.properties.heading && parseInt(feature.properties.heading) && layer.options){
                 layer.options.angle = parseInt(feature.properties.heading);
             }
-        }*/
+        }
     },
     // Path of video
     /* displayHidePath: function(vid, queryurl, key) {
@@ -328,6 +345,8 @@ L.NWSIconsLayer.extend({
 
     },*/
     // Rewrite to clean once data received
+
+/*
     clean: function (text) {
         return jQuery("<div>"+text+"</div>").text() || "";
     },
@@ -356,5 +375,5 @@ L.NWSIconsLayer.extend({
             coords.push(new L.LatLng(ll[1], ll[0]));
         }
         return coords;
-    }
+    }*/
 });
