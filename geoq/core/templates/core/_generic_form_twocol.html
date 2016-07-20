@@ -48,6 +48,10 @@
             {% endif %}
         </dl>
     {% endfor %}
+        <div class="checkboxHolder">
+
+
+        </div>
     </div>
 
 
@@ -61,6 +65,12 @@
 
 <script>
     $(document).ready(function(){
+        if (window.location.href.indexOf("export") != -1) {
+
+            $(".checkboxHolder").append(" <label for='exportWorkcell' name='Workcell'>Import Workcells</label>");
+            $(".checkboxHolder").append(" <input type='checkbox' id='exportWorkcell' name='Workcell'>");
+            $(".formHeader").html("<h2> Export Job </h2>")
+        }
         //Move Select boxes into the second column and make them bigger
         var $sels=$('select[multiple="multiple"]');
         var $first_column = $('#first_column');
@@ -82,6 +92,7 @@
         }
 
         $('input, select, textarea').css('width','80%');
+        $('#exportWorkcell').css('width', '30%');
 
         //If select boxes are here, make them bigger and order them alphabetically
         if ($sels.length) {
