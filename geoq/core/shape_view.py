@@ -39,10 +39,41 @@ if platform.architecture()[0] == '64bit':
 
 class JobAsShape(ListView):
     model = Job
+    
+    #import pdb; pdb.set_trace()
+
+    def get_queryset(self):
+        job_pk = self.kwargs.get('pk')
+        feature_type = self.kwargs.get('type')
+
+        FEATURES = {
+            'points':'Point',
+            'polygons':'Polygon',
+            'lines':'LineString'
+        }
+
+        # Work cell
+        if not feature_type:
+            job_workcells = Job.objects.filter(id=job_pk)
+            if not job_workcells[0]:
+                return None
+            else:
+                # num of aoi's
+                if job_workcells[0].total_count() > 0:
+                    return job_workcells
+                else:
+                    return None
+
+        # Others
+        features = Feature.objects.filter(job=job_pk).filter(template__type=FEATURES[feature_type])
+        return features
 
     def get(self, request, *args, **kwargs):
         job_pk = self.kwargs.get('pk')
         content_type = self.kwargs.get('type')
+
+        if not self.get_queryset():
+            return HttpResponse("Object Not Found", content_type="text/plain", status=404)
 
         try:
             shape_response = ShpResponder(job_pk=job_pk)
@@ -52,15 +83,15 @@ class JobAsShape(ListView):
             elif content_type == 'polygons':
                 shape_out = shape_response.polygons()
             elif content_type == 'lines':
-                shape_out = shape_response.lines()
+                shape_out = shape_response.lines() 
             else:
                 shape_out = shape_response.work_cells()
 
         except Exception, e:
             import traceback
 
-            output = json.dumps(dict(message='Generic Exception', details=traceback.format_exc(), exception=str(e),
-                                     last_data=shape_response.last_data))
+            output = json.dumps(dict(message='Generic Exception In JobAsShape.get()', details=traceback.format_exc(), exception=str(e),
+                                     last_data=shape_response.last_data), indent=6)
             shape_out = HttpResponse(output, mimetype="application/json", status=200)
 
         return shape_out

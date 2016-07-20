@@ -1,0 +1,96 @@
+{% extends "core/base.html" %}
+
+{% block container %}
+
+<div class="row-fluid container-narrow">
+
+    <form id="import_form" action="create-json-layer" role="form" method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+
+        <fieldset style="margin: 15px;">
+            <legend>JSON File Import</legend>
+            <span>Select an appropriate JSON file, then select 'Import'. A JSON Layer will be created on the server using that file</span><br><br>
+            <label for="title">Layer Name: <input type="text" name="title" id="title"></label>
+            <input type="file" id="jsonfile" name="jsonfile" accept="application/json">
+        </fieldset>
+
+        <input id="submitButton" class="btn" type="submit" value="Import" data-role="button" disabled/>
+        <input class="btn" id="clearButton" type="button" value="Clear" onclick="resetPage()">
+    </form>
+    <p id="invalidJSON" style="color:red; display:none"></p>
+</div>
+
+     <script>
+     	document.getElementById('clearButton').addEventListener('click', function(){
+     		$('#import_form')[0].reset();
+     		hideSubmitButtion(true);
+        showError(false);
+     	});
+
+        document.getElementById('jsonfile').addEventListener('change', function(e) {
+        	hideSubmitButtion(true);
+            var file = e.target.files[0];
+            var sFileName = file.name;
+            //If there are more than one "." make sure that we get the last one.
+            var sFileExtension = sFileName.split('.')[sFileName.split('.').length - 1].toLowerCase();
+
+            //Make sure that it ends in json
+            if (!(sFileExtension === "json")) {
+                showError(true, "Invalid File Type");
+            } else {
+                try {
+                    var reader = new FileReader();
+                    reader.onload = function(e){
+                        var isValidJson = checkJSON(e.target.result);
+                    };
+                    reader.readAsText(file);
+                } catch (exception){
+                    alert(exception);
+                }
+            }
+        });
+
+
+        function checkJSON(jsonString) {
+        	var errorCode;
+            try {
+                var o = JSON.parse(jsonString);
+                console.log(o);
+                if (o && typeof o === "object" && o !== null) {
+	                hideSubmitButtion(false);
+	               	showError(false);
+	                return true;
+	            } 
+            }
+            catch (e) { 
+            	//Show the user the execption gracefully
+            	errorCode = e;
+            }
+            showError(true, "Invalid JSON: " + errorCode);
+            return false;
+        }
+
+
+        /*
+        	Some basic helper functions to clean up the code
+        */
+        function hideSubmitButtion(toHide) {
+        	if (toHide == true) {
+        		document.getElementById("submitButton").disabled = true;
+        	} else {
+        		document.getElementById("submitButton").disabled = false;
+        	}
+        }
+
+        function showError(toShow, message) {
+        	console.log(message);
+        	if (toShow == true) {
+        		document.getElementById("invalidJSON").innerHTML = message;
+            	document.getElementById("invalidJSON").style.display = "block";
+        	} else {
+        		document.getElementById("invalidJSON").style.display = "none";
+        	}
+        }
+
+    </script>
+{% endblock %}

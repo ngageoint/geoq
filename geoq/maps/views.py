@@ -10,18 +10,19 @@ from django.core import serializers
 from django.core.exceptions import ValidationError, ObjectDoesNotExist
 from django.core.urlresolvers import reverse
 from django.http import HttpResponse, HttpResponseRedirect, Http404
-from django.shortcuts import render_to_response
+from django.shortcuts import render_to_response, get_object_or_404
 from django.template import RequestContext
 from django.views.generic import ListView, View, DeleteView
 from django.views.decorators.http import require_http_methods
 
-from forms import MapForm, MapInlineFormset, UploadKMZForm
+from forms import MapForm, MapInlineFormset, UploadKMZForm, UploadJSONForm
 
 from geoq.core.models import AOI
 from geoq.locations.models import Counties
 
 from models import Feature, FeatureType, Map, Layer, MapLayerUserRememberedParams, MapLayer, GeoeventsSource
 from kmz_handler import save_kmz_file
+from json import load
 
 import logging
 
@@ -300,4 +301,45 @@ class KMZLayerImport(ListView):
 
 
 
+class JSONLayerImport(ListView):
 
+    model = Layer
+    template_name = "maps/json_upload.html"
+
+    def get_context_data(self, **kwargs):
+        context = super(JSONLayerImport, self).get_context_data(**kwargs)
+        return context
+
+    def post(self, request, *args, **kwargs):
+        form = UploadJSONForm(request.POST, request.FILES)
+        try:
+            dataFromFile = load(request.FILES["jsonfile"])
+        except ValueError as e:
+                ##This is a bad jsonFile, We should never get to this point but it is the last layer of defense.
+                return HttpResponseRedirect(reverse('layer-list'))
+        #Check to make sure that we actually have data
+        if dataFromFile != None:
+            layerName = request.POST['title']
+            if not layerName.strip():
+                layerName = dataFromFile["name"]
+            #Due to the naming errors between the actual DB names and the exporting function built in the maps/models.py file for layers we have to do this in one line and not pretty.
+            layer = Layer.objects.create(id=dataFromFile["id"], name = layerName, image_format=dataFromFile["format"], type=dataFromFile["type"],
+                                         url=dataFromFile["url"], additional_domains=dataFromFile["subdomains"], layer=dataFromFile["layer"], transparent=dataFromFile["transparent"],
+                                         layer_params=dataFromFile["layerParams"], dynamic_params=dataFromFile["dynamicParams"], refreshrate=dataFromFile["refreshrate"],
+                                         token=dataFromFile["token"], attribution=dataFromFile["attribution"], spatial_reference=dataFromFile["spatialReference"],
+                                         layer_parsing_function=dataFromFile["layerParsingFunction"], enable_identify=dataFromFile["enableIdentify"],
+                                         root_field=dataFromFile["rootField"], info_format=dataFromFile["infoFormat"], fields_to_show=dataFromFile["fieldsToShow"],
+                                         description=dataFromFile["description"], downloadableLink=dataFromFile["downloadableLink"], layer_info_link=dataFromFile["layer_info_link"],
+                                         styles=dataFromFile["styles"])
+
+        return HttpResponseRedirect(reverse('layer-list'))
+
+class JSONLayerExport(ListView):
+
+    model = Layer
+
+    def get(self, request, *args, **kwargs):
+        name = self.kwargs.get('pk').replace("%20", " ");
+        layer = Layer.objects.get(name__iexact = name)
+        layerJson = json.dumps(layer.layer_json(), indent=2);
+        return HttpResponse(layerJson, mimetype="application/json", status=200)

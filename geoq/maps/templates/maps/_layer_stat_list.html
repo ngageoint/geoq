@@ -5,6 +5,10 @@
         <i class="icon-edit"></i>
         <a href="{% url 'layer-update' object.id %}">Edit</a>
     </li>
+    <li title="Export this Layer">
+        <i class="icon-share"></i>
+        	<a href="{% url 'json-layer-export' object.name %}" title="Export in JSON format" target="_new">Export</a>
+    </li>
     {% endif %}
     {% if 'maps.delete_layer' in request.base_perms %}
     <li title="Delete this Layer">
@@ -13,4 +17,5 @@
     </li>
     {% endif %}
 </ul>
+
 {% endif %}

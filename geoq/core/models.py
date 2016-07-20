@@ -168,6 +168,7 @@ class Job(GeoQBase, Assignment):
     reviewers = models.ManyToManyField(User, blank=True, null=True, related_name="reviewers")
     progress = models.SmallIntegerField(max_length=2, blank=True, null=True)
     project = models.ForeignKey(Project, related_name="project")
+
     grid = models.CharField(max_length=5, choices=GRID_SERVICE_CHOICES, default=GRID_SERVICE_VALUES[0],
                             help_text='Select usng for Jobs inside the US, otherwise use mgrs')
     tags = models.CharField(max_length=50, blank=True, null=True, help_text='Useful tags to search social media with')
@@ -190,6 +191,9 @@ class Job(GeoQBase, Assignment):
     def get_update_url(self):
         return reverse('job-update', args=[self.id])
 
+    def get_export_url(self):
+        return reverse('job-export', args=[self.id])
+
     def aois_geometry(self):
         return self.aois.all().collect()
 
@@ -201,6 +205,9 @@ class Job(GeoQBase, Assignment):
 
     def aoi_count(self):
         return self.aois.count()
+
+    def aois(self):
+        return self.aois.all()
 
     @property
     def aoi_counts_html(self):
@@ -331,7 +338,6 @@ class Job(GeoQBase, Assignment):
             obj["layers"] = [self.base_layer]
 
         return obj
-
 
 class AOI(GeoQBase, Assignment):
     """
