@@ -675,7 +675,8 @@ footprints.removeCSWOutline = function (identifier,status) {
         if (layer.options.image_id === identifier) {
             // see if there's an image layer as well. If so, remove it
             if (layer.image_layer) {
-                footprints.image_layer_group.removeLayer(layer.image_layer);
+                // footprints.image_layer_group.removeLayer(layer.image_layer);
+                layer.image_layer.setStyle({opacity: 0, fillOpacity: 0});
             }
 
             footprints.getLayerGroup(status).removeLayer(layer);
