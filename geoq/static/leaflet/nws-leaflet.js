@@ -30,19 +30,20 @@ SOFTWARE.
 
 L.NWSIconsLayer = L.GeoJSON.extend({
     options: {
-        debug: true,
-        url: "FEMA SERVER URL",
-        test__url: "/geoq/proxy/https://alerts.weather.gov/cap/us.php?x=0",
+        //debug: true,
+        //url: "FEMA SERVER URL",
+        //test__url: "/geoq/proxy/https://alerts.weather.gov/cap/us.php?x=0",
         //query_link: "rectangle_query?swlat={SWLAT}&swlng={SWLNG}&nelat={NELAT}&nelng={NELNG}",
         //metadata_link: "video_metadata?vid={VID}",
-        key: "PUT_KEY_HERE",
-        geocode_api: "/geoq/proxy/http://open.mapquestapi.com/geocoding/v1/reverse?key=",
+        //key: "PUT_KEY_HERE",
+        //geocode_api: "/geoq/proxy/http://open.mapquestapi.com/geocoding/v1/reverse?key=",
+        //mapquest_key: "Umftrxk7Woq5R45h7z0WsLcdd6jVXqA4",
         //icon: new L.Icon.Default(),
         //pointToLayer: this.iconCallback,
 
         // Icon path on server from root of server (eg: https://myserver/path), 
         // prepending slash is important
-        iconPath: '/static/leaflet/NWSIcons/'
+        //iconPath: ''
     },
 
     _icons: {
@@ -76,40 +77,21 @@ L.NWSIconsLayer = L.GeoJSON.extend({
         // Merge options together
         L.Util.setOptions(this, options);
 
+        if (site_settings.FEMA_IPAWS) {
+            L.Util.setOptions(this, site_settings.FEMA_IPAWS);
+            console.log(this.options);
+        } else {
+            console.error("NWS Icons: Fatal Error. site_settings missing. Please visit GeoQ Admin site and add FEMA_IPAWS json settings object.")
+            return;
+        }
+
+
         // Markers to add to map
         this._layers = {};
         // Our map
         this._map = map;
 
-        // Get the center of the aoi
-        this._searchCoordinates = new YouTubeSearch();
 
-        var boundingPoints = [];
-        for (var i = 0; i < aoi_feature_edit.aoi_extents_geojson["coordinates"][0][0].length; i++) {
-            boundingPoints.push(new Point(aoi_feature_edit.aoi_extents_geojson["coordinates"][0][0][i][1],aoi_feature_edit.aoi_extents_geojson["coordinates"][0][0][i][0]));
-        }
-
-        this._searchCoordinates = this._searchCoordinates.generateCircle(boundingPoints);
-
-        //console.log(this._searchCoordinates);
-        this._center = {};
-        this._center.lat = this._searchCoordinates.currentCenterPoint.x;
-        this._center.lon = this._searchCoordinates.currentCenterPoint.y;
-
-        var mapquest_key = "Umftrxk7Woq5R45h7z0WsLcdd6jVXqA4"
-
-        var geocode_url = this.options.geocode_api + mapquest_key + "&location=" + this._center.lat + "," + this._center.lon;
-
-        $.ajax({
-            type: 'GET',
-            context: this,
-            url: geocode_url,
-            dataType: 'json',
-            success: this.geocode,
-            error: this.nwscap_error
-        });
-
-        // End get the center of the AOI
 
 
         // Current bounds of map, bounds are pixel coordinates (rectangular)
@@ -129,10 +111,38 @@ L.NWSIconsLayer = L.GeoJSON.extend({
 
         if (load) {
             //this.addMediaQ(options);
+            this.geocode();
         }
     },
+    // Performs Calculation of Center of AOI and calls for GeoCode info
+    geocode: function() {
+        this._searchCoordinates = new YouTubeSearch();
+
+        var boundingPoints = [];
+        for (var i = 0; i < aoi_feature_edit.aoi_extents_geojson["coordinates"][0][0].length; i++) {
+            boundingPoints.push(new Point(aoi_feature_edit.aoi_extents_geojson["coordinates"][0][0][i][1],aoi_feature_edit.aoi_extents_geojson["coordinates"][0][0][i][0]));
+        }
+
+        this._searchCoordinates = this._searchCoordinates.generateCircle(boundingPoints);
+
+        //console.log(this._searchCoordinates);
+        this._center = {};
+        this._center.lat = this._searchCoordinates.currentCenterPoint.x;
+        this._center.lon = this._searchCoordinates.currentCenterPoint.y;
+
+        var geocode_url = this.options.proxy + this.options.geocodeApi + "&location=" + this._center.lat + "," + this._center.lon;
+
+        $.ajax({
+            type: 'GET',
+            context: this,
+            url: geocode_url,
+            dataType: 'json',
+            success: this._geocode,
+            error: this.nwscap_error
+        });
+    },
     // Parses and saves GeoCode info
-    geocode: function(data) {
+    _geocode: function(data) {
         this._geocode = data;
 
         console.log(this._geocode);
@@ -143,6 +153,7 @@ L.NWSIconsLayer = L.GeoJSON.extend({
             if(this._sameCodes[i].state === this._geocode.state) {
                 if (this._sameCodes[i].county === this._geocode.county) {
                     console.log("SAME CODE IS: " + this._sameCodes[i].SAME);
+                    this.options.SAME = this._sameCodes[i].SAME;
                     break;
                 }
             }
@@ -153,7 +164,7 @@ L.NWSIconsLayer = L.GeoJSON.extend({
     load: function(callback, options) {
         if (options === undefined) options = this.options;
 
-        if (! options.url ) {
+        if (!options.url ) {
             log.error("No URL set for NWS Cap messages");
             console.error("No URL set for NWS Cap messages");
             return;
