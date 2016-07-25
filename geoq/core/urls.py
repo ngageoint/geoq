@@ -70,6 +70,8 @@ urlpatterns = patterns('',
         #login required set in views
         'core.views.batch_create_aois', name='job-batch-create-aois'),
 
+    url(r'^jobs/statistics/(?P<job_pk>\d+)/?$', JobStatistics.as_view(), name='job-statistics'),
+
     # AOIS
     url(r'^aois/(?P<status>[a-zA-Z_ ]+)?/?$', AOIDetailedListView.as_view(template_name='core/aoi_list.html'), name='aoi-list'),
 

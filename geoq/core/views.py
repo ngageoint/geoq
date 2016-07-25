@@ -18,6 +18,7 @@ from django.http import Http404, HttpResponse, HttpResponseRedirect, HttpRespons
 from django.shortcuts import get_object_or_404, redirect, render
 from django.views.generic import DetailView, ListView, TemplateView, View, DeleteView, CreateView, UpdateView
 from datetime import datetime
+from django.utils.dateparse import parse_datetime
 
 from models import Project, Job, AOI, Comment, AssigneeType, Organization
 from geoq.maps.models import *
@@ -526,6 +527,146 @@ class MapEditView(DetailView):
         aoi = get_object_or_404(AOI, pk=pk)
         cv['mapedit_url'] = aoi.job.editable_layer.edit_url + '?#map=' + aoi.map_detail() + '&geojson=' + aoi.grid_geoJSON()
         return cv
+
+
+class JobStatistics(ListView):
+    model = Job
+    template_name = "core/job_statistics.html"
+
+    def get_context_data(self, **kwargs):
+        cv = super(JobStatistics, self).get_context_data(**kwargs)
+        primaryKey = self.kwargs.get('job_pk')
+        job = get_object_or_404(Job, pk=primaryKey)
+
+        allData = json.loads(job.geoJSON())
+        analysts = []
+        data = []
+        for x in xrange(0, job.aoi_count()):
+            temp = {}
+            temp['aoi'] = allData["features"][x]["properties"]["id"]
+            internalData = {}
+            internalData["analyst"] = allData["features"][x]["properties"]["analyst"]
+            internalData['time'] = allData["features"][x]["properties"]["time"]
+            internalData["priority"] = allData["features"][x]["properties"]["priority"]
+            temp["data"] = internalData
+            data.append(temp)
+
+
+        def checkAnalysts(analyst):
+            for x in xrange(0, len(analysts)):
+                if analysts[x]['analyst'] == analyst:
+                    return x
+            return -1
+
+        for i in xrange(0, len(data)):
+            isCompleted = False;
+            totalTime = inReviewTime = inWorkTime = waitingForReviewTime = 0
+
+        	#Total Time from InWork - Complete
+            if str(data[i]['data']['time']['in_work']) != "None" and str(data[i]['data']['time']['finished']) != "None":
+                isCompleted = True;
+                startedDate = parse_datetime(data[i]['data']['time']['in_work'])
+                finishedDate = parse_datetime(data[i]['data']['time']['finished'])
+                totalTime = abs(startedDate - finishedDate).total_seconds() / 3600
+
+        	#Time In review
+            if str(data[i]['data']['time']['finished']) != "None" and str(data[i]['data']['time']['in_review']) != "None":
+                finishedDate = parse_datetime(data[i]['data']['time']['finished'])
+                inReviewDate = parse_datetime(data[i]['data']['time']['in_review'])
+                inReviewTime = abs(inReviewDate - finishedDate).total_seconds() / 3600
+
+            #Time waiting in work
+            if str(data[i]['data']['time']['in_work']) != "None" and str(data[i]['data']['time']['waiting_review']) != "None":
+                inWorkDate = parse_datetime(data[i]['data']['time']['in_work'])
+                waitingReviewDate = parse_datetime(data[i]['data']['time']['waiting_review'])
+                inWorkTime = abs(inWorkDate - waitingReviewDate).total_seconds() / 3600
+
+            #Time waiting for Review
+            if str(data[i]['data']['time']['in_review']) != "None" and str(data[i]['data']['time']['waiting_review']) != "None":
+                inReviewDate = parse_datetime(data[i]['data']['time']['in_review'])
+                waitingReviewDate = parse_datetime(data[i]['data']['time']['waiting_review'])
+                waitingForReviewTime = abs(inReviewDate - waitingReviewDate).total_seconds() / 3600
+
+
+            if isCompleted:
+                index = checkAnalysts(data[i]['data']['analyst'])
+
+
+                if index != -1:
+                    tempWorkcells = analysts[index]['workcells']
+                    temp = {}
+                    tempInner = {}
+                    temp['priority'] = data[i]['data']['priority']
+                    temp['isCompleted'] = isCompleted
+                    temp['dateCompleted'] = data[i]['data']['time']['finished']
+                    temp['AOIID'] = data[i]["aoi"]
+
+                    tempInner['completedIn'] = totalTime
+                    tempInner['timeInWork'] = inWorkTime
+                    tempInner['timeInReview'] = inReviewTime
+                    tempInner['waitingForReview'] = waitingForReviewTime
+
+                    temp['time'] = tempInner
+
+                    tempWorkcells.append(temp)
+                    analysts[index]['numCompleted'] = analysts[index]['numCompleted'] + 1
+                    analysts[index]['workcells'] = tempWorkcells
+                else:
+                    temp = {}
+                    averagesTemp = {}
+                    dayAveragesTemp = {}
+                    workcells = []
+                    workcellsInner = {}
+                    workcellsInnerTime = {}
+
+                    averagesTemp['averageInWorkTime'] = 0
+                    averagesTemp['averageInReviewTime'] = 0
+                    averagesTemp['averageWaitingForReviewTime'] = 0
+                    dayAveragesTemp['dayRunningAverageInWork'] = 0
+                    dayAveragesTemp['dayRunningAverageInReview'] = 0
+                    dayAveragesTemp['dayRunningAverageWaitingForReview'] = 0
+                    workcellsInner['priority'] = data[i]['data']['priority']
+                    workcellsInner['isCompleted'] = isCompleted
+                    workcellsInner['dateCompleted'] = data[i]['data']['time']['finished']
+                    workcellsInner['AOIID'] = data[i]["aoi"]
+
+                    workcellsInnerTime['completedIn'] = totalTime
+                    workcellsInnerTime['timeInWork'] = inWorkTime
+                    workcellsInnerTime['timeInReview'] = inReviewTime
+                    workcellsInnerTime['waitingForReview'] = waitingForReviewTime
+
+
+                    temp['analyst'] = data[i]['data']['analyst']
+                    temp['numCompleted'] = 1
+                    temp['averages'] = averagesTemp
+                    temp['dayAverages'] = dayAveragesTemp
+                    workcellsInner['time'] = workcellsInnerTime
+                    workcells.append(workcellsInner)
+                    temp['workcells'] = workcells
+                    analysts.append(temp)
+
+            for x in xrange(0, len(analysts)):
+                runningAverageCompletion = 0
+                runningAverageInWork = 0
+                runningAverageInReview = 0
+                runningAverageWaitingForReview = 0
+
+                for i in xrange(0, len(analysts[x]['workcells'])):
+                    runningAverageCompletion = ((runningAverageCompletion * i) + analysts[x]['workcells'][i]['time']['completedIn']) / (i + 1)
+                    runningAverageInWork = ((runningAverageInWork * i) + analysts[x]['workcells'][i]['time']['timeInWork']) / (i + 1)
+                    runningAverageInReview = ((runningAverageInReview * i) + analysts[x]['workcells'][i]['time']['timeInReview']) / (i + 1)
+                    runningAverageWaitingForReview = ((runningAverageWaitingForReview * i) + analysts[x]['workcells'][i]['time']['waitingForReview']) / (i + 1)
+					
+                analysts[x]['averageCompletionTime'] = runningAverageCompletion
+                analysts[x]['averages']['averageInWorkTime'] = runningAverageInWork
+                analysts[x]['averages']['averageInReviewTime'] = runningAverageInReview
+                analysts[x]['averages']['averageWaitingForReviewTime'] = runningAverageWaitingForReview
+
+        cv['data'] = json.dumps(analysts)
+        return cv
+
+
+ 
 
 
 class ChangeAOIStatus(View):

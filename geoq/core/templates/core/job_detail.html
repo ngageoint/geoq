@@ -14,6 +14,8 @@
     <script type="text/javascript">
 
         var map_object;
+        var runningAverage = 0;
+        var timeToCompletion = 0;
         var map_toggle=false;
         var selected_workcell;
 
@@ -36,12 +38,27 @@
 
           	map_object._size.y = 193;
           	map_object._zoom = 12;
+          	count = 0;
             aoi_extents = L.geoJson({{ object.geoJSON|default:'[]'|safe }}, {
                 style: function(feature) {
                     var status = _.find(status_colors,function(stat){return stat.name==feature.properties.status});
                     return (status && status.color) ? status.color : '#ffffff';
                 },
                 onEachFeature: function(feature, layer) {
+
+                    if (feature["properties"]["time"]["in_work"] != "None" && feature["properties"]["time"]["finished"] != "None") {
+                        console.log(feature);
+                        startedDate = new Date(feature["properties"]["time"]["in_work"]);
+                        finishedDate = new Date(feature["properties"]["time"]["finished"]);
+                        var hours = Math.abs(startedDate - finishedDate) / 36e5;
+
+                        runningAverage = ((runningAverage * count) + hours) / (count+1);
+                        count++;
+
+                      	timeToCompletion = runningAverage * ( {{object.aoi_count}} - count);	
+                      
+                    }
+
 
                     job_properties = feature.properties;
                     {% if user.is_authenticated %}
@@ -208,6 +225,9 @@
                     $tab.css({backgroundColor:bg_color, color:color});
                 }
             });
+
+            //var hours = timeToCompletion % 24;
+            document.getElementById("TTC").innerHTML = "Days: " + Math.floor(timeToCompletion / 24) + " Hours: " + Math.round((timeToCompletion % 24) * 100) / 100;
 
         };
 
@@ -399,6 +419,14 @@
                             </td>
                             <td>
                                 {{ object.project.description }}
+                            </td>
+                        </tr>
+                        <tr>
+                            <td style="vertical-align: top;">
+                                <b>Est. Comp: </b>
+                            </td>
+                            <td>
+                                <p id="TTC"></p>
                             </td>
                         </tr>
                         {% include 'core/_job_links.html' %}
