@@ -50,7 +50,7 @@
     <script src="{{ STATIC_URL }}core/js/YouTubeSearch.js"></script>
 
     <!-- Bootstrap dropdown select helper -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-select/1.10.0/js/bootstrap-select.min.js"></script>
+    <script src="{{ STATIC_URL }}bootstrap/js/bootstrap-select.min.js"></script>
 
     {% for layer in object.job.map.layers %}{% if layer.layer.type == 'Google Maps' %}
     <script src="{{ layer.layer.url }}maps/api/js?v=3&sensor=false"></script>
@@ -139,7 +139,7 @@
 	    <link rel="stylesheet" href="{{ STATIC_URL }}core/css/pqgrid.css" />
 
         <!--Bootstrap dropwdown select styling -->
-        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-select/1.10.0/css/bootstrap-select.min.css">
+        <link rel="stylesheet" href="{{ STATIC_URL }}bootstrap/css/bootstrap-select.min.css">
 
     {% endcompress %}
 {% endblock %}
