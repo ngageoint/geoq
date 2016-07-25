@@ -16,6 +16,7 @@
     <button type="button" class="btn btn-primary btn-lg">
         View Job Statistics
     </button> </a>
+    <a href="{{ object.get_export_url }}" <button type="button" class="btn btn-default btn-lg" > Export Job </button> </a>
 </td></tr>
 
 <!-- Added by Jared -->
@@ -91,3 +92,43 @@
         <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
   </div>
 </div> <!-- ./modal -->
+
+<div id="export_job_modal" class="modal hide fade">
+    <div class="modal-header">
+        <h4 class="modal-title">Export to New Job</h4>
+    </div>
+    <div class="export-job-modal-body">
+    
+        <form class="exportJobForm">
+          <fieldset class="form-group">
+            <label for="newJobName">Job Name</label>
+            <input type="text" class="form-control" id="newJobName" placeholder="Enter new job name">
+        </fieldset>
+
+        <label> Select a Destination Project </label>
+        <select class="selectpicker" title="Select Project"> 
+          <option>Project 1</option>
+          <option>Project 2</option>
+          <option>Project 3</option>
+        </select>
+
+        <label>Select Attributes to be Exported</label>
+            <div class="checkbox">
+              <label><input id="exportWorkCell" type="checkbox" value="">Workcells</label>
+            </div>
+            <div class="checkbox">
+              <label><input id="exportFeature" type="checkbox" value="">Features</label>
+            </div>
+            <div class="checkbox">
+              <label><input id="exportLayer" type="checkbox" value="">Layers</label>
+            </div>
+            <div class="checkbox">
+              <label><input id="exportAnalysts" type="checkbox" value="">Analysts</label>
+            </div>
+        </div>
+         <div class="modal-footer">
+            <button type="button" class="btn btn-primary" data-dismiss="modal">Export</button>
+            <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+        </div>
+    </div>
+</div>  

@@ -161,20 +161,25 @@ create_aois.init = function () {
         container: 'body'
     });
 
-    $("#geocomplete").geocomplete()
-        .bind("geocode:result", function (event, result) {
-            create_aois.update_info("Geocode Result: " + result.formatted_address);
-            if (create_aois.map_object) {
-                create_aois.map_object.setView([result.geometry.location.lat(), result.geometry.location.lng()], 13);
-                create_aois.map_object.fire('zoomend');
-            }
-        })
-        .bind("geocode:error", function (event, status) {
-            create_aois.update_info("Geocode Error: " + status);
-        })
-        .bind("geocode:multiple", function (event, results) {
-            create_aois.update_info("Geocode Multiple: " + results.length + " results found");
-        });
+    // only create geocompletion if we're able to load the appropriate javascript file
+    if (google && google.maps) {
+        $("#geocomplete").geocomplete()
+            .bind("geocode:result", function (event, result) {
+                create_aois.update_info("Geocode Result: " + result.formatted_address);
+                if (create_aois.map_object) {
+                    create_aois.map_object.setView([result.geometry.location.lat(), result.geometry.location.lng()], 13);
+                    create_aois.map_object.fire('zoomend');
+                }
+            })
+            .bind("geocode:error", function (event, status) {
+                create_aois.update_info("Geocode Error: " + status);
+            })
+            .bind("geocode:multiple", function (event, results) {
+                create_aois.update_info("Geocode Multiple: " + results.length + " results found");
+            });
+    } else {
+        $("#geocomplete").attr('disabled', true);
+    }
 
     $("#find").click(function () {
         $("#geocomplete").trigger("geocode");

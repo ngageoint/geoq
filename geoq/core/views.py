@@ -6,6 +6,7 @@ import json
 import re
 import requests
 import pytz
+import logging
 
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User, Group, Permission
@@ -17,6 +18,7 @@ from django.forms.util import ValidationError
 from django.http import Http404, HttpResponse, HttpResponseRedirect, HttpResponseForbidden
 from django.shortcuts import get_object_or_404, redirect, render
 from django.views.generic import DetailView, ListView, TemplateView, View, DeleteView, CreateView, UpdateView
+
 from datetime import datetime
 from django.utils.dateparse import parse_datetime
 
@@ -34,6 +36,8 @@ from guardian.decorators import permission_required
 from kml_view import *
 from shape_view import *
 
+from django.views.generic.detail import SingleObjectTemplateResponseMixin
+from django.views.generic.edit import ModelFormMixin, ProcessFormView
 
 class Dashboard(TemplateView):
 
@@ -471,8 +475,8 @@ class CreateProjectView(CreateView):
         self.object = form.save()
         self.object.project_admins.add(self.request.user)
         self.object.save()
-        return HttpResponseRedirect(self.get_success_url())
 
+        return HttpResponseRedirect(self.get_success_url())
 
 class CreateJobView(CreateView):
     """
@@ -515,6 +519,83 @@ class UpdateJobView(UpdateView):
         kwargs = super(UpdateJobView, self).get_form_kwargs()
         kwargs['project'] = kwargs['instance'].project_id if hasattr(kwargs['instance'],'project_id') else 0
         return kwargs
+
+#This class is used for the ExportJobView
+class CreateUpdateView(SingleObjectTemplateResponseMixin, ModelFormMixin,
+                       ProcessFormView):
+
+    def get_object(self, queryset=None):
+        try:
+            return super(CreateUpdateView, self).get_object(queryset)
+        except AttributeError:
+            return None
+
+    def get(self, request, *args, **kwargs):
+        self.object = self.get_object()
+        return super(CreateUpdateView, self).get(request, *args, **kwargs)
+
+    def post(self, request, *args, **kwargs):
+        self.object = self.get_object()
+        # if 'Workcell' in request.POST:
+        #     aoi = AOI.objects.filter(job__id=1)
+
+        return super(CreateUpdateView, self).post(request, *args, **kwargs)
+
+class ExportJobView(CreateUpdateView):
+    """
+    Export Job
+    """
+
+     # if 'Workcell' in request.POST:
+
+
+    def get_form_kwargs(self):
+
+        kwargs = super(ExportJobView, self).get_form_kwargs()
+      #  kwargs['project'] = self.request.GET['project'] if 'project' in self.request.GET else 0
+        kwargs['project'] = kwargs['instance'].project_id if hasattr(kwargs['instance'],'project_id') else 0
+
+        return kwargs
+
+    def form_valid(self, form):
+        """
+        If the form is valid, save the associated model and add the current user as a reviewer.
+        """
+        aois = None
+        if "Workcell" in self.request.POST:
+            aois = AOI.objects.filter(job__id=self.object.id)
+            print aois
+
+        print self.object.id
+        obj = form.save(commit=False)
+        obj.pk = None
+
+        self.object = form.save()
+
+        if aois != None:
+            for aoi in aois:
+                aoi.pk = None
+
+                aoi.job = self.object
+                aoi.save()
+
+        print self.object.id
+        self.object.reviewers.add(self.request.user)
+
+        # Create a new map for each job
+        map = Map(**{'title': self.object.name + ' Map', 'description': 'map for %s project' % self.object.name})
+        map.save()
+        n = 2
+        for layer in form.cleaned_data['layers']:
+            map_layer = MapLayer(**{'map': map, 'layer': layer, 'stack_order': n})
+            map_layer.save()
+            n += 1
+
+        self.object.map = map
+        self.object.save()
+
+        return HttpResponseRedirect(self.get_success_url())
+
 
 class MapEditView(DetailView):
     http_method_names = ['get']

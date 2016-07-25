@@ -85,6 +85,7 @@ SERVICE_TYPES = (
                 ('Yandex', 'Yandex'),
                 ('Leaflet Tile Layer', 'Leaflet Tile Layer'),
                 ('MediaQ', 'MediaQ'),
+                ('OpenSensorHub','OpenSensorHub'),
                 #('MapBox', 'MapBox'),
                 #('TileServer','TileServer'),
                 #('GetCapabilities', 'GetCapabilities'),

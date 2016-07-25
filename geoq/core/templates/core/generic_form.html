@@ -7,7 +7,7 @@
         <div class="row-fluid">
 
             <div class="span12">
-                <h3> {% if object %}Edit {% else %}Create New {% endif %}{% if object_type == "group" %} Team {% elif form.Meta.model %} {{ form.Meta.model|object_class}} {% else %} Team {% endif %}</h3>
+                <h3 class="formHeader"> {% if object %}Edit {% else %}Create New {% endif %}{% if object_type == "group" %} Team {% elif form.Meta.model %} {{ form.Meta.model|object_class}} {% else %} Team {% endif %}</h3>
                 
                         {% include custom_form|default:"core/_generic_form_twocol.html" %}
             </div>

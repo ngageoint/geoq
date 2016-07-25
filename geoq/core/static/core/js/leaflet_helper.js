@@ -159,6 +159,8 @@ leaflet_helper.layer_conversion = function (lyr, map) {
         outputLayer = new L.WFS(layerOptions);
     } else if (lyr.type == 'ESRI Shapefile') {
         outputLayer = new L.shapefile(lyr.url, layerOptions);
+    } else if (lyr.type == 'OpenSensorHub') {
+        outputLayer = new L.SOS(map, layerOptions);
     }
 
     //Make sure the name is set for showing up in the layer menu
