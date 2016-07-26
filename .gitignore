@@ -19,5 +19,6 @@ geoq.komodoproject
 workcell_log.txt
 
 start_geoq.sh
+runGeo.sh
 
 start.sh
