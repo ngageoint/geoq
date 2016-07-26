@@ -15,7 +15,6 @@ from django.contrib.admin.widgets import FilteredSelectMultiple
 
 no_style = [RadioInput, RadioSelect, CheckboxInput, CheckboxSelectMultiple]
 
-
 class StyledModelForm(forms.ModelForm):
     """
     Adds the span5 (in reference to the Twitter Bootstrap element)
@@ -78,9 +77,10 @@ class ItemSelectWidget(forms.SelectMultiple):
             return u'\n'.join(output)
 
 class JobForm(StyledModelForm):
+
     analysts = forms.ModelMultipleChoiceField(
         queryset = User.objects.all(),
-        widget = ItemSelectWidget(option_title_field='email')
+
     )
     layers = forms.ModelMultipleChoiceField(
         queryset = Layer.objects.all(),
@@ -110,6 +110,9 @@ class JobForm(StyledModelForm):
             # If we're creating Job, we don't have a map
             if self.instance.map == None:
                 return;
+
+            # if AOI:
+            #     queryset = AOI.objects.filter(job=kwargs.get('pk')),
 
             self.fields['analysts'].initial = kwargs['data'].getlist('analysts',None)
             # must be a better way, but figure out the layers to display
@@ -142,6 +145,11 @@ class JobForm(StyledModelForm):
             if hasattr(kwargs['instance'],'map') and kwargs['instance'].map and kwargs['instance'].map.layers:
                 self.fields['layers'].initial = [x.layer_id for x in kwargs['instance'].map.layers]
 
+# #form extending original job form to export old job data into new job
+class ExportJobForm(JobForm):
+    class Meta:
+      #  fields = ('workcells')
+        model = Job
 
 class ProjectForm(StyledModelForm):
     class Meta:

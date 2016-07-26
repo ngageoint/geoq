@@ -9,7 +9,7 @@
     {% leaflet_js plugins="draw, esri, esriCluster, MakiMarkers, MediaQ, AutoResizeSVG, NWSIcons" %}
     {% import_django_select2_js %}
     <script src="{{ STATIC_URL }}core/js/jquery-migrate-1.2.1.min.js"></script>
-	<script src="{{ STATIC_URL }}core/js/Leaflet-WFST.min.js"></script> 
+	<script src="{{ STATIC_URL }}core/js/Leaflet-WFST.min.js"></script>
     <script src="{{ STATIC_URL }}core/js/leaflet_helper.js"></script>
     <script src="{{ STATIC_URL }}core/js/leaflet_helper.parsers.js"></script>
     <script src="{{ STATIC_URL }}core/js/KML.js"></script>
@@ -26,6 +26,8 @@
     <script src="{{ STATIC_URL }}core/js/fancytree/jquery.fancytree.dnd.js" type="text/javascript"></script>
     <script src="{{ STATIC_URL }}core/js/jquery.jeditable.js" type="text/javascript"></script>
     <script src="{{ STATIC_URL }}core/js/moment.min.js" type="text/javascript"></script>
+        <script src="{{ STATIC_URL }}core/js/url.js" type="text/javascript"></script>
+
 	<script src="{{ STATIC_URL }}core/js/geojson-js-utils/geojson-utils.js"></script>
 	<script src="{{ STATIC_URL }}core/js/jsmaptools/jsmaptools.js"></script>
 	<script src="{{ STATIC_URL }}core/js/jsmaptools/jsmaptools_polygons.js"></script>
@@ -42,10 +44,14 @@
     <script src="{{ STATIC_URL }}leaflet/leaflet-plugins/layer/tile/leaflet-tilelayer-wmts.js"></script>
 
     <script src="{{ STATIC_URL }}core/js/plugins/geoq.footprintsearch.js"></script>
+        <script src="{{ STATIC_URL }}core/js/plugins/ogc.csw.js"></script>
     <script src="{{ STATIC_URL }}core/js/pqgrid.dev.js"></script>
     <script src="{{ STATIC_URL }}core/js/daterangepicker.js"></script>
     <script src="{{ STATIC_URL }}core/js/bootstrap_slider/bootstrap-slider.js" type="text/javascript"></script>
     <script src="{{ STATIC_URL }}core/js/YouTubeSearch.js"></script>
+
+    <!-- Bootstrap dropdown select helper -->
+    <script src="{{ STATIC_URL }}bootstrap/js/bootstrap-select.min.js"></script>
 
     {% for layer in object.job.map.layers %}{% if layer.layer.type == 'Google Maps' %}
     <script src="{{ layer.layer.url }}maps/api/js?v=3&sensor=false"></script>
@@ -131,8 +137,10 @@
         <link rel="stylesheet" href="{{ STATIC_URL }}leaflet/MarkerCluster.Default.css" />
         <link rel="stylesheet" href="{{ STATIC_URL }}images/maki/maki-sprite.css" />
         <link rel="stylesheet" href="{{ STATIC_URL }}core/edit.css" />
-	<link rel="stylesheet" href="{{ STATIC_URL }}core/css/pqgrid.css" />
+	    <link rel="stylesheet" href="{{ STATIC_URL }}core/css/pqgrid.css" />
 
+        <!--Bootstrap dropwdown select styling -->
+        <link rel="stylesheet" href="{{ STATIC_URL }}bootstrap/css/bootstrap-select.min.css">
 
     {% endcompress %}
 {% endblock %}

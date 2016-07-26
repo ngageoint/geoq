@@ -949,7 +949,7 @@ leaflet_layer_control.parsers.textIfExists = function(options) {
     var suffix = options.suffix;
 
     var html = "";
-    if (typeof obj != "undefined" && obj !== "") {
+    if (obj != undefined && obj !== "") {
         if (header) {
             html+="<h5>";
         }

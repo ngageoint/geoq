@@ -86,6 +86,7 @@ SERVICE_TYPES = (
                 ('Leaflet Tile Layer', 'Leaflet Tile Layer'),
                 ('MediaQ', 'MediaQ'),
                 ('NWS Weather Alerts', 'NWS Weather Alerts'),
+                ('OpenSensorHub','OpenSensorHub'),
                 #('MapBox', 'MapBox'),
                 #('TileServer','TileServer'),
                 #('GetCapabilities', 'GetCapabilities'),

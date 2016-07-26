@@ -148,6 +148,11 @@ LEAFLET_CONFIG = {
             'css': [],
             'js': [STATIC_URL + 'leaflet/nws-leaflet.js'],
             'repo': 'https://github.com/john-kilgo/L.Marker.NWS'
+        },
+        'OpenSensorHub': {
+            'css': [],
+            'js': [STATIC_URL + 'leaflet/Leaflet.SOS.min.js'],
+            'repo': 'https://github.com/opensensorhub/osh-js'
         }
     }
 }

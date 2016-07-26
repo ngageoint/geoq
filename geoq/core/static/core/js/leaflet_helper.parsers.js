@@ -83,7 +83,7 @@ leaflet_helper.constructors.identifyParser = function(result, outputLayer){
 
     } else if (result.geometryType && result.geometryType == "esriGeometryPoint" &&
                result.features && result.features.length &&
-               result.features[0] && result.features[0].attributes) {
+               result.features[0] && result.features[0].attributes && result.features[0].attributes.ImageURL ) {
 
         //Parser is CAP imagery Format
         parser = leaflet_helper.parsers.addDynamicCapimageData;
