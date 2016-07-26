@@ -1,7 +1,7 @@
 L.MediaQLayer = L.GeoJSON.extend({
     options: {
         debug: true,
-        url: "http://media1.usc.edu/MediaQ_MVC_V3/api/geoq/",
+        url: "http://mediaq.usc.edu/MediaQ_MVC_V3/api/geoq/",
         query_link: "rectangle_query?swlat={SWLAT}&swlng={SWLNG}&nelat={NELAT}&nelng={NELNG}",
         metadata_link: "video_metadata?vid={VID}",
         key: "PUT_KEY_HERE",
@@ -13,6 +13,8 @@ L.MediaQLayer = L.GeoJSON.extend({
         L.Util.setOptions(this, options);
         this._layers = {};
         this._map = map;
+        this.map = map;
+        
         if (this._map) {
             this._bounds = map.getBounds();
             var ourmap = this._map;
@@ -35,7 +37,7 @@ L.MediaQLayer = L.GeoJSON.extend({
             return;
         }
 
-        var proxiedURL = L.MediaQLayer.buildURL(this.options.url+this.options.query_link, this._bounds);
+        var proxiedURL = L.MediaQLayer.buildURL(this.options.url + "/" + this.options.query_link, this._bounds);
 
         $.ajax({
             type: 'GET',
@@ -67,7 +69,13 @@ L.MediaQLayer = L.GeoJSON.extend({
     },
 
     mediaqLayerGroup: L.layerGroup(),
-    layer_ids: {}
+    layer_ids: {},
+    index : 0,
+    numFeatures: 0,
+    path_layer_ids: [],
+    mediaQVideo: null,
+    count: 0,
+    prevPosition: -1
 
 });
 
@@ -165,11 +173,10 @@ L.Util.extend(L.MediaQLayer, {
                 if (feature.properties.href){
                     var link = L.MediaQLayer.clean(feature.properties.href); //Strip out any offending
                     popupContent = "<span><h5>MediaQ Video</h5>"+
-                        "</h5></span><video width='320' height='240' controls><source src='"+link+"' type='video/mp4'></video>"+
-                        "<br/><button type='button' class='btn btn-small' " +
-                        "onclick='L.MediaQLayer.displayHidePath(\"" + feature.properties.vid + "\", \"" +
-                        mediaqOptions.url + mediaqOptions.metadata_link + "\", \"" +
-                        mediaqOptions.key + "\");' >Display/Hide Path</button><br/>";
+                        "</h5></span><video id='mediaqvideo' width='310' height='240' controls draggable='true' onplay='L.MediaQLayer.startDrawFOV(\"" + feature.properties.vid + "\", \"" +
+                        mediaqOptions.url + "/" + mediaqOptions.metadata_link + "\", \"" +
+                        mediaqOptions.key + "\")'><source src='"+
+                        link+"' type='video/mp4'></video><br/>";
                 }
             }
             if (popupContent && _.isString(popupContent)) {
@@ -195,6 +202,7 @@ L.Util.extend(L.MediaQLayer, {
     displayHidePath: function(vid, queryurl, key) {
         var layer_ids = this.prototype.layer_ids;
         var ourlayergroup = this.prototype.mediaqLayerGroup;
+        var path_layer_ids = this.prototype.path_layer_ids;
 
 
         if (layer_ids[vid]) {
@@ -217,11 +225,12 @@ L.Util.extend(L.MediaQLayer, {
                         return L.circleMarker(latlng, markerOptions);
                     }
                 });
+                
                 newlayer.addTo(ourlayergroup);
                 var id = ourlayergroup.getLayerId(newlayer);
                 layer_ids[vid] = id;
             } catch (ex){
-                log.error("Error parsing JSON returned from server");
+                log.error("Error parsing JSON returned from server: " + ex);
                 return;
             }
         };
@@ -290,6 +299,170 @@ L.Util.extend(L.MediaQLayer, {
             coords.push(new L.LatLng(ll[1], ll[0]));
         }
         return coords;
+    },
+    
+    drawFOV: function(vid, features, layer_ids, path_layer_ids, ourlayergroup, numFeatures){
+
+        var index = this.prototype.index;
+        this.prototype.count++;
+        
+        var myvid = document.getElementById("mediaqvideo");
+        var curPosition = parseInt(myvid.currentTime);
+        
+        if (index ==0 || this.prototype.prevPosition != curPosition) {
+        
+            this.prototype.prevPosition = curPosition;
+        
+            if (layer_ids[vid]) {
+                // remove layer from layer group
+                var layer = ourlayergroup.getLayer(layer_ids[vid]);
+                ourlayergroup.removeLayer(layer);
+                delete layer_ids[vid];
+            }
+        
+            if (index === numFeatures) {
+                this.prototype.index = 0;
+                $(document).trigger('fov-done');
+                return;
+            }
+        
+            var x = features[index].geometry.coordinates[1],
+                y = features[index].geometry.coordinates[0],
+            angle = 0.0,
+            wide_angle = 0.0,
+            radius = 0.0,
+            start_angle = 0.0,
+            end_angle = 0.0;
+            
+            
+            angle = Number(features[index].properties.theta_x);
+            wide_angle = Number(features[index].properties.alpha);
+            radius = Number(features[index].properties.r) * 1000;
+            start_angle = (angle - wide_angle/2) % 360;
+            end_angle = (angle + wide_angle/2) % 360;
+           
+            var newLayer = L.circle([x, y], 100, {
+                startAngle: start_angle,
+                stopAngle: end_angle,
+                color: 'red',
+                opacity: 0.5
+            });
+        
+            newLayer.addTo(ourlayergroup);
+            var id = ourlayergroup.getLayerId(newLayer);
+            layer_ids[vid] = id;
+        
+            var markerOptions = { radius: 4, fillColor: "#ff0000", color: "#f00", weight: 1, opacity: 1};
+            var pathLayer = L.circle([x, y], markerOptions);
+            pathLayer.addTo(ourlayergroup);
+            var pathLayerId = ourlayergroup.getLayerId(pathLayer);
+            path_layer_ids.push(pathLayerId);
+               
+            this.prototype.index = this.prototype.index + 1;
+  
+        }
+            
+    },
+    
+    startDrawFOV: function(vid, queryurl, key){
+        
+        var layer_ids = this.prototype.layer_ids;
+        var path_layer_ids = this.prototype.path_layer_ids;
+        var ourlayergroup = this.prototype.mediaqLayerGroup;
+        var numFeatures = this.prototype.numFeatures;
+        var fovJob = null;
+        this.prototype.index =0;
+        var myvid = document.getElementById("mediaqvideo");
+        var position = myvid.currentTime;
+        
+        $(document).on('fov-done', function(event) {
+            clearInterval(fovJob);
+            if (layer_ids[vid]) {
+                // remove layer from layer group
+                var layer = ourlayergroup.getLayer(layer_ids[vid]);
+                ourlayergroup.removeLayer(layer);
+                delete layer_ids[vid];
+                }
+            });
+
+        if (layer_ids[vid]) {
+            // remove layer from layer group
+            var layer = ourlayergroup.getLayer(layer_ids[vid]);
+            ourlayergroup.removeLayer(layer);
+            delete layer_ids[vid];
+            return;
+        }
+        
+        var params = {'VID':vid};
+        var url = queryurl.replace(/{[^{}]+}/g, function(k) {
+            return params[k.replace(/[{}]+/g, "")] || "";
+        });
+
+        var cb = function(data) {
+            try {
+                var numFeatures = data.features.length;
+                var myvid = document.getElementById('mediaqvideo');
+                var position = myvid.currentTime; 
+                
+                L.MediaQLayer.drawFOV(vid, data.features, layer_ids, path_layer_ids, ourlayergroup, numFeatures);
+                $("video").on('timeupdate', function(event){
+                    L.MediaQLayer.drawFOV(vid, data.features, layer_ids, path_layer_ids, ourlayergroup, numFeatures);
+                });
+
+                $("video").on('ended', function(event){
+                    if (layer_ids[vid]) {
+                        // remove layer from layer group
+                        var layer = ourlayergroup.getLayer(layer_ids[vid]);
+                        ourlayergroup.removeLayer(layer);
+                        delete layer_ids[vid];
+                    }
+                        
+                    if (path_layer_ids.length != 0) {
+                        _.each(path_layer_ids,function(id){
+                          ourlayergroup.removeLayer(id);
+                        });
+                        path_layer_ids = [];
+                    }                     
+                });                   
+            } catch (ex){
+                log.error("Error parsing JSON returned from server: " + ex);
+                return;
+            }
+        };
+
+        var error = function(data) {
+            log.error("got error");
+        };
+
+        $.ajax({
+            type: 'GET',
+            url: leaflet_helper.proxify(url),
+            headers: {
+                'X-API-KEY': key
+            },
+            dataType: 'json',
+            success: cb,
+            error: error
+        });
+    },
+    
+    clearFOV: function(vid){
+        var layer_ids = this.prototype.layer_ids;
+        var path_layer_ids = this.prototype.path_layer_ids;
+        var ourlayergroup = this.prototype.mediaqLayerGroup;
+        
+        if (layer_ids[vid].length !=0) {
+            var layer = ourlayergroup.getLayer(layer_ids[vid]);
+            ourlayergroup.removeLayer(layer);
+            delete layer_ids[vid];
+        }
+                                   
+        if (path_layer_ids.length != 0) {
+            _.each(path_layer_ids,function(id){
+                ourlayergroup.removeLayer(id);
+            });
+            path_layer_ids = [];
+        }       
     }
 });
 
