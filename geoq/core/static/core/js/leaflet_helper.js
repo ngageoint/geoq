@@ -286,6 +286,7 @@ leaflet_helper.addLayerControl = function (map) {
                     layers: layer.layer,
                     format: layer.format,
                     transparent: layer.transparent,
+                    zIndex: layer.zIndex,
                     attribution: layer.attribution
                 });
                 overlayMaps[layer.name] = mykml;
