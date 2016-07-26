@@ -237,8 +237,6 @@ class CreateFeaturesView(UserAllowedMixin, DetailView):
             aoi.analyst = self.request.user
             aoi.status = 'In work'
             aoi.cellStarted_at = datetime.now(tz=pytz.timezone('UTC'));
-            print "Given Date: " + str(aoi.cellStarted_at)
-            print "Cell ID: " + str(aoi.id)
             aoi.save()
             return True
         elif aoi.status == 'In work':
@@ -564,9 +562,9 @@ class ExportJobView(CreateUpdateView):
         aois = None
         if "Workcell" in self.request.POST:
             aois = AOI.objects.filter(job__id=self.object.id)
-            print aois
+            
 
-        print self.object.id
+        
         obj = form.save(commit=False)
         obj.pk = None
 
@@ -579,7 +577,7 @@ class ExportJobView(CreateUpdateView):
                 aoi.job = self.object
                 aoi.save()
 
-        print self.object.id
+        
         self.object.reviewers.add(self.request.user)
 
         # Create a new map for each job
@@ -755,7 +753,7 @@ class ChangeAOIStatus(View):
 
     def _get_aoi_and_update(self, pk):
         aoi = get_object_or_404(AOI, pk=pk)
-        print "_get_aoi_and_update"
+        
         status = self.kwargs.get('status')
         return status, aoi
 
@@ -782,7 +780,6 @@ class ChangeAOIStatus(View):
 
     def get(self, request, **kwargs):
         # Used to unassign tasks on the job detail, 'in work' tab
-        print "GET in AOI Status"
         status, aoi = self._get_aoi_and_update(self.kwargs.get('pk'))
 
         if aoi.user_can_complete(request.user):
@@ -794,7 +791,6 @@ class ChangeAOIStatus(View):
     def post(self, request, **kwargs):
 
         status, aoi = self._get_aoi_and_update(self.kwargs.get('pk'))
-        print "POST in AOI Status"
         if aoi.user_can_complete(request.user):
             aoi = self._update_aoi(request, aoi, status)
             Comment(aoi=aoi,user=request.user,text='changed status to %s' % status).save()
