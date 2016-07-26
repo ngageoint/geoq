@@ -10,7 +10,6 @@
     <script src="{{ STATIC_URL }}core/js/maths.js"></script>
     <script src="{{ STATIC_URL }}core/js/leafletcontrols/leaflet.simple_button.js"></script>
     <script src="{{ STATIC_URL }}leaflet/L.Control.Button.js"></script>
-    <script src="{{ STATIC_URL }}core/js/readmore.js"></script> <!--Readmore plugin -->
     <script type="text/javascript">
 
         var map_object;
@@ -133,6 +132,8 @@
             };
             var titleInfoButton = new L.Control.Button(titleInfoOptions).addTo(map);
 
+            leaflet_helper.addLayerControl(map);
+
         }
 
         function highlightFeature(e) {
@@ -230,6 +231,8 @@
             document.getElementById("TTC").innerHTML = "Days: " + Math.floor(timeToCompletion / 24) + " Hours: " + Math.round((timeToCompletion % 24) * 100) / 100;
 
         };
+
+    var map_layers = {{ object.map.to_json|safe|default:"{}" }};
 
     $(document).ready(function(){
         var $att = $('#attribute-table');

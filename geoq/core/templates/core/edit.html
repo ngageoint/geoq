@@ -6,10 +6,10 @@
 {% block title %}GeoQ: Workcell {{ object.id }}{% endblock %}
 {% block static_libraries %}
 
-    {% leaflet_js plugins="draw, esri, esriCluster, MakiMarkers, MediaQ, OpenSensorHub" %}
+    {% leaflet_js plugins="draw, esri, esriCluster, MakiMarkers, MediaQ" %}
     {% import_django_select2_js %}
     <script src="{{ STATIC_URL }}core/js/jquery-migrate-1.2.1.min.js"></script>
-	<script src="{{ STATIC_URL }}core/js/Leaflet-WFST.min.js"></script> 
+	<script src="{{ STATIC_URL }}core/js/Leaflet-WFST.min.js"></script>
     <script src="{{ STATIC_URL }}core/js/leaflet_helper.js"></script>
     <script src="{{ STATIC_URL }}core/js/leaflet_helper.parsers.js"></script>
     <script src="{{ STATIC_URL }}core/js/KML.js"></script>
@@ -42,6 +42,7 @@
     <script src="{{ STATIC_URL }}leaflet/leaflet-plugins/layer/tile/Bing.js"></script>
 	<script src="{{ STATIC_URL }}leaflet/leaflet-plugins/layer/tile/Google.js"></script>
     <script src="{{ STATIC_URL }}leaflet/leaflet-plugins/layer/tile/leaflet-tilelayer-wmts.js"></script>
+	<script src="{{ STATIC_URL }}leaflet/leaflet-plugins/Semicircle.js"></script>
     <script src="{{ STATIC_URL }}core/js/plugins/geoq.footprintsearch.js"></script>
         <script src="{{ STATIC_URL }}core/js/plugins/ogc.csw.js"></script>
     <script src="{{ STATIC_URL }}core/js/pqgrid.dev.js"></script>
@@ -50,7 +51,7 @@
     <script src="{{ STATIC_URL }}core/js/YouTubeSearch.js"></script>
 
     <!-- Bootstrap dropdown select helper -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-select/1.10.0/js/bootstrap-select.min.js"></script>
+    <script src="{{ STATIC_URL }}bootstrap/js/bootstrap-select.min.js"></script>
 
     {% for layer in object.job.map.layers %}{% if layer.layer.type == 'Google Maps' %}
     <script src="{{ layer.layer.url }}maps/api/js?v=3&sensor=false"></script>

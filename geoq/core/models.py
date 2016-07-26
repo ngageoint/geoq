@@ -372,6 +372,8 @@ class AOI(GeoQBase, Assignment):
     cellFinished_at = models.DateTimeField(blank=True,null=True)	
 
     class Meta:
+        verbose_name = 'Area of Interest'
+        verbose_name_plural = 'Areas of Interest'
         permissions = (
             ('assign_workcells', 'Assign Workcells'), ('certify_workcells', 'Certify Workcells'),
         )
@@ -486,11 +488,6 @@ class AOI(GeoQBase, Assignment):
         Returns whether the user can update the AOI as complete.
         """
         return user == self.analyst or user in self.job.reviewers.all()
-
-    class Meta:
-        verbose_name = 'Area of Interest'
-        verbose_name_plural = 'Areas of Interest'
-
 
 class Comment(models.Model):
     """

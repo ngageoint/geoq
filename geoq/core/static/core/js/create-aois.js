@@ -306,7 +306,7 @@ create_aois.removeFeatures = function (e) {
 };
 
 create_aois.map_updates = function () {
-    var layers = _.filter(map.layers, function (l) {
+    var layers = _.filter(map_layers.layers, function (l) {
         return l.type == "WMS" || l.type == "KML";
     });
 
@@ -1059,7 +1059,8 @@ create_aois.createWorkCellsFromService = function (data, zoomAfter, skipFeatureS
             }
             layer.popupContent = popupContent;
 
-            layer.bindPopup(layer.popupContent).openPopup();
+            //TODO: Figure out why the layer does not have a map, causing openPopup to throw an error
+            // layer.bindPopup(layer.popupContent).openPopup();
 
             layer.on({
                 mouseover: create_aois.highlightFeature,
