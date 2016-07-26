@@ -1,0 +1,783 @@
+{% extends "core/base.html" %}
+
+{% block container %}
+<style type="text/css">
+
+	#container {
+		margin:auto;
+		width: 1060px;
+	}
+
+	#clear {
+		background-color: black;
+		clear:both;
+	}
+
+	.axis text {
+		font: 10px sans-serif;
+	}
+
+	.axis line,
+	.axis path {
+	  fill: none;
+	  stroke: #000;
+	  shape-rendering: crispEdges;
+	}
+
+	.axis--x path {
+	  display: block;
+	}
+
+	#inWorkText, #inReviewText {
+		padding-right: 50px;
+	}
+
+
+	div.tooltip {	
+	    position: absolute;			
+	    text-align: center;			
+	    width: 100px;					
+	    /*height: 28px;*/					
+	    padding: 2px;				
+	    font: 12px sans-serif;		
+	    background: lightsteelblue;	
+	    border: 0px;		
+	    border-radius: 8px;			
+	    pointer-events: none;			
+	}
+
+
+	fieldset {
+	  display: block;
+	  float: left;
+	  width: 10em;
+	  margin: 0 1em 0 0;
+	  border: 1px solid #ccc;
+	}
+	  fieldset:last-child {
+	  margin: 0;
+	}
+
+	fieldset > input,
+	fieldset > label {
+	  display: block;
+	  font-size: .9em;
+	  margin: 0 auto;
+	}
+	fieldset > input {
+	  width: 80%;
+	  font-size: 1.5em;
+	}
+</style>
+
+<script src="https://d3js.org/d3.v3.min.js" charset="utf-8"></script>
+<script src="/static/core/js/bootstrap-datepicker.js"></script>
+<link rel="stylesheet" type="text/css" href="/static/core/css/datepicker.css">
+
+<script language="JavaScript">
+
+
+	var pickerStartDate = null;
+	var pickerEndDate = null;
+	var data;
+
+	$(document).ready(function() {
+		
+
+		$('#startDate').datepicker({
+			format: 'mm/dd/yyyy',
+			autoclose: true,
+			todayBtn: 1
+		}).on('changeDate', function(ev) {
+			pickerStartDate = new Date(ev.date.getFullYear(), ev.date.getMonth(), ev.date.getDate()+1);
+			$('#endDate').datepicker('setStartDate', pickerStartDate);
+				
+		});
+
+		$("#endDate").datepicker({
+			format: "mm/dd/yyyy",
+			autoclose: true,
+			todayBtn: 1
+		})
+		.on('changeDate', function (ev) {
+			pickerEndDate = new Date(ev.date.getFullYear(), ev.date.getMonth(), ev.date.getDate()+2);
+			$('#startDate').datepicker('setEndDate', pickerEndDate);
+		});
+
+	});
+
+</script>
+
+
+
+<div class="row-fluid container-narrow">
+	<div id="container">
+			<div id="inputs">
+				<h3>Workcell Statistics</h3>
+				<h4 style="float:left; margin-right:10px;">Dates: </h4>
+
+				<form style="display:inline; float:left" >
+					<input type="text" placeholder="Start" id="startDate" name="startDate" style="margin-bottom:0px; margin-right: 10px; width:10em; ">
+					<input type="text" placeholder="End" id="endDate" name="endDate" style="margin-bottom:0px; margin-right: 10px; width:10em;">
+				</form>
+
+				<a href="#" class="btn btn-primary" style="" onclick="apply()">Apply</a>
+				<a href="#" id="btnReset" class="btn btn-default" style="visibility:hidden" onclick="reset()">Reset</a>
+				
+			</div>
+
+
+
+			<!-- Clearing Div -->
+			<div id="clear">
+			</div>
+			<div id="graphs">
+				<div style="height:400px; width:707px; float:left" id="barChart">
+				</div>
+				<div style="height:400px; width:353px; float:left" id="donutChart">
+				</div>
+			</div>
+			<!-- Clearing of floating divs -->
+			<div id="clear">
+			</div>
+			<!-- Other content after the charts -->
+			<div id="legend" style="; margin-top:15px; margin-right: auto; margin-left: auto; width: 750px; height: 25px;">
+				<table><tr><td id="inWork"></td><td id="inWorkText">Hours in Work</td><td id="inReview"></td><td id="inReviewText">Hours In Review</td><td id="waitingForReview"></td><td id="waitingForReviewText">Hours Waiting for Review</td></tr></table>
+			</div>
+
+			<div style="">
+				<table id="extraDataTable">
+				</table>
+			</div>
+		</div>
+</div>
+
+
+	<script>
+		var temp = "{{ data }}";
+		var data = JSON.parse(temp.replace(/&quot;/g,'"'));
+		var hG, pC;
+
+		var div = d3.select("#donutChart").append("div")
+			.attr("class", "tooltip")
+			.style("opacity", 0);
+
+
+		hG = drawBar();
+		pC = drawDonut();
+		drawLegend();
+
+		function apply() {
+
+			if (pickerStartDate != null && pickerEndDate != null) {
+				$("#btnReset").css("visibility", "visible");
+				data.forEach(function (d) {
+					var runningAverageInWork = 0;
+					var runningAverageInReview = 0;
+					var runningAverageWaitingForReview = 0;
+
+					for (var i = 0; i < d.workcells.length; i++) {
+						var checkDate = new Date(d.workcells[i].dateCompleted);
+						if (isInDate(checkDate)) {
+							runningAverageInWork = ((runningAverageInWork * i) + d.workcells[i].time.timeInWork) / (i + 1);
+							runningAverageInReview = ((runningAverageInReview * i) + d.workcells[i].time.timeInReview) / (i + 1);
+							runningAverageWaitingForReview = ((runningAverageWaitingForReview * i) + d.workcells[i].time.waitingForReview) / (i + 1);
+						}
+					}
+
+					d.dayAverages.dayRunningAverageInWork = runningAverageInWork;
+				    d.dayAverages.dayRunningAverageInReview = runningAverageInReview;
+				    d.dayAverages.dayRunningAverageWaitingForReview = runningAverageWaitingForReview;
+				});
+
+				hG.update(false);
+				pC.update(false);
+			}
+			
+		}
+
+
+		function reset() {
+			hG.update(true);
+			pC.update(true);
+			$("#btnReset").css("visibility", "hidden");
+			$("#startDate").val('');
+			$("#endDate").val('');
+			$("#startDate").removeData();
+			$("#endDate").removeData();
+			pickerStartDate = null;
+			pickerEndDate = null;
+			
+		}
+
+		function segColor(c) {return {averageInWorkTime:"#01b0f1", dayRunningAverageInWork:"#01b0f1", averageInReviewTime:"#a8d18d", dayRunningAverageInReview: "#a8d18d", averageWaitingForReviewTime: "#b17fd8", dayRunningAverageWaitingForReview: "#b17fd8"}[c];}
+		function drawBar() {
+			var sections = ["averageInWorkTime", "averageWaitingForReviewTime", "averageInReviewTime"];
+			var labelControl = 0;
+			
+			var hG={},  hGDim = {t: 30, r: 0, b: 35, l: 20};
+			        hGDim.w = 700 - hGDim.l - hGDim.r, 
+			        hGDim.h = 400 - hGDim.t - hGDim.b;
+			            
+	        //create svg for histogram.
+	        var hGsvg = d3.select("#barChart").append("svg")
+	            .attr("width", hGDim.w + hGDim.l + hGDim.r)
+	            .attr("height", hGDim.h + hGDim.t + hGDim.b).append("g")
+	            .attr("transform", "translate(" + (hGDim.l + 60)+ "," + hGDim.t + ")");
+
+
+	        var x = d3.scale.ordinal()
+	        	.rangeRoundBands([0, hGDim.w]);
+
+	       	var xAxis = d3.svg.axis()
+	        	.scale(x)
+	        	.orient("bottom");
+			
+
+	        var y = d3.scale.linear()
+				.rangeRound([hGDim.h, 0]);
+
+	        var z = d3.scale.ordinal()
+	        	.domain(["averageInWorkTime","averageInReviewTime", "averageWaitingForReviewTime"])
+	        	.range(["#01b0f1", "#a8d18d", "#b17fd8"]);
+
+	       
+
+	        var yAxis = d3.svg.axis()
+	        	.scale(y)
+	        	.orient("left");
+
+
+	       
+	    	var layers = d3.layout.stack()(sections.map(function (c) {
+	        	return data.map(function (d) {
+	        		//var label = new Date(d.dateCompleted);
+	        		return {x: d.analyst, y: d.averages[c], numCompleted: d.numCompleted};
+	        	});
+	        }));
+	        
+
+
+	        x.domain(layers[0].map(function (d) { return d.x; }));
+	        y.domain([0, d3.max(layers[layers.length - 1], function (d) {
+	        	return d.y0 + d.y;})]).nice(); 
+			
+
+			/*
+				thank you to a random google link 5 pages in.....
+			*/
+	        var analysts = d3.nest()
+	        	.key(function (d) {return d.analyst})
+	        	.rollup(function (leaves) {return d3.sum(leaves, function (d) {return d3.sum(d3.values(d.averages))});})
+	        	.entries(data);
+
+	        var groups = hGsvg.selectAll("g.hours")
+	        	.data(layers)
+	        	.enter().append("g")
+	        	.attr("class", "hours")
+	        	.style("fill", function (d, i) {return z(i);});
+
+	        var bar = groups.selectAll("g")
+	        	.data(function (d) { return d;})
+	        	.enter().append("g")
+	        	.attr("class", "bars")
+	        	.attr("transform", function(d, i) {return "translate(" + x(d.x) + ", 0)";});
+
+	        var sum = 0;
+			bar.append("rect")
+			  	.attr("y", function(d) { return y(d.y0 + d.y); })
+			  	.attr("transform", "translate(" + (25) + "," + 0 + ")")
+			  	.attr("height", function(d) { return y(d.y0) - y(d.y0 + d.y); })
+			    .attr("width", x.rangeBand() - 50)
+			    .attr("class", "stack");
+		
+
+
+			 columns = hGsvg.append("g")
+			    .selectAll("text").data(analysts)
+			    .enter().append("text")
+			    .attr("x", function(d){return x(d.key) + x.rangeBand()/2})
+			    .attr("y", function (d) {return y(d.values);})
+			    .attr("dy", "1.35em")
+			    .attr("style", "bold")
+			    .attr('style', 'font-size:13px')
+			    .attr('class', "labels")
+			    .attr('transform', "translate(" + 0 + "," + (-30) + ")")
+			    .text( function (d){return d3.format(",")(d3.round(d.values, 2));})
+			    .style({fill: 'black', "text-anchor": "middle"});
+
+			
+			 hGsvg.append("g")
+		      .attr("class", "axis axis--x")
+		      .attr("transform", "translate(0," + hGDim.h + ")")
+		      .call(xAxis);
+			
+		   
+
+			hGsvg.append("g")
+		      .attr("class", "axis axis--y")
+		      .call(yAxis);
+
+		    
+		   	hGsvg.append("text")
+	        .attr("transform", "rotate(-90)")
+	        .attr("y", - 75)
+	        .attr("x", 0 - (hGDim.h) / 2)
+	        .attr("dy", "1em")
+	        .style("text-anchor", "middle")
+	        .text("Average Hours");
+
+	        hGsvg.append("text")
+			.attr("x", hGDim.w / 2 )
+	        .attr("y", -20)
+	        .style("text-anchor", "middle")
+	        .text("Hours Per Analyst");
+
+	        hGsvg.append("text")
+	        .attr("x", hGDim.w /2)
+	        .attr("y", hGDim.h + 30)
+	        .style("text-anchor", "middle")
+	        .text("Analysts")
+
+
+	        hG.update = function(reset) {
+
+	        	var newSections;
+	        	var z;
+
+	        	if (!reset) {
+	        		newSections = ["dayRunningAverageInWork", "dayRunningAverageWaitingForReview", "dayRunningAverageInReview"];
+	        	 	z = d3.scale.ordinal()
+			        	.domain(["dayRunningAverageInWork","dayRunningAverageInReview", "dayRunningAverageWaitingForReview"])
+			        	.range(["#01b0f1", "#a8d18d", "#b17fd8"]);
+	        	} else {
+	        		newSections = ["averageInWorkTime", "averageWaitingForReviewTime", "averageInReviewTime"];
+	        		z =  d3.scale.ordinal()
+			        	.domain(["averageInWorkTime","averageInReviewTime", "averageWaitingForReviewTime"])
+			        	.range(["#01b0f1", "#a8d18d", "#b17fd8"]);
+	        	}
+	        	
+
+
+		        var y = d3.scale.linear()
+					.rangeRound([hGDim.h, 0]);
+
+
+	        	var newLayers;
+	        	if (!reset) {
+	        		newLayers = d3.layout.stack()(newSections.map(function (c) {
+		            	return data.map(function (d) {
+			            		return {x: d.analyst, y: d.dayAverages[c], numCompleted: d.numCompleted};
+			            	});
+		            }));
+	        	} else {
+	        		newLayers = d3.layout.stack()(sections.map(function (c) {
+		            	return data.map(function (d) {
+		            		//var label = new Date(d.dateCompleted);
+		            		return {x: d.analyst, y: d.averages[c], numCompleted: d.numCompleted};
+		            	});
+		            }));
+	        	}
+
+	        	y.domain([0, d3.max(newLayers[newLayers.length - 1], function (d) {
+	        		return d.y0 + d.y;})]).nice();
+
+
+	        	var yAxis = d3.svg.axis()
+	        		.scale(y)
+	        		.orient("left");
+
+	        	var newAnalysts;
+	        	if (!reset) {
+	        		newAnalysts  = d3.nest()
+			        	.key(function (d) {return d.analyst})
+			        	.rollup(function (leaves) {return d3.sum(leaves, function (d) {return d3.sum(d3.values(d.dayAverages))});})
+			        	.entries(data);
+	        	} else {
+	        		newAnalysts = d3.nest()
+			        	.key(function (d) {return d.analyst})
+			        	.rollup(function (leaves) {return d3.sum(leaves, function (d) {return d3.sum(d3.values(d.averages))});})
+			        	.entries(data);
+		        }
+	            
+	        	var transition = hGsvg.transition().duration(500);
+
+	        	
+	        	hGsvg.selectAll(".stack").remove();
+	        	hGsvg.selectAll("g.hours").remove();
+	        	hGsvg.selectAll(".bars").remove();
+	        	hGsvg.selectAll(".labels").remove();
+	        	hGsvg.select(".axis--y").remove();
+
+
+	        	
+				hGsvg.append("g")
+			      .attr("class", "axis axis--y")
+			      .call(yAxis);
+			      
+
+	        	
+	        	var groups = hGsvg.selectAll("g.hours")
+		        	.data(newLayers)
+		        	.enter().append("g")
+		        	.attr("class", "hours")
+		        	.style("fill", function (d, i) {return z(i);});
+
+		        var bar = groups.selectAll("g")
+		        	.data(function (d) { return d;})
+		        	.enter().append("g")
+		        	.attr("class", "bars")
+		        	.attr("transform", function(d, i) {return "translate(" + x(d.x) + ", 0)";});
+
+
+		        var sum = 0;
+				bar.append("rect")
+				  	.attr("y", function(d) { return y(d.y0 + d.y); })
+				  	.attr("transform", "translate(" + (25) + "," + 0 + ")")
+				  	.attr("height", function(d) { return y(d.y0) - y(d.y0 + d.y); })
+				    .attr("width", x.rangeBand() - 50)
+				    .attr("class", "stack");
+	        	
+	        	columns = hGsvg.append("g")
+				    .selectAll("text").data(newAnalysts)
+				    .enter().append("text")
+				    .attr("x", function(d){return x(d.key) + x.rangeBand()/2})
+				    .attr("y", function (d) {return y(d.values);})
+				    .attr("dy", "1.35em")
+				    .attr("style", "bold")
+				    .attr('style', 'font-size:13px')
+				    .attr('class', "labels")
+				    .attr('transform', "translate(" + 0 + "," + (-30) + ")")
+				    .text( function (d){return d3.format(",")(d3.round(d.values, 2));})
+				    .style({fill: 'black', "text-anchor": "middle"});
+
+	        }
+
+
+	        
+
+	        return hG;
+
+		}
+
+
+
+		function drawDonut() {
+			var tF = ['averageInWorkTime','averageWaitingForReviewTime', 'averageInReviewTime'].map(function(d){ 
+					return {type:d, total: d3.sum(data.map(function(t) {return t.averages.averageInWorkTime + t.averages.averageInReviewTime + t.averages.averageWaitingForReviewTime;})), averages: d3.sum(data.map(function(t){ return t.averages[d];}))}; 
+				});
+
+			var pC ={},    pieDim ={w:350, h: 400};
+						pieDim.r = Math.min(pieDim.w, pieDim.h) / 2;
+
+							
+			var arc = d3.svg.arc()
+				.outerRadius(pieDim.r - 10)
+				.innerRadius(pieDim.r - 70);
+
+			var pie = d3.layout.pie()
+				.sort(null)
+				.value(function(d) {return d.averages});
+
+			var piesvg = d3.select("#donutChart").append("svg")
+	    			.attr("width", pieDim.w).attr("height", pieDim.h).append("g")
+	    			.attr("class", "piesvg")
+	    			.attr("transform", "translate("+  (pieDim.w/2) +","+pieDim.h/2+")");
+	    			
+	    	var g = piesvg.selectAll(".arc")
+	    		.data(pie(tF))
+	    		.enter()
+	    		.append("g")
+	    		.attr("class", arc);
+
+	    	var topThree = [];
+	    	var html = "Top Performers: <br/>";
+	    	g.append("path")
+	    		.attr("d", arc)
+	    		.attr("class", "piePath")
+	    		.style("fill", function(d) {return segColor(d.data.type);})
+	    		.on("mouseover", function(d) {
+	    			if (d.data.type == "averageWaitingForReviewTime") {
+	    				data.sort(function (a, b) {
+	    					return a.averages.averageWaitingForReviewTime - b.averages.averageWaitingForReviewTime;
+	    				});
+	    				data.forEach(function (d) {
+	    					html = html + d.analyst + ": " + d3.round(d.averages.averageWaitingForReviewTime, 1) + "<br/>";
+	    				});
+	    			} else if (d.data.type == "averageInWorkTime") {
+	    				data.sort(function (a, b) {
+	    					return a.averages.averageInWorkTime - b.averages.averageInWorkTime;
+	    				});
+	    				data.forEach(function (d) {
+	    					html = html + d.analyst + ": " + d3.round(d.averages.averageInWorkTime, 1) + "<br/>";
+	    				});
+	    			} else {
+	    				data.sort(function (a, b) {
+	    					return a.averages.averageInReviewTime - b.averages.averageInReviewTime;
+	    				});
+	    				data.forEach(function (d) {
+	    					html = html + d.analyst + ": " + d3.round(d.averages.averageInReviewTime, 1) + "<br/>";
+	    				});
+	    			}
+	    			div.transition()
+	    				.duration(200)
+	    				.style("opacity", .9);
+	    			div.html(html)
+	    				.style("left", (d3.event.pageX) + "px")
+	    				.style("top", (d3.event.pageY) + "px");
+	    		})
+	    		.on("mousemove", function(d) {
+	    			div.html(html)
+	    				.style("left", (d3.event.pageX) + "px")
+	    				.style("top", (d3.event.pageY) + "px");
+	    		})
+	    		.on("mouseout", function (d) {
+	    			html = "Top Performers: <br/>";
+	    			div.transition()
+	    				.duration(200)
+	    				.style("opacity", 0);
+	    		});
+
+			g.append("text")
+				.attr("transform", function(d) {return "translate(" + arc.centroid(d) + ")";})
+				.attr("dy", ".35em")
+				.attr("class", "piePercentage")
+				.text(function (d) { 
+					if (d.value == 0) {
+						return "";
+					} else {
+						return (d3.format("%")(d.value/d.data.total));
+					}
+				});
+
+
+			var hours = tF[0].total/data.length;
+			var text;
+
+			if (hours < 1 ) {
+				text = d3.round(hours, 2) + " Hours";
+			} else if (hours >= 1) {
+				text = d3.round(hours, 0) + " Hours";
+			} else {
+				text = "";
+			}
+			
+			g.append("text")
+				.attr("transform", "translate(" + -25 + "," + 0 + ")")
+				.attr("class", "pieTotalHours")
+				.text(text);
+
+			g.append("text")
+				.attr("transform", "translate(" + -70 + "," + (-190) + ")")
+				.text("Average Hour % per cell");
+
+
+
+			pC.update = function (reset){
+				var control = "";
+				if(!reset) {
+					var tF = ['dayRunningAverageInWork','dayRunningAverageWaitingForReview', 'dayRunningAverageInReview'].map(function(d){ 
+	    				return {type:d, total: d3.sum(data.map(function(t) { return t.dayAverages.dayRunningAverageInWork + t.dayAverages.dayRunningAverageWaitingForReview + t.dayAverages.dayRunningAverageInReview;})), averages: d3.sum(data.map(function(t){ return t.dayAverages[d];}))}; 
+					});
+
+					control = ['dayRunningAverageInWork','dayRunningAverageWaitingForReview', 'dayRunningAverageInReview'];
+				} else {
+					var tF = ['averageInWorkTime','averageWaitingForReviewTime', 'averageInReviewTime'].map(function(d){ 
+	    				return {type:d, total: d3.sum(data.map(function(t) {return t.averages.averageInWorkTime + t.averages.averageInReviewTime + t.averages.averageWaitingForReviewTime;})), averages: d3.sum(data.map(function(t){ return t.averages[d];}))}; 
+					});
+
+					control = ['averageInWorkTime','averageWaitingForReviewTime', 'averageInReviewTime'];
+				}
+				
+
+
+				piesvg.selectAll("path").remove();
+				piesvg.selectAll(".pieTotalHours").remove();
+				piesvg.selectAll(".piePercentage").remove();
+
+	        			
+	        	var g = piesvg.selectAll(".arc")
+	        		.data(pie(tF))
+	        		.enter()
+	        		.append("g")
+	        		.attr("class", arc);
+
+	        	g.append("path")
+	        		.attr("d", arc)
+	        		.attr("class", "piePath")
+	        		.style("fill", function(d) {return segColor(d.data.type);})
+	        	.on("mouseover", function (d) {
+	        		if (!reset) {
+						if (d.data.type == "dayRunningAverageWaitingForReview") {
+	        				data.sort(function (a, b) {
+	        					return a.dayAverages.dayRunningAverageWaitingForReview - b.dayAverages.dayRunningAverageWaitingForReview;
+	        				});
+	        				data.forEach(function (d) {
+	        					html = html + d.analyst + ": " + d3.round(d.dayAverages.dayRunningAverageWaitingForReview, 1) + "<br/>";
+	        				});
+	        			} else if (d.data.type == "dayRunningAverageInWork") {
+	        				data.sort(function (a, b) {
+	        					return a.dayAverages.dayRunningAverageInWork - b.dayAverages.dayRunningAverageInWork;
+	        				});
+	        				data.forEach(function (d) {
+	        					html = html + d.analyst + ": " + d3.round(d.dayAverages.dayRunningAverageInWork, 1) + "<br/>";
+	        				});
+	        			} else {
+	        				data.sort(function (a, b) {
+	        					return a.dayAverages.dayRunningAverageInReview - b.dayAverages.dayRunningAverageInReview;
+	        				});
+	        				data.forEach(function (d) {
+	        					html = html + d.analyst + ": " + d3.round(d.dayAverages.dayRunningAverageInReview, 1) + "<br/>";
+	        				});
+	        			}
+					} else {
+						if (d.data.type == "averageWaitingForReviewTime") {
+	        				data.sort(function (a, b) {
+	        					return a.averages.averageWaitingForReviewTime - b.averages.averageWaitingForReviewTime;
+	        				});
+	        				data.forEach(function (d) {
+	        					html = html + d.analyst + ": " + d3.round(d.averages.averageWaitingForReviewTime, 1) + "<br/>";
+	        				});
+	        			} else if (d.data.type == "averageInWorkTime") {
+	        				data.sort(function (a, b) {
+	        					return a.averages.averageInWorkTime - b.averages.averageInWorkTime;
+	        				});
+	        				data.forEach(function (d) {
+	        					html = html + d.analyst + ": " + d3.round(d.averages.averageInWorkTime, 1) + "<br/>";
+	        				});
+	        			} else {
+	        				data.sort(function (a, b) {
+	        					return a.averages.averageInReviewTime - b.averages.averageInReviewTime;
+	        				});
+	        				data.forEach(function (d) {
+	        					html = html + d.analyst + ": " + d3.round(d.averages.averageInReviewTime, 1) + "<br/>";
+	        				});
+	        			}
+					}
+					div.transition()
+	    				.duration(200)
+	    				.style("opacity", .9);
+	    			div.html(html)
+	    				.style("left", (d3.event.pageX) + "px")
+	    				.style("top", (d3.event.pageY) + "px");
+	        	})
+	    		.on("mousemove", function(d) {
+	    			div.html(html)
+	    				.style("left", (d3.event.pageX) + "px")
+	    				.style("top", (d3.event.pageY) + "px");
+	    		})
+	    		.on("mouseout", function (d) {
+	    			html = "Top Performers: <br/>";
+	    			div.transition()
+	    				.duration(200)
+	    				.style("opacity", 0);
+	    		});
+
+				g.append("text")
+					.attr("transform", function(d) {return "translate(" + arc.centroid(d) + ")";})
+					.attr("dy", ".35em")
+					.attr("class", "piePercentage")
+					.text(function (d) { 
+						if (d.value == 0) {
+							return "";
+						} else {
+							return (d3.format("%")(d.value/d.data.total));
+						}
+					});
+
+
+				var hours = tF[0].total/data.length;
+				var text;
+
+				if (hours < 1 ) {
+					text = d3.round(hours, 2) + " Hours";
+				} else if (hours >= 1) {
+					text = d3.round(hours, 0) + " Hours";
+				} else {
+					text = "";
+				}
+				
+				g.append("text")
+					.attr("transform", "translate(" + -25 + "," + 0 + ")")
+					.attr("class", "pieTotalHours")
+					.text(text);
+			}
+			
+			return pC;
+
+				
+		}
+
+
+
+		function drawLegend() {
+			var hG={},  hGDim = {t: 3, r: 0, b: 0, l: 0};
+				        hGDim.w = 25 - hGDim.l - hGDim.r, 
+				        hGDim.h = 25 - hGDim.t - hGDim.b;
+				            
+	        //create svg for histogram.
+	        var inWorkSvg = d3.select("#inWork").append("svg")
+	            .attr("width", hGDim.w + hGDim.l + hGDim.r)
+	            .attr("height", hGDim.h + hGDim.t + hGDim.b).append("g")
+	            .attr("transform", "translate(" + hGDim.l + "," + hGDim.t + ")");
+
+	        var waitingForReviewSvg = d3.select("#waitingForReview").append("svg")
+	            .attr("width", hGDim.w + hGDim.l + hGDim.r)
+	            .attr("height", hGDim.h + hGDim.t + hGDim.b).append("g")
+	            .attr("transform", "translate(" + hGDim.l + "," + hGDim.t + ")");
+
+	        var inReivewSvg = d3.select("#inReview").append("svg")
+	            .attr("width", hGDim.w + hGDim.l + hGDim.r)
+	            .attr("height", hGDim.h + hGDim.t + hGDim.b).append("g")
+	            .attr("transform", "translate(" + hGDim.l + "," + hGDim.t + ")");
+
+	       	inWorkSvg.append("rect")
+	       		.attr("height", '100%')
+	       		.attr("width", '100%')
+	       		.attr("fill", "#01b0f1");
+
+	       	waitingForReviewSvg.append("rect")
+	       		.attr("height", '100%')
+	       		.attr("width", '100%')
+	       		.attr("fill", "#b17fd8");
+
+	       	inReivewSvg.append("rect")
+	       		.attr("height", '100%')
+	       		.attr("width", '100%')
+	       		.attr("fill", "#a8d18d");
+
+		}
+		
+
+
+		function isInDate(cDate) {
+			if (cDate <= pickerEndDate && cDate >= pickerStartDate) {
+				return true;
+			} else {
+				return false;
+			}
+			
+		}
+
+		function endAll (transition, callback) {
+		    var n;
+
+		    if (transition.empty()) {
+		        callback();
+		    }
+		    else {
+		        n = transition.size();
+		        transition.each("end", function () {
+		            n--;
+		            if (n === 0) {
+		                callback();
+		            }
+		        });
+		    }
+		}
+
+	</script>
+
+
+
+{% endblock %}
