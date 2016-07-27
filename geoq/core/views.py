@@ -657,7 +657,6 @@ class JobStatistics(ListView):
 
         	#Time In review
             if str(data[i]['data']['time']['finished']) != "None" and str(data[i]['data']['time']['in_review']) != "None":
-                import pdb; pdb.set_trace()
                 finishedDate = parse_datetime(data[i]['data']['time']['finished'])
                 inReviewDate = parse_datetime(data[i]['data']['time']['in_review'])
                 inReviewTime = getTotalTime(inReviewDate,finishedDate) / 3600
