@@ -68,7 +68,7 @@
                     $.each(tableRows, function(r){
                         var value = $('.value', this).val();
                         if (value) {
-                            var key = $('.key', this).text() || $('.key', this).val();
+                            var key = $('.key', this).text().toLowerCase() || $('.key', this).val().toLowerCase();
                             newProperties[key] = value;
                         }
                     })
@@ -187,7 +187,10 @@
                     $.each(tableRows, function(r){
                         var value = $('.value', this).val();
                         if (value) {
-                            var key = $('.key', this).text() || $('.key', this).val();
+                            var key = $('.key', this).text().toLowerCase() || $('.key', this).val().toLowerCase();
+                            if (key == "icon url") {
+                                key = "iconUrl";
+                            }
                             newStyle[key] = value;
                         }
                     })

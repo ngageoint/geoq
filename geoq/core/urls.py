@@ -79,6 +79,8 @@ urlpatterns = patterns('',
         #login required set in views
         'core.views.batch_create_aois', name='job-batch-create-aois'),
 
+    url(r'^jobs/statistics/(?P<job_pk>\d+)/?$', JobStatistics.as_view(), name='job-statistics'),
+
     # AOIS
     url(r'^aois/(?P<status>[a-zA-Z_ ]+)?/?$', AOIDetailedListView.as_view(template_name='core/aoi_list.html'), name='aoi-list'),
 
@@ -120,6 +122,7 @@ urlpatterns = patterns('',
     url(r'^api/jobs/(?P<job_pk>\d+)/groups/?$', list_groups, name='list_groups'),
     url(r'^api/geo/usng/?$', 'core.views.usng', name='usng'),
     url(r'^api/geo/mgrs/?$', 'core.views.mgrs', name='mgrs'),
+    url(r'^api/geo/ipaws/?$', 'core.views.ipaws', name='ipaws'),
     url(r'^proxy/(?P<path>.*)$', proxy_to, {'target_url': ''}),
     url(r'^proxy/?$', proxy_to, name='proxy'),
     url(r'^api/job[s ]?/(?P<pk>\d+).geojson$', JobGeoJSON.as_view(), name='json-job'),
@@ -139,7 +142,7 @@ urlpatterns = patterns('',
     url(r'^api/prioritize/(?P<method>\w+)?$',
         'core.views.prioritize_cells', name='batch-prioritize-cells'),
     #TEAMS
-    (r'^admin/jsi18n/$', 'django.views.i18n.javascript_catalog'),
+    url(r'^admin/jsi18n/$', 'django.views.i18n.javascript_catalog'),
     url(r'^teams/?$', TeamListView.as_view(template_name='core/team_list.html'), name='team-list'),
     url(r'^teams/create/?$',
         login_required(CreateTeamView.as_view(queryset=Group.objects.all(),

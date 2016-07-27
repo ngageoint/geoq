@@ -13,6 +13,8 @@
     <script type="text/javascript">
 
         var map_object;
+        var runningAverage = 0;
+        var timeToCompletion = 0;
         var map_toggle=false;
         var selected_workcell;
 
@@ -27,18 +29,35 @@
 
         var aoi_extents;
         function mapInit(map, bounds) {
-            map_object = map;  
-            map_object.on('popupopen', function(e) {
-                var px = map_object.project(e.popup._latlng);
-                px.y -= e.popup._container.clientHeight/2 ;
-                map_object.panTo(map_object.unproject(px),{animate: true});
-            });
+            map_object = map;
+          	/*
+          		The Map_object is not consistant with the css that is rendering the map on the intial loading and what the CSS looks like on refresh. 
+          		Changing these two values creates a consistant mapsize between all states. This may want to be looked into eventually.
+          	*/
+
+          	map_object._size.y = 193;
+          	map_object._zoom = 12;
+          	count = 0;
             aoi_extents = L.geoJson({{ object.geoJSON|default:'[]'|safe }}, {
                 style: function(feature) {
                     var status = _.find(status_colors,function(stat){return stat.name==feature.properties.status});
                     return (status && status.color) ? status.color : '#ffffff';
                 },
                 onEachFeature: function(feature, layer) {
+
+                    if (feature["properties"]["time"]["in_work"] != "None" && feature["properties"]["time"]["finished"] != "None") {
+                        console.log(feature);
+                        startedDate = new Date(feature["properties"]["time"]["in_work"]);
+                        finishedDate = new Date(feature["properties"]["time"]["finished"]);
+                        var hours = Math.abs(startedDate - finishedDate) / 36e5;
+
+                        runningAverage = ((runningAverage * count) + hours) / (count+1);
+                        count++;
+
+                      	timeToCompletion = runningAverage * ( {{object.aoi_count}} - count);	
+                      
+                    }
+
 
                     job_properties = feature.properties;
                     {% if user.is_authenticated %}
@@ -49,7 +68,8 @@
                     layer.on({
                         mouseover: highlightFeature,
                         mouseout: resetHighlight,
-                        click: cellClick
+                        click: cellClick,
+                        popupopen: recenter
                     });
                 }
             }).addTo(map);
@@ -127,6 +147,15 @@
             });
         }
 
+       function recenter(e) {
+        	
+            var px = map_object.project(e.popup._latlng);
+   
+            px.y -= (e.popup._container.clientHeight/2);
+            map_object.panTo(map_object.unproject(px),{animate: true});
+        }
+     
+
         function resetHighlight(e) {
             aoi_extents.resetStyle(e.target);
         }
@@ -197,6 +226,9 @@
                     $tab.css({backgroundColor:bg_color, color:color});
                 }
             });
+
+            //var hours = timeToCompletion % 24;
+            document.getElementById("TTC").innerHTML = "Days: " + Math.floor(timeToCompletion / 24) + " Hours: " + Math.round((timeToCompletion % 24) * 100) / 100;
 
         };
 
@@ -390,6 +422,14 @@
                             </td>
                             <td>
                                 {{ object.project.description }}
+                            </td>
+                        </tr>
+                        <tr>
+                            <td style="vertical-align: top;">
+                                <b>Est. Comp: </b>
+                            </td>
+                            <td>
+                                <p id="TTC"></p>
                             </td>
                         </tr>
                         {% include 'core/_job_links.html' %}

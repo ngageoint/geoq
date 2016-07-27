@@ -1059,7 +1059,8 @@ create_aois.createWorkCellsFromService = function (data, zoomAfter, skipFeatureS
             }
             layer.popupContent = popupContent;
 
-            layer.bindPopup(layer.popupContent).openPopup();
+            //TODO: Figure out why the layer does not have a map, causing openPopup to throw an error
+            // layer.bindPopup(layer.popupContent).openPopup();
 
             layer.on({
                 mouseover: create_aois.highlightFeature,

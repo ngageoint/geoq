@@ -42,7 +42,7 @@
     <script src="{{ STATIC_URL }}leaflet/leaflet-plugins/layer/tile/Bing.js"></script>
 	<script src="{{ STATIC_URL }}leaflet/leaflet-plugins/layer/tile/Google.js"></script>
     <script src="{{ STATIC_URL }}leaflet/leaflet-plugins/layer/tile/leaflet-tilelayer-wmts.js"></script>
-
+	<!-- script src="{{ STATIC_URL }}leaflet/leaflet-plugins/Semicircle.js"></script -->
     <script src="{{ STATIC_URL }}core/js/plugins/geoq.footprintsearch.js"></script>
         <script src="{{ STATIC_URL }}core/js/plugins/ogc.csw.js"></script>
     <script src="{{ STATIC_URL }}core/js/pqgrid.dev.js"></script>
@@ -93,6 +93,7 @@
         aoi_feature_edit.aoi_extents_geojson = {{ object.polygon.json|safe }};
         aoi_feature_edit.aoi_properties = {{ object.properties_json|safe }};
         aoi_feature_edit.priority = {{ object.priority|default:5 }};
+        aoi_feature_edit.status = "{{ object.status }}";
 
         aoi_feature_edit.aoi_user_remembered_params = {{ user_custom_params|safe }};
 

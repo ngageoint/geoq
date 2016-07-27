@@ -23,21 +23,10 @@ urlpatterns = patterns('',
     url(r'^features/edit/?$',
         login_required(EditFeatures.as_view()),
         name='feature-edit'),
-
-    #url(r'^feature-types/create/?',
-    #   login_required(CreateView.as_view(template_name='core/generic_form.html',
-    #                      form_class=FeatureTypeForm)),
-    #    name='feature-type-create'),
     
     url(r'^feature-types/create/?',
         login_required(CreateView.as_view(template_name='core/crispy_form.html', form_class=FeatureTypeForm)),
         name='feature-type-create'),
-
-    #url(r'^feature-types/update/(?P<pk>\d+)/?$',
-    #    login_required(UpdateView.as_view(template_name='core/generic_form.html',
-    #                       queryset=FeatureTypeForm.Meta.model.objects.all(),
-    #                       form_class=FeatureTypeForm)),
-    #    name='feature-type-update'),
     
     url(r'^feature-types/update/(?P<pk>\d+)/?$',
         login_required(UpdateView.as_view(template_name='core/crispy_form.html',

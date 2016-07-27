@@ -95,12 +95,36 @@ L.NWSIconsLayer = L.GeoJSON.extend({
 
         if (load) {
             //this.addMediaQ(options);
-            //this.geocode();
+            this.geocode();
             this.load(this.testCallBack);
         }
     },
-    // Performs Calculation of Center of AOI and calls for GeoCode info
-    geocode: function() {
+    // Gets the bounds of the Workcell and calls for GeoCode info
+    geocode: function(){
+        var map = this._map;
+        var bounds = map.getBounds();
+
+        var ringObject = '{"rings":[[[' + 
+                bounds._southWest.lng + ',' + bounds._northEast.lat + '],[' +
+                bounds._northEast.lng + ',' + bounds._northEast.lat + '],[' +
+                bounds._northEast.lng + ',' + bounds._southWest.lat + '],[' +
+                bounds._southWest.lng + ',' + bounds._southWest.lat + '],[' +
+                bounds._southWest.lng + ',' + bounds._northEast.lat + ']]],' +
+                '"spatialReference":{"wkid":4326}}';
+
+        var url = "/geoq/proxy/https://tigerweb.geo.census.gov/arcgis/rest/services/Generalized_ACS2015/State_County/MapServer/11/query?where=&text=&objectIds=&time=&geometry=" + ringObject + "&geometryType=esriGeometryPolygon&inSR=&spatialRel=esriSpatialRelIntersects&relationParam=&outFields=GEOID&returnGeometry=false&returnTrueCurves=false&maxAllowableOffset=&geometryPrecision=&outSR=&returnIdsOnly=false&returnCountOnly=false&orderByFields=&groupByFieldsForStatistics=&outStatistics=&returnZ=false&returnM=false&gdbVersion=&returnDistinctValues=false&resultOffset=&resultRecordCount=&f=pjson";
+
+        $.ajax({
+            type: 'GET',
+            url: url,
+            dataType: 'json',
+            success: function(data){console.log(data);},
+            error: this.nwscap_error
+        });
+
+
+    },
+    /* Old version with MapQuest geocode: function() {
         this._searchCoordinates = new YouTubeSearch();
 
         var boundingPoints = [];
@@ -125,9 +149,9 @@ L.NWSIconsLayer = L.GeoJSON.extend({
             success: this._geocode,
             error: this.nwscap_error
         });
-    },
+    }, */
     // Parses and saves GeoCode info
-    _geocode: function(data) {
+    /* OLD VERSION with MApQuest _geocode: function(data) {
         this._geocode = data;
 
         console.log(this._geocode);
@@ -144,7 +168,7 @@ L.NWSIconsLayer = L.GeoJSON.extend({
             }
         }
 
-    },
+    }, */
     // Loads the FEMA list server
     load: function(callback) {
 
@@ -156,18 +180,11 @@ L.NWSIconsLayer = L.GeoJSON.extend({
             return;
         }
 
-        this._updatedTime = new Date().toISOString().replace(/\.[0-9]{3}/,'');
-
-        var url = options.proxy + options.FEMA + this._updatedTime + options.FEMAkey;
-        console.log("URL " + url);
-
-        $.ajax({
-            type: 'GET',
-            url: url,
-            dataType: 'xml',
-            success: callback,
-            error: this.nwscap_error
-        });
+        $.post( "/geoq/api/geo/ipaws", {develop: true, key: this.options.FEMAkey})
+            .done(function( data ) {
+                alert( "Data Loaded: " + data );
+            });
+            
     },
     // On add of the layer
    /* addMediaQ: function(options) {
@@ -183,7 +200,7 @@ L.NWSIconsLayer = L.GeoJSON.extend({
 
         this.addTo(this._map);
     },*/
-    testCallBack: function(data) {
+    testCallBack: function(data){
         console.log(data);
     },
     // NWS Callback IPAWS Parse
@@ -200,7 +217,7 @@ L.NWSIconsLayer = L.GeoJSON.extend({
     layer_ids: {},
 // begin break with old code in extend
 
-    parseJSON: function (data, layer) {
+    parseJSON: function (data, layer){
         var result;
         if (typeof data=="object") {
             result = data;

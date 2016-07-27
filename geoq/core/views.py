@@ -5,8 +5,12 @@
 import json
 import re
 import requests
+import pytz
 import logging
+import os
 
+
+from django.core.cache import cache
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User, Group, Permission
 from django.contrib.gis.geos import GEOSGeometry
@@ -18,7 +22,8 @@ from django.http import Http404, HttpResponse, HttpResponseRedirect, HttpRespons
 from django.shortcuts import get_object_or_404, redirect, render
 from django.views.generic import DetailView, ListView, TemplateView, View, DeleteView, CreateView, UpdateView
 
-from datetime import datetime
+from datetime import datetime, timedelta
+from django.utils.dateparse import parse_datetime
 
 from models import Project, Job, AOI, Comment, AssigneeType, Organization
 from geoq.maps.models import *
@@ -30,6 +35,7 @@ from geoq.core.utils import send_aoi_create_event
 from geoq.core.middleware import Http403
 from geoq.mgrs.exceptions import ProgramException
 from guardian.decorators import permission_required
+
 from kml_view import *
 from shape_view import *
 
@@ -233,6 +239,7 @@ class CreateFeaturesView(UserAllowedMixin, DetailView):
         if aoi.status == 'Unassigned':
             aoi.analyst = self.request.user
             aoi.status = 'In work'
+            aoi.cellStarted_at = datetime.now(tz=pytz.timezone('UTC'));
             aoi.save()
             return True
         elif aoi.status == 'In work':
@@ -256,6 +263,7 @@ class CreateFeaturesView(UserAllowedMixin, DetailView):
         elif aoi.status == 'Awaiting review':
             if self.request.user in aoi.job.reviewers.all() or is_admin:
                 aoi.status = 'In review'
+                aoi.cellInReview_at = datetime.now(tz=pytz.timezone('UTC'))
                 aoi.reviewers.add(self.request.user)
                 aoi.save()
                 increment_metric('workcell_analyzed')
@@ -557,9 +565,9 @@ class ExportJobView(CreateUpdateView):
         aois = None
         if "Workcell" in self.request.POST:
             aois = AOI.objects.filter(job__id=self.object.id)
-            print aois
+            
 
-        print self.object.id
+        
         obj = form.save(commit=False)
         obj.pk = None
 
@@ -572,7 +580,7 @@ class ExportJobView(CreateUpdateView):
                 aoi.job = self.object
                 aoi.save()
 
-        print self.object.id
+        
         self.object.reviewers.add(self.request.user)
 
         # Create a new map for each job
@@ -603,23 +611,185 @@ class MapEditView(DetailView):
         return cv
 
 
+class JobStatistics(ListView):
+    model = Job
+    template_name = "core/job_statistics.html"
+
+    def get_context_data(self, **kwargs):
+        cv = super(JobStatistics, self).get_context_data(**kwargs)
+        primaryKey = self.kwargs.get('job_pk')
+        job = get_object_or_404(Job, pk=primaryKey)
+
+        allData = json.loads(job.geoJSON())
+        analysts = []
+        data = []
+        for x in xrange(0, job.aoi_count()):
+            temp = {}
+            temp['aoi'] = allData["features"][x]["properties"]["id"]
+            internalData = {}
+            internalData["analyst"] = allData["features"][x]["properties"]["analyst"]
+            internalData['time'] = allData["features"][x]["properties"]["time"]
+            internalData["priority"] = allData["features"][x]["properties"]["priority"]
+            temp["data"] = internalData
+            data.append(temp)
+
+
+        def checkAnalysts(analyst):
+            for x in xrange(0, len(analysts)):
+                if analysts[x]['analyst'] == analyst:
+                    return x
+            return -1
+
+        def getTotalTime(startDate, finishDate):
+            try:
+                return abs(startDate - finishDate).total_seconds()
+            except AttributeError:
+                diff = abs(startDate - finishDate)
+                return (diff.microseconds + (diff.seconds + diff.days * 24 * 3600) * 10**6) / 10**6
+
+        for i in xrange(0, len(data)):
+            isCompleted = False;
+            totalTime = inReviewTime = inWorkTime = waitingForReviewTime = 0
+
+        	#Total Time from InWork - Complete
+            if str(data[i]['data']['time']['in_work']) != "None" and str(data[i]['data']['time']['finished']) != "None":
+                isCompleted = True;
+                startedDate = parse_datetime(data[i]['data']['time']['in_work'])
+                finishedDate = parse_datetime(data[i]['data']['time']['finished'])
+                totalTime = getTotalTime(startedDate,finishedDate) / 3600
+
+        	#Time In review
+            if str(data[i]['data']['time']['finished']) != "None" and str(data[i]['data']['time']['in_review']) != "None":
+                finishedDate = parse_datetime(data[i]['data']['time']['finished'])
+                inReviewDate = parse_datetime(data[i]['data']['time']['in_review'])
+                inReviewTime = getTotalTime(inReviewDate,finishedDate) / 3600
+
+            #Time waiting in work
+            if str(data[i]['data']['time']['in_work']) != "None" and str(data[i]['data']['time']['waiting_review']) != "None":
+                inWorkDate = parse_datetime(data[i]['data']['time']['in_work'])
+                waitingReviewDate = parse_datetime(data[i]['data']['time']['waiting_review'])
+                inWorkTime = getTotalTime(waitingReviewDate,inWorkDate) / 3600
+
+            #Time waiting for Review
+            if str(data[i]['data']['time']['in_review']) != "None" and str(data[i]['data']['time']['waiting_review']) != "None":
+                inReviewDate = parse_datetime(data[i]['data']['time']['in_review'])
+                waitingReviewDate = parse_datetime(data[i]['data']['time']['waiting_review'])
+                waitingForReviewTime = getTotalTime(inReviewDate,waitingReviewDate) / 3600
+
+
+            if isCompleted:
+                index = checkAnalysts(data[i]['data']['analyst'])
+
+
+                if index != -1:
+                    tempWorkcells = analysts[index]['workcells']
+                    temp = {}
+                    tempInner = {}
+                    temp['priority'] = data[i]['data']['priority']
+                    temp['isCompleted'] = isCompleted
+                    temp['dateCompleted'] = data[i]['data']['time']['finished']
+                    temp['AOIID'] = data[i]["aoi"]
+
+                    tempInner['completedIn'] = totalTime
+                    tempInner['timeInWork'] = inWorkTime
+                    tempInner['timeInReview'] = inReviewTime
+                    tempInner['waitingForReview'] = waitingForReviewTime
+
+                    temp['time'] = tempInner
+
+                    tempWorkcells.append(temp)
+                    analysts[index]['numCompleted'] = analysts[index]['numCompleted'] + 1
+                    analysts[index]['workcells'] = tempWorkcells
+                else:
+                    temp = {}
+                    averagesTemp = {}
+                    dayAveragesTemp = {}
+                    workcells = []
+                    workcellsInner = {}
+                    workcellsInnerTime = {}
+
+                    averagesTemp['averageInWorkTime'] = 0
+                    averagesTemp['averageInReviewTime'] = 0
+                    averagesTemp['averageWaitingForReviewTime'] = 0
+                    dayAveragesTemp['dayRunningAverageInWork'] = 0
+                    dayAveragesTemp['dayRunningAverageInReview'] = 0
+                    dayAveragesTemp['dayRunningAverageWaitingForReview'] = 0
+                    workcellsInner['priority'] = data[i]['data']['priority']
+                    workcellsInner['isCompleted'] = isCompleted
+                    workcellsInner['dateCompleted'] = data[i]['data']['time']['finished']
+                    workcellsInner['AOIID'] = data[i]["aoi"]
+
+                    workcellsInnerTime['completedIn'] = totalTime
+                    workcellsInnerTime['timeInWork'] = inWorkTime
+                    workcellsInnerTime['timeInReview'] = inReviewTime
+                    workcellsInnerTime['waitingForReview'] = waitingForReviewTime
+
+
+                    temp['analyst'] = data[i]['data']['analyst']
+                    temp['numCompleted'] = 1
+                    temp['averages'] = averagesTemp
+                    temp['dayAverages'] = dayAveragesTemp
+                    workcellsInner['time'] = workcellsInnerTime
+                    workcells.append(workcellsInner)
+                    temp['workcells'] = workcells
+                    analysts.append(temp)
+
+            for x in xrange(0, len(analysts)):
+                runningAverageCompletion = 0
+                runningAverageInWork = 0
+                runningAverageInReview = 0
+                runningAverageWaitingForReview = 0
+
+                for i in xrange(0, len(analysts[x]['workcells'])):
+                    runningAverageCompletion = ((runningAverageCompletion * i) + analysts[x]['workcells'][i]['time']['completedIn']) / (i + 1)
+                    runningAverageInWork = ((runningAverageInWork * i) + analysts[x]['workcells'][i]['time']['timeInWork']) / (i + 1)
+                    runningAverageInReview = ((runningAverageInReview * i) + analysts[x]['workcells'][i]['time']['timeInReview']) / (i + 1)
+                    runningAverageWaitingForReview = ((runningAverageWaitingForReview * i) + analysts[x]['workcells'][i]['time']['waitingForReview']) / (i + 1)
+					
+                analysts[x]['averageCompletionTime'] = runningAverageCompletion
+                analysts[x]['averages']['averageInWorkTime'] = runningAverageInWork
+                analysts[x]['averages']['averageInReviewTime'] = runningAverageInReview
+                analysts[x]['averages']['averageWaitingForReviewTime'] = runningAverageWaitingForReview
+
+        cv['data'] = json.dumps(analysts)
+        return cv
+
+
+ 
+
+
 class ChangeAOIStatus(View):
     http_method_names = ['post','get']
 
     def _get_aoi_and_update(self, pk):
         aoi = get_object_or_404(AOI, pk=pk)
+        
         status = self.kwargs.get('status')
         return status, aoi
 
     def _update_aoi(self, request, aoi, status):
         aoi.analyst = request.user
         aoi.status = status
+        timestamp = datetime.now(tz=pytz.timezone('UTC'))
+        if status == "Assigned":
+        	aoi.cellAssigned_at = timestamp
+        elif status == "In work":
+        	aoi.cellStarted_at = timestamp
+        elif status == "Awaiting review":
+        	aoi.cellWaitingReview_at = timestamp
+        elif status == "In review":
+        	aoi.cellInReview_at = timestamp
+        elif status == "Completed":
+        	aoi.cellFinished_at = timestamp
+        else:
+        	print "Update AOI hit end of if statement BAD"
+
+
         aoi.save()
         return aoi
 
     def get(self, request, **kwargs):
         # Used to unassign tasks on the job detail, 'in work' tab
-
         status, aoi = self._get_aoi_and_update(self.kwargs.get('pk'))
 
         if aoi.user_can_complete(request.user):
@@ -631,7 +801,6 @@ class ChangeAOIStatus(View):
     def post(self, request, **kwargs):
 
         status, aoi = self._get_aoi_and_update(self.kwargs.get('pk'))
-
         if aoi.user_can_complete(request.user):
             aoi = self._update_aoi(request, aoi, status)
             Comment(aoi=aoi,user=request.user,text='changed status to %s' % status).save()
@@ -720,6 +889,7 @@ class AssignWorkcellsView(TemplateView):
                     aoi.assignee_type_id = AssigneeType.USER if utype == 'user' else AssigneeType.GROUP
                     aoi.assignee_id = user_or_group.get().id
                     aoi.status = 'Assigned'
+                    aoi.cellAssigned_at = datetime.now(tz=pytz.timezone('UTC'))
                     aoi.save()
 
                 if send_email:
@@ -791,6 +961,36 @@ def mgrs(request):
     return HttpResponse(output, mimetype="application/json")
 
 
+def ipaws(request):
+    data = {}
+    
+    #get Data
+    data["develop"] = request.POST.get('develop')
+    data["key"] = request.POST.get('key')
+
+    #prepare timestamp
+    date = (datetime.utcnow() - timedelta(minutes=5)).isoformat()
+    date = re.sub(r'\.[0-9]{6}', "Z", date)
+
+    #check cache
+    content = cache.get("file")
+
+    if content is None:
+        #go out and get it
+        baseURL = ""
+        if data['develop'] == "true":
+            baseURL = 'https://tdl.apps.fema.gov/IPAWSOPEN_EAS_SERVICE/rest/public/recent/'
+        else:
+            baseURL = 'https://apps.fema.gov/IPAWSOPEN_EAS_SERVICE/rest/public/recent/'
+
+        baseURL += date + '?pin=' + data['key']
+        response = requests.get(baseURL)
+        cache.set("file", response.content, 60 * 30)
+        return HttpResponse(response.content, mimetype="text/xml", status=200)
+    else:
+        return HttpResponse(content, mimetype="text/xml", status=200)
+
+
 def geocode(request):
     """
     Proxy to geocode service
@@ -854,9 +1054,19 @@ def update_job_data(request, *args, **kwargs):
     value = request.POST.get('value')
     if attribute and value:
         aoi = get_object_or_404(AOI, pk=aoi_pk)
-
         if attribute == 'status':
             aoi.status = value
+            timestamp = datetime.now(tz=pytz.timezone('UTC'))
+            if value == "Assigned":
+            	aoi.cellAssigned_at = timestamp
+            elif value == "In Work":
+            	aoi.cellStarted_at = timestamp
+            elif value == "Awaiting review":
+            	aoi.cellWaitingReview_at = timestamp
+            elif value == "In review":
+            	aoi.cellInReview_at = timestamp
+            elif value == "Completed":
+            	aoi.cellFinished_at = timestamp
         elif attribute == 'priority':
             aoi.priority = int(value)
         else:
