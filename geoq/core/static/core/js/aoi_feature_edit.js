@@ -404,8 +404,7 @@ aoi_feature_edit.featureLayer_onEachFeature = function (feature, layer, featureL
         }
         if (feature.properties.updated_at){
             var datetime = feature.properties.updated_at;
-            datetime = datetime.replace("T"," ");
-            datetime = datetime.replace("UTC"," UTC");
+            datetime = datetime.replace("UTC",".000Z");
             var dtg = moment(datetime);
 
             if (dtg.isValid()){
