@@ -14,29 +14,32 @@ leaflet_layer_control.$drawer = undefined;
 leaflet_layer_control.$drawer_tray = undefined;
 leaflet_layer_control.$tree = undefined;
 leaflet_layer_control.accordion_sections = [];
-
- //Commenting this out to replace $feature_info with popup
-// leaflet_layer_control.$feature_info = null;
+leaflet_layer_control.$feature_info = undefined;
 leaflet_layer_control.finish_options = [];
-leaflet_layer_control.highlightMode = 'delete';
-leaflet_layer_control.data_fields_obj = {};
-leaflet_layer_control.data_fields = [];
+leaflet_layer_control.hidden_panels = [];
 
 leaflet_layer_control.init = function(){
     leaflet_layer_control.$map = $("#map");
+    leaflet_layer_control.hidden_panels = site_settings.hidden_panels ? site_settings.hidden_panels[aoi_feature_edit.status] : null;
+    if (!leaflet_layer_control.hidden_panels) {
+        leaflet_layer_control.hidden_panels = {
+            "Awaiting Imagery" : ["Feature Details", "Geo Overview", "Layer Comparison", "Rotation Helper", "Geo Layers for Map"],
+            "In work" : [ "Imagery Query"]
+        };
+    }
     return leaflet_layer_control.initDrawer();
 };
 leaflet_layer_control.initDrawer = function(){
     //Build the drawer with an Accordion and add it after the map
     var $drawer = $("<div>")
-    .attr({id:"layer_info_drawer"});
+        .attr({id:"layer_info_drawer"});
     leaflet_layer_control.$drawer = $drawer;
     leaflet_layer_control.$map.after($drawer);
 
     var $accordion = $('<div>')
-    .addClass("accordion")
-    .attr('id','layer-control-accordion')
-    .appendTo($drawer);
+        .addClass("accordion")
+        .attr('id','layer-control-accordion')
+        .appendTo($drawer);
 
     //Build the first row of the accordion if workcell info exists
     leaflet_layer_control.addWorkCellInfo($accordion);
@@ -64,10 +67,10 @@ leaflet_layer_control.initDrawer = function(){
 leaflet_layer_control.addPreferenceListener = function($accordion){
     
     var lastOpened = store.get('leaflet_layer_control.layer_accordion');
-    if (lastOpened) {
+    if (lastOpened && $('#'+lastOpened).is(":visible")) {
         $('#'+lastOpened).collapse('toggle');
     } else {
-         //by default, open work cell details
+        // by default, open work cell details
         $('#collapse-work-cell-details').collapse('toggle');
     }
 
@@ -82,8 +85,8 @@ leaflet_layer_control.addPreferenceListener = function($accordion){
 leaflet_layer_control.addFeatureInfo = function($accordion){
     var $content = leaflet_layer_control.buildAccordionPanel($accordion,"Feature Details");
     leaflet_layer_control.$feature_info = $("<div>")
-    .html("Click a feature on the map to see an information associated with it")
-    .appendTo($content);
+        .html("Click a feature on the map to see an information associated with it")
+        .appendTo($content);
 };
 
 leaflet_layer_control.pan = function(dir, amt) {
@@ -458,25 +461,30 @@ leaflet_layer_control.refreshLogInfo = function() {
 };
 
 leaflet_layer_control.buildAccordionPanel = function($accordion,title){
+    var hide = $.inArray(title, leaflet_layer_control.hidden_panels) > -1;
+
     var sectionName = _.str.dasherize(_.str.stripTags(title));
 
     var $drawerHolder = $("<div>")
-    .addClass("accordion-group")
-    .appendTo($accordion);
+        .addClass("accordion-group")
+        .appendTo($accordion);
+    if (hide) {
+        ($drawerHolder).hide();
+    }
     var $drawerInner = $("<div>")
-    .addClass("accordion-heading gray-header")
-    .appendTo($drawerHolder);
+        .addClass("accordion-heading gray-header")
+        .appendTo($drawerHolder);
     $('<a class="accordion-collapse" data-toggle="collapse" data-parent="#layer-control-accordion" href="#collapse'+sectionName+'">')
-    .text(title)
-    .appendTo($drawerInner);
+        .text(title)
+        .appendTo($drawerInner);
 
     var $contentHolder = $('<div id="collapse'+sectionName+'" class="accordion-body collapse">')
-    .appendTo($drawerHolder);
+        .appendTo($drawerHolder);
     var $content = $("<div>")
-    .addClass('accordion-inner')
-    .appendTo($contentHolder);
+        .addClass('accordion-inner')
+        .appendTo($contentHolder);
 
-    leaflet_layer_control.accordion_sections.push('#collapse'+sectionName)
+    leaflet_layer_control.accordion_sections.push('#collapse'+sectionName);
 
     return $content;
 };
@@ -1577,6 +1585,17 @@ leaflet_layer_control.filetypeHelper = function(fileHandle, mimes,fileSuffix) {
     leaflet_layer_control.addLayerControlInfoPanel($content);
     
     leaflet_layer_control.initializeFileUploads();
+
+
+    // if we aren't showing the layer panel, uncheck 'Data Feeds'
+    var hidden = $.inArray("Geo Layers for Map", leaflet_layer_control.hidden_panels) > -1;
+    if (hidden) {
+        var df = _.findWhere(leaflet_layer_control.lastSelectedNodes, {title: "Data Feeds"});
+        if (df) {
+            df.setSelected(false);
+        }
+    }
+
 
     //If it was open last time, open it again
     if (store.get('leaflet_layer_control.drawer')) {
