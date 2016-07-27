@@ -7,7 +7,10 @@ import re
 import requests
 import pytz
 import logging
+import os
 
+
+from django.core.cache import cache
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User, Group, Permission
 from django.contrib.gis.geos import GEOSGeometry
@@ -19,7 +22,7 @@ from django.http import Http404, HttpResponse, HttpResponseRedirect, HttpRespons
 from django.shortcuts import get_object_or_404, redirect, render
 from django.views.generic import DetailView, ListView, TemplateView, View, DeleteView, CreateView, UpdateView
 
-from datetime import datetime
+from datetime import datetime, timedelta
 from django.utils.dateparse import parse_datetime
 
 from models import Project, Job, AOI, Comment, AssigneeType, Organization
@@ -949,6 +952,39 @@ def mgrs(request):
             output = json.dumps(dict(error=500, message='Generic Exception', details=traceback.format_exc(), exception=str(e), grid=str(bb)))
 
     return HttpResponse(output, mimetype="application/json")
+
+
+def ipaws(request):
+    data = {}
+    
+    #get Data
+    data["develop"] = request.POST.get('develop')
+    data["key"] = request.POST.get('key')
+
+    #prepare timestamp
+    date = (datetime.utcnow() - timedelta(minutes=5)).isoformat()
+    date = re.sub(r'\.[0-9]{6}', "Z", date)
+
+    #date = "2016-07-25T19:34:44Z"
+
+    #check cache
+    content = cache.get("file")
+
+    if content is None:
+        #go out and get it
+        baseURL = ""
+        if data['develop'] == "true":
+            baseURL = 'https://tdl.apps.fema.gov/IPAWSOPEN_EAS_SERVICE/rest/public/recent/'
+        else:
+            
+            baseURL = 'https://apps.fema.gov/IPAWSOPEN_EAS_SERVICE/rest/public/recent/'
+
+        baseURL += date + '?pin=' + data['key']
+        response = requests.get(baseURL)
+        cache.set("file", response.content, 60 * 30)
+        return HttpResponse(response.content, mimetype="text/xml", status=200)
+    else:
+        return HttpResponse(content, mimetype="text/xml", status=200)
 
 
 def geocode(request):
