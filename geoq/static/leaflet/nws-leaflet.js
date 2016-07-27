@@ -34,6 +34,7 @@ L.NWSIconsLayer = L.GeoJSON.extend({
         debug: true
     },
 
+    // NOTE: A possible way to organize (possible list) of icons?
     _icons: {
         statement : {
             flood : "StatementFloodOutlineHaloed.svg",
@@ -78,29 +79,28 @@ L.NWSIconsLayer = L.GeoJSON.extend({
         // Our map
         this._map = map;
 
-        // Current bounds of map, bounds are pixel coordinates (rectangular)
-        if (this._map) { 
-            
-            this._bounds = map.getBounds();
-            var ourmap = this._map;
-            
+        if (this._map) {   
             this.NWSLayerGroup.addTo(this._map);
             
             // When map moves update bounds
-            /*this._map.on('moveend', function() {
-                this._bounds = ourmap.getBounds();
-            });*/
-        
+            var _this = this; // Set the context of the event handler
+            this._map.on('moveend', function() {
+                _this.geocode();
+                _this.load(_this.testCallBack);
+            }); 
         }
 
-        if (load) {
+        // Map adjusts onload triggering the moveend event handler several times
+        // this section may therefore be redundant?
+        /*if (load) {
             //this.addMediaQ(options);
             this.geocode();
             this.load(this.testCallBack);
-        }
+        }*/
     },
+
     // Gets the bounds of the Workcell and calls for GeoCode info
-    geocode: function(){
+    geocode: function() {
         var map = this._map;
         var bounds = map.getBounds();
 
@@ -116,79 +116,54 @@ L.NWSIconsLayer = L.GeoJSON.extend({
 
         $.ajax({
             type: 'GET',
+            context: this,
             url: url,
             dataType: 'json',
-            success: function(data){console.log(data);},
-            error: this.nwscap_error
-        });
+        })
+        .done(this._geocode)
+        .fail(this.ajaxError)
 
         /// PArse out and generate SAME codes and put into array
         //this._sameCodes <<<< John will generate
 
 
     },
-    /* Old version with MapQuest geocode: function() {
-        this._searchCoordinates = new YouTubeSearch();
 
-        var boundingPoints = [];
-        for (var i = 0; i < aoi_feature_edit.aoi_extents_geojson["coordinates"][0][0].length; i++) {
-            boundingPoints.push(new Point(aoi_feature_edit.aoi_extents_geojson["coordinates"][0][0][i][1],aoi_feature_edit.aoi_extents_geojson["coordinates"][0][0][i][0]));
+    // Finds and saves SAME codes
+    _geocode: function(data) {
+        var features = data.features;
+        this._sameCodes = [];
+
+        for (var i=0; i < features.length; i++) {
+            var tmp = features[i]["attributes"]["GEOID"];
+            tmp = tmp.toString();
+            // Prepend '0' in order to convert FIPS 5-1 to NWS SAME code
+            tmp = '0' + tmp;
+            this._sameCodes.push(tmp);
         }
+    },
 
-        this._searchCoordinates = this._searchCoordinates.generateCircle(boundingPoints);
-
-        //console.log(this._searchCoordinates);
-        this._center = {};
-        this._center.lat = this._searchCoordinates.currentCenterPoint.x;
-        this._center.lon = this._searchCoordinates.currentCenterPoint.y;
-
-        var geocode_url = this.options.proxy + this.options.geocodeApi + "&location=" + this._center.lat + "," + this._center.lon;
-
-        $.ajax({
-            type: 'GET',
-            context: this,
-            url: geocode_url,
-            dataType: 'json',
-            success: this._geocode,
-            error: this.nwscap_error
-        });
-    }, */
-    // Parses and saves GeoCode info
-    /* OLD VERSION with MApQuest _geocode: function(data) {
-        this._geocode = data;
-
-        console.log(this._geocode);
-        this._geocode.state = this._geocode.results[0].locations[0].adminArea3;
-        this._geocode.county = this._geocode.results[0].locations[0].adminArea4.replace(' County','');
-
-        for(var i = 0, j = this._sameCodes.length; i < j; i++) {
-            if(this._sameCodes[i].state === this._geocode.state) {
-                if (this._sameCodes[i].county === this._geocode.county) {
-                    console.log("SAME CODE IS: " + this._sameCodes[i].SAME);
-                    this.options.SAME = this._sameCodes[i].SAME;
-                    break;
-                }
-            }
-        }
-
-    }, */
     // Loads the FEMA list server
     load: function(callback) {
-
         var options = this.options;
 
-        if (!options.FEMA ) {
-            log.error("No URL set for NWS Cap messages");
-            console.error("No URL set for NWS Cap messages");
+        if (!options.FEMAkey) {
+            log.error("No key set for NWS Cap messages");
+            console.error("No key set for NWS Cap messages");
             return;
         }
-
-        $.post( "/geoq/api/geo/ipaws", {develop: true, key: this.options.FEMAkey})
-            .done(function( data ) {
+ 
+        $.ajax({
+            type: "POST",
+            url: "/geoq/api/geo/ipaws",
+            context: this,
+            data: {develop: true, key: this.options.FEMAkey}
+        }).done(function( data ) {
+                // To be changed to callback
                 console.log(data);
-            });
-            
+        }).fail(this.ajaxError);  
     },
+
     // On add of the layer
    /* addMediaQ: function(options) {
         var _this = this;
@@ -203,21 +178,24 @@ L.NWSIconsLayer = L.GeoJSON.extend({
 
         this.addTo(this._map);
     },*/
-    testCallBack: function(data){
-        console.log(data);
-    },
+
     // NWS Callback IPAWS Parse
-    parseIPAWS: function(data){
+    parseIPAWS: function(data) {
 
     },
-    // If an error occurs:
-    nwscap_error: function (resultobj){
-        log.error ("A JSON layer was requested, but no valid response was received from the server, result:", resultobj);
+
+    // If an ajax error occurs
+    ajaxError: function (resultobj) {
+        console.error("Ajax error.");
+        console.log(resultobj);
+        log.error("Request called for, but no valid response was received from the server, result:", resultobj);
     },
     // Where icons/paths are stored
     NWSLayerGroup: L.layerGroup(),
     // IDs of layers??
     layer_ids: {},
+
+
 // begin break with old code in extend
 
     parseJSON: function (data, layer){
@@ -244,28 +222,7 @@ L.NWSIconsLayer = L.GeoJSON.extend({
 
         layer.addData(data);
     },
-    /* Builds URL based on bounds, which we may not have access to in FEMA api
-    buildURL: function( url, bounds ) {
-        if (! bounds) {
-            return undefined;
-        }
 
-        var sw = bounds.getSouthWest();
-        var ne = bounds.getNorthEast();
-
-        var params = {
-            "SWLAT" : sw.lat,
-            "SWLNG" : sw.lng,
-            "NELAT" : ne.lat,
-            "NELNG" : ne.lng
-        };
-
-        var url = url.replace(/{[^{}]+}/g, function(k) {
-            return params[k.replace(/[{}]+/g, "")] || "";
-        });
-
-        return leaflet_helper.proxify(url);
-    },*/
     // Make icon and place in marker.
     iconBuilderCallback: function(feature, latlng, layerConfig){
         var iconX = 15;
@@ -288,6 +245,7 @@ L.NWSIconsLayer = L.GeoJSON.extend({
         //Construct the final Icon
         return L.rotatedMarker(latlng, {icon: icon});
     },
+
     // Polygon Style
     /*polygonStyleBuilderCallback: function(feature) {
         var polyFillColor = '#ff0000';
@@ -301,6 +259,7 @@ L.NWSIconsLayer = L.GeoJSON.extend({
 
         return style;
     },*/
+
     // Assign popups to each feature
     onEachFeature: function (feature, layer, layerConfig, mediaqOptions) {
         if (feature.properties) {
@@ -337,6 +296,7 @@ L.NWSIconsLayer = L.GeoJSON.extend({
             }
         }
     },
+
     // Path of video
     /* displayHidePath: function(vid, queryurl, key) {
         var layer_ids = this.prototype.layer_ids;
@@ -407,9 +367,7 @@ L.NWSIconsLayer = L.GeoJSON.extend({
         return output;
 
     },*/
-    // Rewrite to clean once data received
-
-/*
+    /* Rewrite to clean once data received
     clean: function (text) {
         return jQuery("<div>"+text+"</div>").text() || "";
     },
