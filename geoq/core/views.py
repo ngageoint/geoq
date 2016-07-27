@@ -986,8 +986,10 @@ def ipaws(request):
         baseURL += date + '?pin=' + data['key']
         response = requests.get(baseURL)
         cache.set("file", response.content, 60 * 30)
+        print 'Not cached'
         return HttpResponse(response.content, mimetype="text/xml", status=200)
     else:
+        print 'Cached'
         return HttpResponse(content, mimetype="text/xml", status=200)
 
 

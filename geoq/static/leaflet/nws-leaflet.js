@@ -122,6 +122,9 @@ L.NWSIconsLayer = L.GeoJSON.extend({
             error: this.nwscap_error
         });
 
+        /// PArse out and generate SAME codes and put into array
+        //this._sameCodes <<<< John will generate
+
 
     },
     /* Old version with MapQuest geocode: function() {
@@ -182,7 +185,7 @@ L.NWSIconsLayer = L.GeoJSON.extend({
 
         $.post( "/geoq/api/geo/ipaws", {develop: true, key: this.options.FEMAkey})
             .done(function( data ) {
-                alert( "Data Loaded: " + data );
+                console.log(data);
             });
             
     },
