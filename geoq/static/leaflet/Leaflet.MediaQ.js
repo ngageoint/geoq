@@ -73,9 +73,12 @@ L.MediaQLayer = L.GeoJSON.extend({
     },
 
 <<<<<<< HEAD
+<<<<<<< HEAD
     nwsLayerGroup: L.layerGroup(),
     layer_ids: {}
 =======
+=======
+>>>>>>> 9fc3dfcdef860024504abb38c9b0d9401c4c5cb8
     mediaqLayerGroup: L.layerGroup(),
     layer_ids: {},
     index : 0,
@@ -84,7 +87,10 @@ L.MediaQLayer = L.GeoJSON.extend({
     mediaQVideo: null,
     count: 0,
     prevPosition: -1
+<<<<<<< HEAD
 >>>>>>> da3f5aa447f7b222a2823be7230e94ee32491054
+=======
+>>>>>>> 9fc3dfcdef860024504abb38c9b0d9401c4c5cb8
 
 });
 
