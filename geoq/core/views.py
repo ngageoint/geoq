@@ -640,6 +640,13 @@ class JobStatistics(ListView):
                     return x
             return -1
 
+        def getTotalTime(startDate, finishDate):
+            try:
+                return abs(startDate - finishDate).total_seconds()
+            except AttributeError:
+                diff = abs(startDate - finishDate)
+                return (diff.microseconds + (diff.seconds + diff.days * 24 * 3600) * 10**6) / 10**6
+
         for i in xrange(0, len(data)):
             isCompleted = False;
             totalTime = inReviewTime = inWorkTime = waitingForReviewTime = 0
@@ -649,25 +656,25 @@ class JobStatistics(ListView):
                 isCompleted = True;
                 startedDate = parse_datetime(data[i]['data']['time']['in_work'])
                 finishedDate = parse_datetime(data[i]['data']['time']['finished'])
-                totalTime = abs(startedDate - finishedDate).total_seconds() / 3600
+                totalTime = getTotalTime(startedDate,finishedDate) / 3600
 
         	#Time In review
             if str(data[i]['data']['time']['finished']) != "None" and str(data[i]['data']['time']['in_review']) != "None":
                 finishedDate = parse_datetime(data[i]['data']['time']['finished'])
                 inReviewDate = parse_datetime(data[i]['data']['time']['in_review'])
-                inReviewTime = abs(inReviewDate - finishedDate).total_seconds() / 3600
+                inReviewTime = getTotalTime(inReviewDate,finishedDate) / 3600
 
             #Time waiting in work
             if str(data[i]['data']['time']['in_work']) != "None" and str(data[i]['data']['time']['waiting_review']) != "None":
                 inWorkDate = parse_datetime(data[i]['data']['time']['in_work'])
                 waitingReviewDate = parse_datetime(data[i]['data']['time']['waiting_review'])
-                inWorkTime = abs(inWorkDate - waitingReviewDate).total_seconds() / 3600
+                inWorkTime = getTotalTime(waitingReviewDate,inWorkDate) / 3600
 
             #Time waiting for Review
             if str(data[i]['data']['time']['in_review']) != "None" and str(data[i]['data']['time']['waiting_review']) != "None":
                 inReviewDate = parse_datetime(data[i]['data']['time']['in_review'])
                 waitingReviewDate = parse_datetime(data[i]['data']['time']['waiting_review'])
-                waitingForReviewTime = abs(inReviewDate - waitingReviewDate).total_seconds() / 3600
+                waitingForReviewTime = getTotalTime(inReviewDate,waitingReviewDate) / 3600
 
 
             if isCompleted:
