@@ -85,6 +85,7 @@ SERVICE_TYPES = (
                 ('Yandex', 'Yandex'),
                 ('Leaflet Tile Layer', 'Leaflet Tile Layer'),
                 ('MediaQ', 'MediaQ'),
+                ('NWS Weather Alerts', 'NWS Weather Alerts'),
                 ('OpenSensorHub','OpenSensorHub'),
                 #('MapBox', 'MapBox'),
                 #('TileServer','TileServer'),
@@ -105,38 +106,38 @@ class Layer(models.Model):
     A layer object that can be added to any map.
     """
 
-    name = models.CharField(max_length=200, help_text='Name that will be displayed within GeoQ')
-    type = models.CharField(choices=SERVICE_TYPES, max_length=75)
-    url = models.CharField(help_text='URL of service. If WMS or ESRI, can be any valid URL. Otherwise, the URL will require a local proxy', max_length=500)
-    layer = models.CharField(max_length=800, null=True, blank=True, help_text='Layer names can sometimes be comma-separated, and are not needed for data layers (KML, GeoRSS, GeoJSON...)')
+    name = models.CharField(max_length=200, help_text='Name that will be displayed within GeoQ.')
+    type = models.CharField(choices=SERVICE_TYPES, max_length=75, help_text='Type of service for the new layer.')
+    url = models.CharField(help_text='URL of service. If WMS or ESRI, can be any valid URL. Otherwise, the URL will require a local proxy.', max_length=500)
+    layer = models.CharField(max_length=800, null=True, blank=True, help_text='Layer names can sometimes be comma-separated, and are not needed for data layers (KML, GeoRSS, GeoJSON...).')
     image_format = models.CharField(null=True, blank=True, choices=IMAGE_FORMATS, max_length=75, help_text='The MIME type of the image format to use for tiles on WMS layers (image/png, image/jpeg image/gif...). Double check that the server exposes this exactly - some servers push png instead of image/png.')
-    styles = models.CharField(null=True, blank=True, max_length=200, help_text='The name of a style to use for this layer (only useful for WMS layers if the server exposes it.)')
+    styles = models.CharField(null=True, blank=True, max_length=200, help_text='The name of a style to use for this layer (only useful for WMS layers if the server exposes it).')
     transparent = models.BooleanField(default=True, help_text='If WMS or overlay, should the tiles be transparent where possible?')
-    refreshrate = models.PositiveIntegerField(blank=True, null=True, verbose_name="Layer Refresh Rate", help_text='Layer refresh rate in seconds for vector/data layers (will not refresh WMS layers)')
-    description = models.TextField(max_length=800, null=True, blank=True, help_text='Text to show in layer chooser, please be descriptive - this will soon be searchable')
+    refreshrate = models.PositiveIntegerField(blank=True, null=True, verbose_name="Layer Refresh Rate", help_text='Layer refresh rate in seconds for vector/data layers (will not refresh WMS layers).')
+    description = models.TextField(max_length=800, null=True, blank=True, help_text='Text to show in layer chooser, please be descriptive - this will soon be searchable.')
     attribution = models.CharField(max_length=200, null=True, blank=True, help_text="Attribution from layers to the map display (will show in bottom of map when layer is visible).")
-    token = models.CharField(max_length=400, null=True, blank=True, help_text='Authentication token, if required (usually only for secure layer servers)')
+    token = models.CharField(max_length=400, null=True, blank=True, help_text='Authentication token, if required (usually only for secure layer servers).')
 
     ## Advanced layer options
     objects = models.GeoManager()
     extent = models.PolygonField(null=True, blank=True, help_text='Extent of the layer.')
     layer_parsing_function = models.CharField(max_length=100, blank=True, null=True,  help_text='Advanced - The javascript function used to parse a data service (GeoJSON, GeoRSS, KML), needs to be an internally known parser. Contact an admin if you need data parsed in a new way.')
     enable_identify = models.BooleanField(default=False, help_text='Advanced - Allow user to click map to query layer for details. The map server must support queries for this layer.')
-    info_format = models.CharField(max_length=75, null=True, blank=True, choices=INFO_FORMATS, help_text='Advanced - what format the server returns for an WMS-I query')
+    info_format = models.CharField(max_length=75, null=True, blank=True, choices=INFO_FORMATS, help_text='Advanced - what format the server returns for an WMS-I query.')
     root_field = models.CharField(max_length=100, null=True, blank=True, help_text='Advanced - For WMS-I (queryable) layers, the root field returned by server. Leave blank for default (will usually be "FIELDS" in returned XML).')
     fields_to_show = models.CharField(max_length=200, null=True, blank=True, help_text='Fields to show when someone uses the identify tool to click on the layer. Leave blank for all.')
-    downloadableLink = models.URLField(max_length=400, null=True, blank=True, help_text='URL of link to supporting tool (such as a KML document that will be shown as a download button)')
-    layer_params = JSONField(null=True, blank=True, help_text='JSON key/value pairs to be sent to the web service.  ex: {"crs":"urn:ogc:def:crs:EPSG::4326"}')
+    downloadableLink = models.URLField(max_length=400, null=True, blank=True, help_text='URL of link to supporting tool (such as a KML document that will be shown as a download button).')
+    layer_params = JSONField(null=True, blank=True, help_text='JSON key/value pairs to be sent to the web service. ex: {"crs":"urn:ogc:def:crs:EPSG::4326"}')
     dynamic_params = JSONField(null=True, blank=True, help_text='URL Variables that may be modified by the analyst. ex: "date"')
-    spatial_reference = models.CharField(max_length=32, blank=True, null=True, default="EPSG:4326", help_text='The spatial reference of the service.  Should be in ESPG:XXXX format.')
+    spatial_reference = models.CharField(max_length=32, blank=True, null=True, default="EPSG:4326", help_text='The spatial reference of the service. Should be in ESPG:XXXX format.')
     constraints = models.TextField(null=True, blank=True, help_text='Constrain layer data displayed to certain feature types')
-    disabled = models.BooleanField(default=False, blank=True, help_text="If unchecked, Don't show this layer when listing all layers")
-    layer_info_link = models.URLField(null=True, blank=True, help_text='URL of info about the service, or a help doc or something', max_length=500)
+    disabled = models.BooleanField(default=False, blank=True, help_text="If unchecked, don't show this layer when listing all layers.")
+    layer_info_link = models.URLField(null=True, blank=True, help_text='URL of info about the service, or a help doc or something.', max_length=500)
     created_at = models.DateTimeField(auto_now_add=True, null=True)
     updated_at = models.DateTimeField(auto_now_add=True, null=True)
 
     ## Primarily for http://trac.osgeo.org/openlayers/wiki/OpenLayersOptimization
-    additional_domains = models.TextField(null=True, blank=True, help_text='Semicolon seperated list of additional domains for the layer. Only used if you want to cycle through domains for load-balancing')
+    additional_domains = models.TextField(null=True, blank=True, help_text='Semicolon seperated list of additional domains for the layer. Only used if you want to cycle through domains for load-balancing.')
 
     def __unicode__(self):
         return '{0}'.format(self.name)

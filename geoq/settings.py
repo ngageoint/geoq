@@ -139,6 +139,16 @@ LEAFLET_CONFIG = {
             'js': [STATIC_URL + 'leaflet/Leaflet.MediaQ.js'],
             'repo': 'https://github.com/stephenrjones/Leaflet.MediaQ'
         },
+        'AutoResizeSVG': {
+            'css': [],
+            'js': [STATIC_URL + 'leaflet/marker-resize-svg.js'],
+            'repo': 'https://github.com/john-kilgo/L.Marker.AutoResizeSVG'
+        },
+        'NWSIcons': {
+            'css': [],
+            'js': [STATIC_URL + 'leaflet/nws-leaflet.js'],
+            'repo': 'https://github.com/john-kilgo/L.Marker.NWS'
+        },
         'OpenSensorHub': {
             'css': [],
             'js': [STATIC_URL + 'leaflet/Leaflet.SOS.min.js'],

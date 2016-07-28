@@ -972,8 +972,6 @@ def ipaws(request):
     date = (datetime.utcnow() - timedelta(minutes=5)).isoformat()
     date = re.sub(r'\.[0-9]{6}', "Z", date)
 
-    #date = "2016-07-25T19:34:44Z"
-
     #check cache
     content = cache.get("file")
 
@@ -983,14 +981,15 @@ def ipaws(request):
         if data['develop'] == "true":
             baseURL = 'https://tdl.apps.fema.gov/IPAWSOPEN_EAS_SERVICE/rest/public/recent/'
         else:
-            
             baseURL = 'https://apps.fema.gov/IPAWSOPEN_EAS_SERVICE/rest/public/recent/'
 
         baseURL += date + '?pin=' + data['key']
         response = requests.get(baseURL)
         cache.set("file", response.content, 60 * 30)
+        print 'Not cached'
         return HttpResponse(response.content, mimetype="text/xml", status=200)
     else:
+        print 'Cached'
         return HttpResponse(content, mimetype="text/xml", status=200)
 
 
