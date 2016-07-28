@@ -622,7 +622,10 @@ leaflet_helper.parsers.leaflet_geojson = function (geojson, map, outputLayer, ke
             var icon;
             var marker;
             if (style.type == 'maki') {
-                icon = L.MakiMarkers.Icon;
+                var name = style.icon | "circle";
+                var color = style.color | "red";
+                var size = style.size | "m";
+                icon = L.MakiMarkers.icon({url: name, color: color, size: size});
                 icon.type = 'maki';
             }
             else {
