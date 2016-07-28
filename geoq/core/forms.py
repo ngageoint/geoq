@@ -111,9 +111,6 @@ class JobForm(StyledModelForm):
             if self.instance.map == None:
                 return;
 
-            # if AOI:
-            #     queryset = AOI.objects.filter(job=kwargs.get('pk')),
-
             self.fields['analysts'].initial = kwargs['data'].getlist('analysts',None)
             # must be a better way, but figure out the layers to display
             layers_selected = set(kwargs['data'].getlist('layers',None))
