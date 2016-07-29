@@ -190,7 +190,7 @@ L.NWSIconsLayer = L.GeoJSON.extend({
             var geocodes = area[0].getElementsByTagName("geocode");
             var polygon = area[0].getElementsByTagName("polygon");
 
-            if (info && area && geocodes && (polygon[0]) && this._sameCodes) {
+            if (info && area && geocodes && (polygon[0]) && this._sameCodes && alerts[i].getElementsByTagName("status")[0].innerHTML != "Cancelled") {
                 for (var j = 0; j < geocodes.length; j++) {
                     if (geocodes[j].childNodes[0].innerHTML == "SAME" && control != true) {
                         for (var k = 0; k < this._sameCodes.length; k++) {
