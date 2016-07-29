@@ -86,7 +86,7 @@ L.NWSIconsLayer = L.GeoJSON.extend({
             var _this = this; // Set the context of the event handler
             this._map.on('moveend', function() {
                 _this.geocode();
-                _this.load(_this.testCallBack);
+                _this.load(_this.parseIPAWS);
             }); 
         }
 
@@ -158,10 +158,8 @@ L.NWSIconsLayer = L.GeoJSON.extend({
             url: "/geoq/api/geo/ipaws",
             context: this,
             data: {develop: true, key: this.options.FEMAkey}
-        }).done(function( data ) {
-                // To be changed to callback
-                console.log(data);
-        }).fail(this.ajaxError);  
+        }).done(callback)
+        .fail(this.ajaxError);  
     },
 
     // On add of the layer
@@ -178,12 +176,77 @@ L.NWSIconsLayer = L.GeoJSON.extend({
 
         this.addTo(this._map);
     },*/
-
+    
     // NWS Callback IPAWS Parse
     parseIPAWS: function(data) {
+        this._jsonData = [];
+        var sameArray = [];
+        var control;
+        var alerts = data.getElementsByTagName("alert");
+        console.log(alerts);
+        for (var i = 0; i < alerts.length; i++) {
+            control = false;
+            var info = alerts[i].getElementsByTagName("info");
+            var area = info[0].getElementsByTagName("area");
+            var geocodes = area[0].getElementsByTagName("geocode");
+            var polygon = area[0].getElementsByTagName("polygon");
+
+            if (info && area && geocodes && polygon && this._sameCodes) {
+                for (var j = 0; j < geocodes.length; j++) {
+                    if (geocodes[j].childNodes[0].innerHTML == "SAME" && control != true) {
+                        for (var k = 0; k < this._sameCodes.length; k++) {
+                            if (this._sameCodes[k] == geocodes[j].childNodes[1].innerHTML) {
+                                control = true;
+                            }
+                        }
+
+                    }
+                }
+            }
+
+            if (control) {
+                var tmpJson = {};
+                console.log("here");
+                console.log(info[0].getElementsByTagName("event")[0].innerHTML);
+                tmpJson["identifier"] = String(alerts[i].getElementsByTagName("identifier")[0].innerHTML);
+                tmpJson["sent"] = alerts[i].getElementsByTagName("sent")[0].innerHTML;
+                tmpJson["status"] = alerts[i].getElementsByTagName("status")[0].innerHTML;
+                tmpJson["event"] = info[0].getElementsByTagName("event")[0].innerHTML;
+                tmpJson["severity"] = info[0].getElementsByTagName("severity")[0].innerHTML;
+                tmpJson["certainty"] = info[0].getElementsByTagName("certainty")[0].innerHTML;
+                tmpJson["effective"] = info[0].getElementsByTagName("effective")[0].innerHTML;
+                tmpJson["onset"] = info[0].getElementsByTagName("onset")[0].innerHTML;
+                tmpJson["expires"] = info[0].getElementsByTagName("expires")[0].innerHTML;
+                tmpJson["headline"] = info[0].getElementsByTagName("headline")[0].innerHTML;
+                tmpJson["description"] = info[0].getElementsByTagName("description")[0].innerHTML;
+                tmpJson["instruction"] = info[0].getElementsByTagName("instruction")[0].innerHTML;
+
+                var mapData, jsonMapData = [];
+                var rawData = polygon[0].innerHTML;
+                mapData = rawData.split(" ");
+
+                for (var j = 0; j < mapData.length; j++) {
+                    var latlong = mapData[i].split(",");
+                    var jsonLatLong = {};
+                    jsonLatLong["lat"] = latlong[0];
+                    jsonLatLong["long"] = latlong[1];
+
+                    jsonMapData.push(jsonLatLong);
+                }
+
+                //tmpJson["msgtype"] = alerts[i].getElementsByTagName("msgtype")[0].innerHTML;
+
+                tmpJson["coordinates"] = jsonMapData;
+
+                this._jsonData.push(tmpJson);
+
+            } 
+            
+            console.log(this._jsonData);
+
+        }
 
     },
-
     // If an ajax error occurs
     ajaxError: function (resultobj) {
         console.error("Ajax error.");
