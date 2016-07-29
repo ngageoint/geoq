@@ -63,6 +63,8 @@ L.NWSIconsLayer = L.GeoJSON.extend({
     },
 
     initialize: function (load, map, options) {
+        // Note: load is unused at this time
+
         // Merge options together
         L.Util.setOptions(this, options);
 
@@ -87,16 +89,10 @@ L.NWSIconsLayer = L.GeoJSON.extend({
             this._map.on('moveend', function() {
                 _this.geocode();
                 _this.load(_this.parseIPAWS);
+                _this.createMarkers();
             }); 
         }
 
-        // Map adjusts onload triggering the moveend event handler several times
-        // this section may therefore be redundant?
-        /*if (load) {
-            //this.addMediaQ(options);
-            this.geocode();
-            this.load(this.testCallBack);
-        }*/
     },
 
     // Gets the bounds of the Workcell and calls for GeoCode info
@@ -122,11 +118,6 @@ L.NWSIconsLayer = L.GeoJSON.extend({
         })
         .done(this._geocode)
         .fail(this.ajaxError)
-
-        /// PArse out and generate SAME codes and put into array
-        //this._sameCodes <<<< John will generate
-
-
     },
 
     // Finds and saves SAME codes
@@ -180,7 +171,6 @@ L.NWSIconsLayer = L.GeoJSON.extend({
     // NWS Callback IPAWS Parse
     parseIPAWS: function(data) {
         this._jsonData = [];
-        var sameArray = [];
         var control;
         var alerts = data.getElementsByTagName("alert");
         console.log(alerts);
@@ -206,8 +196,6 @@ L.NWSIconsLayer = L.GeoJSON.extend({
 
             if (control) {
                 var tmpJson = {};
-                console.log("here");
-                console.log(info[0].getElementsByTagName("event")[0].innerHTML);
                 tmpJson["identifier"] = String(alerts[i].getElementsByTagName("identifier")[0].innerHTML);
                 tmpJson["sent"] = alerts[i].getElementsByTagName("sent")[0].innerHTML;
                 tmpJson["status"] = alerts[i].getElementsByTagName("status")[0].innerHTML;
@@ -229,7 +217,7 @@ L.NWSIconsLayer = L.GeoJSON.extend({
                     var latlong = mapData[i].split(",");
                     var jsonLatLong = {};
                     jsonLatLong["lat"] = latlong[0];
-                    jsonLatLong["long"] = latlong[1];
+                    jsonLatLong["lon"] = latlong[1];
 
                     jsonMapData.push(jsonLatLong);
                 }
@@ -255,8 +243,45 @@ L.NWSIconsLayer = L.GeoJSON.extend({
     },
     // Where icons/paths are stored
     NWSLayerGroup: L.layerGroup(),
+    //_iconsTmp: [],
     // IDs of layers??
-    layer_ids: {},
+    //layer_ids: {},
+
+    // Create markers and add layers to map
+    createMarkers: function (){
+        this.NWSLayerGroup.clearLayers()
+        var markerArray = [];
+        //this._iconsTmp = null;
+        //this._iconsTmp = [];
+
+        //for (var i = 0; i < this._jsonData; i++) {
+            var tmpMarker;
+            this._tmpIcon = L.icon({
+                iconUrl: this.options.iconPath + 'StatementFloodOutlineHaloed.svg',
+                iconSize: [32,32],
+                iconSizeArray: 
+                [
+                    [32, 32], [96, 96], [256, 256]
+                ],
+                iconAnchorArray: 
+                [
+                    [16, 32], [48, 96], [128, 256]
+                ]
+            });
+            //this._iconsTmp.push(tmpIcon);
+
+            //var _this = this;
+            tmpMarker = L.marker([36.79, -87.31], {icon: this._tmpIcon});
+
+            //markerArray.push(tmpMarker);
+        //}
+
+        //if (markerArray.length > 0) {
+            this.NWSLayerGroup.addLayer(tmpMarker);
+            //this.NWSLayerGroup.addTo(this._map);
+        //}
+
+    },
 
 
     /* // begin break with old code in extend
@@ -323,7 +348,7 @@ L.NWSIconsLayer = L.GeoJSON.extend({
     },*/
 
     // Assign popups to each feature
-    onEachFeature: function (feature, layer, layerConfig, mediaqOptions) {
+    /*onEachFeature: function (feature, layer, layerConfig, mediaqOptions) {
         if (feature.properties) {
             var popupContent = "";
             if (feature.properties.popupContent) {
@@ -357,7 +382,7 @@ L.NWSIconsLayer = L.GeoJSON.extend({
                 layer.options.angle = parseInt(feature.properties.heading);
             }
         }
-    },
+    },*/
 
     // Path of video
     /* displayHidePath: function(vid, queryurl, key) {
