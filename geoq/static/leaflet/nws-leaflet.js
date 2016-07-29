@@ -36,30 +36,51 @@ L.NWSIconsLayer = L.GeoJSON.extend({
 
     // NOTE: A possible way to organize (possible list) of icons?
     _icons: {
-        statement : {
-            flood : "StatementFloodOutlineHaloed.svg",
-            tornado : "StatementHurricaneOutlineHaloed.svg",
-            hurricane : "StatementHurricaneOutlineHaloed.svg",
-            tropicalStorm : "StatementTropicalStormOutlineHaloed.svg"
-        },
-        warning : {
-            evacuate : "warningEvacuateImmediatelyHaloed.svg",
-            fire : "warningFireOutlineHaloed.svg",
-            flood : "warningFloodOutlineHaloed.svg",
-            hurricane : "warningHurricaneOutlineHaloed.svg",
-            thunderstorm : "warningSevereThunderstormOutlineHaloed.svg",
-            tropicalStorm : "warningTropicalStormOutlineHaloed1.svg",
-            tsunami : "warningTsumaniDraftHaloed.svg"
-        },
-        watch : {
-            fire : "watchFireOutlineHaloed.svg",
-            flood : "watchFloodOutlineHaloed.svg",
-            hurricane : "watchHurricaneOutlineHaloed.svg",
-            thunderstorm : "watchSevereThunderstormOutlineHaloed.svg",
-            tornado : "watchTornadoColorOutlineHaloed.svg",
-            tropicalStorm : "watchTropicalStormOutlineHaloed.svg",
-            winterStorm : "watchWinterStormHaloed.svg"
-        },
+        "Emergency Action Notification" : ["PAWS_WARNING_RED_Local-Area-Emergency.svg"],
+        "Avalanche Warning" : ["PAWS_WARNING_RED_Avalanche.svg"],
+        "Avalanche Watch" : ["PAWS_WATCH_YELLOW_Avalanche.svg"],
+        "Blizzard Warning" : ["PAWS_WARNING_RED_Blizzard.svg"],
+        "Child Abduction Emergency" : ["PAWS_STATEMENT_BLUE_Child-Abduction-Emergency.svg"],
+        "Civil Danger Warning" : ["PAWS_WARNING_RED_CivilDanger.svg"],
+        "Coastal Flood Warning" : ["PAWS_WARNING_RED_Coastal-Flood.svg"],
+        "Coastal Flood Watch" : ["PAWS_WATCH_YELLOW_Coastal-Flood.svg"],
+        "Dust Storm Warning" : ["PAWS_WARNING_RED_Dust-Storm.svg"],
+        "Earthquake Warning" : ["PAWS_WARNING_RED_Earthquake.svg"],
+        "Evacuation Immediate" : ["PAWS_WARNING_RED_Evacuate-Immediately.svg"],
+        "Fire Warning" : ["PAWS_WARNING_RED_Fire.svg"],
+        "Flash Flood Warning" : ["PAWS_WARNING_RED_Flash-Flood.svg"],
+        "Flash Flood Watch" : ["PAWS_WATCH_YELLOW_Flash-Flood.svg"],
+        "Flash Flood Statement" : ["PAWS_STATEMENT_BLUE_Flash-Flood.svg"],
+        "Flood Warning" : ["PAWS_WARNING_RED_Flood.svg"],
+        "Flood Watch" : ["PAWS_WATCH_YELLOW_Flood.svg"],
+        "Flood Statement" : ["PAWS_STATEMENT_BLUE_Flood.svg"],
+        "Flood Advisory" : ["PAWS_STATEMENT_BLUE_Flood.svg"],
+        "Hazardous Materials Warning" : ["PAWS_WARNING_RED_Hazardous-Materials-Warning.svg"],
+        "High Wind Warning" : ["PAWS_WARNING_RED_High-Wind.svg"],
+        "High Wind Watch" : ["PAWS_WATCH_YELLOW_High-Wind.svg"],
+        "Hurricane Warning" : ["PAWS_WARNING_RED_Hurricane.svg"],
+        "Hurricane Watch" : ["PAWS_WATCH_YELLOW_Hurricane.svg"],
+        "Hurricane Statement" : ["PAWS_STATEMENT_BLUE_Hurricane.svg"],
+        "Law Enforcement Warning" : ["PAWS_WARNING_RED_Law-Enforcement.svg"],
+        "Local Area Emergency" : ["PAWS_WARNING_RED_Local-Area-Emergency.svg"],
+        "911 Telephone Outage Emergency" : ["PAWS_WARNING_RED_911TelephoneOutageEmergency.svg"],
+        "Nuclear Power Plant Warning" : ["PAWS_WARNING_RED_Nuclear_Powerplant-Warning.svg"],
+        "Radiological Hazard Warning" : ["PAWS_WARNING_RED_Radiological-Hazard-Warning.svg"],
+        "Severe Thunderstorm Warning" : ["PAWS_WARNING_RED_Severe-Thunderstorm.svg"],
+        "Severe Thunderstorm Watch" : ["PAWS_WATCH_YELLOW_Severe-Thunderstorm.svg"],
+        "Severe Weather Statement" : ["PAWS_STATEMENT_BLUE_Severe-Weather.svg"],
+        "Shelter in Place Warning" : ["PAWS_WARNING_RED_Shelter-In-Place.svg"],
+        "Special Marine Warning" : ["PAWS_WARNING_RED_SpecialMarine.svg"],
+        "Special Weather Statement" : ["PAWS_STATEMENT_BLUE_Special-Weather.svg"],
+        "Tornado Warning" : ["PAWS_WARNING_RED_Tornado.svg"],
+        "Tornado Watch" : ["PAWS_WATCH_YELLOW_Tornado.svg"],
+        "Tropical Storm Warning" : ["PAWS_WARNING_RED_Tropical-Storm.svg"],
+        "Tropical Storm Watch" : ["PAWS_WATCH_YELLOW_Tropical-Storm.svg"],
+        "Tsunami Warning" : ["PAWS_WARNING_RED_Tsunami.svg"],
+        "Tsunami Watch" : ["PAWS_WATCH_YELLOW_Tsunami.svg"],
+        "Volcano Warning" : ["PAWS_WARNING_RED_Volcano.svg"],
+        "Winter Storm Warning" : ["PAWS_WARNING_RED_Winter-Storm.svg"],
+        "Winter Storm Watch" : ["PAWS_WATCH_YELLOW_Winter-Storm.svg"],
     },
 
     initialize: function (load, map, options) {
@@ -70,7 +91,7 @@ L.NWSIconsLayer = L.GeoJSON.extend({
 
         if (site_settings.FEMA_IPAWS) {
             L.Util.setOptions(this, site_settings.FEMA_IPAWS);
-            console.log(this.options);
+            //console.log(this.options);
         } else {
             console.error("NWS Icons: Fatal Error. site_settings missing. Please visit GeoQ Admin site and add FEMA_IPAWS json settings object.")
             return;
@@ -153,35 +174,20 @@ L.NWSIconsLayer = L.GeoJSON.extend({
         .fail(this.ajaxError);  
     },
 
-    // On add of the layer
-   /* addMediaQ: function(options) {
-        var _this = this;
-        // Below is the function called on each piece of data.
-        var cb = function(data) { _this._addMediaQ(data, this.options); };
-        this.loadMediaQ(cb, options);
-    },
-    // Parses JSON
-    _addMediaQ: function(data, options) {
-        L.MediaQLayer.parseJSON(data, this);
-        if (!this) return;
-
-        this.addTo(this._map);
-    },*/
-
     // NWS Callback IPAWS Parse
     parseIPAWS: function(data) {
         this._jsonData = [];
-        var control;
-        var alerts = data.getElementsByTagName("alert");
-        var searchCoordinates = new YouTubeSearch();
-        console.log(alerts);
+        var control,
+            alerts = data.getElementsByTagName("alert"),
+            searchCoordinates = new YouTubeSearch();
+        //console.log(alerts);
 
         for (var i = 0; i < alerts.length; i++) {
             control = false;
-            var info = alerts[i].getElementsByTagName("info");
-            var area = info[0].getElementsByTagName("area");
-            var geocodes = area[0].getElementsByTagName("geocode");
-            var polygon = area[0].getElementsByTagName("polygon");
+            var info = alerts[i].getElementsByTagName("info"),
+                area = info[0].getElementsByTagName("area"),
+                geocodes = area[0].getElementsByTagName("geocode"),
+                polygon = area[0].getElementsByTagName("polygon");
 
             if (info && area && geocodes && (polygon[0]) && this._sameCodes && alerts[i].getElementsByTagName("status")[0].innerHTML != "Cancelled") {
                 for (var j = 0; j < geocodes.length; j++) {
@@ -241,11 +247,9 @@ L.NWSIconsLayer = L.GeoJSON.extend({
 
             } 
             
-            console.log(this._jsonData);
+            //console.log(this._jsonData);
             this.createMarkers();
-
         }
-
     },
 
     // If an ajax error occurs
@@ -254,259 +258,65 @@ L.NWSIconsLayer = L.GeoJSON.extend({
         console.log(resultobj);
         log.error("Request called for, but no valid response was received from the server, result:", resultobj);
     },
+
     // Where icons/paths are stored
     NWSLayerGroup: L.layerGroup(),
-    //_iconsTmp: [],
-    // IDs of layers??
-    //layer_ids: {},
 
     // Create markers and add layers to map
     createMarkers: function (){
-        this.NWSLayerGroup.clearLayers()
-        var markerArray = [];
+        this.NWSLayerGroup.clearLayers();
+
+        var _this = this;
+
         this._iconsTmp = null;
         this._iconsTmp = [];
 
-        for (var i = 0; i < this._jsonData.length; i++) {
-            var tmpMarker;
+        for (var i = 0; i < this._jsonData.length; i++){
+            var tmpMarker, tmpPolygon, polyArr = [];
+            var tmpLayer = L.layerGroup();
+
+            // Polygon points array
+            for (var j = 0; j < this._jsonData[i].coordinates.length; j++){
+                var tmpArr = [];
+                tmpArr.push(Number(this._jsonData[i].coordinates[j].lat));
+                tmpArr.push(Number(this._jsonData[i].coordinates[j].lon));
+                polyArr.push(tmpArr);
+            }
+
+            tmpPolygon = L.polygon(polyArr);
+
             this._iconsTmp.push(L.icon({
-                iconUrl: this.options.iconPath + 'StatementFloodOutlineHaloed.svg',
+                iconUrl: this.options.iconPath + this._icons[this._jsonData[i].event][0],
                 iconSize: [32,32],
-                iconSizeArray: 
+                iconAnchor: [16, 32],
+                /*iconSizeArray: // For use when Leaflet 1.0 Implemented
                 [
                     [32, 32], [96, 96], [256, 256]
                 ],
                 iconAnchorArray: 
                 [
                     [16, 32], [48, 96], [128, 256]
-                ]
+                ] */
             }));
-            //this._iconsTmp.push(tmpIcon);
+            //console.log("icons:" + this._icons[this._jsonData[i].event][0])
 
-            //var _this = this;
+            var center = this._jsonData[i].center
 
-            var center = this._jsonData[i].center, lat, lon;
-            /*center.lat.split('.');
-            center.lon.split('.');
-            lat = center.lat[0] + center.lat[1];
-            lon = center.lon[0] + center.lon[1];
-            lat = Number(lat);
-            lon = Number(lon);
-            console.log(lat + ',' + lon); */
-
-            var _this = this;
             tmpMarker = L.marker([center.lat, center.lon], {icon: _this._iconsTmp[i]});
 
-            markerArray.push(tmpMarker);
-            this.NWSLayerGroup.addLayer(tmpMarker/*markerArray[i]*/);
+            var popupContent = 'Event: <b>' + this._jsonData[i].event +
+                                '</b><br/>Description: ' +
+                                this._jsonData[i].description + '<br />' +
+                                'Onset: <b>' + this._jsonData[i].onset + '</b>';
+            var popup = L.popup()
+                .setLatLng([center.lat, center.lon])
+                .setContent(popupContent);
+
+            tmpMarker.bindPopup(popup);
+            tmpLayer.addLayer(tmpPolygon);
+            tmpLayer.addLayer(tmpMarker);
+
+            this.NWSLayerGroup.addLayer(tmpLayer);
         }
-
-        //if (markerArray.length > 0) {
-            //this.NWSLayerGroup.addLayer(tmpMarker);
-            //this.NWSLayerGroup.addTo(this._map);
-        //}
-
     },
-
-
-    /* // begin break with old code in extend
-    parseJSON: function (data, layer){
-        var result;
-        if (typeof data=="object") {
-            result = data;
-        } else {
-            try {
-                result = JSON.parse(data);
-            } catch (ex){
-                log.error("Error parsing JSON returned from server");
-                return;
-            }
-        }
-
-        layer.options.onEachFeature = function(feature, layer) {
-            L.MediaQLayer.onEachFeature(feature, layer, layer.options, this);
-        };
-
-        // layer.options.style = leaflet_helper.constructors.polygonStyleBuilderCallback;
-        layer.pointToLayer = function(feature, latlng) {
-            return L.MediaQLayer.iconBuilderCallback(feature, latlng, layer);
-        };
-
-        layer.addData(data);
-    },*/
-
-    /*// Make icon and place in marker.
-    iconBuilderCallback: function(feature, latlng, layerConfig){
-        var iconX = 15;
-        var iconY = 24;
-        var iconAnchor = null;
-
-        layerConfig = layerConfig || {geojson_layer_count:1, name:'MediaQ Layer'};
-
-        var iconUrl = this.options.iconUrl || "";
-
-        //Build the icon injects
-        var iconData = {
-            iconUrl: iconUrl,
-            iconSize: new L.Point(iconX, iconY),
-            text: layerConfig.name
-        };
-        if (iconAnchor) iconData.iconAnchor = iconAnchor;
-        var icon = new MapMarker(iconData);
-
-        //Construct the final Icon
-        return L.rotatedMarker(latlng, {icon: icon});
-    },*/
-
-    // Polygon Style
-    /*polygonStyleBuilderCallback: function(feature) {
-        var polyFillColor = '#ff0000';
-
-        var style = {
-            weight: 2,
-            opacity: 1,
-            color: 'white',
-            fillOpacity: 0.1,
-            fillColor: polyFillColor};
-
-        return style;
-    },*/
-
-    // Assign popups to each feature
-    /*onEachFeature: function (feature, layer, layerConfig, mediaqOptions) {
-        if (feature.properties) {
-            var popupContent = "";
-            if (feature.properties.popupContent) {
-                popupContent = feature.properties.popupContent;
-            } else if (feature.properties.vid) {
-                popupContent = L.MediaQLayer.clean("MediaQ Id: " + feature.properties.vid);
-                if (feature.properties.href){
-                    var link = L.MediaQLayer.clean(feature.properties.href); //Strip out any offending
-                    popupContent = "<span><h5>MediaQ Video</h5>"+
-                        "</h5></span><video width='320' height='240' controls><source src='"+link+"' type='video/mp4'></video>"+
-                        "<br/><button type='button' class='btn btn-small' " +
-                        "onclick='L.MediaQLayer.displayHidePath(\"" + feature.properties.vid + "\", \"" +
-                        mediaqOptions.url + mediaqOptions.metadata_link + "\", \"" +
-                        mediaqOptions.key + "\");' >Display/Hide Path</button><br/>";
-                }
-            }
-            if (popupContent && _.isString(popupContent)) {
-
-                if (!popupContent.indexOf("<span class='hide feature-id-hint'>")){
-                    if (layerConfig && layerConfig.name) {
-                        if (!feature.properties.id) {
-                            feature.properties.id = leaflet_helper.id_count++;
-                        }
-                        var id = feature.properties.id;
-                        popupContent += L.MediaQLayer.addLinksToPopup(layerConfig.name, id, true, false);
-                    }
-                }
-                layer.bindPopup(popupContent);
-            }
-            if (feature.properties.heading && parseInt(feature.properties.heading) && layer.options){
-                layer.options.angle = parseInt(feature.properties.heading);
-            }
-        }
-    },*/
-
-    // Path of video
-    /* displayHidePath: function(vid, queryurl, key) {
-        var layer_ids = this.prototype.layer_ids;
-        var ourlayergroup = this.prototype.mediaqLayerGroup;
-
-
-        if (layer_ids[vid]) {
-            // remove layer from layer group
-            var layer = ourlayergroup.getLayer(layer_ids[vid]);
-            ourlayergroup.removeLayer(layer);
-            delete layer_ids[vid];
-            return;
-        }
-        var params = {'VID':vid};
-        var url = queryurl.replace(/{[^{}]+}/g, function(k) {
-            return params[k.replace(/[{}]+/g, "")] || "";
-        });
-
-        var cb = function(data) {
-            try {
-                var markerOptions = { radius: 4, fillColor: "#ff0000", color: "#f00", weight: 1, opacity: 1};
-                var newlayer = L.geoJson(data, {
-                    pointToLayer: function (feature, latlng) {
-                        return L.circleMarker(latlng, markerOptions);
-                    }
-                });
-                newlayer.addTo(ourlayergroup);
-                var id = ourlayergroup.getLayerId(newlayer);
-                layer_ids[vid] = id;
-            } catch (ex){
-                log.error("Error parsing JSON returned from server");
-                return;
-            }
-        };
-
-        var error = function(data) {
-            log.error("got error");
-        };
-
-        $.ajax({
-            type: 'GET',
-            url: leaflet_helper.proxify(url),
-            headers: {
-                'X-API-KEY': key
-            },
-            dataType: 'json',
-            success: cb,
-            error: error
-        });
-    },*/
-    // Add links to popup (not needed)
-    /*addLinksToPopup: function (layerName,id,useMove,useHide,useDrop) {
-
-        var spanLink = "<span class='hide layer-name-hint'>"+layerName+"</span>";
-        spanLink += "<span class='hide feature-id-hint'>"+id+"</span>";
-        var output = "";
-        if (useMove) {
-            output += "<br/><a href='#' class='make-draggable-hint'>Click on a feature to link this to it"+spanLink+"</a>"
-        }
-        if (useHide) {
-            output += "<br/><a href='#' class='make-deletable-hint'>Hide this Item"+spanLink+"</a>";
-        }
-        if (useDrop) {
-            output += "<br/><a href='#' class='make-droppable-hint'><span class='text-hint'></span>"+spanLink+"</a>";
-        }
-        if (output) output = "<br/>"+output;
-
-        return output;
-
-    },*/
-    /* Rewrite to clean once data received
-    clean: function (text) {
-        return jQuery("<div>"+text+"</div>").text() || "";
-    },
-    // ??????
-    getLatLngs: function (xml) {
-        var el = xml.getElementsByTagName('coordinates');
-        var coords = [];
-        for (var j = 0; j < el.length; j++) {
-            // text might span many childNodes
-            coords = coords.concat(this._read_coords(el[j]));
-        }
-        return coords;
-    },
-    // ???????
-    _read_coords: function (el) {
-        var text = '', coords = [], i;
-        for (i = 0; i < el.childNodes.length; i++) {
-            text = text + el.childNodes[i].nodeValue;
-        }
-        text = text.split(/[\s\n]+/);
-        for (i = 0; i < text.length; i++) {
-            var ll = text[i].split(',');
-            if (ll.length < 2) {
-                continue;
-            }
-            coords.push(new L.LatLng(ll[1], ll[0]));
-        }
-        return coords;
-    },*/
 });
