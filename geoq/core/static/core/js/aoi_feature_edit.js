@@ -1591,7 +1591,12 @@ aoi_feature_edit.createPointOptions = function (opts) {
           "iconSize":15,
           "iconUrl":"/static/images/markers/44circle_red_house.png"
         };
-        options.icon = new icon_obj(style_obj);
+        if (icon_obj) {
+            options.icon = new icon_obj(style_obj);
+        } else {
+            options.icon = new aoi_feature_edit.MapIcon(style_obj);
+        }
+
     }
 
     options.repeatMode = true;
