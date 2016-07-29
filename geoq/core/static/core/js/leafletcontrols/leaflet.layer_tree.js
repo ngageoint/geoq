@@ -219,7 +219,7 @@ leaflet_layer_control.addYouTube = function ($accordion) {
 			for (var i = 0; i < cleanResults.length; i++) {
                 marker[i] = new L.Marker([cleanResults[i].lat, cleanResults[i].long], {icon: youtubeIcon}).bindPopup('<b>' + cleanResults[i].title + '</b><br>' + cleanResults[i].displayTimeStamp +
                                                                                             '<br> <img id="youTube" src="/static/images/YouTube.png" alt="Play Video" ' + 
-                                                                                            ' onclick="playVideo(&quot;http://youtube.com/embed/'+cleanResults[i].videoID+'?autoplay=1&quot;)">');
+                                                                                            ' onclick="playVideo(&quot;https://youtube.com/embed/'+cleanResults[i].videoID+'?autoplay=1&quot;)">');
                 aoi_feature_edit.YouTube.addLayer(marker[i]);
 			}
 		});
@@ -1630,22 +1630,22 @@ leaflet_layer_control.drawEachLayer=function(data,map,doNotMoveToTop){
         }
     });
 
-    _.each(layersClicked,function(layer_obj){
+    _.each(layersClicked, function (layer_obj) {
         if (layer_obj && layer_obj.data && _.toArray(layer_obj.data).length) {
             var layer = layer_obj.data;
 
             if (layer._map && layer._initHooksCalled) {
                 //It's a layer that's been already built
-                var opacity = layer.options ? layer.options.opacity||layer.options.oldOpacity : 0;
+                var opacity = layer.options ? layer.options.opacity || layer.options.oldOpacity : 0;
                 if (!opacity) {
                     opacity = layer.config ? layer.config.opacity : 1;
                 }
-                leaflet_layer_control.setLayerOpacity(layer,opacity,doNotMoveToTop);
+                leaflet_layer_control.setLayerOpacity(layer, opacity, doNotMoveToTop);
 
                 if (leaflet_layer_control.likelyHasFeatures(layer)) {
                     leaflet_helper.constructors.geojson(layer.config, map, layer);
                 }
-                
+
                 aoi_feature_edit.map.addLayer(layer);
             } else {
                 //It's an object with layer info, not yet built - build the layer from the config data
@@ -1653,16 +1653,16 @@ leaflet_layer_control.drawEachLayer=function(data,map,doNotMoveToTop){
                 if (!name && layer.options) name = layer.options.name;
 //                log.info("Creating a map layer " + name+ " URL: " + layer.url);
 
-var newLayer = leaflet_helper.layer_conversion(layer, map);
-if (newLayer) {
-    aoi_feature_edit.map.addLayer(newLayer);
-    leaflet_layer_control.setLayerOpacity(newLayer,1,doNotMoveToTop);
+                var newLayer = leaflet_helper.layer_conversion(layer, map);
+                if (newLayer) {
+                    aoi_feature_edit.map.addLayer(newLayer);
+                    leaflet_layer_control.setLayerOpacity(newLayer, 1, doNotMoveToTop);
 
-    layer_obj.data = newLayer;
+                    layer_obj.data = newLayer;
 
                     //Replace the old object list with the new layer
-                    _.each(aoi_feature_edit.layers,function(layerGroup,l_i){
-                        _.each(layerGroup,function(layerGroupItem,l_l){
+                    _.each(aoi_feature_edit.layers, function (layerGroup, l_i) {
+                        _.each(layerGroup, function (layerGroupItem, l_l) {
                             if (layerGroupItem.id == layer.id) {
                                 layerGroup[l_l] = newLayer;
                             }
@@ -1678,8 +1678,8 @@ if (newLayer) {
                             leaflet_filter_bar.showInputTags();
                         }
                         //Run every 15 seconds after map move
-                        var refreshFunction = _.debounce( function () {
-                            log.log('Refreshing Layer at : '+new Date);
+                        var refreshFunction = _.debounce(function () {
+                            log.log('Refreshing Layer at : ' + new Date);
                             var currentOpacity = 1;
                             if (newLayer.options) {
                                 currentOpacity = newLayer.options.opacity;
@@ -1687,18 +1687,18 @@ if (newLayer) {
                             if (currentOpacity > 0) {
                                 leaflet_helper.constructors.geojson(layer, map, newLayer);
                             }
-                        },15000);
-                        map.on('moveend viewreset',refreshFunction);
+                        }, 15000);
+                        map.on('moveend viewreset', refreshFunction);
                     }
                 }
             }
-            if (layersClicked.length==1){
+            if (layersClicked.length == 1) {
                 layer_obj.setActive();
             }
 
         } else if (layer_obj.children && layer_obj.children.length) {
             //A category was clicked
-            _.each(layer_obj.children, function(layer_obj_item){
+            _.each(layer_obj.children, function (layer_obj_item) {
                 layer_obj_item.setSelected(true);
             });
         } else {

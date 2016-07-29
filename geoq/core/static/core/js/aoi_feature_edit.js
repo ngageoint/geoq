@@ -930,7 +930,12 @@ aoi_feature_edit.map_init = function (map, bounds) {
             if(aoi_feature_edit.feature_types[geojson.properties.template]) {
                 var ft = aoi_feature_edit.feature_types[geojson.properties.template];
                 var style = ft.style;
-                if(!$.isEmptyObject(style)) icon = new aoi_feature_edit.MapIcon(style);
+                if (aoi_feature_edit.icons[aoi_feature_edit.current_feature_type_id]) {
+                    icon = new aoi_feature_edit.icons[aoi_feature_edit.current_feature_type_id](style);
+                }
+                else if(!$.isEmptyObject(style)) {
+                    icon = new aoi_feature_edit.MapIcon(style);
+                }
             }
             var layer = L.marker([geojson.geometry.coordinates[1], geojson.geometry.coordinates[0]], {
                 icon: icon, opacity: .5});
@@ -1586,7 +1591,12 @@ aoi_feature_edit.createPointOptions = function (opts) {
           "iconSize":15,
           "iconUrl":"/static/images/markers/44circle_red_house.png"
         };
-        options.icon = new icon_obj(style_obj);
+        if (icon_obj) {
+            options.icon = new icon_obj(style_obj);
+        } else {
+            options.icon = new aoi_feature_edit.MapIcon(style_obj);
+        }
+
     }
 
     options.repeatMode = true;
