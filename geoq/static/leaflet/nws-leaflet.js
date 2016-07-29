@@ -89,7 +89,7 @@ L.NWSIconsLayer = L.GeoJSON.extend({
             this._map.on('moveend', function() {
                 _this.geocode();
                 _this.load(_this.parseIPAWS);
-                _this.createMarkers();
+                //_this.createMarkers();
             }); 
         }
 
@@ -173,7 +173,9 @@ L.NWSIconsLayer = L.GeoJSON.extend({
         this._jsonData = [];
         var control;
         var alerts = data.getElementsByTagName("alert");
+        var searchCoordinates = new YouTubeSearch();
         console.log(alerts);
+
         for (var i = 0; i < alerts.length; i++) {
             control = false;
             var info = alerts[i].getElementsByTagName("info");
@@ -210,7 +212,7 @@ L.NWSIconsLayer = L.GeoJSON.extend({
                 tmpJson["instruction"] = info[0].getElementsByTagName("instruction")[0].innerHTML;
 
                 var mapData, jsonMapData = [];
-                console.log(polygon);
+                //console.log(polygon);
                 var rawData = polygon[0].innerHTML;
                 mapData = rawData.split(" ");
 
@@ -222,8 +224,6 @@ L.NWSIconsLayer = L.GeoJSON.extend({
 
                     jsonMapData.push(jsonLatLong);
                 }
-
-                var searchCoordinates = new YouTubeSearch();
 
                 var boundingPoints = [];
                 for (var j = 0; j < jsonMapData.length; j++) {
@@ -242,6 +242,7 @@ L.NWSIconsLayer = L.GeoJSON.extend({
             } 
             
             console.log(this._jsonData);
+            this.createMarkers();
 
         }
 
@@ -263,12 +264,12 @@ L.NWSIconsLayer = L.GeoJSON.extend({
     createMarkers: function (){
         this.NWSLayerGroup.clearLayers()
         var markerArray = [];
-        //this._iconsTmp = null;
-        //this._iconsTmp = [];
+        this._iconsTmp = null;
+        this._iconsTmp = [];
 
         for (var i = 0; i < this._jsonData.length; i++) {
             var tmpMarker;
-            this._tmpIcon = L.icon({
+            this._iconsTmp.push(L.icon({
                 iconUrl: this.options.iconPath + 'StatementFloodOutlineHaloed.svg',
                 iconSize: [32,32],
                 iconSizeArray: 
@@ -279,15 +280,25 @@ L.NWSIconsLayer = L.GeoJSON.extend({
                 [
                     [16, 32], [48, 96], [128, 256]
                 ]
-            });
+            }));
             //this._iconsTmp.push(tmpIcon);
 
             //var _this = this;
-            
-            tmpMarker = L.marker([36.79, -87.31], {icon: this._tmpIcon});
+
+            var center = this._jsonData[i].center, lat, lon;
+            /*center.lat.split('.');
+            center.lon.split('.');
+            lat = center.lat[0] + center.lat[1];
+            lon = center.lon[0] + center.lon[1];
+            lat = Number(lat);
+            lon = Number(lon);
+            console.log(lat + ',' + lon); */
+
+            var _this = this;
+            tmpMarker = L.marker([center.lat, center.lon], {icon: _this._iconsTmp[i]});
 
             markerArray.push(tmpMarker);
-            this.NWSLayerGroup.addLayer(markerArray[i]);
+            this.NWSLayerGroup.addLayer(tmpMarker/*markerArray[i]*/);
         }
 
         //if (markerArray.length > 0) {
