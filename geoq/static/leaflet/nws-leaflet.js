@@ -81,7 +81,7 @@ L.NWSIconsLayer = L.GeoJSON.extend({
 
         if (this._map) {   
             this.NWSLayerGroup.addTo(this._map);
-            
+                
             // When map moves update bounds
             var _this = this; // Set the context of the event handler
             this._map.on('moveend', function() {
@@ -196,8 +196,7 @@ L.NWSIconsLayer = L.GeoJSON.extend({
     layer_ids: {},
 
 
-// begin break with old code in extend
-
+    /* // begin break with old code in extend
     parseJSON: function (data, layer){
         var result;
         if (typeof data=="object") {
@@ -221,9 +220,9 @@ L.NWSIconsLayer = L.GeoJSON.extend({
         };
 
         layer.addData(data);
-    },
+    },*/
 
-    // Make icon and place in marker.
+    /*// Make icon and place in marker.
     iconBuilderCallback: function(feature, latlng, layerConfig){
         var iconX = 15;
         var iconY = 24;
@@ -244,7 +243,7 @@ L.NWSIconsLayer = L.GeoJSON.extend({
 
         //Construct the final Icon
         return L.rotatedMarker(latlng, {icon: icon});
-    },
+    },*/
 
     // Polygon Style
     /*polygonStyleBuilderCallback: function(feature) {
