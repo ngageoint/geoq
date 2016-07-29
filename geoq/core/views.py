@@ -969,7 +969,7 @@ def ipaws(request):
     data["key"] = request.POST.get('key')
 
     #prepare timestamp
-    date = (datetime.utcnow() - timedelta(minutes=5)).isoformat()
+    date = (datetime.utcnow() - timedelta(minutes=30)).isoformat()
     date = re.sub(r'\.[0-9]{6}', "Z", date)
 
     #check cache

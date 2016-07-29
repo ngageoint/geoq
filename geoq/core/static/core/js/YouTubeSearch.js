@@ -45,7 +45,9 @@ Vector.prototype.dot = function (P1, P2) {
 **************************************************************************************************/
 
 function YouTubeSearch() {
-	this.API_ACCESS_KEY = site_settings.YouTube["key"];
+	if (site_settings.Youtube != null) {
+		this.API_ACCESS_KEY = site_settings.YouTube["key"];
+	}
 	this.searchResults = [];
 	this.inputObject = {};
 	
