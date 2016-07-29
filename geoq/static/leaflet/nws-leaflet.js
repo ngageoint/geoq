@@ -167,7 +167,7 @@ L.NWSIconsLayer = L.GeoJSON.extend({
 
         this.addTo(this._map);
     },*/
-    
+
     // NWS Callback IPAWS Parse
     parseIPAWS: function(data) {
         this._jsonData = [];
@@ -181,7 +181,7 @@ L.NWSIconsLayer = L.GeoJSON.extend({
             var geocodes = area[0].getElementsByTagName("geocode");
             var polygon = area[0].getElementsByTagName("polygon");
 
-            if (info && area && geocodes && polygon && this._sameCodes) {
+            if (info && area && geocodes && (polygon[0]) && this._sameCodes && alerts[i].getElementsByTagName("status")[0].innerHTML != "Cancelled") {
                 for (var j = 0; j < geocodes.length; j++) {
                     if (geocodes[j].childNodes[0].innerHTML == "SAME" && control != true) {
                         for (var k = 0; k < this._sameCodes.length; k++) {
@@ -210,11 +210,12 @@ L.NWSIconsLayer = L.GeoJSON.extend({
                 tmpJson["instruction"] = info[0].getElementsByTagName("instruction")[0].innerHTML;
 
                 var mapData, jsonMapData = [];
+                console.log(polygon);
                 var rawData = polygon[0].innerHTML;
                 mapData = rawData.split(" ");
 
                 for (var j = 0; j < mapData.length; j++) {
-                    var latlong = mapData[i].split(",");
+                    var latlong = mapData[j].split(",");
                     var jsonLatLong = {};
                     jsonLatLong["lat"] = latlong[0];
                     jsonLatLong["lon"] = latlong[1];
@@ -222,6 +223,16 @@ L.NWSIconsLayer = L.GeoJSON.extend({
                     jsonMapData.push(jsonLatLong);
                 }
 
+                var searchCoordinates = new YouTubeSearch();
+
+                var boundingPoints = [];
+                for (var j = 0; j < jsonMapData.length; j++) {
+                    boundingPoints.push(new Point(jsonMapData[j].lat,jsonMapData[j].lon));
+                }
+
+                var center = searchCoordinates.generateCircle(boundingPoints);
+
+                tmpJson["center"] = {"lat": center.currentCenterPoint.x, "lon": center.currentCenterPoint.y};
                 //tmpJson["msgtype"] = alerts[i].getElementsByTagName("msgtype")[0].innerHTML;
 
                 tmpJson["coordinates"] = jsonMapData;
@@ -235,6 +246,7 @@ L.NWSIconsLayer = L.GeoJSON.extend({
         }
 
     },
+
     // If an ajax error occurs
     ajaxError: function (resultobj) {
         console.error("Ajax error.");
