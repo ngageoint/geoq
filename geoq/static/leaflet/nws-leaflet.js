@@ -180,7 +180,6 @@ L.NWSIconsLayer = L.GeoJSON.extend({
     // NWS Callback IPAWS Parse
     parseIPAWS: function(data) {
         this._jsonData = [];
-        var sameArray = [];
         var control;
         var alerts = data.getElementsByTagName("alert");
         console.log(alerts);
@@ -191,7 +190,7 @@ L.NWSIconsLayer = L.GeoJSON.extend({
             var geocodes = area[0].getElementsByTagName("geocode");
             var polygon = area[0].getElementsByTagName("polygon");
 
-            if (info && area && geocodes && polygon && this._sameCodes) {
+            if (info && area && geocodes && (polygon[0]) && this._sameCodes) {
                 for (var j = 0; j < geocodes.length; j++) {
                     if (geocodes[j].childNodes[0].innerHTML == "SAME" && control != true) {
                         for (var k = 0; k < this._sameCodes.length; k++) {
@@ -206,8 +205,6 @@ L.NWSIconsLayer = L.GeoJSON.extend({
 
             if (control) {
                 var tmpJson = {};
-                console.log("here");
-                console.log(info[0].getElementsByTagName("event")[0].innerHTML);
                 tmpJson["identifier"] = String(alerts[i].getElementsByTagName("identifier")[0].innerHTML);
                 tmpJson["sent"] = alerts[i].getElementsByTagName("sent")[0].innerHTML;
                 tmpJson["status"] = alerts[i].getElementsByTagName("status")[0].innerHTML;
@@ -222,18 +219,29 @@ L.NWSIconsLayer = L.GeoJSON.extend({
                 tmpJson["instruction"] = info[0].getElementsByTagName("instruction")[0].innerHTML;
 
                 var mapData, jsonMapData = [];
+                console.log(polygon);
                 var rawData = polygon[0].innerHTML;
                 mapData = rawData.split(" ");
 
                 for (var j = 0; j < mapData.length; j++) {
-                    var latlong = mapData[i].split(",");
+                    var latlong = mapData[j].split(",");
                     var jsonLatLong = {};
                     jsonLatLong["lat"] = latlong[0];
-                    jsonLatLong["long"] = latlong[1];
+                    jsonLatLong["lon"] = latlong[1];
 
                     jsonMapData.push(jsonLatLong);
                 }
 
+                var searchCoordinates = new YouTubeSearch();
+
+                var boundingPoints = [];
+                for (var j = 0; j < jsonMapData.length; j++) {
+                    boundingPoints.push(new Point(jsonMapData[j].lat,jsonMapData[j].lon));
+                }
+
+                var center = searchCoordinates.generateCircle(boundingPoints);
+
+                tmpJson["center"] = {"lat": center.currentCenterPoint.x, "lon": center.currentCenterPoint.y};
                 //tmpJson["msgtype"] = alerts[i].getElementsByTagName("msgtype")[0].innerHTML;
 
                 tmpJson["coordinates"] = jsonMapData;
