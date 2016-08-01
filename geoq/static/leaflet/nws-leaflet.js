@@ -107,7 +107,8 @@ L.NWSIconsLayer = L.GeoJSON.extend({
                 
             // When map moves update bounds
             var _this = this; // Set the context of the event handler
-            this._map.on('moveend', function() {
+            this._map.on('moveend', function(e) {
+                console.log(e)
                 _this.geocode();
                 _this.load(_this.parseIPAWS);
                 //_this.createMarkers();
