@@ -10,15 +10,17 @@ L.MediaQLayer = L.GeoJSON.extend({
     },
 
     initialize: function (load, map, options) {
+
         L.Util.setOptions(this, options);
+        
         this._layers = {};
+        
         this._map = map;
-        this.map = map;
         
         if (this._map) {
             this._bounds = map.getBounds();
             var ourmap = this._map;
-            this.mediaqLayerGroup.addTo(this._map);
+            this.nwsLayerGroup.addTo(this._map);
             this._map.on('moveend', function() {
                 this._bounds = ourmap.getBounds();
             });
@@ -59,6 +61,8 @@ L.MediaQLayer = L.GeoJSON.extend({
 
     _addMediaQ: function(data, options) {
         L.MediaQLayer.parseJSON(data, this);
+        /// purpose of below?
+        // 
         if (!this) return;
 
         this.addTo(this._map);
