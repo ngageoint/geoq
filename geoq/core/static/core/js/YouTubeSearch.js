@@ -126,8 +126,8 @@ YouTubeSearch.prototype.generateCircle = function (pointArray) {
 		deltaXVector.y = (deltaXVector.y / 2);
 		
 		//Update Center initial guess Point
-		center.x = (pointArray[Pxmin].x + deltaXVector.x);
-		center.y = (pointArray[Pxmin].y + deltaXVector.y);
+		center.x = (Number(pointArray[Pxmin].x) + Number(deltaXVector.x));
+		center.y = (Number(pointArray[Pxmin].y) + Number(deltaXVector.y));
 
 		rad2 = VectorWorker.squaredLength(VectorWorker.subtraction(pointArray[Pxmax], center));
 	} else {

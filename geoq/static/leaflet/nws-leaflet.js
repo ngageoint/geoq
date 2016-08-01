@@ -234,6 +234,7 @@ L.NWSIconsLayer = L.GeoJSON.extend({
                 var boundingPoints = [];
                 for (var j = 0; j < jsonMapData.length; j++) {
                     boundingPoints.push(new Point(jsonMapData[j].lat,jsonMapData[j].lon));
+                    console.log(jsonMapData[j].lat + ',' + jsonMapData[j].lon)
                 }
 
                 var center = searchCoordinates.generateCircle(boundingPoints);
@@ -300,16 +301,18 @@ L.NWSIconsLayer = L.GeoJSON.extend({
             }));
             //console.log("icons:" + this._icons[this._jsonData[i].event][0])
 
-            var center = this._jsonData[i].center
+            var center = this._jsonData[i].center;
+            var lat = center.lat;
+            var lon = center.lon;
 
-            tmpMarker = L.marker([center.lat, center.lon], {icon: _this._iconsTmp[i]});
+            tmpMarker = L.marker([lat, lon], {icon: _this._iconsTmp[i]});
 
             var popupContent = 'Event: <b>' + this._jsonData[i].event +
                                 '</b><br/>Description: ' +
                                 this._jsonData[i].description + '<br />' +
                                 'Onset: <b>' + this._jsonData[i].onset + '</b>';
             var popup = L.popup()
-                .setLatLng([center.lat, center.lon])
+                .setLatLng([lat, lon])
                 .setContent(popupContent);
 
             tmpMarker.bindPopup(popup);
