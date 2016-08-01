@@ -108,7 +108,7 @@ L.NWSIconsLayer = L.GeoJSON.extend({
             // When map moves update bounds
             var _this = this; // Set the context of the event handler
             this._map.on('moveend', function(e) {
-                console.log(e)
+                //console.log(e)
                 _this.geocode();
                 _this.load(_this.parseIPAWS);
                 //_this.createMarkers();
@@ -235,7 +235,6 @@ L.NWSIconsLayer = L.GeoJSON.extend({
                 var boundingPoints = [];
                 for (var j = 0; j < jsonMapData.length; j++) {
                     boundingPoints.push(new Point(jsonMapData[j].lat,jsonMapData[j].lon));
-                    console.log(jsonMapData[j].lat + ',' + jsonMapData[j].lon)
                 }
 
                 var center = searchCoordinates.generateCircle(boundingPoints);
@@ -248,8 +247,7 @@ L.NWSIconsLayer = L.GeoJSON.extend({
                 this._jsonData.push(tmpJson);
 
             } 
-            
-            //console.log(this._jsonData);
+
             this.createMarkers();
         }
     },
@@ -304,6 +302,7 @@ L.NWSIconsLayer = L.GeoJSON.extend({
                 iconUrl: this.options.iconPath + this._icons[this._jsonData[i].event][0],
                 iconSize: [32,32],
                 iconAnchor: [16, 32],
+                popupAnchor: [0, -32],
                 /*iconSizeArray: // For use when Leaflet 1.0 Implemented
                 [
                     [32, 32], [96, 96], [256, 256]
@@ -325,9 +324,7 @@ L.NWSIconsLayer = L.GeoJSON.extend({
                                 '</b><br/>Description: ' +
                                 this._jsonData[i].description + '<br />' +
                                 'Onset: <b>' + this._jsonData[i].onset + '</b>';
-            var popup = L.popup()
-                .setLatLng([lat, lon])
-                .setContent(popupContent);
+            var popup = L.popup().setContent(popupContent);
 
             tmpMarker.bindPopup(popup);
             tmpLayer.addLayer(tmpPolygon);
@@ -335,5 +332,5 @@ L.NWSIconsLayer = L.GeoJSON.extend({
 
             this.NWSLayerGroup.addLayer(tmpLayer);
         }
-    },
+    }
 });
