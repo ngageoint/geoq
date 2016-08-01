@@ -259,6 +259,19 @@ L.NWSIconsLayer = L.GeoJSON.extend({
         log.error("Request called for, but no valid response was received from the server, result:", resultobj);
     },
 
+    // provide a way to hide layer
+    setStyle: function (style) {
+        this.NWSLayerGroup.eachLayer(function(lyr_group) {
+            lyr_group.eachLayer(function(layer) {
+                if (layer.setStyle){
+                    layer.setStyle(style);
+                } else if (layer.setOpacity){
+                    layer.setOpacity(style.opacity);
+                }
+            });
+        });
+    },
+
     // Where icons/paths are stored
     NWSLayerGroup: L.layerGroup(),
 
