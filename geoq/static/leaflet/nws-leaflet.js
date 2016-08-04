@@ -107,7 +107,8 @@ L.NWSIconsLayer = L.GeoJSON.extend({
                 
             // When map moves update bounds
             var _this = this; // Set the context of the event handler
-            this._map.on('moveend', function() {
+            this._map.on('moveend', function(e) {
+                //console.log(e)
                 _this.geocode();
                 _this.load(_this.parseIPAWS);
                 //_this.createMarkers();
@@ -246,8 +247,7 @@ L.NWSIconsLayer = L.GeoJSON.extend({
                 this._jsonData.push(tmpJson);
 
             } 
-            
-            //console.log(this._jsonData);
+
             this.createMarkers();
         }
     },
@@ -257,6 +257,19 @@ L.NWSIconsLayer = L.GeoJSON.extend({
         console.error("Ajax error.");
         console.log(resultobj);
         log.error("Request called for, but no valid response was received from the server, result:", resultobj);
+    },
+
+    // provide a way to hide layer
+    setStyle: function (style) {
+        this.NWSLayerGroup.eachLayer(function(lyr_group) {
+            lyr_group.eachLayer(function(layer) {
+                if (layer.setStyle){
+                    layer.setStyle(style);
+                } else if (layer.setOpacity){
+                    layer.setOpacity(style.opacity);
+                }
+            });
+        });
     },
 
     // Where icons/paths are stored
@@ -289,6 +302,7 @@ L.NWSIconsLayer = L.GeoJSON.extend({
                 iconUrl: this.options.iconPath + this._icons[this._jsonData[i].event][0],
                 iconSize: [32,32],
                 iconAnchor: [16, 32],
+                popupAnchor: [0, -32],
                 /*iconSizeArray: // For use when Leaflet 1.0 Implemented
                 [
                     [32, 32], [96, 96], [256, 256]
@@ -300,17 +314,17 @@ L.NWSIconsLayer = L.GeoJSON.extend({
             }));
             //console.log("icons:" + this._icons[this._jsonData[i].event][0])
 
-            var center = this._jsonData[i].center
+            var center = this._jsonData[i].center;
+            var lat = center.lat;
+            var lon = center.lon;
 
-            tmpMarker = L.marker([center.lat, center.lon], {icon: _this._iconsTmp[i]});
+            tmpMarker = L.marker([lat, lon], {icon: _this._iconsTmp[i]});
 
             var popupContent = 'Event: <b>' + this._jsonData[i].event +
                                 '</b><br/>Description: ' +
                                 this._jsonData[i].description + '<br />' +
                                 'Onset: <b>' + this._jsonData[i].onset + '</b>';
-            var popup = L.popup()
-                .setLatLng([center.lat, center.lon])
-                .setContent(popupContent);
+            var popup = L.popup().setContent(popupContent);
 
             tmpMarker.bindPopup(popup);
             tmpLayer.addLayer(tmpPolygon);
@@ -318,5 +332,5 @@ L.NWSIconsLayer = L.GeoJSON.extend({
 
             this.NWSLayerGroup.addLayer(tmpLayer);
         }
-    },
+    }
 });
