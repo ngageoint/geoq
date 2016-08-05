@@ -324,7 +324,7 @@ L.NWSIconsLayer = L.GeoJSON.extend({
                                 '</b><br/>Description: ' +
                                 this._jsonData[i].description + '<br />' +
                                 'Onset: <b>' + this._jsonData[i].onset + '</b>';
-            var popup = L.popup().setContent(popupContent);
+            var popup = L.popup({autoPan: false}).setContent(popupContent);
 
             tmpMarker.bindPopup(popup);
             tmpLayer.addLayer(tmpPolygon);
@@ -332,5 +332,15 @@ L.NWSIconsLayer = L.GeoJSON.extend({
 
             this.NWSLayerGroup.addLayer(tmpLayer);
         }
+    },
+
+    onEachFeature: function(feature, layer) {
+        feature.on('mouseover', function(e) {
+            console.log("mouseover");
+        });
+
+        feature.on('mouseout', function(e) {
+            console.log("mouseout");
+        });
     }
 });
