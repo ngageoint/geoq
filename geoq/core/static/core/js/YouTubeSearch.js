@@ -45,7 +45,9 @@ Vector.prototype.dot = function (P1, P2) {
 **************************************************************************************************/
 
 function YouTubeSearch() {
-	this.API_ACCESS_KEY = site_settings.YouTube["key"];
+	if (site_settings.Youtube != null) {
+		this.API_ACCESS_KEY = site_settings.YouTube["key"];
+	}
 	this.searchResults = [];
 	this.inputObject = {};
 	
@@ -77,6 +79,9 @@ YouTubeSearch.prototype.toRadians = function (degrees) {
 }
 
 YouTubeSearch.prototype.generateCircle = function (pointArray) {
+	if ((pointArray[0].x == pointArray[(pointArray.length -1)].x) && (pointArray[0].y == pointArray[(pointArray.length -1)].y)) {
+		pointArray.pop();
+	}
 	var center = new Point(0,0); 
 	var rad, rad2;
 	var xmin, xmax, ymin, ymax;
@@ -124,8 +129,8 @@ YouTubeSearch.prototype.generateCircle = function (pointArray) {
 		deltaXVector.y = (deltaXVector.y / 2);
 		
 		//Update Center initial guess Point
-		center.x = (pointArray[Pxmin].x + deltaXVector.x);
-		center.y = (pointArray[Pxmin].y + deltaXVector.y);
+		center.x = (Number(pointArray[Pxmin].x) + Number(deltaXVector.x));
+		center.y = (Number(pointArray[Pxmin].y) + Number(deltaXVector.y));
 
 		rad2 = VectorWorker.squaredLength(VectorWorker.subtraction(pointArray[Pxmax], center));
 	} else {
@@ -135,8 +140,8 @@ YouTubeSearch.prototype.generateCircle = function (pointArray) {
 		deltaYVector.y = (deltaYVector.y / 2);
 
 		//Create Center Point initial guess
-		center.x = (pointArray[Pymin].x + deltaYVector.x);
-		center.y = (pointArray[Pymin].y + deltaYVector.y);
+		center.x = (Number(pointArray[Pymin].x) + Number(deltaYVector.x));
+		center.y = (Number(pointArray[Pymin].y) + Number(deltaYVector.y));
 
 		rad2 = VectorWorker.squaredLength(VectorWorker.subtraction(pointArray[Pxmax], center));
 	}
@@ -319,7 +324,8 @@ YouTubeSearch.prototype.processYouTubeRequest = function (request, pointArray, c
                   			tempPoint.x = resultsArr[i].lat;
                   			tempPoint.y = resultsArr[i].long;
 
-                  			if ((windingNumber(tempPoint, pointArray, (pointArray.length - 1))) != 0) {
+                  			console.log(resultsArr);
+                  			if ((windingNumber(tempPoint, pointArray, (pointArray.length -1))) != 0) {
                   				finalResults.push(resultsArr[i]);
                   			}
                   			break;

@@ -542,6 +542,7 @@ class CreateUpdateView(SingleObjectTemplateResponseMixin, ModelFormMixin,
 
         return super(CreateUpdateView, self).post(request, *args, **kwargs)
 
+#Exports old job into new one
 class ExportJobView(CreateUpdateView):
     """
     Export Job
@@ -562,25 +563,35 @@ class ExportJobView(CreateUpdateView):
         """
         If the form is valid, save the associated model and add the current user as a reviewer.
         """
-        aois = None
-        if "Workcell" in self.request.POST:
-            aois = AOI.objects.filter(job__id=self.object.id)
-            
 
-        
+        aois = None
+
+        #Check if workcells are being imported
+        if "Workcell" in self.request.POST:
+
+            #populate aois with all workcells from the job being exported
+            aois = AOI.objects.filter(job__id=self.object.id)
+
+        #Prevents old job from being updated
         obj = form.save(commit=False)
+
+        #Causes a new job to be created
         obj.pk = None
 
+        #Saves new job
         self.object = form.save()
 
+        #Loops through Workcells to create copies, setting assignees, status, and analyst to defaults
         if aois != None:
             for aoi in aois:
                 aoi.pk = None
+                aoi.assignee_id = None
 
+                aoi.analyst = None
                 aoi.job = self.object
+                aoi.status = "Unassigned"
                 aoi.save()
 
-        
         self.object.reviewers.add(self.request.user)
 
         # Create a new map for each job
@@ -969,7 +980,7 @@ def ipaws(request):
     data["key"] = request.POST.get('key')
 
     #prepare timestamp
-    date = (datetime.utcnow() - timedelta(minutes=5)).isoformat()
+    date = (datetime.utcnow() - timedelta(minutes=30)).isoformat()
     date = re.sub(r'\.[0-9]{6}', "Z", date)
 
     #check cache
