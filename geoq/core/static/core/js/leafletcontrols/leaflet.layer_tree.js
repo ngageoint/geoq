@@ -217,9 +217,10 @@ leaflet_layer_control.addYouTube = function ($accordion) {
             }
 
 			for (var i = 0; i < cleanResults.length; i++) {
-                marker[i] = new L.Marker([cleanResults[i].lat, cleanResults[i].long], {icon: youtubeIcon}).bindPopup('<b>' + cleanResults[i].title + '</b><br>' + cleanResults[i].displayTimeStamp +
-                                                                                            '<br> <img id="youTube" src="/static/images/YouTube.png" alt="Play Video" ' + 
-                                                                                            ' onclick="playVideo(&quot;https://youtube.com/embed/'+cleanResults[i].videoID+'?autoplay=1&quot;)">');
+                marker[i] = new L.Marker([cleanResults[i].lat, cleanResults[i].long], {icon: youtubeIcon})
+                    .bindPopup('<b>' + cleanResults[i].title + '</b><br>' + cleanResults[i].displayTimeStamp +
+                               '<br> <img id="youTube" src="/static/images/YouTube.png" alt="Play Video" ' +
+                               ' onclick="playVideo(&quot;https://youtube.com/embed/'+cleanResults[i].videoID+'?autoplay=1&quot;)">');
                 aoi_feature_edit.YouTube.addLayer(marker[i]);
 			}
 		});
