@@ -35,7 +35,7 @@ L.NWSIconsLayer = L.GeoJSON.extend({
     },
 
     // Boolean to see if should parse locations via SAME codes
-    _isParse: true,
+    _isParse: false,
 
     // NOTE: A possible way to organize (possible list) of icons?
     _icons: {
@@ -110,12 +110,16 @@ L.NWSIconsLayer = L.GeoJSON.extend({
                 
             // When map moves update bounds
             var _this = this; // Set the context of the event handler
-            this._map.on('moveend', function(e) {
+            //this._map.on('moveend', function(e) {
                 //console.log(e)
-                _this.geocode();
+                //_this.geocode();
                 _this.load(_this.parseIPAWS);
                 //_this.createMarkers();
-            }); 
+            //}); 
+
+            setInterval(function(){
+                _this.load(_this.parseIPAWS);
+            }, 600000)
         }
 
     },
@@ -184,7 +188,8 @@ L.NWSIconsLayer = L.GeoJSON.extend({
         var control,
             alerts = data.getElementsByTagName("alert"),
             searchCoordinates = new YouTubeSearch();
-        //console.log(alerts);
+        console.log(alerts);
+        console.log(data);
 
         for (var i = 0; i < alerts.length; i++) {
             control = false;
@@ -193,7 +198,7 @@ L.NWSIconsLayer = L.GeoJSON.extend({
                 geocodes = area[0].getElementsByTagName("geocode"),
                 polygon = area[0].getElementsByTagName("polygon");
 
-            if (!_isParse && (polygon[0])) {
+            if (!this._isParse && (polygon[0])) {
             	control = true;
             } else {
             	if (info && area && geocodes && (polygon[0]) && this._sameCodes && alerts[i].getElementsByTagName("status")[0].innerHTML != "Cancelled") {
