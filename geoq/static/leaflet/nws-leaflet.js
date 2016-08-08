@@ -34,6 +34,9 @@ L.NWSIconsLayer = L.GeoJSON.extend({
         debug: true
     },
 
+    // Boolean to see if should parse locations via SAME codes
+    _isParse: true,
+
     // NOTE: A possible way to organize (possible list) of icons?
     _icons: {
         "Emergency Action Notification" : ["PAWS_WARNING_RED_Local-Area-Emergency.svg"],
