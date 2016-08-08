@@ -199,7 +199,7 @@ leaflet_layer_control.addYouTube = function ($accordion) {
 
         var search = new YouTubeSearch();
 
-		//search.generateCircle(pointArray);
+		//var center = search.generateCircle(boundingPoints);
 		var request = search.search(boundingPoints);
 
 		search.processYouTubeRequest(request, boundingPoints, function (videoResults) {
