@@ -190,17 +190,21 @@ L.NWSIconsLayer = L.GeoJSON.extend({
                 geocodes = area[0].getElementsByTagName("geocode"),
                 polygon = area[0].getElementsByTagName("polygon");
 
-            if (info && area && geocodes && (polygon[0]) && this._sameCodes && alerts[i].getElementsByTagName("status")[0].innerHTML != "Cancelled") {
-                for (var j = 0; j < geocodes.length; j++) {
-                    if (geocodes[j].childNodes[0].innerHTML == "SAME" && control != true) {
-                        for (var k = 0; k < this._sameCodes.length; k++) {
-                            if (this._sameCodes[k] == geocodes[j].childNodes[1].innerHTML) {
-                                control = true;
-                            }
-                        }
+            if (!_isParse && (polygon[0])) {
+            	control = true;
+            } else {
+            	if (info && area && geocodes && (polygon[0]) && this._sameCodes && alerts[i].getElementsByTagName("status")[0].innerHTML != "Cancelled") {
+	                for (var j = 0; j < geocodes.length; j++) {
+	                    if (geocodes[j].childNodes[0].innerHTML == "SAME" && control != true) {
+	                        for (var k = 0; k < this._sameCodes.length; k++) {
+	                            if (this._sameCodes[k] == geocodes[j].childNodes[1].innerHTML) {
+	                                control = true;
+	                            }
+	                        }
 
-                    }
-                }
+	                    }
+	                }
+	            }
             }
 
             if (control) {
