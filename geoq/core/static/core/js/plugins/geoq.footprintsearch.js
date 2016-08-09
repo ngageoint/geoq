@@ -84,7 +84,7 @@ footprints.schema = [
         transform: 'day',
         show: 'small-table',
         showSizeMultiplier: 2,
-        initialDateRange: 30,
+        initialDateRange: 365,
         colorMarker: true
     }
 ];
@@ -1480,8 +1480,8 @@ footprints.addFilterDateMax = function ($holder, schema_item) {
             'Last 7 Days': [moment().subtract(6, 'days'), moment()],
             'Last 30 Days': [moment().subtract(29, 'days'), moment()],
             'This Month': [moment().startOf('month'), moment().endOf('month')],
-            'Last 4 Months': [moment().subtract(120, 'days'), moment()]
-
+            'Last 4 Months': [moment().subtract(120, 'days'), moment()],
+            'Last Year' : [moment().subtract(1, 'years'), moment()]
         }
     }, cb);
 
