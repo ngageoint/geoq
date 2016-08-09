@@ -192,17 +192,19 @@ leaflet_layer_control.addYouTube = function ($accordion) {
     	stopVideo();
         $("#clearButton").css('visibility', 'visible');
        	var boundingPoints = [];
+        var testBoundingPoints = [];
        	var videoLocationPoints = [];
         for (var i = 0; i < aoi_feature_edit.aoi_extents_geojson["coordinates"][0][0].length; i++) {
         	boundingPoints.push(new Point(aoi_feature_edit.aoi_extents_geojson["coordinates"][0][0][i][1],aoi_feature_edit.aoi_extents_geojson["coordinates"][0][0][i][0]));
+            testBoundingPoints.push(new Point(aoi_feature_edit.aoi_extents_geojson["coordinates"][0][0][i][1],aoi_feature_edit.aoi_extents_geojson["coordinates"][0][0][i][0]));
         }
 
         var search = new YouTubeSearch();
 
-		//var center = search.generateCircle(boundingPoints);
-		var request = search.search(boundingPoints);
+		//boundingPoints = cleanArray(boundingPoints);
+		var request = search.search(cleanArray(boundingPoints));
 
-		search.processYouTubeRequest(request, boundingPoints, function (videoResults) {
+		search.processYouTubeRequest(request, testBoundingPoints, function (videoResults) {
 			var marker = [];
             var cleanResults = [];
 
@@ -254,6 +256,26 @@ leaflet_layer_control.addYouTube = function ($accordion) {
         }
         return true;
     }
+    
+    function cleanArray(inputArray) {
+      	var tempArray = [];
+      	var found;
+      	for (var i = 0; i < inputArray.length; i++) {
+      		found = false;
+      		for (var j = 0; j < tempArray.length; j++) {
+      			if (tempArray[j].x == inputArray[i].x && tempArray[j].y == inputArray[i].y) {
+      				found = true;	
+      			}
+      		}
+      
+      		if (found == false) {
+      			tempArray.push(inputArray[i]);
+      		}
+      
+      	}
+      
+      	return tempArray;
+      }
 }
 
 /*

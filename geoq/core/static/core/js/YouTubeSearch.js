@@ -4,7 +4,7 @@
 
 **************************************************************************************************/
 
-function Point (x, y) {
+function Point (x, y, orderIndex) {
 //X = lat Y = Long
 	this.x = x;
 	this.y = y;
@@ -79,9 +79,7 @@ YouTubeSearch.prototype.toRadians = function (degrees) {
 }
 
 YouTubeSearch.prototype.generateCircle = function (pointArray) {
-	if ((pointArray[0].x == pointArray[(pointArray.length -1)].x) && (pointArray[0].y == pointArray[(pointArray.length -1)].y)) {
-		pointArray.pop();
-	}
+	
 	var center = new Point(0,0); 
 	var rad, rad2;
 	var xmin, xmax, ymin, ymax;
@@ -324,10 +322,10 @@ YouTubeSearch.prototype.processYouTubeRequest = function (request, pointArray, c
                   			tempPoint.x = resultsArr[i].lat;
                   			tempPoint.y = resultsArr[i].long;
 
-                  			console.log(resultsArr);
                   			if ((windingNumber(tempPoint, pointArray, (pointArray.length -1))) != 0) {
                   				finalResults.push(resultsArr[i]);
                   			}
+                  			
                   			break;
                 		}
              		 }
@@ -380,6 +378,8 @@ function formatAsTwoDigitNumber(numb) {
   	return String(numb);
 	}
 }
+
+
 
 //Influenced by 2000, Dan Sunday
 function isLeft (P0, P1, P2) {
