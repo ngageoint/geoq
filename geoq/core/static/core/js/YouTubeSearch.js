@@ -4,7 +4,7 @@
 
 **************************************************************************************************/
 
-function Point (x, y, orderIndex) {
+function Point (x, y,) {
 //X = lat Y = Long
 	this.x = x;
 	this.y = y;

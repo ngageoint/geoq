@@ -196,12 +196,14 @@ leaflet_layer_control.addYouTube = function ($accordion) {
        	var videoLocationPoints = [];
         for (var i = 0; i < aoi_feature_edit.aoi_extents_geojson["coordinates"][0][0].length; i++) {
         	boundingPoints.push(new Point(aoi_feature_edit.aoi_extents_geojson["coordinates"][0][0][i][1],aoi_feature_edit.aoi_extents_geojson["coordinates"][0][0][i][0]));
+            //This line is required. I am not sure why the original bounding points variable is being changed.
             testBoundingPoints.push(new Point(aoi_feature_edit.aoi_extents_geojson["coordinates"][0][0][i][1],aoi_feature_edit.aoi_extents_geojson["coordinates"][0][0][i][0]));
         }
 
         var search = new YouTubeSearch();
 
 		//boundingPoints = cleanArray(boundingPoints);
+        //The clean array function helps us clean up the bounding points to get a tighter bounding circle.
 		var request = search.search(cleanArray(boundingPoints));
 
 		search.processYouTubeRequest(request, testBoundingPoints, function (videoResults) {
