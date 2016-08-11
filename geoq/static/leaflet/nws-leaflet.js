@@ -137,7 +137,7 @@ L.NWSIconsLayer = L.GeoJSON.extend({
                 bounds._southWest.lng + ',' + bounds._northEast.lat + ']]],' +
                 '"spatialReference":{"wkid":4326}}';
 
-        var url = "/geoq/proxy/https://tigerweb.geo.census.gov/arcgis/rest/services/Generalized_ACS2015/State_County/MapServer/11/query?where=&text=&objectIds=&time=&geometry=" + ringObject + "&geometryType=esriGeometryPolygon&inSR=&spatialRel=esriSpatialRelIntersects&relationParam=&outFields=GEOID&returnGeometry=false&returnTrueCurves=false&maxAllowableOffset=&geometryPrecision=&outSR=&returnIdsOnly=false&returnCountOnly=false&orderByFields=&groupByFieldsForStatistics=&outStatistics=&returnZ=false&returnM=false&gdbVersion=&returnDistinctValues=false&resultOffset=&resultRecordCount=&f=pjson";
+        var url = leaflet_helper.home_url + "proxy/https://tigerweb.geo.census.gov/arcgis/rest/services/Generalized_ACS2015/State_County/MapServer/11/query?where=&text=&objectIds=&time=&geometry=" + ringObject + "&geometryType=esriGeometryPolygon&inSR=&spatialRel=esriSpatialRelIntersects&relationParam=&outFields=GEOID&returnGeometry=false&returnTrueCurves=false&maxAllowableOffset=&geometryPrecision=&outSR=&returnIdsOnly=false&returnCountOnly=false&orderByFields=&groupByFieldsForStatistics=&outStatistics=&returnZ=false&returnM=false&gdbVersion=&returnDistinctValues=false&resultOffset=&resultRecordCount=&f=pjson";
 
         $.ajax({
             type: 'GET',
@@ -175,7 +175,7 @@ L.NWSIconsLayer = L.GeoJSON.extend({
  
         $.ajax({
             type: "POST",
-            url: "/geoq/api/geo/ipaws",
+            url: leaflet_helper.home_url + "api/geo/ipaws",
             context: this,
             data: {develop: true, key: this.options.FEMAkey}
         }).done(callback)
