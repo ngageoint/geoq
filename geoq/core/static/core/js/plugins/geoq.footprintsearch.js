@@ -469,7 +469,8 @@ footprints.updateFootprintDataFromCSWServer = function () {
             inputs[field.name] = footprints.expandPromptSettings(field);
         });
 
-        ogc_csw.getRecords(params, callback);
+        var bounds = [{"lat":36.986771, "lon":-91.516129}, {"lat":42.509361,"lon":-87.507889}];
+        ogc_csw.getRecordsPost(params, bounds, callback);
     });
 };
 footprints.boundsToGeometryPolygon = function(bounds) {
