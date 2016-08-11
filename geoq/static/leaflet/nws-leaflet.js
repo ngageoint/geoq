@@ -188,8 +188,8 @@ L.NWSIconsLayer = L.GeoJSON.extend({
         var control,
             alerts = data.getElementsByTagName("alert"),
             searchCoordinates = new YouTubeSearch();
-        console.log(alerts);
-        console.log(data);
+        //console.log(alerts);
+        //console.log(data);
 
         for (var i = 0; i < alerts.length; i++) {
             control = false;
@@ -286,6 +286,18 @@ L.NWSIconsLayer = L.GeoJSON.extend({
 
     // Where icons/paths are stored
     NWSLayerGroup: L.layerGroup(),
+
+    // Point to Layer http://leafletjs.com/reference.html#geojson-pointtolayer
+    pointToLayer: function(feature, latlng) {
+        return L.marker(latlng);
+        
+    },
+
+    onEachFeature: function(feature, layer) {
+        var popup = L.popup().setContent("test content");
+
+        layer.bindPopup(popup);
+    },
 
     // Create markers and add layers to map
     createMarkers: function (){
