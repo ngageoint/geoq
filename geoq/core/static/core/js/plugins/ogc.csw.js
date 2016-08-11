@@ -202,7 +202,7 @@ ogc_csw.createLayerPopup = function(name,options) {
 };
 
 ogc_csw.init({
-    server: 'centos.mitre.org',
+    server: '192.168.32.129',
     port: '8080',
     protocol: 'http',
     path: '/geoserver'
