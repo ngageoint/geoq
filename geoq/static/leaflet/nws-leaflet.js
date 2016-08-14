@@ -24,20 +24,53 @@ SOFTWARE.
 /* Makes use of Leaflet JS: http://leafletjs.com/ */
 /* SVG Icons courtesy of GEOHuntsville: http://geohuntsville.org/page/geoq */
 
-/* Dependent on L.Marker.AutoResizeSVG found at 
-   http://github.com/john-kilgo/L.Marker.AutoResizeSVG
-   Include marker-resize-svg.js in your HTML document */
+
+L.NWSLayerGroup = L.LayerGroup.extend({
+    addLayer: function (layer) {
+        var id = this.getLayerId(layer);
+
+        var _this = this;
+
+        this._layers[id] = layer;
+
+        if (this._map) {
+            this._map.addLayer(layer);
+        }
+
+        layer.options.holdPolygon = false;
+        layer.bindPopup(layer.options.popup);
+
+        layer.on('mouseover', function(e){
+            if(!layer.options.holdPolygon)
+                layer.options.polygon.addTo(this._map);        
+        });
+        layer.on('mouseout', function(e){
+            if(!layer.options.holdPolygon)
+                _this._map.removeLayer(layer.options.polygon);       
+        });
+        layer.on('dblclick', function(e){
+            if(layer.options.holdPolygon === false) {
+                layer.options.polygon.addTo(this._map);
+                layer.options.holdPolygon = true;
+            } else {
+                layer.options.holdPolygon = false;
+                _this._map.removeLayer(layer.options.polygon);
+            }       
+        });
+
+        return this;
+    },
+});
 
 L.NWSIconsLayer = L.GeoJSON.extend({
-    // Options are JSON object found in database
+    // Options are JSON object found in database core.setting
     options: {
-        debug: true
+        //debug: true
     },
 
-    // Boolean to see if should parse locations via SAME codes
+    // Boolean to see if should parse locations via SAME codes, set to true to parse
     _isParse: false,
 
-    // NOTE: A possible way to organize (possible list) of icons?
     _icons: {
         "Emergency Action Notification" : ["PAWS_WARNING_RED_Local-Area-Emergency.svg"],
         "Avalanche Warning" : ["PAWS_WARNING_RED_Avalanche.svg"],
@@ -87,8 +120,6 @@ L.NWSIconsLayer = L.GeoJSON.extend({
     },
 
     initialize: function (load, map, options) {
-        // Note: load is unused at this time
-
         // Merge options together
         L.Util.setOptions(this, options);
 
@@ -119,7 +150,7 @@ L.NWSIconsLayer = L.GeoJSON.extend({
 
             setInterval(function(){
                 _this.load(_this.parseIPAWS);
-            }, 600000)
+            }, 300000)
         }
 
     },
@@ -285,19 +316,7 @@ L.NWSIconsLayer = L.GeoJSON.extend({
     },
 
     // Where icons/paths are stored
-    NWSLayerGroup: L.layerGroup(),
-
-    // Point to Layer http://leafletjs.com/reference.html#geojson-pointtolayer
-    pointToLayer: function(feature, latlng) {
-        return L.marker(latlng);
-        
-    },
-
-    onEachFeature: function(feature, layer) {
-        var popup = L.popup().setContent("test content");
-
-        layer.bindPopup(popup);
-    },
+    NWSLayerGroup: new L.NWSLayerGroup,
 
     // Create markers and add layers to map
     createMarkers: function (){
@@ -305,14 +324,16 @@ L.NWSIconsLayer = L.GeoJSON.extend({
 
         var _this = this;
 
-        this._iconsTmp = null;
-        this._iconsTmp = [];
-
-        for (var i = 0; i < this._jsonData.length; i++){
-            var tmpMarker, tmpPolygon, polyArr = [];
-            var tmpLayer = L.layerGroup();
-
+        for (var i = 0; i < this._jsonData.length; i++) {
+            var center = this._jsonData[i].center;
+            var lat = center.lat;
+            var lon = center.lon;
+            var popupContent = 'Event: <b>' + this._jsonData[i].event +
+                               '</b><br/>Description: ' +
+                               this._jsonData[i].description + '<br />' +
+                               'Onset: <b>' + this._jsonData[i].onset + '</b>'
             // Polygon points array
+            var polyArr = [];
             for (var j = 0; j < this._jsonData[i].coordinates.length; j++){
                 var tmpArr = [];
                 tmpArr.push(Number(this._jsonData[i].coordinates[j].lat));
@@ -320,41 +341,25 @@ L.NWSIconsLayer = L.GeoJSON.extend({
                 polyArr.push(tmpArr);
             }
 
-            tmpPolygon = L.polygon(polyArr);
+            this.NWSLayerGroup.addLayer(L.marker([lat,lon],{
+                icon: L.icon({
+                    iconUrl: _this.options.iconPath + _this._icons[this._jsonData[i].event][0],
+                    iconSize: [32,32],
+                    iconAnchor: [16, 32],
+                    popupAnchor: [0, -32],
+                    iconSizeArray: // For use when Leaflet 1.0 Implemented
+                    [
+                        [32, 32], [96, 96], [256, 256]
+                    ],
+                    iconAnchorArray: 
+                    [
+                        [16, 32], [48, 96], [128, 256]
+                    ]
+                }),
+                polygon: L.polygon(polyArr),
+                popup: L.popup().setContent(popupContent), 
 
-            this._iconsTmp.push(L.icon({
-                iconUrl: this.options.iconPath + this._icons[this._jsonData[i].event][0],
-                iconSize: [32,32],
-                iconAnchor: [16, 32],
-                popupAnchor: [0, -32],
-                /*iconSizeArray: // For use when Leaflet 1.0 Implemented
-                [
-                    [32, 32], [96, 96], [256, 256]
-                ],
-                iconAnchorArray: 
-                [
-                    [16, 32], [48, 96], [128, 256]
-                ] */
             }));
-            //console.log("icons:" + this._icons[this._jsonData[i].event][0])
-
-            var center = this._jsonData[i].center;
-            var lat = center.lat;
-            var lon = center.lon;
-
-            tmpMarker = L.marker([lat, lon], {icon: _this._iconsTmp[i]});
-
-            var popupContent = 'Event: <b>' + this._jsonData[i].event +
-                                '</b><br/>Description: ' +
-                                this._jsonData[i].description + '<br />' +
-                                'Onset: <b>' + this._jsonData[i].onset + '</b>';
-            var popup = L.popup().setContent(popupContent);
-
-            tmpMarker.bindPopup(popup);
-            tmpLayer.addLayer(tmpPolygon);
-            tmpLayer.addLayer(tmpMarker);
-
-            this.NWSLayerGroup.addLayer(tmpLayer);
         }
     }
 });
