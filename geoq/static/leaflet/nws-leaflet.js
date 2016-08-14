@@ -208,6 +208,7 @@ L.NWSIconsLayer = L.GeoJSON.extend({
             type: "POST",
             url: leaflet_helper.home_url + "api/geo/ipaws",
             context: this,
+            // So we know which server to use:
             data: {develop: true, key: this.options.FEMAkey}
         }).done(callback)
         .fail(this.ajaxError);  
