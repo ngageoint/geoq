@@ -727,6 +727,7 @@ footprints.replaceCSWOutlineWithLayer = function (identifier) {
             try {
                 // hide footprint, then add wms image
                 layer.setStyle({opacity: 0, fillOpacity: 0});
+                footprints.map.closePopup();
                 layer.unbindPopup();
                 var func = 'footprints.saveInspectedImage("' + layer.options.image_id + '", ' + true + ')';
                 var func2 = 'footprints.saveInspectedImage("' + layer.options.image_id + '", ' + false + ')';
