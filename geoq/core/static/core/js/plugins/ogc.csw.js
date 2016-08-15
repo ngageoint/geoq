@@ -75,6 +75,75 @@ ogc_csw.getRecords = function(params,callback) {
 
 };
 
+ogc_csw.getRecordsPost = function(params,bounds,callback) {
+    var proxy = leaflet_helper.proxy_path || '/geoq/proxy';
+
+    var url = ogc_csw.protocol + "://" + ogc_csw.server + ":" + ogc_csw.port + ogc_csw.path + "/csw?" + $.param(params);
+
+    var data = ogc_csw.createXMLPostData(bounds);
+
+    $.ajax({
+        type: 'POST',
+        url: proxy + url,
+        contentType: 'text/xml',
+        dataType: 'xml',
+        data: ((new XMLSerializer()).serializeToString(data)),
+        success: callback,
+        failure: function() {
+            alert('unable to retrieve csw records');
+        }
+    });
+};
+
+ogc_csw.createXMLPostData = function(bounds) {
+    var xw = new XMLWriter('UTF-8');
+
+    xw.writeStartDocument();
+    xw.writeStartElement("csw:GetRecords");
+      xw.writeAttributeString("xmlns:csw", "http://www.opengis.net/cat/csw/2.0.2");
+      xw.writeAttributeString("xmlns:ogc", "http://www.opengis.net/ogc");
+      xw.writeAttributeString("xmlns:gml", "http://www.opengis.net/gml");
+      xw.writeAttributeString("service","CSW");
+      xw.writeAttributeString("version","2.0.2");
+      xw.writeAttributeString("resultType","results");
+      xw.writeAttributeString("maxRecords","50");
+      xw.writeAttributeString("outputSchema","http://www.opengis.net/cat/csw/2.0.2");
+
+      xw.writeStartElement("csw:Query");
+        xw.writeAttributeString("typeNames","csw:Record");
+        xw.writeStartElement("csw:ElementSetName");
+          xw.writeString("full");
+        xw.writeEndElement();
+
+    // if there are values in the bounds array, add that filter
+        if (bounds && bounds.length > 1) {
+            xw.writeStartElement("csw:Constraint");
+            xw.writeAttributeString("version", "1.1.0");
+            xw.writeStartElement("ogc:Filter");
+            xw.writeStartElement("ogc:Contains");
+            xw.writeStartElement("ogc:PropertyName");
+            xw.writeString("ows:BoundingBox");
+            xw.writeEndElement();
+            xw.writeStartElement("gml:Envelope");
+            xw.writeStartElement("gml:lowerCorner");
+            xw.writeString(bounds[0]['lon'] + " " + bounds[0]['lat']);
+            xw.writeEndElement();
+            xw.writeStartElement("gml:upperCorner");
+            xw.writeString(bounds[1]['lon'] + " " + bounds[1]['lat']);
+            xw.writeEndElement();
+            xw.writeEndElement();
+            xw.writeEndElement();
+            xw.writeEndElement();
+            xw.writeEndElement();
+        }
+
+      xw.writeEndElement();
+    xw.writeEndElement();
+    xw.writeEndDocument();
+
+    return xw.getDocument();
+};
+
 ogc_csw.createWMSLayerFromRecord = function(record) {
     var newlayer = {};
     try {
@@ -200,11 +269,3 @@ ogc_csw.createLayerPopup = function(name,options) {
 
     return html;
 };
-
-ogc_csw.init({
-    server: '192.168.32.129',
-    port: '8080',
-    protocol: 'http',
-    path: '/geoserver'
-});
-

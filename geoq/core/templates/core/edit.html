@@ -44,6 +44,7 @@
     <script src="{{ STATIC_URL }}core/js/plugins/geoq.footprintsearch.js"></script>
     <script src="{{ STATIC_URL }}core/js/plugins/geoq.imageviewer.js"></script>
     <script src="{{ STATIC_URL }}core/js/plugins/ogc.csw.js"></script>
+    <script src="{{ STATIC_URL }}js/XMLWriter-1.0.0-min.js"></script>
     <script src="{{ STATIC_URL }}core/js/pqgrid.dev.js"></script>
     <script src="{{ STATIC_URL }}core/js/daterangepicker.js"></script>
 
@@ -125,6 +126,16 @@
                 return this.find('*').filter(function() {
                     return this.nodeName === name;
                 });
+            };
+
+        // and a function to selectively load javascript files
+            $.fn.loadjsfile = function(filename) {
+                var fileref = document.createElement('script');
+                fileref.setAttribute('type', 'text/javascript');
+                fileref.setAttribute('src', filename);
+                if (typeof fileref !== 'undefined') {
+                    document.getElementsByTagName('head')[0].appendChild(fileref);
+                }
             };
 
 

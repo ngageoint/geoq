@@ -131,6 +131,17 @@ aoi_feature_edit.init = function () {
     //Close Alert field if shown
     setTimeout(function(){$('div.alert').css({display:'none'});},3000);
 
+    // for footprints if we're using them
+    if (site_settings.csw) {
+        ogc_csw.init({
+            server: site_settings.csw['server'],
+            port: site_settings.csw['port'],
+            protocol: site_settings.csw['protocol'],
+            path: site_settings.csw['path']
+        });
+
+    }
+
     //Open Terms of Use prompt if necessary
     $(document).ready(aoi_feature_edit.promptForUserAcceptance);
 };
