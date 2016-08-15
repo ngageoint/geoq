@@ -48,15 +48,17 @@ L.NWSLayerGroup = L.LayerGroup.extend({
             if(!layer.options.holdPolygon)
                 _this._map.removeLayer(layer.options.polygon);       
         });
-        layer.on('dblclick', function(e){
+        layer.on('click', function(e){
             if(layer.options.holdPolygon === false) {
                 layer.options.polygon.addTo(this._map);
                 layer.options.holdPolygon = true;
-            } else {
-                layer.options.holdPolygon = false;
-                _this._map.removeLayer(layer.options.polygon);
-            }       
+            }     
         });
+        layer.on('dblclick', function(e){
+            layer.options.holdPolygon = false;
+            _this._map.removeLayer(layer.options.polygon);
+            layer.closePopup();  
+        })
 
         return this;
     },
@@ -65,7 +67,7 @@ L.NWSLayerGroup = L.LayerGroup.extend({
 L.NWSIconsLayer = L.GeoJSON.extend({
     // Options are JSON object found in database core.setting
     options: {
-        //debug: true
+        debug: true
     },
 
     // Boolean to see if should parse locations via SAME codes, set to true to parse
@@ -209,7 +211,7 @@ L.NWSIconsLayer = L.GeoJSON.extend({
             url: leaflet_helper.home_url + "api/geo/ipaws",
             context: this,
             // So we know which server to use:
-            data: {develop: true, key: this.options.FEMAkey}
+            data: {develop: options.debug, key: this.options.FEMAkey}
         }).done(callback)
         .fail(this.ajaxError);  
     },
