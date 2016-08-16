@@ -58,7 +58,12 @@ L.NWSLayerGroup = L.LayerGroup.extend({
             layer.options.holdPolygon = false;
             _this._map.removeLayer(layer.options.polygon);
             layer.closePopup();  
-        })
+        });
+
+        
+        layer.on('remove', function(e){
+            _this._map.removeLayer(layer.options.polygon);
+        });
 
         return this;
     },
