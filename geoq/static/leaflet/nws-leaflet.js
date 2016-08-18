@@ -27,9 +27,8 @@ SOFTWARE.
 
 L.NWSLayerGroup = L.LayerGroup.extend({
     addLayer: function (layer) {
-        var id = this.getLayerId(layer);
-
-        var _this = this;
+        var id = this.getLayerId(layer),
+            _this = this;
 
         this._layers[id] = layer;
 
@@ -60,7 +59,7 @@ L.NWSLayerGroup = L.LayerGroup.extend({
             layer.closePopup();  
         });
 
-        
+        // Make sure the Polygon is removed from map.
         layer.on('remove', function(e){
             _this._map.removeLayer(layer.options.polygon);
         });
@@ -127,27 +126,23 @@ L.NWSIconsLayer = L.GeoJSON.extend({
     },
 
     initialize: function (load, map, options) {
-        // Merge options together
+        var _this = this;
+
         L.Util.setOptions(this, options);
 
         if (site_settings.FEMA_IPAWS) {
             L.Util.setOptions(this, site_settings.FEMA_IPAWS);
-            //console.log(this.options);
         } else {
             console.error("NWS Icons: Fatal Error. site_settings missing. Please visit GeoQ Admin site and add FEMA_IPAWS json settings object.")
             return;
         }
 
-        // Markers to add to map
-        this._layers = {};
-        // Our map
         this._map = map;
 
         if (this._map) {   
             this.NWSLayerGroup.addTo(this._map);
                 
             // When map moves update bounds
-            var _this = this; // Set the context of the event handler
             //this._map.on('moveend', function(e) {
                 //console.log(e)
                 //_this.geocode();
@@ -157,7 +152,7 @@ L.NWSIconsLayer = L.GeoJSON.extend({
 
             setInterval(function(){
                 _this.load(_this.parseIPAWS);
-            }, 300000)
+            }, 600000)
         }
 
     },
@@ -223,12 +218,11 @@ L.NWSIconsLayer = L.GeoJSON.extend({
 
     // NWS Callback IPAWS Parse
     parseIPAWS: function(data) {
-        this._jsonData = [];
+        this._jsonData = {};
+
         var control,
             alerts = data.getElementsByTagName("alert"),
             searchCoordinates = new YouTubeSearch();
-        //console.log(alerts);
-        //console.log(data);
 
         for (var i = 0; i < alerts.length; i++) {
             control = false;
@@ -256,27 +250,100 @@ L.NWSIconsLayer = L.GeoJSON.extend({
 
             if (control) {
                 var tmpJson = {};
-                tmpJson["identifier"] = String(alerts[i].getElementsByTagName("identifier")[0].innerHTML);
-                tmpJson["sent"] = alerts[i].getElementsByTagName("sent")[0].innerHTML;
-                tmpJson["status"] = alerts[i].getElementsByTagName("status")[0].innerHTML;
-                tmpJson["event"] = info[0].getElementsByTagName("event")[0].innerHTML;
-                tmpJson["severity"] = info[0].getElementsByTagName("severity")[0].innerHTML;
-                tmpJson["certainty"] = info[0].getElementsByTagName("certainty")[0].innerHTML;
-                tmpJson["effective"] = info[0].getElementsByTagName("effective")[0].innerHTML;
-                tmpJson["onset"] = info[0].getElementsByTagName("onset")[0].innerHTML;
-                tmpJson["expires"] = info[0].getElementsByTagName("expires")[0].innerHTML;
-                tmpJson["headline"] = info[0].getElementsByTagName("headline")[0].innerHTML;
-                tmpJson["description"] = info[0].getElementsByTagName("description")[0].innerHTML;
-                tmpJson["instruction"] = info[0].getElementsByTagName("instruction")[0].innerHTML;
+                try {
+                    tmpJson["identifier"] = String(alerts[i].getElementsByTagName("identifier")[0].innerHTML);
+                }
+                catch(err) {
+                    console.log("identifier", alerts[i], err);
+                }
 
-                var mapData, jsonMapData = [];
-                //console.log(polygon);
-                var rawData = polygon[0].innerHTML;
+                try {
+                    tmpJson["sent"] = alerts[i].getElementsByTagName("sent")[0].innerHTML;
+                }
+                catch(err) {
+                    console.log("sent", alerts[i], err);
+                }
+
+                try {
+                    tmpJson["status"] = alerts[i].getElementsByTagName("status")[0].innerHTML;
+                }
+                catch(err) {
+                    console.log("status", alerts[i], err);
+                }
+
+                try {
+                    tmpJson["event"] = info[0].getElementsByTagName("event")[0].innerHTML;
+                }
+                catch(err) {
+                    console.log("event", alerts[i], err);
+                }
+
+                try {
+                    tmpJson["severity"] = info[0].getElementsByTagName("severity")[0].innerHTML;
+                }
+                catch(err) {
+                    console.log("severity", alerts[i], err);
+                }
+
+                try {
+                    tmpJson["certainty"] = info[0].getElementsByTagName("certainty")[0].innerHTML;
+                }
+                catch(err) {
+                    console.log("certainty", alerts[i], err);
+                }
+
+                try {
+                    tmpJson["effective"] = info[0].getElementsByTagName("effective")[0].innerHTML;
+                }
+                catch(err) {
+                    console.log("effective", alerts[i], err);
+                }
+
+                try {
+                    tmpJson["onset"] = info[0].getElementsByTagName("onset")[0].innerHTML;
+                }
+                catch(err) {
+                    console.log("onset", alerts[i], err);
+                }
+
+                try {
+                    tmpJson["expires"] = info[0].getElementsByTagName("expires")[0].innerHTML;
+                }
+                catch(err) {
+                    console.log("expires", alerts[i], err);
+                }
+
+                try {
+                    tmpJson["headline"] = info[0].getElementsByTagName("headline")[0].innerHTML;
+                }
+                catch(err) {
+                    console.log("headline", alerts[i], err);
+                }
+
+                try {
+                    tmpJson["description"] = info[0].getElementsByTagName("description")[0].innerHTML;
+                }
+                catch(err) {
+                    console.log("description", alerts[i], err);
+                }
+
+                try {
+                    tmpJson["instruction"] = info[0].getElementsByTagName("instruction")[0].innerHTML;
+                }
+                catch(err) {
+                    console.log("instruction", alerts[i], err);
+                }
+
+                var mapData, 
+                    jsonMapData = [], 
+                    rawData = polygon[0].innerHTML;
+                
                 mapData = rawData.split(" ");
 
                 for (var j = 0; j < mapData.length; j++) {
-                    var latlong = mapData[j].split(",");
-                    var jsonLatLong = {};
+                    var latlong = mapData[j].split(","),
+                        jsonLatLong = {};
+                    
                     jsonLatLong["lat"] = latlong[0];
                     jsonLatLong["lon"] = latlong[1];
 
@@ -295,12 +362,13 @@ L.NWSIconsLayer = L.GeoJSON.extend({
 
                 tmpJson["coordinates"] = jsonMapData;
 
-                this._jsonData.push(tmpJson);
+                this._jsonData[tmpJson.identifier] = tmpJson;
 
-            } 
+            }
 
-            this.createMarkers();
-        }
+        } // END for{} loop
+
+        this.createMarkers();
     },
 
     // If an ajax error occurs
@@ -312,14 +380,21 @@ L.NWSIconsLayer = L.GeoJSON.extend({
 
     // provide a way to hide layer
     setStyle: function (style) {
-        this.NWSLayerGroup.eachLayer(function(lyr_group) {
-            lyr_group.eachLayer(function(layer) {
+        var _this = this;
+
+        this.NWSLayerGroup.eachLayer(function(layer) {
+            /*lyr_group.eachLayer(function(layer) {
                 if (layer.setStyle){
                     layer.setStyle(style);
                 } else if (layer.setOpacity){
                     layer.setOpacity(style.opacity);
                 }
-            });
+            });?*/
+            if (layer.setStyle){
+                layer.setStyle(style);
+            } else if (layer.setOpacity){
+                layer.setOpacity(style.opacity);
+            }
         });
     },
 
@@ -327,19 +402,57 @@ L.NWSIconsLayer = L.GeoJSON.extend({
     NWSLayerGroup: new L.NWSLayerGroup,
 
     // Create markers and add layers to map
-    createMarkers: function (){
-        this.NWSLayerGroup.clearLayers();
-
+    createMarkers: function () {
         var _this = this;
 
-        for (var i = 0; i < this._jsonData.length; i++) {
-            var center = this._jsonData[i].center;
-            var lat = center.lat;
-            var lon = center.lon;
-            var popupContent = 'Event: <b>' + this._jsonData[i].event +
-                               '</b><br/>Description: ' +
-                               this._jsonData[i].description + '<br />' +
-                               'Onset: <b>' + this._jsonData[i].onset + '</b>'
+        this.NWSLayerGroup.eachLayer(function(layer){
+            var obj;
+
+            if((obj = _.find(_this._jsonData, function(comp){
+                return comp.identifier === layer.options.jsonData.identifier && comp.status === layer.options.jsonData.status;
+            }))) {
+                console.log("Match");
+                delete _this._jsonData[obj.identifier];
+            } else {
+                // Purge those that don't exist
+                console.log("removing", layer);
+                _this.NWSLayerGroup.removeLayer(layer);
+            }
+        });
+
+        for (var i in this._jsonData) {
+            var center = this._jsonData[i].center,
+                lat = center.lat,
+                lon = center.lon;
+
+            // Pop-up Text
+            var severity = function(){
+                var threshold = _this._jsonData[i].severity;
+                if(threshold === "Severe")
+                    return '<span style="color:#ff0000;">' + threshold + '</span>';
+                if(threshold === "Moderate")
+                    return '<span style="color:#0000ff;">' + threshold + '</span>';
+                if(threshold === "Minor")
+                    return '<span style="color:#355e3b;">' + threshold + '</span>';
+                else
+                    return threshold;
+            }
+            var certainty = function(){
+                var certainty = _this._jsonData[i].certainty;
+                if(certainty === "Observed")
+                    return '<span style="color:#ff0000;">' + certainty + '</span>';
+                else
+                    return certainty;
+            }
+            var pEvent = 'Event: <b>' + this._jsonData[i].event + '</b><br/>',
+                pOnset = 'Onset: <b>' + this._jsonData[i].onset + '</b><br/>',
+                pExpire = 'Expires: <b>' + this._jsonData[i].expires + '</b><br/>',
+                pCertainty = 'Certainty: <b>' + certainty() + '</b><br/>',
+                pSeverity = 'Severity: <b>' + severity() + '</b><br/>',
+                pDescription = '<div style="overflow-y:scroll;min-height:75px;max-height:150px;border:1px solid #000;border-radius:3px;display:none;"' + 'id="' + this._jsonData[i].identifier + '">' + this._jsonData[i].description.toLowerCase() + '</div>' + 'Description: ' + '<a href="#" onclick="jQuery(&quot;#' + this._jsonData[i].identifier +'&quot;).toggle(&quot;show&quot;)">Show/Hide</a>',
+                popupContent = pEvent + pOnset + pExpire + pCertainty + pSeverity + pDescription;
+            // END Pop-up Text
+                               
             // Polygon points array
             var polyArr = [];
             for (var j = 0; j < this._jsonData[i].coordinates.length; j++){
@@ -365,8 +478,8 @@ L.NWSIconsLayer = L.GeoJSON.extend({
                     ]
                 }),
                 polygon: L.polygon(polyArr),
-                popup: L.popup().setContent(popupContent), 
-
+                popup: L.popup().setContent(popupContent),
+                jsonData: _this._jsonData[i]
             }));
         }
     }
