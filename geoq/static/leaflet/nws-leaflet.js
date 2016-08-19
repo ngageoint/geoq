@@ -36,32 +36,36 @@ L.NWSLayerGroup = L.LayerGroup.extend({
             this._map.addLayer(layer);
         }
 
+        layer.options.layer = L.layerGroup();
+        layer.options.layer.addTo(_this._map);
+
         layer.options.holdPolygon = false;
         layer.bindPopup(layer.options.popup);
 
         layer.on('mouseover', function(e){
             if(!layer.options.holdPolygon)
-                layer.options.polygon.addTo(this._map);        
+                layer.options.polygon.addTo(layer.options.layer);        
         });
         layer.on('mouseout', function(e){
             if(!layer.options.holdPolygon)
-                _this._map.removeLayer(layer.options.polygon);       
+                layer.options.layer.removeLayer(layer.options.polygon);       
         });
         layer.on('click', function(e){
             if(layer.options.holdPolygon === false) {
-                layer.options.polygon.addTo(this._map);
+                layer.options.polygon.addTo(layer.options.layer);
                 layer.options.holdPolygon = true;
             }     
         });
         layer.on('dblclick', function(e){
             layer.options.holdPolygon = false;
-            _this._map.removeLayer(layer.options.polygon);
+            layer.options.layer.removeLayer(layer.options.polygon);
             layer.closePopup();  
         });
 
         // Make sure the Polygon is removed from map.
         layer.on('remove', function(e){
-            _this._map.removeLayer(layer.options.polygon);
+            layer.options.layer.removeLayer(layer.options.polygon);
+            _this._map.removeLayer(layer.options.layer);
         });
 
         return this;
@@ -150,9 +154,10 @@ L.NWSIconsLayer = L.GeoJSON.extend({
                 //_this.createMarkers();
             //}); 
 
+            // 5 Minute Refresh
             setInterval(function(){
                 _this.load(_this.parseIPAWS);
-            }, 600000)
+            }, 300000)
         }
 
     },
@@ -380,21 +385,21 @@ L.NWSIconsLayer = L.GeoJSON.extend({
 
     // provide a way to hide layer
     setStyle: function (style) {
-        var _this = this;
+        this.NWSLayerGroup.eachLayer(function(marker) {
 
-        this.NWSLayerGroup.eachLayer(function(layer) {
-            /*lyr_group.eachLayer(function(layer) {
-                if (layer.setStyle){
-                    layer.setStyle(style);
-                } else if (layer.setOpacity){
-                    layer.setOpacity(style.opacity);
-                }
-            });?*/
-            if (layer.setStyle){
-                layer.setStyle(style);
-            } else if (layer.setOpacity){
-                layer.setOpacity(style.opacity);
+            if (marker.setStyle){
+                marker.setStyle(style);
+            } else if (marker.setOpacity){
+                marker.setOpacity(style.opacity);
             }
+
+            marker.options.layer.eachLayer(function(lyr) {
+                if (lyr.setStyle){
+                    lyr.setStyle(style);
+                } else if (lyr.setOpacity){
+                    lyr.setOpacity(style.opacity);
+                }
+            });
         });
     },
 
@@ -411,11 +416,11 @@ L.NWSIconsLayer = L.GeoJSON.extend({
             if((obj = _.find(_this._jsonData, function(comp){
                 return comp.identifier === layer.options.jsonData.identifier && comp.status === layer.options.jsonData.status;
             }))) {
-                console.log("Match");
+                //console.log("Match");
                 delete _this._jsonData[obj.identifier];
             } else {
                 // Purge those that don't exist
-                console.log("removing", layer);
+                //console.log("removing", layer);
                 _this.NWSLayerGroup.removeLayer(layer);
             }
         });
@@ -444,13 +449,16 @@ L.NWSIconsLayer = L.GeoJSON.extend({
                 else
                     return certainty;
             }
-            var pEvent = 'Event: <b>' + this._jsonData[i].event + '</b><br/>',
-                pOnset = 'Onset: <b>' + this._jsonData[i].onset + '</b><br/>',
-                pExpire = 'Expires: <b>' + this._jsonData[i].expires + '</b><br/>',
-                pCertainty = 'Certainty: <b>' + certainty() + '</b><br/>',
-                pSeverity = 'Severity: <b>' + severity() + '</b><br/>',
-                pDescription = '<div style="overflow-y:scroll;min-height:75px;max-height:150px;border:1px solid #000;border-radius:3px;display:none;"' + 'id="' + this._jsonData[i].identifier + '">' + this._jsonData[i].description.toLowerCase() + '</div>' + 'Description: ' + '<a href="#" onclick="jQuery(&quot;#' + this._jsonData[i].identifier +'&quot;).toggle(&quot;show&quot;)">Show/Hide</a>',
-                popupContent = pEvent + pOnset + pExpire + pCertainty + pSeverity + pDescription;
+            var pTableOpen = '<table style="width:100%;"><colgroup><col style="width:75px"><col></colgroup>',
+                pTableClose = '</table>',
+                pEvent = '<tr><td>Event:</td><td><b>' + this._jsonData[i].event + '</b></td></tr>',
+                pOnset = '<tr><td>Onset:</td><td><b>' + this._jsonData[i].onset + '</b></td></tr>',
+                pExpire = '<tr><td>Expires:</td><td><b>' + this._jsonData[i].expires + '</b></td></tr>',
+                pCertainty = '<tr><td>Certainty:</td><td><b>' + certainty() + '</b></td></tr>',
+                pCertainty = '<tr><td>Certainty:</td><td><b>' + certainty() + '</b></td></tr>',
+                pSeverity = '<tr><td>Severity:</td><td><b>' + severity() + '</b></td></tr>',
+                pDescription = '<div style="word-wrap:break-word;display:none;"' + 'id="' + this._jsonData[i].identifier + '">' + this._jsonData[i].description + '</div>' + pTableOpen +'<tr><td>Description:</td>' + '<td><a href="#" id="' + this._jsonData[i].identifier + '-show" onclick="jQuery(&quot;#' + this._jsonData[i].identifier +'&quot;).toggle(&quot;show&quot;)&&jQuery(this).toggle()&&jQuery(&quot;#' + this._jsonData[i].identifier +'-hide&quot;).toggle(&quot;show&quot;)">Show</a><a href="#" id="' + this._jsonData[i].identifier + '-hide" style="display:none;" onclick="jQuery(&quot;#' + this._jsonData[i].identifier +'&quot;).toggle(&quot;show&quot;)&&jQuery(this).toggle()&&jQuery(&quot;#' + this._jsonData[i].identifier +'-show&quot;).toggle(&quot;show&quot;)">Hide</a></td></tr>' + pTableClose,
+                popupContent = pTableOpen + pEvent + pOnset + pExpire + pCertainty + pSeverity + pTableClose + pDescription;
             // END Pop-up Text
                                
             // Polygon points array
@@ -478,7 +486,7 @@ L.NWSIconsLayer = L.GeoJSON.extend({
                     ]
                 }),
                 polygon: L.polygon(polyArr),
-                popup: L.popup().setContent(popupContent),
+                popup: L.popup({minWidth: "275"}).setContent(popupContent),
                 jsonData: _this._jsonData[i]
             }));
         }
