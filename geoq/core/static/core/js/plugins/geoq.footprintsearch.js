@@ -58,7 +58,8 @@ footprints.getLayerGroup = function(status) {
 };
 
 footprints.schema = [
-    {name: 'image_id', title: 'Id', id: true, cswid: 'identifier', show: 'small-table'},
+    {name: 'image_id', title: 'Id', id: true, cswid: 'identifier'},
+    {name: 'layerName', title: 'Name', cswid: 'layerName', show: 'small-table' },
     {name: 'platformCode', title: 'Pltfrm', filter: 'options', cswid: 'creator', show: 'small-table'},
     //TODO: Show image name as mouseover or small text field?
     {
@@ -66,7 +67,7 @@ footprints.schema = [
         cswid: '',
         title: 'Cloud%',
         type: 'integer',
-        filter: 'slider-max',
+        // filter: 'slider-max',
         min: 0,
         max: 100,
         start: 10,
@@ -86,7 +87,8 @@ footprints.schema = [
         showSizeMultiplier: 2,
         initialDateRange: 365,
         colorMarker: true
-    }
+    },
+    {name: 'keyword', title: 'Keywords', filter: 'textbox', show: 'small-table', cswid: 'keyword'}
 ];
 
 footprints.url_template = 'http://server.com/arcgis/rest/services/ImageEvents/MapServer/req_{{layer}}/query?&geometry={{bounds}}&geometryType=esriGeometryEnvelope&spatialRel=esriSpatialRelIntersects&outFields=*&outSR=4326&f=json';
@@ -438,41 +440,41 @@ footprints.updateFootprintDataFromMap = function () {
 };
 footprints.updateFootprintDataFromCSWServer = function () {
     var proxy = leaflet_helper.proxy_path || '/geoq/proxy/';
-    var bounds = footprints.map.getBounds();
-    var geom_string = footprints.boundsToGeometryPolygon(bounds);
+    var mapbounds = footprints.map.getBounds();
+    var geom_string = footprints.boundsToGeometryPolygon(mapbounds);
 
-    var layers = footprints.layerList || [1];
-    _.each(layers, function (layer, layer_id) {
-        var inputs = {
-            geometryPolygon: geom_string,
-            responseFormat: 'xml',
-            outputSchema: 'RESTfulView-1.1',
-            streamable: 'immediate'
-        };
-        var params = {
-            service: "CSW",
-            version: "2.0.2",
-            request: "GetRecords",
-            typeNames: "csw:Record",
-            resultType: "results",
-            elementSetName: "full",
-            maxRecords: 50,
-            outputSchema: "http://www.opengis.net/cat/csw/2.0.2"
-        };
-        var callback = function (xml,lang) {
-            var $xml = $(xml);
-            var data = $xml.filterNode('csw:Record') || [];
-            footprints.newCSWFeaturesArrived(data);
-        };
-        //If there are any WHERE clauses, add those in
-        _.each(footprints.promptFields, function (field) {
-            inputs[field.name] = footprints.expandPromptSettings(field);
-        });
-
-        var bounds = [{"lat":36.986771, "lon":-91.516129}, {"lat":42.509361,"lon":-87.507889}];
-        ogc_csw.getRecordsPost(params, bounds, callback);
+    var inputs = {
+        geometryPolygon: geom_string,
+        responseFormat: 'xml',
+        outputSchema: 'RESTfulView-1.1',
+        streamable: 'immediate'
+    };
+    var params = {
+        service: "CSW",
+        version: "2.0.2",
+        request: "GetRecords",
+        typeNames: "csw:Record",
+        resultType: "results",
+        elementSetName: "full",
+        maxRecords: 50,
+        outputSchema: "http://www.opengis.net/cat/csw/2.0.2"
+    };
+    var callback = function (xml,lang) {
+        var $xml = $(xml);
+        var data = $xml.filterNode('csw:Record') || [];
+        footprints.newCSWFeaturesArrived(data);
+    };
+    //If there are any WHERE clauses, add those in
+    _.each(footprints.promptFields, function (field) {
+        inputs[field.name] = footprints.expandPromptSettings(field);
     });
+
+    var bounds = [{"lat":mapbounds._southWest.lat, "lon":mapbounds._southWest.lng},
+        {"lat":mapbounds._northEast.lat,"lon":mapbounds._northEast.lng}];
+    ogc_csw.getRecordsPost(params, bounds, callback);
+
 };
+
 footprints.boundsToGeometryPolygon = function(bounds) {
     var polygon = {};
     var sw = bounds.getSouthWest();

@@ -18,13 +18,14 @@ ogc_csw.current_layer_list = [];
 ogc_csw.schema = {
     'image_id': { key: 'dc:identifier', default: 'unknown'},
     'wmsUrl': { key: 'dct:references', default: null },
-    'ObservationDate': { key: null, default: moment().format('YYYY-MM-DD')},
+    'format': { key: 'dc:format', default: 'OGC:WMS'},
+    'ObservationDate': { key: 'dct:modified', default: moment().format('YYYY-MM-DD')},
     'maxCloudCoverPercentageRate': { key: null, default: 1},
     'platformCode': { key: null, default: 'abc123'},
     'sensor': {key: null, default: 'def456'},
-    'nef_name': {key: null, default: 'unknown'},
     'layerName': {key: 'dc:title', default: 'Unknown'},
-    'status': {key: null, default: 'NotEvaluated'}
+    'status': {key: null, default: 'NotEvaluated'},
+    'keyword': {key: 'dc:subject', default: 'unknown'}
 };
 
 ogc_csw.init = function(options) {
@@ -78,13 +79,14 @@ ogc_csw.getRecords = function(params,callback) {
 ogc_csw.getRecordsPost = function(params,bounds,callback) {
     var proxy = leaflet_helper.proxy_path || '/geoq/proxy';
 
-    var url = ogc_csw.protocol + "://" + ogc_csw.server + ":" + ogc_csw.port + ogc_csw.path + "/csw?" + $.param(params);
+    var url = ogc_csw.protocol + "://" + ogc_csw.server + ":" + ogc_csw.port + ogc_csw.path + "/csw";
+    var datelimit = null;
 
-    var data = ogc_csw.createXMLPostData(bounds);
+    var data = ogc_csw.createXMLPostData(bounds,datelimit);
 
     $.ajax({
         type: 'POST',
-        url: proxy + url,
+        url: encodeURI(proxy + url),
         contentType: 'text/xml',
         dataType: 'xml',
         data: ((new XMLSerializer()).serializeToString(data)),
@@ -95,7 +97,7 @@ ogc_csw.getRecordsPost = function(params,bounds,callback) {
     });
 };
 
-ogc_csw.createXMLPostData = function(bounds) {
+ogc_csw.createXMLPostData = function(bounds,datelimit) {
     var xw = new XMLWriter('UTF-8');
 
     xw.writeStartDocument();
@@ -115,30 +117,60 @@ ogc_csw.createXMLPostData = function(bounds) {
           xw.writeString("full");
         xw.writeEndElement();
 
+        // start the constraints section
+        xw.writeStartElement("csw:Constraint");
+        xw.writeAttributeString("version", "1.1.0");
+        xw.writeStartElement("ogc:Filter");
+
+        if (bounds && datelimit) {
+            xw.writeStartElement("ogc:And");
+        }
+
     // if there are values in the bounds array, add that filter
         if (bounds && bounds.length > 1) {
-            xw.writeStartElement("csw:Constraint");
-            xw.writeAttributeString("version", "1.1.0");
-            xw.writeStartElement("ogc:Filter");
+
             xw.writeStartElement("ogc:Contains");
             xw.writeStartElement("ogc:PropertyName");
             xw.writeString("ows:BoundingBox");
-            xw.writeEndElement();
+            xw.writeEndElement();  // PropertyName
             xw.writeStartElement("gml:Envelope");
             xw.writeStartElement("gml:lowerCorner");
             xw.writeString(bounds[0]['lon'] + " " + bounds[0]['lat']);
-            xw.writeEndElement();
+            xw.writeEndElement();  // lowerCorner
             xw.writeStartElement("gml:upperCorner");
             xw.writeString(bounds[1]['lon'] + " " + bounds[1]['lat']);
-            xw.writeEndElement();
-            xw.writeEndElement();
-            xw.writeEndElement();
-            xw.writeEndElement();
-            xw.writeEndElement();
+            xw.writeEndElement(); // upperCorner
+            xw.writeEndElement(); // Envelope
+            xw.writeEndElement(); // Contains
         }
 
-      xw.writeEndElement();
-    xw.writeEndElement();
+        if (datelimit) {
+            xw.writeStartElement("ogc:PropertyIsGreaterThan");
+            xw.writeStartElement("ogc:PropertyName");
+            xw.writeString("dc:date");
+            xw.writeEndElement(); // PropertyName
+            xw.writeStartElement("ogc:Function");
+            xw.writeAttributeString("name","dateParse");
+            xw.writeStartElement("ogc:Literal");
+            xw.writeString("yyyy-MM-dd HH:mm:ss");
+            xw.writeEndElement();  // Literal
+            xw.writeStartElement("ogc:Literal");
+            xw.writeString(datelimit);
+            xw.writeEndElement();  // Literal
+            xw.writeEndElement(); // Function
+            xw.writeEndElement(); // PropertyIsGreaterThan
+        }
+
+        if (bounds && datelimit) {
+            xw.writeEndElement(); // And
+        }
+
+        // end constraints
+        xw.writeEndElement();  // Filter
+        xw.writeEndElement();  // Constraint
+
+      xw.writeEndElement(); // Query
+    xw.writeEndElement();   // GetRecords
     xw.writeEndDocument();
 
     return xw.getDocument();
@@ -188,14 +220,10 @@ ogc_csw.parseCSWRecord = function(record) {
         oRecord.uc = $box.filterNode('ows:UpperCorner').text();
         oRecord.lc = $box.filterNode('ows:LowerCorner').text();
 
-        oRecord.options.image_id = ogc_csw.getRecordValue(record, 'image_id');
-        oRecord.options.wmsUrl = ogc_csw.getRecordValue(record, 'wmsUrl');
-        oRecord.options.ObservationDate = ogc_csw.getRecordValue(record, 'ObservationDate');
-        oRecord.options.maxCloudCoverPercentageRate = ogc_csw.getRecordValue(record, 'maxCloudCoverPercentageRate');
-        oRecord.options.platformCode = ogc_csw.getRecordValue(record, 'platformCode');
+        _.each(_.keys(ogc_csw.schema), function(key) {
+            oRecord.options[key] = ogc_csw.getRecordValue(record, key);
+        });
 
-        oRecord.layerName = ogc_csw.getRecordValue(record, 'layerName');
-        oRecord.options.status = ogc_csw.getRecordValue(record, 'status');
     } catch (e) {
         console.error(e);
     }
