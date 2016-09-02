@@ -42,9 +42,15 @@ def proxy_to(request, path, target_url):
             headers = {}
             if 'HTTP_X_API_KEY' in request.META:
                 headers['X-API-KEY'] = request.META['HTTP_X_API_KEY']
+            if 'CONTENT_TYPE' in request.META:
+                headers['Content-type'] = request.META['CONTENT_TYPE']
 
             newrequest = urllib2.Request(url, headers = headers)
-            proxied_request = urllib2.urlopen(newrequest, timeout=120)
+
+            if request.body != None and len(request.body) > 0:
+                newrequest.add_data(request.body)
+
+            proxied_request = urllib2.urlopen(newrequest, timeout=20)
             status_code = proxied_request.code
             mimetype = proxied_request.headers.typeheader or mimetypes.guess_type(url)
             content = proxied_request.read()
