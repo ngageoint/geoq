@@ -87,6 +87,7 @@ SERVICE_TYPES = (
                 ('MediaQ', 'MediaQ'),
                 ('NWS Weather Alerts', 'NWS Weather Alerts'),
                 ('OpenSensorHub','OpenSensorHub'),
+                ('MAGE','MAGE'),
                 #('MapBox', 'MapBox'),
                 #('TileServer','TileServer'),
                 #('GetCapabilities', 'GetCapabilities'),
