@@ -323,7 +323,7 @@ ONLINE_TIME = 10 * 60 * 1000
 MAGE_USERNAME = 'username'
 MAGE_UID = '12345'
 MAGE_PASSWORD = 'password'
-MAGE_URL = '/mage/api'
+MAGE_URL = 'https://mage.server.com/api'
 
 # Override production settings with local settings if they exist
 try:
