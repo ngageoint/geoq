@@ -243,6 +243,7 @@ INSTALLED_APPS = (
     'geoq.locations',
     'geoq.proxy',
     'geoq.training',
+    'geoq.mage',
 
 
     'django.contrib.gis',
@@ -317,6 +318,12 @@ BOOTSTRAP_CSS_URL = BOOTSTRAP_CSS_BASE_URL + 'bootstrap.css'
 
 #Time to check if users online (in milliseconds)
 ONLINE_TIME = 10 * 60 * 1000
+
+#MAGE Settings
+MAGE_USERNAME = 'username'
+MAGE_UID = '12345'
+MAGE_PASSWORD = 'password'
+MAGE_URL = '/mage/api'
 
 # Override production settings with local settings if they exist
 try:
