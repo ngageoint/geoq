@@ -25,59 +25,13 @@
 /* Makes use of Leaflet JS: http://leafletjs.com/ */
 
 
-L.MAGELayerGroup = L.LayerGroup.extend({
-    addLayer: function (layer) {
-        var id = this.getLayerId(layer),
-            _this = this;
-
-        this._layers[id] = layer;
-
-        if (this._map) {
-            this._map.addLayer(layer);
-        }
-
-        layer.options.layer = L.layerGroup();
-        layer.options.layer.addTo(_this._map);
-
-        layer.options.holdPolygon = false;
-        layer.bindPopup(layer.options.popup);
-
-        layer.on('mouseover', function(e){
-            if(!layer.options.holdPolygon)
-                layer.options.polygon.addTo(layer.options.layer);
-        });
-        layer.on('mouseout', function(e){
-            if(!layer.options.holdPolygon)
-                layer.options.layer.removeLayer(layer.options.polygon);
-        });
-        layer.on('click', function(e){
-            if(layer.options.holdPolygon === false) {
-                layer.options.polygon.addTo(layer.options.layer);
-                layer.options.holdPolygon = true;
-            }
-        });
-        layer.on('dblclick', function(e){
-            layer.options.holdPolygon = false;
-            layer.options.layer.removeLayer(layer.options.polygon);
-            layer.closePopup();
-        });
-
-        // Make sure the Polygon is removed from map.
-        layer.on('remove', function(e){
-            layer.options.layer.removeLayer(layer.options.polygon);
-            _this._map.removeLayer(layer.options.layer);
-        });
-
-        return this;
-    }
-});
-
 L.MAGELayer = L.GeoJSON.extend({
     // Options are JSON object found in database core.setting
     options: {
         debug: true,
         url: '/mage/api',
-        eventId: 'eventId'
+        event: "None",
+        refresh: 300000
     },
 
     initialize: function (load, map, options) {
@@ -97,6 +51,12 @@ L.MAGELayer = L.GeoJSON.extend({
             } else if (msg.events_loaded) {
                 console.log('MAGE events loaded');
                 // grab event id and set that value for getting observations
+                var event = _.find(magehelper.getEvents(), function(o) {
+                    return o.name === _this.options.event;
+                });
+                if (event) {
+                    magehelper.setCurrentEvent(event.id);
+                }
                 if (_this._map) {
                     magehelper.loadObservations();
                 }
@@ -130,7 +90,7 @@ L.MAGELayer = L.GeoJSON.extend({
         setInterval(function () {
             _this.clearLayers();
             magehelper.loadEvents();
-        }, 300000)
+        }, _this.options.refresh)
 
     },
 

@@ -101,6 +101,9 @@ var magehelper = (function () {
         getCurrentEvent: function() {
             return current_event;
         },
+        setCurrentEvent: function(id) {
+            current_event = id;
+        },
         setUrl: function(arg) {
             if (arg) {
                 url = arg;
