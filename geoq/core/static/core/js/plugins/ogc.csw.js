@@ -76,13 +76,12 @@ ogc_csw.getRecords = function(params,callback) {
 
 };
 
-ogc_csw.getRecordsPost = function(params,bounds,callback) {
+ogc_csw.getRecordsPost = function(params,input,callback) {
     var proxy = leaflet_helper.proxy_path || '/geoq/proxy';
 
     var url = ogc_csw.protocol + "://" + ogc_csw.server + ":" + ogc_csw.port + ogc_csw.path + "/csw";
-    var datelimit = null;
 
-    var data = ogc_csw.createXMLPostData(bounds,datelimit);
+    var data = ogc_csw.createXMLPostData(input);
 
     $.ajax({
         type: 'POST',
@@ -97,7 +96,7 @@ ogc_csw.getRecordsPost = function(params,bounds,callback) {
     });
 };
 
-ogc_csw.createXMLPostData = function(bounds,datelimit) {
+ogc_csw.createXMLPostData = function(input) {
     var xw = new XMLWriter('UTF-8');
 
     xw.writeStartDocument();
@@ -122,46 +121,20 @@ ogc_csw.createXMLPostData = function(bounds,datelimit) {
         xw.writeAttributeString("version", "1.1.0");
         xw.writeStartElement("ogc:Filter");
 
-        if (bounds && datelimit) {
+        if (_.size(input) > 1) {
             xw.writeStartElement("ogc:And");
         }
 
     // if there are values in the bounds array, add that filter
-        if (bounds && bounds.length > 1) {
-
-            xw.writeStartElement("ogc:Contains");
-            xw.writeStartElement("ogc:PropertyName");
-            xw.writeString("ows:BoundingBox");
-            xw.writeEndElement();  // PropertyName
-            xw.writeStartElement("gml:Envelope");
-            xw.writeStartElement("gml:lowerCorner");
-            xw.writeString(bounds[0]['lon'] + " " + bounds[0]['lat']);
-            xw.writeEndElement();  // lowerCorner
-            xw.writeStartElement("gml:upperCorner");
-            xw.writeString(bounds[1]['lon'] + " " + bounds[1]['lat']);
-            xw.writeEndElement(); // upperCorner
-            xw.writeEndElement(); // Envelope
-            xw.writeEndElement(); // Contains
+        if (input['bounds'] && input['bounds'].length > 1) {
+            ogc_csw.createBoundsConstraint(xw,input['bounds']);
         }
 
-        if (datelimit) {
-            xw.writeStartElement("ogc:PropertyIsGreaterThan");
-            xw.writeStartElement("ogc:PropertyName");
-            xw.writeString("dc:date");
-            xw.writeEndElement(); // PropertyName
-            xw.writeStartElement("ogc:Function");
-            xw.writeAttributeString("name","dateParse");
-            xw.writeStartElement("ogc:Literal");
-            xw.writeString("yyyy-MM-dd HH:mm:ss");
-            xw.writeEndElement();  // Literal
-            xw.writeStartElement("ogc:Literal");
-            xw.writeString(datelimit);
-            xw.writeEndElement();  // Literal
-            xw.writeEndElement(); // Function
-            xw.writeEndElement(); // PropertyIsGreaterThan
+        if (input['startdate']) {
+            ogc_csw.createDateConstraint(xw,input['startdate']);
         }
 
-        if (bounds && datelimit) {
+        if (_.size(input) > 1) {
             xw.writeEndElement(); // And
         }
 
@@ -174,6 +147,33 @@ ogc_csw.createXMLPostData = function(bounds,datelimit) {
     xw.writeEndDocument();
 
     return xw.getDocument();
+};
+
+ogc_csw.createBoundsConstraint = function(xdoc, bounds) {
+    xdoc.writeStartElement("ogc:Contains");
+    xdoc.writeStartElement("ogc:PropertyName");
+    xdoc.writeString("ows:BoundingBox");
+    xdoc.writeEndElement();  // PropertyName
+    xdoc.writeStartElement("gml:Envelope");
+    xdoc.writeStartElement("gml:lowerCorner");
+    xdoc.writeString(bounds[0]['lon'] + " " + bounds[0]['lat']);
+    xdoc.writeEndElement();  // lowerCorner
+    xdoc.writeStartElement("gml:upperCorner");
+    xdoc.writeString(bounds[1]['lon'] + " " + bounds[1]['lat']);
+    xdoc.writeEndElement(); // upperCorner
+    xdoc.writeEndElement(); // Envelope
+    xdoc.writeEndElement(); // Contains
+};
+
+ogc_csw.createDateConstraint = function(xdoc, startdate) {
+    xdoc.writeStartElement("ogc:PropertyIsGreaterThan");
+    xdoc.writeStartElement("ogc:PropertyName");
+    xdoc.writeString("dct:modified");
+    xdoc.writeEndElement(); // PropertyName
+    xdoc.writeStartElement("ogc:Literal");
+    xdoc.writeString(startdate);
+    xdoc.writeEndElement();  // Literal
+    xdoc.writeEndElement(); // PropertyIsGreaterThan
 };
 
 ogc_csw.createWMSLayerFromRecord = function(record) {
@@ -288,8 +288,8 @@ ogc_csw.createPolygonFromGeometry = function(geometry, options, style) {
     return outlineLayer;
 };
 
-ogc_csw.createLayerPopup = function(name,options) {
-    var layerName = name;
+ogc_csw.createLayerPopup = function(options) {
+    var layerName = options.layerName;
     var func = 'footprints.removeCSWOutline("' + options.image_id + '","' + options.status + '")';
     var func2 = 'footprints.replaceCSWOutlineWithLayer("' + options.image_id + '")';
     var html = "<p>Name: " + layerName + "<br/><a href=\'#\' onclick=\'" + func + "\'>Hide Outline</a><br/>" +

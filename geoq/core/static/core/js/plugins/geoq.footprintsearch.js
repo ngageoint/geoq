@@ -57,6 +57,13 @@ footprints.getLayerGroup = function(status) {
     }
 };
 
+footprints.clearFootprints = function() {
+    footprints.features.length = 0;
+    if (footprints.outline_layer_group) {footprints.outline_layer_group.clearLayers();}
+    if (footprints.image_layer_group) { footprints.image_layer_group.clearLayers();}
+    footprints.$grid.pqGrid("option", "dataModel", {data: []} );
+};
+
 footprints.schema = [
     {name: 'image_id', title: 'Id', id: true, cswid: 'identifier'},
     {name: 'layerName', title: 'Name', cswid: 'layerName', show: 'small-table' },
@@ -439,6 +446,9 @@ footprints.updateFootprintDataFromMap = function () {
     });
 };
 footprints.updateFootprintDataFromCSWServer = function () {
+    // clear any previous footprints
+    footprints.clearFootprints();
+
     var proxy = leaflet_helper.proxy_path || '/geoq/proxy/';
     var mapbounds = footprints.map.getBounds();
     var geom_string = footprints.boundsToGeometryPolygon(mapbounds);
@@ -471,7 +481,16 @@ footprints.updateFootprintDataFromCSWServer = function () {
 
     var bounds = [{"lat":mapbounds._southWest.lat, "lon":mapbounds._southWest.lng},
         {"lat":mapbounds._northEast.lat,"lon":mapbounds._northEast.lng}];
-    ogc_csw.getRecordsPost(params, bounds, callback);
+    var startdate = footprints.filters['ObservationDate'].startdate_moment.format('YYYY-MM-DDT00:00:00Z') || null;
+    var keyword = footprints.filters['keyword'] || null;
+    var input = {"bounds":bounds};
+    _.each([{'startdate':startdate},{'keyword': keyword}], function(item) {
+        if (item[_.keys(item)[0]]) {
+            input[_.keys(item)[0]] = _.values(item)[0];
+        }
+    });
+
+    ogc_csw.getRecordsPost(params, input, callback);
 
 };
 
@@ -642,7 +661,7 @@ footprints.newCSWFeaturesArrived = function (items) {
                     console.error("No coordinates found. Skipping this layer");
                     return;
                 }
-                wms.bindPopup(ogc_csw.createLayerPopup(record.layerName, record.options));
+                wms.bindPopup(ogc_csw.createLayerPopup(record.options));
 
                 // add geometry of layer to record
                 var latlngs = wms.getLatLngs();
@@ -1426,11 +1445,24 @@ footprints.addFilterPrompts = function ($content) {
 
 };
 footprints.addFilterTextbox = function ($holder, schema_item) {
-    $("<div><b>Or search for specific " + footprints.title + ":</b></div>")
+    $("<div><b>Add a search filter:</b></div>")
         .appendTo($holder);
     footprints.filters[schema_item.name] = '';
 
-    $("<input>")
+    var $query_builder = $("<div>")
+        .attr("id","builder")
+        .appendTo($holder);
+
+    $('#builder').queryBuilder( {
+        filters: [
+            {id: 'name', label: 'Name', type: 'string', size: 40},
+            {id: 'platform', label: 'Platform', type: 'string', size: 40},
+            {id: 'cloud', label: 'Cloud %', type: 'integer', size: 40}
+        ]
+    });
+
+
+/*    $("<input>")
         .on('change', function (evt) {
             var val = evt.target.value;
             footprints.filters[schema_item.name] = val;
@@ -1441,7 +1473,7 @@ footprints.addFilterTextbox = function ($holder, schema_item) {
                 schema_item.onNotFound(val);
             }
         })
-        .appendTo($holder);
+        .appendTo($holder); */
 
     //TODO: If text entered, ignore other filters
     //TODO: Build an autocomplete from possible values - using jquery.Select
