@@ -481,16 +481,29 @@ footprints.updateFootprintDataFromCSWServer = function () {
 
     var bounds = [{"lat":mapbounds._southWest.lat, "lon":mapbounds._southWest.lng},
         {"lat":mapbounds._northEast.lat,"lon":mapbounds._northEast.lng}];
+
+    var query_rules = { condition: "AND", rules: [{field: "ows:BoundingBox", id: "location", input: "text",
+                        operation: "equals", type: "location", value: bounds}]};
     var startdate = footprints.filters['ObservationDate'].startdate_moment.format('YYYY-MM-DDT00:00:00Z') || null;
-    var keyword = footprints.filters['keyword'] || null;
-    var input = {"bounds":bounds};
-    _.each([{'startdate':startdate},{'keyword': keyword}], function(item) {
+    if (startdate) {
+        query_rules.rules.push({field: "dct:modified", id: "startdate", input: "text", operation: "greater",
+                                    type: "date", value: startdate})
+    }
+
+    if ($('#builder').queryBuilder('validate')) {
+        query_rules.rules.push($('#builder').queryBuilder('getRules').rules);
+    }
+
+/*    _.each([{'startdate':startdate},{'keyword': keyword}], function(item) {
         if (item[_.keys(item)[0]]) {
             input[_.keys(item)[0]] = _.values(item)[0];
         }
-    });
+    });*/
 
-    ogc_csw.getRecordsPost(params, input, callback);
+    // check if there are any query rules
+    var qb = $('#builder').queryBuilder('getRules');
+
+    ogc_csw.getRecordsPost(params, query_rules, callback);
 
 };
 
@@ -1453,30 +1466,17 @@ footprints.addFilterTextbox = function ($holder, schema_item) {
         .attr("id","builder")
         .appendTo($holder);
 
+    var ops = ['equal', 'not_equal', 'less', 'less_or_equal', 'greater', 'greater_or_equal', 'is_null', 'is_not_null', 'begins_with'];
+
     $('#builder').queryBuilder( {
+
         filters: [
-            {id: 'name', label: 'Name', type: 'string', size: 40},
-            {id: 'platform', label: 'Platform', type: 'string', size: 40},
-            {id: 'cloud', label: 'Cloud %', type: 'integer', size: 40}
+            {id: 'name', field: 'dc:title', label: 'Name', type: 'string', operators: ops},
+            {id: 'platform', field: 'dc:subject', label: 'Platform', type: 'string', size: 40, operators: ops},
+            {id: 'cloud', field: 'wst:CloudCover', label: 'Cloud %', type: 'integer', size: 40, operators: ops}
         ]
     });
 
-
-/*    $("<input>")
-        .on('change', function (evt) {
-            var val = evt.target.value;
-            footprints.filters[schema_item.name] = val;
-
-            var items_found = footprints.updateFootprintFilteredResults();
-            //TODO: Specifically search for this one and ajax query to add it to results if not already in
-            if ((items_found.length == 0) && schema_item.onNotFound) {
-                schema_item.onNotFound(val);
-            }
-        })
-        .appendTo($holder); */
-
-    //TODO: If text entered, ignore other filters
-    //TODO: Build an autocomplete from possible values - using jquery.Select
     return null;
 };
 footprints.addFilterDateMax = function ($holder, schema_item) {

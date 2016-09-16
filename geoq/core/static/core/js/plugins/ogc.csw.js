@@ -28,6 +28,18 @@ ogc_csw.schema = {
     'keyword': {key: 'dc:subject', default: 'unknown'}
 };
 
+ogc_csw.filterOperators = {
+    equal:            { op: 'ogc:PropertyIsEqualTo' },
+    not_equal:        { op: 'ogc:PropertyIsNotEqualTo' },
+    less:             { op: 'ogc:PropertyIsLessThan' },
+    less_or_equal:    { op: 'ogc:PropertyIsLessThanOrEqualTo' },
+    greater:          { op: 'ogc:PropertyIsGreaterThan' },
+    greater_or_equal: { op: 'ogc:PropertyIsLessThanOrEqualTo' },
+    between:          { op: 'ogc:PropertyIsBetween',      sep: 'And' },
+    is_null:          { op: 'ogc:PropertyIsNull' },
+    begins_with:      { op: 'ogc:PropertyIsLike', wildcards: true }
+};
+
 ogc_csw.init = function(options) {
 // initialize
     if (options) ogc_csw = $.extend(ogc_csw, options);
@@ -121,7 +133,12 @@ ogc_csw.createXMLPostData = function(input) {
         xw.writeAttributeString("version", "1.1.0");
         xw.writeStartElement("ogc:Filter");
 
+        // write out filter depending on rules. top level will always be a group
         if (_.size(input) > 1) {
+            ogc_csw.write_group_rules(xw, input);
+        }
+
+ /*       if (_.size(input) > 1) {
             xw.writeStartElement("ogc:And");
         }
 
@@ -136,7 +153,7 @@ ogc_csw.createXMLPostData = function(input) {
 
         if (_.size(input) > 1) {
             xw.writeEndElement(); // And
-        }
+        }*/
 
         // end constraints
         xw.writeEndElement();  // Filter
@@ -149,31 +166,77 @@ ogc_csw.createXMLPostData = function(input) {
     return xw.getDocument();
 };
 
-ogc_csw.createBoundsConstraint = function(xdoc, bounds) {
+ogc_csw.write_group_rules = function(xw, input) {
+    // write group rules
+    var group_tag = (input.condition === "AND") ? "ogc:And" : "ogc:Or";
+    xw.writeStartElement(group_tag);
+    _.each(input.rules, function(rule) {
+        if (rule.condition) {
+            ogc_csw.write_group_rules(xw,rule);
+        } else {
+            ogc_csw.write_element_rule(xw,rule);
+        }
+    });
+    xw.writeEndElement();
+};
+
+ogc_csw.write_element_rule = function(xw, input) {
+    // write element rule depending on type
+    if (input.type === "location") {
+        ogc_csw.createBoundsConstraint(xw, input);
+    } else if (input.type === "date" ) {
+        ogc_csw.createDateConstraint(xw, input);
+    } else {
+        ogc_csw.createNamedConstraint(xw, input);
+    }
+};
+
+ogc_csw.createBoundsConstraint = function(xdoc, element) {
     xdoc.writeStartElement("ogc:Contains");
     xdoc.writeStartElement("ogc:PropertyName");
     xdoc.writeString("ows:BoundingBox");
     xdoc.writeEndElement();  // PropertyName
     xdoc.writeStartElement("gml:Envelope");
     xdoc.writeStartElement("gml:lowerCorner");
-    xdoc.writeString(bounds[0]['lon'] + " " + bounds[0]['lat']);
+    xdoc.writeString(element.value[0]['lon'] + " " + element.value[0]['lat']);
     xdoc.writeEndElement();  // lowerCorner
     xdoc.writeStartElement("gml:upperCorner");
-    xdoc.writeString(bounds[1]['lon'] + " " + bounds[1]['lat']);
+    xdoc.writeString(element.value[1]['lon'] + " " + element.value[1]['lat']);
     xdoc.writeEndElement(); // upperCorner
     xdoc.writeEndElement(); // Envelope
     xdoc.writeEndElement(); // Contains
 };
 
-ogc_csw.createDateConstraint = function(xdoc, startdate) {
+ogc_csw.createDateConstraint = function(xdoc, element) {
     xdoc.writeStartElement("ogc:PropertyIsGreaterThan");
     xdoc.writeStartElement("ogc:PropertyName");
-    xdoc.writeString("dct:modified");
+    xdoc.writeString(element.field);
     xdoc.writeEndElement(); // PropertyName
     xdoc.writeStartElement("ogc:Literal");
-    xdoc.writeString(startdate);
+    xdoc.writeString(element.value);
     xdoc.writeEndElement();  // Literal
     xdoc.writeEndElement(); // PropertyIsGreaterThan
+};
+
+ogc_csw.createNamedConstraint = function(xdoc, element) {
+    element = element[0];
+    xdoc.writeStartElement((ogc_csw.filterOperators[element.operator]).op);
+    if ((ogc_csw.filterOperators[element.operator]).wildcards) {
+        xdoc.writeAttributeString("wildCard","*");
+        xdoc.writeAttributeString("singleChar","#");
+        xdoc.writeAttributeString("escapeChar","!");
+    }
+    xdoc.writeStartElement("ogc:PropertyName");
+    xdoc.writeString(element.field);
+    xdoc.writeEndElement(); // PropertyName
+    xdoc.writeStartElement("ogc:Literal");
+    xdoc.writeString(element.value);
+    // TODO: support something other than begins_with
+    if ((ogc_csw.filterOperators[element.operator]).wildcards) {
+        xdoc.writeString("*");
+    }
+    xdoc.writeEndElement(); // Literal
+    xdoc.writeEndElement(); // <operator>
 };
 
 ogc_csw.createWMSLayerFromRecord = function(record) {
