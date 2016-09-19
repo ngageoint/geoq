@@ -498,6 +498,7 @@ class WorkcellImage(models.Model):
     EVALUATION_CHOICES = [(choice, choice) for choice in EVALUATION_VALUES_LIST]
 
     image_id = models.CharField(max_length=200)
+    format = models.CharField(max_length=50, default='OGC:WMS')
     nef_name = models.CharField(max_length=200)
     sensor = models.CharField(max_length=50)
     platform = models.CharField(max_length=50)
@@ -516,6 +517,7 @@ class WorkcellImage(models.Model):
         _json = dict(
             id=str(self.id),
             image_id=str(self.image_id),
+            format=str(self.format),
             nef_name=str(self.nef_name),
             sensor=str(self.sensor),
             cloud_cover=int(self.cloud_cover),

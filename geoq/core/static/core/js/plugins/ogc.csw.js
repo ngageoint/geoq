@@ -138,23 +138,6 @@ ogc_csw.createXMLPostData = function(input) {
             ogc_csw.write_group_rules(xw, input);
         }
 
- /*       if (_.size(input) > 1) {
-            xw.writeStartElement("ogc:And");
-        }
-
-    // if there are values in the bounds array, add that filter
-        if (input['bounds'] && input['bounds'].length > 1) {
-            ogc_csw.createBoundsConstraint(xw,input['bounds']);
-        }
-
-        if (input['startdate']) {
-            ogc_csw.createDateConstraint(xw,input['startdate']);
-        }
-
-        if (_.size(input) > 1) {
-            xw.writeEndElement(); // And
-        }*/
-
         // end constraints
         xw.writeEndElement();  // Filter
         xw.writeEndElement();  // Constraint
@@ -267,7 +250,8 @@ ogc_csw.createWMSLayerFromRecord = function(record) {
 ogc_csw.getRecordValue = function(record, attribute) {
 
     if (ogc_csw.schema[attribute].key) {
-        return $(record).filterNode(ogc_csw.schema[attribute].key).text() || 'unknown';
+        // TODO: only grabbing the first record, but will probably want to see which one (if more than one) is most appropriate
+        return $(record).filterNode(ogc_csw.schema[attribute].key).first().text() || 'unknown';
     } else {
         return ogc_csw.schema[attribute].default;
     }

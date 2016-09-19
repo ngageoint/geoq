@@ -67,6 +67,7 @@ footprints.clearFootprints = function() {
 footprints.schema = [
     {name: 'image_id', title: 'Id', id: true, cswid: 'identifier'},
     {name: 'layerName', title: 'Name', cswid: 'layerName', show: 'small-table' },
+    {name: 'format', title: 'Format', cswid: 'format', show: 'small-table'},
     {name: 'platformCode', title: 'Pltfrm', filter: 'options', cswid: 'creator', show: 'small-table'},
     //TODO: Show image name as mouseover or small text field?
     {
@@ -1304,6 +1305,7 @@ footprints.addResultTable = function ($holder) {
 
                 var data = {
                     image_id: data_row.image_id,
+                    format: data_row.format,
                     nef_name: data_row.value,
                     sensor: data_row.image_sensor,
                     platform: data_row.platformCode,
