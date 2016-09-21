@@ -53,8 +53,7 @@
     <script src="{{ STATIC_URL }}js/jquery.tablesorter.widgets.js"></script>
     <script src="{{ STATIC_URL }}js/tablesorter.pager.js"></script>
 
-
-
+    <script src="{{ STATIC_URL }}core/js/query-builder/query-builder.min.js" type="text/javascript"></script>
 
     {% for layer in object.job.map.layers %}{% if layer.layer.type == 'Google Maps' %}
     <script src="{{ layer.layer.url }}maps/api/js?v=3&sensor=false"></script>
@@ -158,9 +157,13 @@
         <link rel="stylesheet" href="{{ STATIC_URL }}core/edit.css" />
 	<link rel="stylesheet" href="{{ STATIC_URL }}core/css/pqgrid.css" />
 	<link rel="stylesheet" href="{{ STATIC_URL }}core/css/daterangepicker.css" />
+
     <link rel="stylesheet" href="{{ STATIC_URL }}css/theme.blue.css" />
     <link rel="stylesheet" href="{{ STATIC_URL }}css/tablesorter.pager.css" />
     <link rel="stylesheet" href="{{ STATIC_URL }}css/tablesorter.pager.custom.css" />
+
+    <link rel="stylesheet" href="{{ STATIC_URL }}core/css/query-builder.default.min.css" />
+
 
     {% endcompress %}
 {% endblock %}

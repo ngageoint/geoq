@@ -34,8 +34,8 @@ footprints.defaultFootprintStyle = {color: 'blue', weight: 1};
 footprints.savedFootprintStyle = {color: 'green', weight: 1};
 footprints.rejectedFootprintStyle = {color: 'red', weight: 1};
 footprints.selectedFootprintStyle = {color: 'yellow', weight: 1};
-
-
+footprints.csw_max_records = 50;
+footprints.current_page = 0;
 
 footprints.selectStyle = function(status) {
     switch(status) {
@@ -60,8 +60,17 @@ footprints.getLayerGroup = function(status) {
     }
 };
 
+footprints.clearFootprints = function() {
+    footprints.features.length = 0;
+    if (footprints.outline_layer_group) {footprints.outline_layer_group.clearLayers();}
+    if (footprints.image_layer_group) { footprints.image_layer_group.clearLayers();}
+    footprints.$grid.pqGrid("option", "dataModel", {data: []} );
+};
+
 footprints.schema = [
-    {name: 'image_id', title: 'Id', id: true, cswid: 'identifier', show: 'small-table'},
+    {name: 'image_id', title: 'Id', id: true, cswid: 'identifier'},
+    {name: 'layerName', title: 'Name', cswid: 'layerName', show: 'small-table' },
+    {name: 'format', title: 'Format', cswid: 'format', show: 'small-table'},
     {name: 'platformCode', title: 'Pltfrm', filter: 'options', cswid: 'creator', show: 'small-table'},
     //TODO: Show image name as mouseover or small text field?
     {
@@ -69,7 +78,7 @@ footprints.schema = [
         cswid: '',
         title: 'Cloud%',
         type: 'integer',
-        filter: 'slider-max',
+        // filter: 'slider-max',
         min: 0,
         max: 100,
         start: 10,
@@ -89,7 +98,8 @@ footprints.schema = [
         showSizeMultiplier: 2,
         initialDateRange: 365,
         colorMarker: true
-    }
+    },
+    {name: 'keyword', title: 'Keywords', filter: 'textbox', show: 'small-table', cswid: 'keyword'}
 ];
 
 footprints.url_template = 'http://server.com/arcgis/rest/services/ImageEvents/MapServer/req_{{layer}}/query?&geometry={{bounds}}&geometryType=esriGeometryEnvelope&spatialRel=esriSpatialRelIntersects&outFields=*&outSR=4326&f=json';
@@ -440,42 +450,68 @@ footprints.updateFootprintDataFromMap = function () {
     });
 };
 footprints.updateFootprintDataFromCSWServer = function () {
+    // clear any previous footprints
+    footprints.clearFootprints();
+
     var proxy = leaflet_helper.proxy_path || '/geoq/proxy/';
-    var bounds = footprints.map.getBounds();
-    var geom_string = footprints.boundsToGeometryPolygon(bounds);
+    var mapbounds = footprints.map.getBounds();
+    var geom_string = footprints.boundsToGeometryPolygon(mapbounds);
 
-    var layers = footprints.layerList || [1];
-    _.each(layers, function (layer, layer_id) {
-        var inputs = {
-            geometryPolygon: geom_string,
-            responseFormat: 'xml',
-            outputSchema: 'RESTfulView-1.1',
-            streamable: 'immediate'
-        };
-        var params = {
-            service: "CSW",
-            version: "2.0.2",
-            request: "GetRecords",
-            typeNames: "csw:Record",
-            resultType: "results",
-            elementSetName: "full",
-            maxRecords: 50,
-            outputSchema: "http://www.opengis.net/cat/csw/2.0.2"
-        };
-        var callback = function (xml,lang) {
-            var $xml = $(xml);
-            var data = $xml.filterNode('csw:Record') || [];
-            footprints.newCSWFeaturesArrived(data);
-        };
-        //If there are any WHERE clauses, add those in
-        _.each(footprints.promptFields, function (field) {
-            inputs[field.name] = footprints.expandPromptSettings(field);
-        });
-
-        var bounds = [{"lat":36.986771, "lon":-91.516129}, {"lat":42.509361,"lon":-87.507889}];
-        ogc_csw.getRecordsPost(params, bounds, callback);
+    var inputs = {
+        geometryPolygon: geom_string,
+        responseFormat: 'xml',
+        outputSchema: 'RESTfulView-1.1',
+        streamable: 'immediate'
+    };
+    var params = {
+        service: "CSW",
+        version: "2.0.2",
+        request: "GetRecords",
+        typeNames: "csw:Record",
+        resultType: "results",
+        elementSetName: "full",
+        maxRecords: footprints.csw_max_records,
+        startPosition: footprints.csw_max_records * footprints.current_page + 1,
+        outputSchema: "http://www.opengis.net/cat/csw/2.0.2"
+    };
+    var callback = function (xml,lang) {
+        var $xml = $(xml);
+        var data = $xml.filterNode('csw:Record') || [];
+        footprints.newCSWFeaturesArrived(data);
+    };
+    //If there are any WHERE clauses, add those in
+    _.each(footprints.promptFields, function (field) {
+        inputs[field.name] = footprints.expandPromptSettings(field);
     });
+
+    var bounds = [{"lat":mapbounds._southWest.lat, "lon":mapbounds._southWest.lng},
+        {"lat":mapbounds._northEast.lat,"lon":mapbounds._northEast.lng}];
+
+    var query_rules = { condition: "AND", rules: [{field: "ows:BoundingBox", id: "location", input: "text",
+                        operation: "equals", type: "location", value: bounds}]};
+    var startdate = footprints.filters['ObservationDate'].startdate_moment.format('YYYY-MM-DDT00:00:00Z') || null;
+    if (startdate) {
+        query_rules.rules.push({field: "dct:modified", id: "startdate", input: "text", operation: "greater",
+                                    type: "date", value: startdate})
+    }
+
+    if ($('#builder').queryBuilder('validate')) {
+        query_rules.rules.push($('#builder').queryBuilder('getRules').rules);
+    }
+
+/*    _.each([{'startdate':startdate},{'keyword': keyword}], function(item) {
+        if (item[_.keys(item)[0]]) {
+            input[_.keys(item)[0]] = _.values(item)[0];
+        }
+    });*/
+
+    // check if there are any query rules
+    var qb = $('#builder').queryBuilder('getRules');
+
+    ogc_csw.getRecordsPost(params, query_rules, callback);
+
 };
+
 footprints.boundsToGeometryPolygon = function(bounds) {
     var polygon = {};
     var sw = bounds.getSouthWest();
@@ -643,7 +679,7 @@ footprints.newCSWFeaturesArrived = function (items) {
                     console.error("No coordinates found. Skipping this layer");
                     return;
                 }
-                wms.bindPopup(ogc_csw.createLayerPopup(record.layerName, record.options));
+                wms.bindPopup(ogc_csw.createLayerPopup(record.options));
 
                 // add geometry of layer to record
                 var latlngs = wms.getLatLngs();
@@ -1359,7 +1395,7 @@ footprints.addResultTable = function ($holder) {
 		page: 0,
 
 		// Number of visible rows
-		size: 10,
+		size: footprints.csw_max_records,
 
         // This is important due to the
 		fixedHeight: false,
@@ -1498,6 +1534,7 @@ footprints.addResultTable = function ($holder) {
 
                 var data = {
                     image_id: data_row.image_id,
+                    format: data_row.format,
                     nef_name: data_row.value,
                     sensor: data_row.image_sensor,
                     platform: data_row.platformCode,
@@ -1656,25 +1693,25 @@ footprints.addFilterPrompts = function ($content) {
 
 };
 footprints.addFilterTextbox = function ($holder, schema_item) {
-    $("<div><b>Or search for specific " + footprints.title + ":</b></div>")
+    $("<div><b>Add a search filter:</b></div>")
         .appendTo($holder);
     footprints.filters[schema_item.name] = '';
 
-    $("<input>")
-        .on('change', function (evt) {
-            var val = evt.target.value;
-            footprints.filters[schema_item.name] = val;
-
-            var items_found = footprints.updateFootprintFilteredResults();
-            //TODO: Specifically search for this one and ajax query to add it to results if not already in
-            if ((items_found.length == 0) && schema_item.onNotFound) {
-                schema_item.onNotFound(val);
-            }
-        })
+    var $query_builder = $("<div>")
+        .attr("id","builder")
         .appendTo($holder);
 
-    //TODO: If text entered, ignore other filters
-    //TODO: Build an autocomplete from possible values - using jquery.Select
+    var ops = ['equal', 'not_equal', 'less', 'less_or_equal', 'greater', 'greater_or_equal', 'is_null', 'is_not_null', 'begins_with'];
+
+    $('#builder').queryBuilder( {
+
+        filters: [
+            {id: 'name', field: 'dc:title', label: 'Name', type: 'string', operators: ops},
+            {id: 'platform', field: 'dc:subject', label: 'Platform', type: 'string', size: 40, operators: ops},
+            {id: 'cloud', field: 'wst:CloudCover', label: 'Cloud %', type: 'integer', size: 40, operators: ops}
+        ]
+    });
+
     return null;
 };
 footprints.addFilterDateMax = function ($holder, schema_item) {
