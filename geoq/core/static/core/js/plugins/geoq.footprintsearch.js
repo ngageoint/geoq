@@ -34,6 +34,9 @@ footprints.savedFootprintStyle = {color: 'green', weight: 1};
 footprints.rejectedFootprintStyle = {color: 'red', weight: 1};
 footprints.selectedFootprintStyle = {color: 'yellow', weight: 1};
 
+footprints.csw_max_records = 50;
+footprints.current_page = 0;
+
 footprints.selectStyle = function(status) {
     switch(status) {
         case 'Accepted':
@@ -467,7 +470,8 @@ footprints.updateFootprintDataFromCSWServer = function () {
         typeNames: "csw:Record",
         resultType: "results",
         elementSetName: "full",
-        maxRecords: 50,
+        maxRecords: footprints.csw_max_records,
+        startPosition: footprints.csw_max_records * footprints.current_page + 1,
         outputSchema: "http://www.opengis.net/cat/csw/2.0.2"
     };
     var callback = function (xml,lang) {

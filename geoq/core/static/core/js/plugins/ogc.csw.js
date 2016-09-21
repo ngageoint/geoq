@@ -93,7 +93,7 @@ ogc_csw.getRecordsPost = function(params,input,callback) {
 
     var url = ogc_csw.protocol + "://" + ogc_csw.server + ":" + ogc_csw.port + ogc_csw.path + "/csw";
 
-    var data = ogc_csw.createXMLPostData(input);
+    var data = ogc_csw.createXMLPostData(params,input);
 
     $.ajax({
         type: 'POST',
@@ -108,7 +108,7 @@ ogc_csw.getRecordsPost = function(params,input,callback) {
     });
 };
 
-ogc_csw.createXMLPostData = function(input) {
+ogc_csw.createXMLPostData = function(params,input) {
     var xw = new XMLWriter('UTF-8');
 
     xw.writeStartDocument();
@@ -116,16 +116,17 @@ ogc_csw.createXMLPostData = function(input) {
       xw.writeAttributeString("xmlns:csw", "http://www.opengis.net/cat/csw/2.0.2");
       xw.writeAttributeString("xmlns:ogc", "http://www.opengis.net/ogc");
       xw.writeAttributeString("xmlns:gml", "http://www.opengis.net/gml");
-      xw.writeAttributeString("service","CSW");
-      xw.writeAttributeString("version","2.0.2");
-      xw.writeAttributeString("resultType","results");
-      xw.writeAttributeString("maxRecords","50");
-      xw.writeAttributeString("outputSchema","http://www.opengis.net/cat/csw/2.0.2");
+      xw.writeAttributeString("service",params.service);
+      xw.writeAttributeString("version",params.version);
+      xw.writeAttributeString("resultType",params.resultType);
+      xw.writeAttributeString("maxRecords",params.maxRecords);
+      xw.writeAttributeString("startPosition", params.startPosition);
+      xw.writeAttributeString("outputSchema",params.outputSchema);
 
       xw.writeStartElement("csw:Query");
-        xw.writeAttributeString("typeNames","csw:Record");
+        xw.writeAttributeString("typeNames",params.typeNames);
         xw.writeStartElement("csw:ElementSetName");
-          xw.writeString("full");
+          xw.writeString(params.elementSetName);
         xw.writeEndElement();
 
         // start the constraints section
