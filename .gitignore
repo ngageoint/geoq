@@ -8,6 +8,7 @@ CACHE/*
 *.pot
 *.pyc
 *.pyo
+runGeo.sh
 geoq/local_settings.py
 local_settings.py
 dev-geoq-django
