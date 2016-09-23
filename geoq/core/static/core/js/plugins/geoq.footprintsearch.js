@@ -28,12 +28,12 @@ footprints.$error_div = null;
 footprints.outline_layer_group = null;
 footprints.image_layer_group = null;
 footprints.rejected_layer_group = null;
+footprints.dataInTable = null;
 
 footprints.defaultFootprintStyle = {color: 'blue', weight: 1};
 footprints.savedFootprintStyle = {color: 'green', weight: 1};
 footprints.rejectedFootprintStyle = {color: 'red', weight: 1};
 footprints.selectedFootprintStyle = {color: 'yellow', weight: 1};
-
 footprints.csw_max_records = 50;
 footprints.current_page = 0;
 
@@ -721,6 +721,7 @@ footprints.removeCSWOutline = function (identifier,status) {
 
             footprints.getLayerGroup(status).removeLayer(layer);
 
+
             // now remove from table
             var data = footprints.$grid.pqGrid("option","dataModel");
             for (var index = 0; index < data.data.length; index++) {
@@ -731,6 +732,16 @@ footprints.removeCSWOutline = function (identifier,status) {
                 }
             }
 
+            var newData = footprints.dataInTable;
+            for (var index = 0; index < newData.length; index++) {
+                if (newData[index]['image_id'] == identifier) {
+                    newData.splice(index,1);
+                    index--;
+                    break;
+                }
+            }
+
+            footprints.addToResultTable(newData);
             footprints.$grid.pqGrid("option","dataModel", {data: data.data });
             return;
         }
@@ -767,6 +778,7 @@ footprints.replaceCSWOutlineWithLayer = function (identifier) {
             try {
                 // hide footprint, then add wms image
                 layer.setStyle({opacity: 0, fillOpacity: 0});
+                footprints.map.closePopup();
                 layer.unbindPopup();
                 var func = 'footprints.saveInspectedImage("' + layer.options.image_id + '", ' + true + ')';
                 var func2 = 'footprints.saveInspectedImage("' + layer.options.image_id + '", ' + false + ')';
@@ -1060,7 +1072,7 @@ footprints.updateFootprintFilteredResults = function (options) {
     for (var i = 0; i < footprints.features.length; i++) {
         var matched = true;
         var feature = footprints.features[i];
-
+        console.log(feature);
         //Check first if geometry is in bounds (if that's being checked for)
         if (feature.geometry && footprints.filters.in_bounds) {
             if (!footprints.isFeatureInPolygon(feature, workcellGeojson)) {
@@ -1181,6 +1193,7 @@ footprints.updateFootprintFilteredResults = function (options) {
             display: (matched_list.length > 0) ? 'block' : 'none'
         });
         footprints.$grid.pqGrid("option", "dataModel", {data: flattened_list})
+        footprints.addToResultTable(flattened_list);
     }
     return matched_list;
 };
@@ -1203,11 +1216,225 @@ footprints.addResultCount = function ($holder) {
         .html(' match the below filters.')
         .appendTo($div);
 };
+
+
+footprints.addToResultTable = function (flattenedList) {
+
+    var length = flattenedList.length;
+    footprints.dataInTable = flattenedList;
+
+    $('#workcell-list tbody').html("");
+    for (var i = 0; i < length; i++) {
+        //Add accept toggle
+        var c1 = (flattenedList[i].status && flattenedList[i].status == 'Accepted') ? 'checked' : '';
+        var c2 = (!flattenedList[i].status || (flattenedList[i].status && flattenedList[i].status == 'NotEvaluated')) ? 'checked' : '';
+        var c3 = (flattenedList[i].status && flattenedList[i].status == 'RejectedQuality') ? 'checked' : '';
+
+        var bg = '<input class="accept" id="r1-' + flattenedList[i].image_id + '" type="radio" name="acceptance-' + flattenedList[i].image_id + '" ' + c1 + ' value="Accepted" onclick="footprints.updateValueFromRadio(&quot;'+flattenedList[i].image_id + '&quot;, 1)"/><label for="r1-' + flattenedList[i].image_id + '"></label>';
+        bg += '<input class="unsure" id="r2-' + flattenedList[i].image_id + '" type="radio" name="acceptance-' + flattenedList[i].image_id + '" ' + c2 + ' value="NotEvaluated" onclick="footprints.updateValueFromRadio(&quot;'+ flattenedList[i].image_id + '&quot;, 0)"/>';
+        bg += '<input class="reject" id="r3-' + flattenedList[i].image_id + '" type="radio" name="acceptance-' + flattenedList[i].image_id + '" ' + c3 + ' value="RejectedQuality"/><label for="r3-' + flattenedList[i].image_id + '" onclick="&quot;updateValueFromRadio('+ flattenedList[i].image_id + '&quot;, -1)"></label>';
+
+
+        var $tr = $('<tr>').on('click', function() {
+            footprints.rowClicked((this.rowIndex - 1));
+        });
+        $('<td>')
+            .html(bg)
+            .css("border", "0px solid black")
+            .appendTo($tr);
+        console.log(flattenedList[i]);
+        $('<td>')
+            .html(flattenedList[i].image_id)
+            .css("border", "0px solid black")
+            .appendTo($tr);
+
+        console.log(flattenedList[i]);
+
+        $('<td>')
+            .html(flattenedList[i].ObservationDate)
+            .css("border", "0px solid black")
+            .appendTo($tr);
+
+        $('<td>')
+            .html(flattenedList[i].maxCloudCoverPercentageRate)
+            .css("border", "0px solid black")
+            .appendTo($tr);
+
+        $('#workcell-list tbody').append($tr);
+    }
+
+
+    $("#workcell-list").trigger('update');
+};
+
+footprints.updateValueFromRadio = function(id, value) {
+    var val, data_row;
+    if (value < 0) {
+        val = "RejectedQuality";
+    } else if (value > 0) {
+        val = "Accepted";
+    } else {
+        val = ("NotEvlauated");
+    }
+
+    for (var i = 0; i < footprints.dataInTable.length; i++) {
+        if (id == footprints.dataInTable[i].image_id) {
+            data_row = footprints.dataInTable[i];
+            break;
+        }
+    }
+
+    var image_id = data_row.image_id;
+    var inputs = {
+        id: encodeURIComponent(image_id),
+        evaluation: val
+    };
+
+    //Apply all the above inputs to the url template to build out the final url
+    var proxy = leaflet_helper.proxy_path || '/geoq/proxy/';
+    var url_template = _.template(footprints.featureSelectUrl);
+    var url = url_template(inputs);
+
+    if (_.str.startsWith(url, 'http')) url = proxy + url;
+
+    var geometry = {
+        "type": "Polygon",
+        "coordinates": [[]]
+    };
+    _.each(data_row.geometry.geometry.rings[0], function(point) {
+       geometry.coordinates[0].push(point);
+    });
+
+    var data = {
+        image_id: data_row.image_id,
+        nef_name: data_row.value,
+        sensor: data_row.image_sensor,
+        platform: data_row.platformCode,
+        cloud_cover: data_row.maxCloudCoverPercentageRate,
+        acq_date: data_row.ObservationDate,
+        img_geom: JSON.stringify(geometry),
+        wmsUrl: data_row.wmsUrl,
+        area: 1,
+        status: val,
+        workcell: aoi_feature_edit.aoi_id
+    };
+
+    // find that layer in footprints.features and update
+    for (var i = 0; i < footprints.features.length; i++) {
+        if (data_row.image_id == footprints.features[i].image_id) {
+            footprints.features[i].status = val;
+            break;
+        }
+    }
+    console.log(url);
+    $.ajax({
+        type: "POST",
+        url: url,
+        data: data,
+        dataType: "json",
+        success: function (data) {
+            console.log(data)
+        }
+    });
+
+}
+
+footprints.rowClicked = function (index) {
+    var imageid = footprints.dataInTable[index].image_id;
+    var image_status = footprints.dataInTable[index].status;
+
+    // change back previous selection if necessary
+    if ( footprints.outline_layer_group.lastHighlight.id ) {
+        var pastlayers = footprints.getLayerGroup(footprints.outline_layer_group.lastHighlight.status).getLayers();
+        var player = pastlayers.filter(function(e) {return e.options.image_id == footprints.outline_layer_group.lastHighlight.id})[0];
+        if (player) {
+            player.setStyle(footprints.selectStyle(player.options.status));
+            player.bringToBack();
+        }
+    }
+
+    // change the color of the selected image
+    var newlayers = footprints.getLayerGroup(image_status).getLayers();
+    var layer = newlayers.filter(function(e) { return e.options.image_id == imageid; })[0];
+    if (layer) {
+        layer.setStyle(footprints.selectStyle('Selected'));
+        layer.bringToFront();
+        footprints.outline_layer_group.lastHighlight = {'id': imageid, 'status': layer.options.status};
+    }
+
+    $("#workcell-list").trigger('update');
+
+}
+
 footprints.addResultTable = function ($holder) {
-    var $grid = $("<div>")
-        .css({overflow: 'scroll'})
+    //We can change the max height here when we are testing with many elements.
+    var $grid = $("<div class='tableContainer' style='overflow-x:auto; overflow-y: auto; max-height: 250px'><table class='tablesorter' id='workcell-list'><colgroup><thead><tr><th>Accept</th><th>ID</th><th>Date Observed</th><th>Cloud Cover</th></tr></thead><tbody></tbody></table>")
         .appendTo($holder);
 
+    var $pager = $("<div id='pager' class='pager'><form><img src='/static/images/first.png' class='first' alt='First'/><img src='/static/images/prev.png' class='prev'/><span class='pagedisplay'></span><img src='/static/images/next.png' class='next'/><img src='/static/images/last.png' class='last'/></form></div>")
+        .appendTo($holder);
+
+
+    $("#workcell-list").trigger('update');
+
+    var pagerOptions = {
+        // target the pager markup - see the HTML block below
+		container: $(".pager"),
+
+        // Taken from the API Documentation
+		// output string - default is '{page}/{totalPages}'
+		// possible variables: {size}, {page}, {totalPages}, {filteredPages}, {startRow}, {endRow}, {filteredRows} and {totalRows}
+		// also {page:input} & {startRow:input} will add a modifiable input in place of the value
+		output: '{startRow:input} to {endRow} ({totalRows})',
+
+		// apply disabled classname (cssDisabled option) to the pager arrows when the rows
+		// are at either extreme is visible; default is true
+		updateArrows: true,
+
+		// starting page of the pager (zero based index)
+		page: 0,
+
+		// Number of visible rows
+		size: footprints.csw_max_records,
+
+        // This is important due to the
+		fixedHeight: false,
+
+		// css class names of pager arrows
+		cssNext: '.next', // next page arrow
+		cssPrev: '.prev', // previous page arrow
+		cssFirst: '.first', // go to first page arrow
+		cssLast: '.last', // go to last page arrow
+		cssGoto: '.gotoPage', // select dropdown to allow choosing a page
+
+		cssPageDisplay: '.pagedisplay', // location of where the "output" is displayed
+		cssPageSize: '.pagesize', // page size selector - select dropdown that sets the "size" option
+
+
+		cssDisabled: 'disabled'
+
+    };
+
+    $(".tablesorter").tablesorter({
+         theme: 'blue',
+                    widgets: ['zebra','scroller'],
+                    widgetOptions: {
+                        //Sticky headers seems to have some sort of problem. Will h ave to come back to this as it is not pressing ATM.
+                        //stickyHeaders_attachTo : $('.tableContainer'),
+                        scroller_barWidth: null,
+                        scroller_rowHighlight: 'hover'
+                    }
+    })
+
+    // initialize the pager plugin
+    // ****************************
+    .tablesorterPager(pagerOptions);
+
+    $("#workcell-list").trigger('update');
+    //Have to call this function
+    $('#workcell-list').trigger('pageAndSize');
+
+    /*
     //Set up table
     var width = 300;
     if (footprints.featureSelectFunction || footprints.featureSelectUrl) {
@@ -1217,7 +1444,6 @@ footprints.addResultTable = function ($holder) {
         width: width, height: 180, title: "Matched " + footprints.title + "s", editable: false,
         flexHeight: false, topVisible: false, bottomVisible: false, flexWidth: false, numberCell: false
     };
-
 
     //Pull out just the columns that will be shown
     var columns = [];
@@ -1286,7 +1512,6 @@ footprints.addResultTable = function ($holder) {
             if (val && footprints.featureSelectUrl) {
                 var data_row = ui.dataModel.data[ui.rowIndx];
                 var image_id = data_row.image_id;
-
                 var inputs = {
                     id: encodeURIComponent(image_id),
                     evaluation: val
@@ -1329,7 +1554,6 @@ footprints.addResultTable = function ($holder) {
                         break;
                     }
                 }
-
                 console.log(url);
                 $.ajax({
                     type: "POST",
@@ -1371,7 +1595,12 @@ footprints.addResultTable = function ($holder) {
     obj.colModel = obj.colModel.concat(columns);
     obj.dataModel = {data: footprints.matched_flattened};
 
+    console.log("adding object to grid - AddResultsTable");
+
     $grid.pqGrid(obj);
+
+    */
+
     footprints.$grid = $grid;
 };
 footprints.getFeatureFromTable = function (rowData) {
