@@ -744,6 +744,7 @@ footprints.removeCSWOutline = function (identifier,status) {
             console.log(data.data);
             console.log(footprints.dataInTable);
             console.log(footprints.features);
+            console.log(newData);
             footprints.addToResultTable(newData);
             footprints.$grid.pqGrid("option","dataModel", {data: data.data });
             return;
@@ -1075,7 +1076,7 @@ footprints.updateFootprintFilteredResults = function (options) {
     for (var i = 0; i < footprints.features.length; i++) {
         var matched = true;
         var feature = footprints.features[i];
-
+        console.log(feature);
         //Check first if geometry is in bounds (if that's being checked for)
         if (feature.geometry && footprints.filters.in_bounds) {
             if (!footprints.isFeatureInPolygon(feature, workcellGeojson)) {
@@ -1251,6 +1252,8 @@ footprints.addToResultTable = function (flattenedList) {
             .css("border", "0px solid black")
             .appendTo($tr);
 
+        console.log(flattenedList[i]);
+
         $('<td>')
             .html(flattenedList[i].ObservationDate)
             .css("border", "0px solid black")
@@ -1368,6 +1371,7 @@ footprints.rowClicked = function (index) {
 }
 
 footprints.addResultTable = function ($holder) {
+    //We can change the max height here when we are testing with many elements.
     var $grid = $("<div class='tableContainer' style='overflow-x:auto; overflow-y: auto; max-height: 250px'><table class='tablesorter' id='workcell-list'><colgroup><thead><tr><th>Accept</th><th>ID</th><th>Date Observed</th><th>Cloud Cover</th></tr></thead><tbody></tbody></table>")
         .appendTo($holder);
 
