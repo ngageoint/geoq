@@ -741,10 +741,6 @@ footprints.removeCSWOutline = function (identifier,status) {
                 }
             }
 
-            console.log(data.data);
-            console.log(footprints.dataInTable);
-            console.log(footprints.features);
-            console.log(newData);
             footprints.addToResultTable(newData);
             footprints.$grid.pqGrid("option","dataModel", {data: data.data });
             return;
