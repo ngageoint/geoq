@@ -99,7 +99,7 @@ footprints.schema = [
         initialDateRange: 365,
         colorMarker: true
     },
-    {name: 'keyword', title: 'Keywords', filter: 'textbox', show: 'small-table', cswid: 'keyword'}
+    {name: 'keyword', title: 'Keywords', filter: 'textbox', cswid: 'keyword'}
 ];
 
 footprints.url_template = 'http://server.com/arcgis/rest/services/ImageEvents/MapServer/req_{{layer}}/query?&geometry={{bounds}}&geometryType=esriGeometryEnvelope&spatialRel=esriSpatialRelIntersects&outFields=*&outSR=4326&f=json';
@@ -476,6 +476,11 @@ footprints.updateFootprintDataFromCSWServer = function () {
     };
     var callback = function (xml,lang) {
         var $xml = $(xml);
+        var count = $xml.filterNode('csw:SearchResults').attr('numberOfRecordsMatched') || "0";
+        if (count && footprints.$matching_count) {
+            footprints.$matching_count.text(count);
+            footprints.$matching_total.text(count);
+        }
         var data = $xml.filterNode('csw:Record') || [];
         footprints.newCSWFeaturesArrived(data);
     };
@@ -809,7 +814,7 @@ footprints.replaceCSWOutlineWithLayer = function (identifier) {
             }
         }
     })
-}
+};
 footprints.updateFeatureMinMaxes = function () {
     //If it's a number or date, find the min and max and save it with the schema
 
@@ -1180,10 +1185,10 @@ footprints.updateFootprintFilteredResults = function (options) {
     }
 
     //Update counts
-    if (footprints.$matching_count) {
-        footprints.$matching_count.text(matched_list.length);
-        footprints.$matching_total.text(total);
-    }
+//    if (footprints.$matching_count) {
+//        footprints.$matching_count.text(matched_list.length);
+//        footprints.$matching_total.text(total);
+//    }
     footprints.matched = matched_list;
     footprints.matched_flattened = flattened_list;
 
@@ -1206,7 +1211,7 @@ footprints.addResultCount = function ($holder) {
         .text('0')
         .appendTo($div);
     $("<span>")
-        .html(' in map bounds. ')
+        .html(' layers found. ')
         .appendTo($div);
     footprints.$matching_total = $("<span>")
         .attr({id: 'footprints-matching-count-total'})
@@ -1223,7 +1228,7 @@ footprints.addToResultTable = function (flattenedList) {
     var length = flattenedList.length;
     footprints.dataInTable = flattenedList;
 
-    $('#workcell-list tbody').html("");
+    $('#imagelayer-list tbody').html("");
     for (var i = 0; i < length; i++) {
         //Add accept toggle
         var c1 = (flattenedList[i].status && flattenedList[i].status == 'Accepted') ? 'checked' : '';
@@ -1238,33 +1243,35 @@ footprints.addToResultTable = function (flattenedList) {
         var $tr = $('<tr>').on('click', function() {
             footprints.rowClicked((this.rowIndex - 1));
         });
-        $('<td>')
-            .html(bg)
-            .css("border", "0px solid black")
-            .appendTo($tr);
-        console.log(flattenedList[i]);
-        $('<td>')
-            .html(flattenedList[i].image_id)
-            .css("border", "0px solid black")
-            .appendTo($tr);
 
-        console.log(flattenedList[i]);
+        var headers = [];
 
-        $('<td>')
-            .html(flattenedList[i].ObservationDate)
-            .css("border", "0px solid black")
-            .appendTo($tr);
+        $('#imagelayer-list tr').find('th').filter(function() {
+            headers.push($(this).find('div')[0].textContent);
+        });
 
-        $('<td>')
-            .html(flattenedList[i].maxCloudCoverPercentageRate)
-            .css("border", "0px solid black")
-            .appendTo($tr);
+        _.each(headers, function(hdr) {
+            var schemaItem = _.findWhere( footprints.schema, { title: hdr});
+            if (schemaItem) {
+                $('<td>')
+                    .html(flattenedList[i][schemaItem.name])
+                    .css("border", "0px solid black")
+                    .appendTo($tr);
+            } else {
+                // should be Accept column
+                $('<td>')
+                    .html(bg)
+                    .css("border", "0px solid black")
+                    .appendTo($tr);
+            }
+        });
 
-        $('#workcell-list tbody').append($tr);
+
+        $('#imagelayer-list tbody').append($tr);
     }
 
 
-    $("#workcell-list").trigger('update');
+    $("#imagelayer-list").trigger('update');
 };
 
 footprints.updateValueFromRadio = function(id, value) {
@@ -1337,7 +1344,7 @@ footprints.updateValueFromRadio = function(id, value) {
         }
     });
 
-}
+};
 
 footprints.rowClicked = function (index) {
     var imageid = footprints.dataInTable[index].image_id;
@@ -1362,20 +1369,31 @@ footprints.rowClicked = function (index) {
         footprints.outline_layer_group.lastHighlight = {'id': imageid, 'status': layer.options.status};
     }
 
-    $("#workcell-list").trigger('update');
+    $("#imagelayer-list").trigger('update');
 
 }
 
 footprints.addResultTable = function ($holder) {
     //We can change the max height here when we are testing with many elements.
-    var $grid = $("<div class='tableContainer' style='overflow-x:auto; overflow-y: auto; max-height: 250px'><table class='tablesorter' id='workcell-list'><colgroup><thead><tr><th>Accept</th><th>ID</th><th>Date Observed</th><th>Cloud Cover</th></tr></thead><tbody></tbody></table>")
+    var $grid = $("<div class='tableContainer' style='overflow-x:auto; overflow-y: auto; max-height: 250px'><table class='tablesorter' id='imagelayer-list'><colgroup><thead><tr></tr></thead><tbody></tbody></table>")
         .appendTo($holder);
+
+    var $row = $grid.find("tr");
+
+    // first row is the accept/reject buttons
+    $row.append("<th>Accept</th>");
+
+    _.each( footprints.schema, function(item) {
+        if (item.show && item.show === 'small-table') {
+            $row.append("<th>" + item.title + "</th>");
+        }
+    });
 
     var $pager = $("<div id='pager' class='pager'><form><img src='/static/images/first.png' class='first' alt='First'/><img src='/static/images/prev.png' class='prev'/><span class='pagedisplay'></span><img src='/static/images/next.png' class='next'/><img src='/static/images/last.png' class='last'/></form></div>")
         .appendTo($holder);
 
 
-    $("#workcell-list").trigger('update');
+    $("#imagelayer-list").trigger('update');
 
     var pagerOptions = {
         // target the pager markup - see the HTML block below
@@ -1385,7 +1403,7 @@ footprints.addResultTable = function ($holder) {
 		// output string - default is '{page}/{totalPages}'
 		// possible variables: {size}, {page}, {totalPages}, {filteredPages}, {startRow}, {endRow}, {filteredRows} and {totalRows}
 		// also {page:input} & {startRow:input} will add a modifiable input in place of the value
-		output: '{startRow:input} to {endRow} ({totalRows})',
+		output: '{startRow:input} to {endRow}',
 
 		// apply disabled classname (cssDisabled option) to the pager arrows when the rows
 		// are at either extreme is visible; default is true
@@ -1411,7 +1429,7 @@ footprints.addResultTable = function ($holder) {
 		cssPageSize: '.pagesize', // page size selector - select dropdown that sets the "size" option
 
 
-		cssDisabled: 'disabled'
+		cssDisabled: ''
 
     };
 
@@ -1428,11 +1446,16 @@ footprints.addResultTable = function ($holder) {
 
     // initialize the pager plugin
     // ****************************
-    .tablesorterPager(pagerOptions);
+    .tablesorterPager(pagerOptions)
 
-    $("#workcell-list").trigger('update');
+    // and listen for page changes for us to get updated results
+    .bind('pagerChange pageMoved', function(e,c) {
+        console.log("moved to page " + c.page);
+    });
+
+    $("#imagelayer-list").trigger('update');
     //Have to call this function
-    $('#workcell-list').trigger('pageAndSize');
+    $('#imagelayer-list').trigger('pageAndSize');
 
     /*
     //Set up table
