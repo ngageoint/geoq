@@ -24,6 +24,28 @@
 /* Borrowed from J. Kilgo's NWS Leaflet layer */
 /* Makes use of Leaflet JS: http://leafletjs.com/ */
 
+L.MAGEClusterGroup = L.MarkerClusterGroup.extend({
+    options: {
+        spiderfyOnMaxZoom: true,
+        removeOutsideVisibleBounds: false
+    },
+
+    initialize: function(map, options) {
+        L.Util.setOptions(this, t), this.options.iconCreateFunction || (this.options.iconCreateFunction = this._defaultIconCreateFunction), this._featureGroup = L.featureGroup(), this._featureGroup.on(L.FeatureGroup.EVENTS, this._propagateEvent, this), this._nonPointGroup = L.featureGroup(), this._nonPointGroup.on(L.FeatureGroup.EVENTS, this._propagateEvent, this), this._inZoomAnimation = 0, this._needsClustering = [], this._needsRemoving = [], this._currentShownBounds = null, this._queue = [];
+
+        // create the actual MAGE layer
+        L.Util.setOptions(options);
+
+        this._mageLayer = new L.MAGELayer(map, options.MAGEOptions, this);
+
+    },
+
+    onAdd: function() {
+        // add MAGE layer to cluster
+        this.addLayer(this._mageLayer);
+    }
+});
+
 
 L.MAGELayer = L.GeoJSON.extend({
     // Options are JSON object found in database core.setting
@@ -34,8 +56,9 @@ L.MAGELayer = L.GeoJSON.extend({
         refresh: 300000
     },
 
-    initialize: function (load, map, options) {
+    initialize: function (map, options, clusterlayer) {
         var _this = this;
+        _this._clusterlayer = clusterlayer;
         this._layers = {};
 
         L.Util.setOptions(this, options);
@@ -71,6 +94,10 @@ L.MAGELayer = L.GeoJSON.extend({
                         "features": magehelper.getObservations()
                     };
                     _this.addData(fc);
+                    if (_this._clusterlayer) {
+                        _this._clusterlayer.removeLayer(_this);
+                        _this._clusterlayer.addLayer(_this);
+                    }
                 }
             }
         };
