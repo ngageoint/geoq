@@ -130,7 +130,7 @@ urlpatterns = patterns('',
     url(r'^api/prioritize/(?P<method>\w+)?$',
         'core.views.prioritize_cells', name='batch-prioritize-cells'),
     #TEAMS
-    (r'^admin/jsi18n/$', 'django.views.i18n.javascript_catalog'),
+    url(r'^admin/jsi18n/$', 'django.views.i18n.javascript_catalog'),
     url(r'^teams/?$', TeamListView.as_view(template_name='core/team_list.html'), name='team-list'),
     url(r'^teams/create/?$',
         login_required(CreateTeamView.as_view(queryset=Group.objects.all(),
