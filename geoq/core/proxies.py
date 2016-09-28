@@ -4,6 +4,7 @@
 from django.contrib.auth.decorators import login_required
 from django.views.decorators.cache import patch_cache_control, cache_page
 from django.http import HttpResponse
+from IPy import IP
 import json
 import mimetypes
 import urllib2
@@ -34,6 +35,10 @@ def proxy_to(request, path, target_url):
             url = '%s?%s' % (url, qs)
 
     try:
+
+        if not url.startswith('http'):
+            raise urllib2.URLError('Illegal protocol')
+
         if testurl:
             content = url
             status_code = 200
@@ -46,6 +51,14 @@ def proxy_to(request, path, target_url):
                 headers['Content-type'] = request.META['CONTENT_TYPE']
 
             newrequest = urllib2.Request(url, headers = headers)
+            # check that if an ip address is passed, it isn't in the local network
+            try:
+                ip = IP(newrequest.get_host())
+                if ip.iptype() == 'PRIVATE':
+                    raise urllib2.URLError('Private IP addresses may not be used')
+            except Exception:
+                # hostname was not an IP. Allow to continue
+                pass
 
             if request.body != None and len(request.body) > 0:
                 newrequest.add_data(request.body)
