@@ -163,8 +163,19 @@ leaflet_helper.layer_conversion = function (lyr, map) {
     } else if (lyr.type == 'OpenSensorHub') {
         outputLayer = new L.SOS(map, layerOptions);
     } else if (lyr.type == 'MAGE') {
-        var mage_group_options = {MAGEOptions: layerOptions};
-        outputLayer = new L.MAGEClusterGroup(map, mage_group_options);
+        var mageLayer = new L.MAGELayer(map, layerOptions);
+        outputLayer = L.markerClusterGroup({
+            spiderfyDistanceMultiplier: 2,
+            spiderLegPolylineOptions: { weight: 2, color: '#000', opacity: 1.0}
+        });
+        mageLayer.on("MageLoaded", function(e) {
+            if (outputLayer.getLayers().length > 0) {
+                // remove previous points
+                outputLayer.clearLayers();
+            }
+            outputLayer.addLayer(mageLayer);
+        });
+
     }
 
     //Make sure the name is set for showing up in the layer menu

@@ -24,7 +24,6 @@
 /* Borrowed from J. Kilgo's NWS Leaflet layer */
 /* Makes use of Leaflet JS: http://leafletjs.com/ */
 
-
 L.MAGELayer = L.GeoJSON.extend({
     // Options are JSON object found in database core.setting
     options: {
@@ -34,16 +33,15 @@ L.MAGELayer = L.GeoJSON.extend({
         refresh: 300000
     },
 
-    initialize: function (load, map, options) {
+    initialize: function (map, options) {
         var _this = this;
         this._layers = {};
 
         L.Util.setOptions(this, options);
         this.options.onEachFeature = this.onEachFeature;
 
-        this._map = map;
 
-        var mage_callback = function(msg) {
+        var mage_callback = function (msg) {
             if (msg.failed) {
                 console.log('MAGE failed');
             } else if (msg.events_loading) {
@@ -51,32 +49,34 @@ L.MAGELayer = L.GeoJSON.extend({
             } else if (msg.events_loaded) {
                 console.log('MAGE events loaded');
                 // grab event id and set that value for getting observations
-                var event = _.find(magehelper.getEvents(), function(o) {
+                var event = _.find(magehelper.getEvents(), function (o) {
                     return o.name === _this.options.event;
                 });
                 if (event) {
                     magehelper.setCurrentEvent(event.id);
                 }
-                if (_this._map) {
-                    magehelper.loadObservations();
-                }
+
+                magehelper.loadObservations();
+
             } else if (msg.observations_loading) {
                 console.log('MAGE observations loading');
                 _this.clearLayers();
             } else if (msg.observations_loaded) {
                 console.log('MAGE observations_loaded');
-                if (_this._map) {
-                    var fc = {
-                        "type": "FeatureCollection",
-                        "features": magehelper.getObservations()
-                    };
-                    _this.addData(fc);
-                }
+
+                var fc = {
+                    "type": "FeatureCollection",
+                    "features": magehelper.getObservations()
+                };
+                _this.addData(fc);
+
+                // signal data loaded
+                _this.fire("MageLoaded");
             }
         };
 
         // load helper functions
-        var load_callback = function(data, textStatus, jqxhr) {
+        var load_callback = function (data, textStatus, jqxhr) {
             console.log('magehelper loaded. Trying to download events');
             magehelper.setUrl(options.url);
 
@@ -94,7 +94,7 @@ L.MAGELayer = L.GeoJSON.extend({
 
     },
 
-    onEachFeature: function(feature, layer) {
+    onEachFeature: function (feature, layer) {
         window.lastfl = [feature, layer];
         if (feature.properties) {
             var props = feature.properties;
@@ -103,16 +103,16 @@ L.MAGELayer = L.GeoJSON.extend({
             if (props.type) {
                 var t = props.type;
                 var iurl = magehelper.getIconURL(
-                            magehelper.getCurrentEvent(), t);
+                    magehelper.getCurrentEvent(), t);
                 var obIcon = L.icon({
-                                iconUrl: iurl,
-                                iconSize: [72/2, 92/2],
+                    iconUrl: iurl,
+                    iconSize: [72 / 2, 92 / 2],
                 });
                 layer.setIcon(obIcon);
 
                 html += "Type: " + t + "<br />";
 
-			}
+            }
             for (p in props) {
                 if ("type" == p || props[p] == "")
                     continue;
@@ -123,7 +123,7 @@ L.MAGELayer = L.GeoJSON.extend({
     },
 
     // Gets the bounds of the Workcell and calls for GeoCode info
-    geocode: function() {
+    geocode: function () {
         var map = this._map;
         var bounds = map.getBounds();
 
