@@ -746,7 +746,6 @@ footprints.removeCSWOutline = function (identifier,status) {
                 }
             }
 
-            console.log(newData);
             footprints.addToResultTable(newData);
             footprints.$grid.pqGrid("option","dataModel", {data: data.data });
             return;
@@ -1078,7 +1077,6 @@ footprints.updateFootprintFilteredResults = function (options) {
     for (var i = 0; i < footprints.features.length; i++) {
         var matched = true;
         var feature = footprints.features[i];
-        console.log(feature);
         //Check first if geometry is in bounds (if that's being checked for)
         if (feature.geometry && footprints.filters.in_bounds) {
             if (!footprints.isFeatureInPolygon(feature, workcellGeojson)) {
@@ -1239,10 +1237,6 @@ footprints.addToResultTable = function (flattenedList) {
         var c2 = (!flattenedList[i].status || (flattenedList[i].status && flattenedList[i].status == 'NotEvaluated')) ? 'checked' : '';
         var c3 = (flattenedList[i].status && flattenedList[i].status == 'RejectedQuality') ? 'checked' : '';
 
-        console.log("Accepted: " + c1);
-        console.log("NotEvaluated: " + c2);
-        console.log("RejectedQuality: " + c3);
-
         var bg = '<input class="accept" id="r1-' + flattenedList[i].image_id + '" type="radio" name="acceptance-' + flattenedList[i].image_id + '" ' + c1 + ' value="Accepted" onclick="footprints.updateValueFromRadio(&quot;'+flattenedList[i].image_id + '&quot;, 1)"/><label for="r1-' + flattenedList[i].image_id + '"></label>';
         bg += '<input class="unsure" id="r2-' + flattenedList[i].image_id + '" type="radio" name="acceptance-' + flattenedList[i].image_id + '" ' + c2 + ' value="NotEvaluated" onclick="footprints.updateValueFromRadio(&quot;'+ flattenedList[i].image_id + '&quot;, 0)"/>';
         bg += '<input class="reject" id="r3-' + flattenedList[i].image_id + '" type="radio" name="acceptance-' + flattenedList[i].image_id + '" ' + c3 + ' value="RejectedQuality" onclick="footprints.updateValueFromRadio(&quot;'+ flattenedList[i].image_id + '&quot;, -1)"/><label for="r3-' + flattenedList[i].image_id + '"></label>';
@@ -1284,7 +1278,6 @@ footprints.addToResultTable = function (flattenedList) {
 
 footprints.updateValueFromRadio = function(id, value) {
     var val, data_row;
-    console.log("Updating Status: " + value);
 
     if (value < 0) {
         val = "RejectedQuality";
@@ -1303,7 +1296,6 @@ footprints.updateValueFromRadio = function(id, value) {
 
     var image_id = data_row.image_id;
 
-    console.log("val: " + val);
     var inputs = {
         id: encodeURIComponent(image_id),
         evaluation: val
@@ -1345,7 +1337,6 @@ footprints.updateValueFromRadio = function(id, value) {
             break;
         }
     }
-    console.log(url);
     $.ajax({
         type: "POST",
         url: url,
