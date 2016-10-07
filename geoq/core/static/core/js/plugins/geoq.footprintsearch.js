@@ -746,6 +746,7 @@ footprints.removeCSWOutline = function (identifier,status) {
                 }
             }
 
+            console.log(newData);
             footprints.addToResultTable(newData);
             footprints.$grid.pqGrid("option","dataModel", {data: data.data });
             return;
@@ -1231,13 +1232,20 @@ footprints.addToResultTable = function (flattenedList) {
     $('#imagelayer-list tbody').html("");
     for (var i = 0; i < length; i++) {
         //Add accept toggle
+
+        console.log("Flattened List Status: " + flattenedList[i].status);
+
         var c1 = (flattenedList[i].status && flattenedList[i].status == 'Accepted') ? 'checked' : '';
         var c2 = (!flattenedList[i].status || (flattenedList[i].status && flattenedList[i].status == 'NotEvaluated')) ? 'checked' : '';
         var c3 = (flattenedList[i].status && flattenedList[i].status == 'RejectedQuality') ? 'checked' : '';
 
+        console.log("Accepted: " + c1);
+        console.log("NotEvaluated: " + c2);
+        console.log("RejectedQuality: " + c3);
+
         var bg = '<input class="accept" id="r1-' + flattenedList[i].image_id + '" type="radio" name="acceptance-' + flattenedList[i].image_id + '" ' + c1 + ' value="Accepted" onclick="footprints.updateValueFromRadio(&quot;'+flattenedList[i].image_id + '&quot;, 1)"/><label for="r1-' + flattenedList[i].image_id + '"></label>';
         bg += '<input class="unsure" id="r2-' + flattenedList[i].image_id + '" type="radio" name="acceptance-' + flattenedList[i].image_id + '" ' + c2 + ' value="NotEvaluated" onclick="footprints.updateValueFromRadio(&quot;'+ flattenedList[i].image_id + '&quot;, 0)"/>';
-        bg += '<input class="reject" id="r3-' + flattenedList[i].image_id + '" type="radio" name="acceptance-' + flattenedList[i].image_id + '" ' + c3 + ' value="RejectedQuality"/><label for="r3-' + flattenedList[i].image_id + '" onclick="&quot;updateValueFromRadio('+ flattenedList[i].image_id + '&quot;, -1)"></label>';
+        bg += '<input class="reject" id="r3-' + flattenedList[i].image_id + '" type="radio" name="acceptance-' + flattenedList[i].image_id + '" ' + c3 + ' value="RejectedQuality" onclick="footprints.updateValueFromRadio(&quot;'+ flattenedList[i].image_id + '&quot;, -1)"/><label for="r3-' + flattenedList[i].image_id + '"></label>';
 
 
         var $tr = $('<tr>').on('click', function() {
@@ -1276,12 +1284,14 @@ footprints.addToResultTable = function (flattenedList) {
 
 footprints.updateValueFromRadio = function(id, value) {
     var val, data_row;
+    console.log("Updating Status: " + value);
+
     if (value < 0) {
         val = "RejectedQuality";
     } else if (value > 0) {
         val = "Accepted";
     } else {
-        val = ("NotEvlauated");
+        val = "NotEvaluated";
     }
 
     for (var i = 0; i < footprints.dataInTable.length; i++) {
@@ -1292,6 +1302,8 @@ footprints.updateValueFromRadio = function(id, value) {
     }
 
     var image_id = data_row.image_id;
+
+    console.log("val: " + val);
     var inputs = {
         id: encodeURIComponent(image_id),
         evaluation: val
@@ -1450,7 +1462,7 @@ footprints.addResultTable = function ($holder) {
 
     // and listen for page changes for us to get updated results
     .bind('pagerChange pageMoved', function(e,c) {
-        console.log("moved to page " + c.page);
+        //console.log("moved to page " + c.page);
     });
 
     $("#imagelayer-list").trigger('update');
