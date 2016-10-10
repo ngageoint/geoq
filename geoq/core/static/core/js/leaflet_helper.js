@@ -111,6 +111,8 @@ leaflet_helper.layer_conversion = function (lyr, map) {
             layerOptions.createMarker = leaflet_helper.createMarker[layerOptions.createMarker];
         }
         outputLayer = new L.esri.clusteredFeatureLayer(lyr.url, layerOptions);
+    } else if (lyr.type == 'ESRI Image Map Layer' && esriPluginInstalled) {
+        outputLayer = new L.esri.imageMapLayer(lyr.url, layerOptions);
     } else if (lyr.type == 'GeoJSON' || lyr.type == 'Social Networking Link') {
         outputLayer = leaflet_helper.constructors.geojson(lyr, map);
 

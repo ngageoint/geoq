@@ -21,7 +21,7 @@ ogc_csw.schema = {
     'format': { key: 'dc:format', default: 'OGC:WMS'},
     'ObservationDate': { key: 'dct:modified', default: moment().format('YYYY-MM-DD')},
     'maxCloudCoverPercentageRate': { key: null, default: 1},
-    'platformCode': { key: null, default: 'abc123'},
+    'platformCode': { key: 'dc:source', default: 'Unknown'},
     'sensor': {key: null, default: 'def456'},
     'layerName': {key: 'dc:title', default: 'Unknown'},
     'status': {key: null, default: 'NotEvaluated'},
@@ -38,6 +38,13 @@ ogc_csw.filterOperators = {
     between:          { op: 'ogc:PropertyIsBetween',      sep: 'And' },
     is_null:          { op: 'ogc:PropertyIsNull' },
     begins_with:      { op: 'ogc:PropertyIsLike', wildcards: true }
+};
+
+ogc_csw.layers = {
+    OGC_WMS:                    { type: 'WMS', format: 'image/png'},
+    OGC_WMTS:                   { type: 'WMTS'},
+    ESRI_ArcGIS_ImageServer:    { type: 'ESRI Image Map Layer'},
+    ESRI_ArcGIS_MapServer:      { type: 'ESRI Dynamic Map Layer'}
 };
 
 ogc_csw.init = function(options) {

@@ -71,7 +71,7 @@ footprints.schema = [
     {name: 'image_id', title: 'Id', id: true, cswid: 'identifier'},
     {name: 'layerName', title: 'Name', cswid: 'layerName', show: 'small-table' },
     {name: 'format', title: 'Format', cswid: 'format', show: 'small-table'},
-    {name: 'platformCode', title: 'Pltfrm', filter: 'options', cswid: 'creator', show: 'small-table'},
+    {name: 'platformCode', title: 'Source', filter: 'options', cswid: 'creator', show: 'small-table'},
     //TODO: Show image name as mouseover or small text field?
     {
         name: 'maxCloudCoverPercentageRate',
