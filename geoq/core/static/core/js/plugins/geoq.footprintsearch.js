@@ -98,8 +98,7 @@ footprints.schema = [
         showSizeMultiplier: 2,
         initialDateRange: 365,
         colorMarker: true
-    },
-    {name: 'keyword', title: 'Keywords', filter: 'textbox', cswid: 'keyword'}
+    }
 ];
 
 footprints.url_template = 'http://server.com/arcgis/rest/services/ImageEvents/MapServer/req_{{layer}}/query?&geometry={{bounds}}&geometryType=esriGeometryEnvelope&spatialRel=esriSpatialRelIntersects&outFields=*&outSR=4326&f=json';
@@ -1096,9 +1095,9 @@ footprints.updateFootprintFilteredResults = function (options) {
             if (schema_item.filter && matched) {
                 var fieldToCheck = schema_item.name;
                 var filterSetting = footprints.filters[fieldToCheck];
-                var val = feature[fieldToCheck] || feature.options[fieldToCheck];
+                var val = feature[fieldToCheck];
 
-                if (typeof val != "unknown") {
+                if (val) {
                     //Check all possible options and see if the feature has that setting
                     if (schema_item.filter == 'options') {
                         var option_found = false;
@@ -1156,23 +1155,25 @@ footprints.updateFootprintFilteredResults = function (options) {
         //Only store in the array items mentioned in the schema
         _.each(footprints.schema, function (schema_item) {
             var fieldToCheck = schema_item.name;
-            var val = feature[fieldToCheck] || feature.options[fieldToCheck];
+            var val = feature[fieldToCheck];
 
-            if ((schema_item.type && schema_item.type == 'date') || (schema_item.filter && schema_item.filter == 'date-range')) {
-                var date_format = null;
-                if (schema_item.transform == 'day') {
-                    if (val.indexOf('-') < 0) {
-                        val = val.substr(0, 4) + '-' + val.substr(4, 2) + '-' + val.substr(6, 2);
+            if (val) {
+                if ((schema_item.type && schema_item.type == 'date') || (schema_item.filter && schema_item.filter == 'date-range')) {
+                    var date_format = null;
+                    if (schema_item.transform == 'day') {
+                        if (val.indexOf('-') < 0) {
+                            val = val.substr(0, 4) + '-' + val.substr(4, 2) + '-' + val.substr(6, 2);
+                        }
+                        date_format = "YYYY-MM-DD";
                     }
-                    date_format = "YYYY-MM-DD";
+                    var date_val = moment(val, date_format);
+                    if (date_val && date_val.isValid && date_val.isValid()) {
+                        val = date_val.format('YYYY-MM-DD');
+                    }
                 }
-                var date_val = moment(val, date_format);
-                if (date_val && date_val.isValid && date_val.isValid()) {
-                    val = date_val.format('YYYY-MM-DD');
-                }
-            }
 
-            item[fieldToCheck] = val;
+                item[fieldToCheck] = val;
+            }
         });
 
         //Pull out the geometry
