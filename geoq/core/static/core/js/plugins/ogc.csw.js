@@ -21,7 +21,7 @@ ogc_csw.schema = {
     'format': { key: 'dc:format', default: 'OGC:WMS'},
     'ObservationDate': { key: 'dct:modified', default: moment().format('YYYY-MM-DD')},
     'maxCloudCoverPercentageRate': { key: null, default: 1},
-    'platformCode': { key: 'dc:source', default: 'Unknown'},
+    'platformCode': { key: 'dc:platform', default: 'Unknown'},
     'sensor': {key: null, default: 'def456'},
     'layerName': {key: 'dc:title', default: 'Unknown'},
     'status': {key: null, default: 'NotEvaluated'},
