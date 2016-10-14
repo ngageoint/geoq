@@ -37,7 +37,19 @@ ogc_csw.filterOperators = {
     greater_or_equal: { op: 'ogc:PropertyIsLessThanOrEqualTo' },
     between:          { op: 'ogc:PropertyIsBetween',      sep: 'And' },
     is_null:          { op: 'ogc:PropertyIsNull' },
-    begins_with:      { op: 'ogc:PropertyIsLike', wildcards: true }
+    contains:      { op: 'ogc:PropertyIsLike', wildcards: true }
+};
+
+ogc_csw.cqlOperators = {
+    equal:            { op: '=' },
+    not_equal:        { op: '<>' },
+    less:             { op: '<' },
+    less_or_equal:    { op: '<=' },
+    greater:          { op: '>', date_op: " after " },
+    greater_or_equal: { op: '>=' , date_op: " after "},
+    between:          { op: ' between ',      sep: 'And' },
+    is_null:          { op: 'ogc:PropertyIsNull' },
+    contains:      { op: ' like ', wildcards: true }
 };
 
 ogc_csw.layers = {
@@ -78,8 +90,12 @@ ogc_csw.getCapabilities = function() {
     });
 };
 
-ogc_csw.getRecords = function(params,callback) {
+ogc_csw.getRecordsGet = function(params,input,callback) {
     var proxy = leaflet_helper.proxy_path || '/geoq/proxy';
+
+    params['constraint'] = ogc_csw.createCQLConstraint(input);
+    params['constraintLanguage'] = "CQL_TEXT";
+    params['constraint_language_version'] = "1.1.0";
 
     var url = ogc_csw.protocol + "://" + ogc_csw.server + ":" + ogc_csw.port + ogc_csw.path + "/csw?" + $.param(params);
 
@@ -93,6 +109,80 @@ ogc_csw.getRecords = function(params,callback) {
         }
     });
 
+};
+
+ogc_csw.createCQLConstraint = function(input) {
+    var cql = {constraintLanguage: "CQL_TEXT"};
+    if (_.size(input) > 1) {
+        return ogc_csw.write_cql_group_rules(input);
+    }
+
+    // else
+    return '';
+};
+
+ogc_csw.write_cql_group_rules = function(input) {
+    var boolean_expr = input.condition ? input.condition.toLowerCase() : "and";
+    var constraints = [];
+    if (input.rules) {
+        _.each(input.rules, function(rule) {
+            if (_.isArray(rule)) {
+                if (rule[0].condition) {
+                    // this is a subgroup
+                    constraints.push("(" + ogc_csw.write_cql_group_rules(rule[0]) + ")");
+                } else {
+                    // just append these rules
+                    _.each(rule, function(r) {
+                        constraints.push(ogc_csw.write_cql_constraint(r));
+                    })
+                }
+            } else {
+                constraints.push(ogc_csw.write_cql_constraint(rule));
+            }
+        });
+    } else if (input.length > 0) {
+        _.each(input, function(rule) {
+            constraints.push(ogc_csw.write_cql_constraint(rule));
+        });
+    }
+
+    return constraints.join( " " + boolean_expr + " " );
+};
+
+ogc_csw.write_cql_constraint = function(input) {
+    // write element rule depending on type
+    if (input.type === "location") {
+        return ogc_csw.createCQLBoundsConstraint(input);
+    } else if (input.type === "date" ) {
+        return ogc_csw.createCQLDateConstraint(input);
+    } else {
+        return ogc_csw.createCQLNamedConstraint(input);
+    }
+};
+
+ogc_csw.createCQLBoundsConstraint = function(input) {
+    if (input.field && input.value && input.value.length == 2) {
+        return "BBOX(" + input.field + "," + input.value[0].lon + "," + input.value[0].lat +
+            "," + input.value[1].lon + "," + input.value[1].lat + ")";
+    }
+
+    // else
+    return '';
+};
+
+ogc_csw.createCQLDateConstraint = function(input) {
+    if (input.field && input.operation && input.value) {
+        return input.field + (ogc_csw.cqlOperators[input.operation]).date_op + input.value;
+    }
+};
+
+ogc_csw.createCQLNamedConstraint = function(input) {
+    if (input.field && input.operator && input.value) {
+        return input.field + (ogc_csw.cqlOperators[input.operator]).op + "\'" + input.value + "\'";
+    }
+
+    // else
+    return '';
 };
 
 ogc_csw.getRecordsPost = function(params,input,callback) {

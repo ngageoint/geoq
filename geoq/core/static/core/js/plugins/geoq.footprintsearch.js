@@ -513,7 +513,8 @@ footprints.updateFootprintDataFromCSWServer = function () {
     // check if there are any query rules
     var qb = $('#builder').queryBuilder('getRules');
 
-    ogc_csw.getRecordsPost(params, query_rules, callback);
+    // ogc_csw.getRecordsPost(params, query_rules, callback);
+    ogc_csw.getRecordsGet(params, query_rules, callback);
 
 };
 
@@ -1077,7 +1078,6 @@ footprints.updateFootprintFilteredResults = function (options) {
     for (var i = 0; i < footprints.features.length; i++) {
         var matched = true;
         var feature = footprints.features[i];
-        console.log(feature);
         //Check first if geometry is in bounds (if that's being checked for)
         if (feature.geometry && footprints.filters.in_bounds) {
             if (!footprints.isFeatureInPolygon(feature, workcellGeojson)) {
@@ -1724,14 +1724,15 @@ footprints.addFilterTextbox = function ($holder, schema_item) {
         .attr("id","builder")
         .appendTo($holder);
 
-    var ops = ['equal', 'not_equal', 'less', 'less_or_equal', 'greater', 'greater_or_equal', 'is_null', 'is_not_null', 'begins_with'];
+    var ops = ['equal', 'not_equal', 'less', 'less_or_equal', 'greater', 'greater_or_equal', 'is_null', 'is_not_null', 'contains'];
 
     $('#builder').queryBuilder( {
 
         filters: [
             {id: 'name', field: 'dc:title', label: 'Name', type: 'string', operators: ops},
             {id: 'platform', field: 'dc:subject', label: 'Platform', type: 'string', size: 40, operators: ops},
-            {id: 'cloud', field: 'wst:CloudCover', label: 'Cloud %', type: 'integer', size: 40, operators: ops}
+            {id: 'cloud', field: 'wst:CloudCover', label: 'Cloud %', type: 'integer', size: 40, operators: ops},
+            {id: 'format', field: 'dc:format', label: 'Format', type: 'string', size: 30, operators: ops}
         ]
     });
 
