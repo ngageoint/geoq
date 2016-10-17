@@ -98,6 +98,7 @@ L.MAGELayer = L.GeoJSON.extend({
         window.lastfl = [feature, layer];
         if (feature.properties) {
             var props = feature.properties;
+            var pics = feature.attachments;
 
             var html = "";
             if (props.type) {
@@ -112,6 +113,20 @@ L.MAGELayer = L.GeoJSON.extend({
 
                 html += "Type: " + t + "<br />";
 
+            }
+            if (pics.length > 0) {
+                _.each(pics, function(p) {
+                    // add a thumbnail for each pic
+                    var parser = document.createElement('a');
+                    parser.href = p.url;
+                    parser.host = location.host;
+                    parser.search = "?size=150&oriented=true";
+                    parser.pathname = "/mage" + parser.pathname;   // TODO: figure out how to do this when app isn't at top level
+                    parser.protocol = location.protocol;
+
+                    html += "<p><img src=\'" + parser.href + "\' onclick=\'window.open(\"" + parser.origin + parser.pathname
+                        + "\")\'><br/>";
+                });
             }
             for (p in props) {
                 if ("type" == p || props[p] == "")

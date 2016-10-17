@@ -84,6 +84,32 @@ def get_icon(request,id,type):
         return HttpResponse('{"status":"unable to retrieve icon"}', status=404)
 
 
+def get_attachment(request,id,obs,att):
+    if cache.get('mage.token') is None:
+        # try to log in
+        try:
+            mage_login(request)
+        except requests.ConnectionError:
+            return HttpResponse('{"status":"Can not connect to server"}', status=403)
+
+    try:
+        params = request.GET.dict()
+        params['access_token'] = cache.get('mage.token')
+        r = requests.get('%s/events/%s/observations/%s/attachments/%s' % (settings.MAGE_URL,id,obs,att),
+            params=params, verify=False)
+        headers = r.headers
+        response = HttpResponse()
+        if 'content-type' in headers:
+            response['Content-type'] = headers['content-type']
+        if 'length' in headers:
+            response['Length'] = headers['length']
+        for block in r.iter_content(1024):
+            response.write(block)
+        return response
+    except Exception as e:
+        print('Error retrieving attachment')
+        return HttpResponse('{"status":"unable to retrieve attachment"}', status=404)
+
 
 
 
