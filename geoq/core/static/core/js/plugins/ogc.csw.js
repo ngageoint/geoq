@@ -115,12 +115,4 @@ ogc_csw.createOutlineBoxFromRecord = function(record) {
     return outlineLayer;
 };
 
-ogc_csw.init({
-    server: 'centos.mitre.org',
-    port: '8080',
-    protocol: 'http',
-    path: '/geoserver'
-});
 
-ogc_csw.getCapabilities();
-ogc_csw.getRecords();

@@ -46,10 +46,8 @@
         <script src="{{ STATIC_URL }}core/js/plugins/ogc.csw.js"></script>
     <script src="{{ STATIC_URL }}core/js/daterangepicker.js"></script>
     <script src="{{ STATIC_URL }}core/js/bootstrap_slider/bootstrap-slider.js" type="text/javascript"></script>
-    <script src="{{ STATIC_URL }}js/tablesorter.pager.js"></script>
     <script src="{{ STATIC_URL }}core/js/YouTubeSearch.js"></script>
     <script src="{{ STATIC_URL }}leaflet/mage-leaflet.js"></script>
-    <script src="{{ STATIC_URL }}core/js/query-builder/query-builder.min.js" type="text/javascript"></script>
     <script src="{{ STATIC_URL }}bootstrap/js/bootstrap-select.min.js"></script>
 
     {% for layer in object.job.map.layers %}{% if layer.layer.type == 'Google Maps' %}
