@@ -24,6 +24,23 @@
 /* Borrowed from J. Kilgo's NWS Leaflet layer */
 /* Makes use of Leaflet JS: http://leafletjs.com/ */
 
+L.MarkerClusterGroup.include({
+    setStyle: function(style) {
+        var iconStyle = style;
+        // only way I can seem to make this work is by removing layer
+        if (this.getLayers().length > 0) {
+            if (iconStyle.opacity === 0) {
+                aoi_feature_edit.map.removeLayer(this);
+                this._map = aoi_feature_edit.map;
+            }
+            else {
+                aoi_feature_edit.map.addLayer(this);
+            }
+        }
+    }
+
+});
+
 L.MAGELayer = L.GeoJSON.extend({
     // Options are JSON object found in database core.setting
     options: {
