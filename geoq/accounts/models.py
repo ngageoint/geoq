@@ -151,6 +151,12 @@ class UserAuthorization(models.Model):
             # if they are not staff and they have the permission, remove it.
             self.user.groups.remove(1)
 
+        #If user_profile does not exist, create one for the user
+        try:
+            profile = UserProfile.objects.get(user=self.user)
+        except UserProfile.DoesNotExist:
+            profile = UserProfile.objects.create(user=self.user)
+
         # TODO -- make this work!
         # *** If person is authorized and part of an organization, then they can add people from that org.
 
