@@ -93,10 +93,12 @@ leaflet_helper.layer_conversion = function (lyr, map) {
         // SRJ - DynamicMapLayer looking for an array passed in
         try {
             layerOptions.layers = JSON.parse(layerOptions.layers);
+            // this layer disables features as it wants to be on top. Position it behind other overlays
+            layerOptions['position'] = "back";
         } catch (err) {
             layerOptions.layers = [];
         }
-        outputLayer = new L.esri.dynamicMapLayer(lyr.url, layerOptions);
+        outputLayer = L.esri.dynamicMapLayer(layerOptions);
     } else if (lyr.type == 'ESRI Feature Layer' && esriPluginInstalled) {
         outputLayer = new L.esri.featureLayer(lyr.url, layerOptions);
         if (layerOptions.popupTemplate) {
