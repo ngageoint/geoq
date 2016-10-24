@@ -169,6 +169,7 @@ leaflet_helper.layer_conversion = function (lyr, map) {
         var mageLayer = new L.MAGELayer(map, layerOptions);
         outputLayer = L.markerClusterGroup({
             spiderfyDistanceMultiplier: 2,
+            disableClusteringAtZoom: 18,
             spiderLegPolylineOptions: { weight: 2, color: '#000', opacity: 1.0}
         });
         mageLayer.on("MageLoaded", function(e) {
