@@ -88,19 +88,20 @@ leaflet_helper.layer_conversion = function (lyr, map) {
             log.warn('Unable to create WMTS layer: ' + e.toString());
         }
     } else if (lyr.type == 'ESRI Tiled Map Service' && esriPluginInstalled) {
-        outputLayer = new L.esri.tiledMapLayer(lyr.url, layerOptions);
+        outputLayer = L.esri.tiledMapLayer(layerOptions);
     } else if (lyr.type == 'ESRI Dynamic Map Layer' && esriPluginInstalled) {
         // SRJ - DynamicMapLayer looking for an array passed in
         try {
             layerOptions.layers = JSON.parse(layerOptions.layers);
-            // this layer disables features as it wants to be on top. Position it behind other overlays
-            layerOptions['position'] = "back";
         } catch (err) {
             layerOptions.layers = [];
         }
+        // this layer disables features as it wants to be on top. Position it behind other overlays
+        layerOptions['position'] = "back";
+
         outputLayer = L.esri.dynamicMapLayer(layerOptions);
     } else if (lyr.type == 'ESRI Feature Layer' && esriPluginInstalled) {
-        outputLayer = new L.esri.featureLayer(lyr.url, layerOptions);
+        outputLayer = L.esri.featureLayer(layerOptions);
         if (layerOptions.popupTemplate) {
             var template = layerOptions.popupTemplate;
             outputLayer.bindPopup(function (feature) {
@@ -111,7 +112,7 @@ leaflet_helper.layer_conversion = function (lyr, map) {
         if (layerOptions.createMarker) {
             layerOptions.createMarker = leaflet_helper.createMarker[layerOptions.createMarker];
         }
-        outputLayer = new L.esri.clusteredFeatureLayer(lyr.url, layerOptions);
+        outputLayer = L.esri.Cluster.FeatureLayer(layerOptions);
     } else if (lyr.type == 'GeoJSON' || lyr.type == 'Social Networking Link') {
         outputLayer = leaflet_helper.constructors.geojson(lyr, map);
 
