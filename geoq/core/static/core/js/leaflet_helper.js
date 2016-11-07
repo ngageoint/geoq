@@ -166,6 +166,7 @@ leaflet_helper.layer_conversion = function (lyr, map) {
     } else if (lyr.type == 'OpenSensorHub') {
         outputLayer = new L.SOS(map, layerOptions);
     } else if (lyr.type == 'MAGE') {
+        layerOptions.type = "observations";
         var mageLayer = new L.MAGELayer(map, layerOptions);
         outputLayer = L.markerClusterGroup({
             spiderfyDistanceMultiplier: 2,
@@ -180,6 +181,9 @@ leaflet_helper.layer_conversion = function (lyr, map) {
             outputLayer.addLayer(mageLayer);
         });
 
+    } else if (lyr.type == 'MAGE Users') {
+        layerOptions.type = "users";
+        outputLayer = new L.MAGELayer(map, layerOptions);
     }
 
     //Make sure the name is set for showing up in the layer menu

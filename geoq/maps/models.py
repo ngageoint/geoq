@@ -88,6 +88,7 @@ SERVICE_TYPES = (
                 ('NWS Weather Alerts', 'NWS Weather Alerts'),
                 ('OpenSensorHub','OpenSensorHub'),
                 ('MAGE','MAGE'),
+                ('MAGE Users', 'MAGE Users'),
                 #('MapBox', 'MapBox'),
                 #('TileServer','TileServer'),
                 #('GetCapabilities', 'GetCapabilities'),

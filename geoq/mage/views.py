@@ -21,6 +21,7 @@ def mage_login(request):
             expirationDatetime = datetime.strptime(resp['expirationDate'],'%Y-%m-%dT%H:%M:%S.%fZ')
             cache.set("mage.token", resp['token'], (expirationDatetime-datetime.now()).seconds)
         except Exception as e:
+            import pdb; pdb.set_trace()
             print('Unable to connect to MAGE: %s' % e.msg)
             raise requests.exceptions.ConnectionError('Unable to connect to MAGE server')
 
@@ -42,6 +43,23 @@ def get_events(request):
         print('Error retrieving events')
         return HttpResponse('{"status":"Unable to retrieve Events"}', status=500)
 
+def get_all_users(request):
+    if cache.get('mage.token') is None:
+        # try to log in
+        try:
+            mage_login(request)
+        except requests.exceptions.ConnectionError:
+            return HttpResponse('{"status":"Can not connect to server"}', status=403)
+
+    try:
+        params = {'access_token': cache.get('mage.token') }
+        r = requests.get(settings.MAGE_URL+'/users',params=params, verify=False)
+        return HttpResponse(r.text, status=200, mimetype="application/json")
+    except Exception as e:
+        print('Error retrieving users')
+        return HttpResponse('{"status":"Unable to retrieve Events"}', status=500)
+
+
 def get_observations(request, id):
     if cache.get('mage.token') is None:
         # try to log in
@@ -52,6 +70,10 @@ def get_observations(request, id):
 
     try:
         params = {'access_token': cache.get('mage.token') }
+        if len(request.GET) > 0:
+            for key,val in request.GET.items():
+                params[key] = val;
+
         r = requests.get('%s/events/%s/observations' % (settings.MAGE_URL,id),params=params, verify=False)
         return HttpResponse(r.text, status=200, mimetype="application/json")
     except Exception as e:
@@ -110,6 +132,21 @@ def get_attachment(request,id,obs,att):
         print('Error retrieving attachment')
         return HttpResponse('{"status":"unable to retrieve attachment"}', status=404)
 
+def get_event_users(request, id):
+    if cache.get('mage.token') is None:
+        # try to log in
+        try:
+            mage_login(request)
+        except requests.ConnectionError:
+            return HttpResponse('{"status":"Can not connect to server"}', status=403)
+
+    try:
+        params = {'access_token': cache.get('mage.token') }
+        r = requests.get('%s/events/%s/locations/users' % (settings.MAGE_URL,id),params=params, verify=False)
+        return HttpResponse(r.text, status=200, mimetype="application/json")
+    except Exception as e:
+        print('Error retrieving events')
+        return HttpResponse('{"status":"Unable to retrieve Events"}', status=500)
 
 
 
