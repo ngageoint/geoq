@@ -6,9 +6,7 @@
 
  TODO: Show Workcell as highest vis layer
  TODO: Allow this class to be loaded multiple times in separate namespaces via closure
- TODO: Update pqgrid to v 2.0.4 to improve scrolling
 
- TODO: MINOR: Cloud filter slider in middle, not at 10%
 
  */
 var footprints = {};
@@ -28,19 +26,21 @@ footprints.$error_div = null;
 footprints.outline_layer_group = null;
 footprints.image_layer_group = null;
 footprints.rejected_layer_group = null;
+footprints.accepted_layer_group = null;
 footprints.dataInTable = null;
 
 footprints.defaultFootprintStyle = {color: 'blue', weight: 1};
-footprints.savedFootprintStyle = {color: 'green', weight: 1};
+footprints.acceptedFootprintStyle = {color: 'green', weight: 1};
 footprints.rejectedFootprintStyle = {color: 'red', weight: 1};
 footprints.selectedFootprintStyle = {color: 'yellow', weight: 1};
 footprints.csw_max_records = 50;
 footprints.current_page = 0;
 
+
 footprints.selectStyle = function(status) {
     switch(status) {
         case 'Accepted':
-            return footprints.savedFootprintStyle;
+            return footprints.acceptedFootprintStyle;
         case 'RejectedQuality':
             return footprints.rejectedFootprintStyle;
         case 'Selected':
@@ -55,16 +55,25 @@ footprints.getLayerGroup = function(status) {
     switch(status) {
         case 'RejectedQuality':
             return footprints.rejected_layer_group;
+        case 'Accepted':
+            return footprints.accepted_layer_group;
         default:
             return footprints.outline_layer_group;
     }
 };
 
 footprints.clearFootprints = function() {
-    footprints.features.length = 0;
+    // remove features neither accepted or rejected
+    _.each(footprints.features, function(f,index) {
+        if (f.status === "NotEvaluated") {
+            footprints.features.splice(index,1);
+        }
+    });
+    //footprints.features.length = 0;
     if (footprints.outline_layer_group) {footprints.outline_layer_group.clearLayers();}
     if (footprints.image_layer_group) { footprints.image_layer_group.clearLayers();}
-    footprints.$grid.pqGrid("option", "dataModel", {data: []} );
+
+    $.tablesorter.clearTableBody($('#imagelayer-list'));
 };
 
 footprints.ops = ['equal', 'not_equal', 'less', 'less_or_equal', 'greater', 'greater_or_equal', 'is_null', 'is_not_null',
@@ -117,7 +126,7 @@ footprints.featureSelectFunction = function (feature) {
     console.log("Lookup more info on " + feature.name);
 };
 footprints.featureSelectUrl = null;
-footprints.filters = {in_bounds: true, previously_rejected: false};
+footprints.filters = {in_bounds: true, previously_rejected: false, previously_accepted: true};
 footprints.prompts = {};
 footprints.features = [];
 
@@ -174,6 +183,7 @@ footprints.init = function (options) {
         footprints.outline_layer_group.lastHighlight = {'id': undefined, 'status': undefined};
         footprints.outline_layer_group.addTo(footprints.map);
         footprints.rejected_layer_group = L.layerGroup();
+        footprints.accepted_layer_group = L.layerGroup();
     }
 
     // finally add any layers that have already been vetted
@@ -213,7 +223,8 @@ footprints.buildAccordionPanel = function () {
         }
     });
     footprints.addWorkcellBounds(footprints.$filter_holder);
-    if (footprints.showRejectOption) footprints.addRejectButton(footprints.$filter_holder);
+    footprints.addAcceptedButton(footprints.$filter_holder);
+    footprints.addRejectButton(footprints.$filter_holder);
 
     footprints.addResultTable(footprints.$filter_holder);
     footprints.addHideButton(footprints.$filter_holder);
@@ -262,11 +273,12 @@ footprints.addInitialImages = function () {
             options:{
                 id: data_row.image_id,
                 image_id: data_row.image_id,
-                platformCode: data_row.platform, //TODO: Was this saved?
+                platformCode: data_row.platform,
                 image_sensor: data_row.sensor,
+                format: data_row.format,
                 maxCloudCoverPercentageRate : data_row.cloud_cover,
                 ObservationDate: data_row.acq_date,
-                value: data_row.nef_name,
+                layerName: data_row.nef_name,
                 area: data_row.area,
                 geometry: { rings: [rings]},
                 status: data_row.status,
@@ -633,6 +645,9 @@ footprints.newFeaturesArrived = function (data, url, layer_id, layer_name) {
                     if (style == footprints.rejectedFootprintStyle) {
                         footprints.rejected_layer_group.addLayer(wms);
                     }
+                    else if (style == footprints.acceptedFootprintStyle) {
+                        footprints.accepted_layer_group.addLayer(wms);
+                    }
                     else {
                         footprints.outline_layer_group.addLayer(wms);
                     }
@@ -736,7 +751,12 @@ footprints.removeCSWOutline = function (identifier,status) {
 
 
             // now remove from table
-            var data = footprints.$grid.pqGrid("option","dataModel");
+            var row = $('#imagelayer-list td').filter(function() { return $(this).text() == identifier;}).closest('tr');
+            if (row.length > 0) {
+                row[0].remove();
+                $("#imagelayer-list").trigger('update');
+            }
+/*            var data = footprints.$grid.pqGrid("option","dataModel");
             for (var index = 0; index < data.data.length; index++) {
                 if (data.data[index]['image_id'] == identifier) {
                     data.data.splice(index,1);
@@ -755,7 +775,7 @@ footprints.removeCSWOutline = function (identifier,status) {
             }
 
             footprints.addToResultTable(newData);
-            footprints.$grid.pqGrid("option","dataModel", {data: data.data });
+            footprints.$grid.pqGrid("option","dataModel", {data: data.data });*/
             return;
         }
     });
@@ -764,7 +784,16 @@ footprints.saveInspectedImage = function (identifier, accepted) {
     _.each(footprints.outline_layer_group.getLayers(), function(layer) {
         if (layer.options.image_id === identifier) {
             // find the correct row in the table, then click the save radio button
-            var data = footprints.$grid.pqGrid("option", "dataModel");
+            var row = $('#imagelayer-list td').filter(function() { return $(this).text() == identifier;}).closest('tr');
+            if (row.length > 0) {
+                var inputs = row.find(":input");
+                if (accepted) {
+                    inputs[0].click();
+                } else {
+                    inputs[2].click();
+                }
+            }
+/*            var data = footprints.$grid.pqGrid("option", "dataModel");
             if (data.data && data.data.length > 0) {
                 for (var index = 0; index < data.data.length; index++) {
                     if (data.data[index]['image_id'] == identifier) {
@@ -776,7 +805,7 @@ footprints.saveInspectedImage = function (identifier, accepted) {
                         }
                     }
                 }
-            }
+            }*/
             // remove outline
             // since we're not keeping this one, go ahead and clear from map
             if (! accepted) {
@@ -1074,6 +1103,12 @@ footprints.updateFootprintFilteredResults = function (options) {
 
     var workcellGeojson = footprints.workcellGeojson;
 
+    // check whether to show already accepted outlines or not
+    if (footprints.filters.previously_accepted && !footprints.map.hasLayer(footprints.accepted_layer_group)) {
+        footprints.map.addLayer(footprints.accepted_layer_group);
+    } else if (!footprints.filters.previously_accepted && footprints.map.hasLayer(footprints.accepted_layer_group)) {
+        footprints.map.removeLayer(footprints.accepted_layer_group);
+    }
     // check whether to show rejected outlines or not
     if (footprints.filters.previously_rejected && !footprints.map.hasLayer(footprints.rejected_layer_group)) {
         footprints.map.addLayer(footprints.rejected_layer_group);
@@ -1092,6 +1127,10 @@ footprints.updateFootprintFilteredResults = function (options) {
             }
         }
 
+        // Check if item has been accepted and whether it should be shown
+        if (feature.status && feature.status == "Accepted" && !footprints.filters.previously_accepted) {
+            matched = false;
+        }
         //Check if item has been rejected and rejects shouldn't be shown
         if (feature.status && feature.status == "RejectedQuality" && !footprints.filters.previously_rejected) {
             matched = false;
@@ -1206,7 +1245,7 @@ footprints.updateFootprintFilteredResults = function (options) {
         footprints.$grid.css({
             display: (matched_list.length > 0) ? 'block' : 'none'
         });
-        footprints.$grid.pqGrid("option", "dataModel", {data: flattened_list})
+        //footprints.$grid.pqGrid("option", "dataModel", {data: flattened_list})
         footprints.addToResultTable(flattened_list);
     }
     return matched_list;
@@ -1325,7 +1364,7 @@ footprints.updateValueFromRadio = function(id, value) {
 
     var data = {
         image_id: data_row.image_id,
-        nef_name: data_row.value,
+        nef_name: data_row.layerName,
         sensor: data_row.image_sensor,
         platform: data_row.platformCode,
         cloud_cover: data_row.maxCloudCoverPercentageRate,
@@ -1501,6 +1540,19 @@ footprints.addWorkcellBounds = function ($holder) {
         .on('change', function () {
             var val = $(this).attr('checked');
             footprints.filters.in_bounds = !!val;
+            footprints.updateFootprintFilteredResults();
+        })
+        .appendTo($div);
+};
+footprints.addAcceptedButton = function ($holder) {
+    var $div = $("<div><b>Show items previously accepted:</b> </div>")
+        .appendTo($holder);
+    $('<input>')
+        .attr({type: 'checkbox', value: 'previously_accepted', checked: true})
+        .css({fontSize: '12px', padding: '2px'})
+        .on('change', function () {
+            var val = $(this).attr('checked');
+            footprints.filters.previously_accepted = !!val;
             footprints.updateFootprintFilteredResults();
         })
         .appendTo($div);
