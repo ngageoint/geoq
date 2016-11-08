@@ -63,12 +63,11 @@ footprints.getLayerGroup = function(status) {
 };
 
 footprints.clearFootprints = function() {
-    // remove features neither accepted or rejected
-    _.each(footprints.features, function(f,index) {
-        if (f.status === "NotEvaluated") {
-            footprints.features.splice(index,1);
-        }
+    // remove features that have not been evaluated
+    footprints.features = _.filter(footprints.features, function(f) {
+        return f.status !== "NotEvaluated";
     });
+
     //footprints.features.length = 0;
     if (footprints.outline_layer_group) {footprints.outline_layer_group.clearLayers();}
     if (footprints.image_layer_group) { footprints.image_layer_group.clearLayers();}
@@ -640,7 +639,7 @@ footprints.newFeaturesArrived = function (data, url, layer_id, layer_name) {
                         console.error("No coordinates found. Skipping this layer");
                         break;
                     }
-                    wms.bindPopup(ogc_csw.createLayerPopup(record.options.image_id, record.options));
+                    wms.bindPopup(ogc_csw.createLayerPopup(record.options));
 
                     if (style == footprints.rejectedFootprintStyle) {
                         footprints.rejected_layer_group.addLayer(wms);
