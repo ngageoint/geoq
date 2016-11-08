@@ -67,11 +67,17 @@ footprints.clearFootprints = function() {
     footprints.$grid.pqGrid("option", "dataModel", {data: []} );
 };
 
+footprints.ops = ['equal', 'not_equal', 'less', 'less_or_equal', 'greater', 'greater_or_equal', 'is_null', 'is_not_null',
+                    'contains'];
+
 footprints.schema = [
     {name: 'image_id', title: 'Id', id: true, cswid: 'identifier'},
-    {name: 'layerName', title: 'Name', cswid: 'layerName', show: 'small-table' },
-    {name: 'format', title: 'Format', cswid: 'format', show: 'small-table'},
-    {name: 'platformCode', title: 'Source', filter: 'options', cswid: 'creator', show: 'small-table'},
+    {name: 'layerName', title: 'Name', cswid: 'layerName', show: 'small-table',
+        query_filter: {id: 'name', field: 'dc:title', label: 'Name', type: 'string', operators: footprints.ops} },
+    {name: 'format', title: 'Format', cswid: 'format', show: 'small-table',
+        query_filter: {id: 'format', field: 'dc:format', label: 'Format', type: 'string', size: 30, operators: footprints.ops} },
+    {name: 'platformCode', title: 'Source', filter: 'options', cswid: 'creator', show: 'small-table',
+        query_filter: {id: 'platform', field: 'dc:subject', label: 'Platform', type: 'string', size: 40, operators: footprints.ops} },
     //TODO: Show image name as mouseover or small text field?
     {
         name: 'maxCloudCoverPercentageRate',
@@ -83,7 +89,8 @@ footprints.schema = [
         max: 100,
         start: 10,
         show: 'small-table',
-        sizeMarker: true
+        sizeMarker: true,
+        query_filter: {id: 'cloud', field: 'wst:CloudCover', label: 'Cloud %', type: 'integer', size: 40, operators: footprints.ops}
     },
     {name: 'status', title: 'Status', filter: 'options'},
     {name: 'wmsUrl', title: "WMS Url"},
@@ -190,6 +197,9 @@ footprints.buildAccordionPanel = function () {
     //Show count of items returned
     footprints.addResultCount(footprints.$filter_holder);
 
+    //Add a query filter builder
+    footprints.addFilterTextbox(footprints.$filter_holder);
+
     //For every item in the schema that has a filter, draw the filter chrome and link it to the item
     _.each(footprints.schema, function (schema_item) {
         if (schema_item.filter) {
@@ -199,8 +209,6 @@ footprints.buildAccordionPanel = function () {
                 schema_item.update = footprints.addFilterSliderMax(footprints.$filter_holder, schema_item);
             } else if (schema_item.filter == 'date-range') {
                 schema_item.update = footprints.addFilterDateMax(footprints.$filter_holder, schema_item);
-            } else if (schema_item.filter == 'textbox') {
-                schema_item.update = footprints.addFilterTextbox(footprints.$filter_holder, schema_item);
             }
         }
     });
@@ -1550,25 +1558,19 @@ footprints.addFilterPrompts = function ($content) {
     });
 
 };
-footprints.addFilterTextbox = function ($holder, schema_item) {
+footprints.addFilterTextbox = function ($holder) {
     $("<div><b>Add a search filter:</b></div>")
         .appendTo($holder);
-    footprints.filters[schema_item.name] = '';
 
     var $query_builder = $("<div>")
         .attr("id","builder")
         .appendTo($holder);
 
-    var ops = ['equal', 'not_equal', 'less', 'less_or_equal', 'greater', 'greater_or_equal', 'is_null', 'is_not_null', 'contains'];
+    var query_filters = [];
+    _.each(footprints.schema, function(s) { if (s.query_filter) query_filters.push(s.query_filter); });
 
     $('#builder').queryBuilder( {
-
-        filters: [
-            {id: 'name', field: 'dc:title', label: 'Name', type: 'string', operators: ops},
-            {id: 'platform', field: 'dc:subject', label: 'Platform', type: 'string', size: 40, operators: ops},
-            {id: 'cloud', field: 'wst:CloudCover', label: 'Cloud %', type: 'integer', size: 40, operators: ops},
-            {id: 'format', field: 'dc:format', label: 'Format', type: 'string', size: 30, operators: ops}
-        ]
+        filters: query_filters
     });
 
     return null;
@@ -1699,7 +1701,7 @@ footprints.addFilterOptions = function ($holder, schema_item) {
         var option_ids = [];
 
         _.each(footprints.features, function (feature) {
-            var val = feature[fieldToUpdate] || feature.options[fieldToUpdate];
+            var val = feature[fieldToUpdate];
             if (val) {
                 option_items[val] = feature._geojson ? feature._geojson.layer_id : true;
             }
