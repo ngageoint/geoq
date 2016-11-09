@@ -80,6 +80,8 @@
             return false;
         });
     });
+
+
 </script>
 
     {% compress css %}
@@ -124,7 +126,7 @@
                             </colgroup>
                             <thead>
                             <tr>
-                                <th><input type="checkbox"></th>
+                                <th><input id="batch-assign-workcells" type="checkbox" onclick="job_map.check_all();"></th>
                                 <th>ID</th>
                                 <th>ATC ID</th>
                                 <th>Status</th>

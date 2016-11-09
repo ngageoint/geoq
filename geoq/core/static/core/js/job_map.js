@@ -366,3 +366,12 @@ job_map.assignAOI = function(selected_workcells) {
     }
 };
 
+job_map.check_all = function() {
+    // Get the value of the header checkbox and apply to all rows in table
+    var selected = $('#batch-assign-workcells')[0].checked;
+    var boxes = $('.tablesorter tbody :input');
+    _.each(boxes, function(b) {
+        b.checked = selected;
+    });
+};
+
