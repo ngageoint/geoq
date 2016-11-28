@@ -79,12 +79,12 @@ footprints.ops = ['equal', 'not_equal', 'less', 'less_or_equal', 'greater', 'gre
                     'contains'];
 
 footprints.schema = [
-    {name: 'image_id', title: 'Id', id: true, cswid: 'identifier'},
-    {name: 'layerName', title: 'Name', cswid: 'layerName', show: 'small-table',
+    {name: 'image_id', title: 'Id', id: true},
+    {name: 'layerName', title: 'Name', show: 'small-table',
         query_filter: {id: 'name', field: 'dc:title', label: 'Name', type: 'string', operators: footprints.ops} },
-    {name: 'format', title: 'Format', cswid: 'format', show: 'small-table',
+    {name: 'format', title: 'Format', show: 'small-table',
         query_filter: {id: 'format', field: 'dc:format', label: 'Format', type: 'string', size: 30, operators: footprints.ops} },
-    {name: 'platformCode', title: 'Source', filter: 'options', cswid: 'creator', show: 'small-table',
+    {name: 'platformCode', title: 'Source', filter: 'options', show: 'small-table',
         query_filter: {id: 'platform', field: 'dc:subject', label: 'Platform', type: 'string', size: 40, operators: footprints.ops} },
     //TODO: Show image name as mouseover or small text field?
     {

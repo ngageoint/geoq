@@ -25,21 +25,32 @@ imageviewer.$error_div = null;
 imageviewer.displayed_layers = {};
 
 imageviewer.schema = [
-    {name: 'id', title: 'id', filter: 'hidden', show: 'small-table', index: 5, type: 'int', showSizeMultiplier: 0 },
-    {name: 'wmsUrl', title: 'URL', filter: 'hidden', type: 'string'},
-    {name: 'image_id', title: 'ID', filter: 'options', show: 'small-table', index: 6, type: 'string', showSizeMultiplier: 6},
-    {name: 'sensor', title: 'Sensor', filter: 'options', show: 'small-table', index: 1, type:'string',showSizeMultiplier: 2},
-    {name: 'acq_date',title: 'Date Taken',filter: 'datetime', show: 'small-table', index: 2, type:'date',showSizeMultiplier: 4},
-    {name: 'status', title: 'Done', filter: 'checkbox', show: 'small-table', index:3, type:'bool',showSizeMultiplier: 1}
+    {name: 'image_id', title: 'Id', id: true},
+    {name: 'layerName', title: 'Name', show: 'small-table' },
+    {name: 'format', title: 'Format' },
+    {name: 'platformCode', title: 'Source' },
+    {
+        name: 'maxCloudCoverPercentageRate',
+        title: 'Cloud%'
+    },
+    {name: 'status', title: 'Status'},
+    {name: 'wmsUrl', title: "WMS Url"},
+    {
+        name: 'ObservationDate',
+        title: 'Observe Date',
+        show: 'small-table'
+    }
 ];
+
 
 imageviewer.finishImageUrl = null;
 
-imageviewer.map = aoi_feature_edit.map;
+imageviewer.map = null;
 imageviewer.layerHolder = null;
-imageviewer.workcellGeojson = aoi_feature_edit.aoi_extents_geojson;
+imageviewer.workcellGeojson = null;
 
 imageviewer.image_layer_group = null;
+imageviewer.footprint_layer_group = null;
 
 imageviewer.init = function (options) {
 
@@ -54,12 +65,12 @@ imageviewer.init = function (options) {
     imageviewer.$accordion = $(imageviewer.accordion_id);
     imageviewer.buildAccordionPanel();
 
-    function onEachFeature(feature, layer) {
-        // If this feature has a property named popupContent, show it
-        if (feature.popupContent) {
-            layer.bindPopup(feature.popupContent);
-        }
-    }
+//    function onEachFeature(feature, layer) {
+//        // If this feature has a property named popupContent, show it
+//        if (feature.popupContent) {
+//            layer.bindPopup(feature.popupContent);
+//        }
+//    }
 
     //Set up map and workcells
     if (!imageviewer.map && aoi_feature_edit && aoi_feature_edit.map) {
@@ -70,23 +81,29 @@ imageviewer.init = function (options) {
     }
 
     //Set up GeoJSON layer
-    if (imageviewer.map) {
-        imageviewer.layerHolder = L.geoJson([], {
-            onEachFeature: onEachFeature,
-            style: imageviewer.polyToLayer,
-            pointToLayer: imageviewer.pointToLayer
-        }).addTo(imageviewer.map);
-    } else {
-        console.error("Imageviewer Plugin could not load layerHolder");
-    }
+//    if (imageviewer.map) {
+//        imageviewer.layerHolder = L.geoJson([], {
+//            onEachFeature: onEachFeature,
+//            style: imageviewer.polyToLayer,
+//            pointToLayer: imageviewer.pointToLayer
+//        }).addTo(imageviewer.map);
+//    } else {
+//        console.error("Imageviewer Plugin could not load layerHolder");
+//    }
 
     // Set up layers for overlays
     if (imageviewer.map) {
         imageviewer.image_layer_group = L.layerGroup();
         imageviewer.image_layer_group.lastHighlight = undefined;
         imageviewer.image_layer_group.addTo(imageviewer.map);
+
+        imageviewer.footprint_layer_group = L.layerGroup();
+        imageviewer.footprint_layer_group.lastHighlight = undefined;
+        imageviewer.footprint_layer_group.addTo(imageviewer.map);
     }
 
+    // Now load initial data
+    imageviewer.addInitialImages();
 
 };
 
@@ -105,22 +122,20 @@ imageviewer.addInitialImages = function () {
             options:{
                 id: data_row.image_id,
                 image_id: data_row.image_id,
-                platformCode: data_row.platform, //TODO: Was this saved?
+                platformCode: data_row.platform,
                 image_sensor: data_row.sensor,
+                format: data_row.format,
                 maxCloudCoverPercentageRate : data_row.cloud_cover,
                 ObservationDate: data_row.acq_date,
-                value: data_row.nef_name,
+                layerName: data_row.nef_name,
                 area: data_row.area,
                 geometry: { rings: [rings]},
-                status: data_row.status
+                status: data_row.status,
+                wmsUrl: data_row.wmsUrl
             }
         };
 
-        var layer_name = "Layer";
-        if (footprints.layerNames && footprints.layerNames.length && footprints.layerNames.length >= layer_id) {
-            layer_name = footprints.layerNames[layer_id];
-        }
-        imageviewer.newFeaturesArrived({features:[data]}, "[initial]", layer_id, layer_name);
+        imageviewer.populateTable(data);
     });
 
 };
@@ -142,8 +157,7 @@ imageviewer.buildAccordionPanel = function () {
     imageviewer.addResultCount(imageviewer.$filter_holder);
 
     imageviewer.addResultTable(imageviewer.$filter_holder);
-    var imagelist = imageviewer.updateImageList();
-    //var items_found = imageviewer.updateImageList(imagelist);
+
 };
 
 imageviewer.userMessage = function (text, color) {
@@ -154,7 +168,7 @@ imageviewer.userMessage = function (text, color) {
 };
 
 
-imageviewer.updateImageList = function(options) {
+/*imageviewer.updateImageList = function(options) {
     var width = 280;
     if (aoi_feature_edit.workcell_images && aoi_feature_edit.workcell_images.length) {
         var matched_list = _.where(aoi_feature_edit.workcell_images,{status: "Accepted"});
@@ -204,7 +218,7 @@ imageviewer.updateImageList = function(options) {
         $('#imageviewer-matching-count-total').text(flattened_list.length);
     }
     return flattened_list;
-};
+};*/
 
 imageviewer.updateImageFootprints = function (images) {
     //Add the feature to the map
@@ -300,286 +314,197 @@ imageviewer.popupContentOfFeature = function (feature) {
     });
     return out;
 };
-imageviewer.updateFootprintFilteredResults = function (options) {
-    var matched_list = [];
-    var total = aoi_feature_edit.workcell_images.length
 
-    if (total == 0) return [];
+imageviewer.populateTable = function (data) {
+    var $body = $('#imageviewer-list tbody')[0];
 
-    var workcellGeojson = imageviewer.workcellGeojson;
+    _.each(data, function(d) {
+        var $row = $('<tr>');
+        $('<td>')
+            .text(d.layerName)
+            .appendTo($row);
+        $('<td>')
+            .text(d.ObservationDate)
+            .appendTo($row);
+        $('<td><input type="checkbox"></td>')
+            .appendTo($row);
+        $('<td><input type="checkbox"></td>')
+            .appendTo($row);
+        $('<td><input type="checkbox" class="image-completed"></td>')
+            .appendTo($row);
 
-    //Flatten matched_list to show in data table
-    var flattened_list = [];
-    for (var i = 0; i < matched_list.length; i++) {
-        var feature = matched_list[i];
-        var item = {};
+        $row.appendTo($body);
+    });
 
-        //Only store in the array items mentioned in the schema
-        _.each(imageviewer.schema, function (schema_item) {
-            var fieldToCheck = schema_item.name;
-            var val = feature[fieldToCheck] || feature.attributes[fieldToCheck] || feature._geojson[fieldToCheck];
-
-            if ((schema_item.type && schema_item.type == 'date') || (schema_item.filter && schema_item.filter == 'date-range')) {
-                var date_format = null;
-                if (schema_item.transform == 'day') {
-                    val = val.substr(0, 4) + '-' + val.substr(4, 2) + '-' + val.substr(6, 2);
-                    date_format = "YYYY-MM-DD";
-                }
-                var date_val = moment(val, date_format);
-                if (date_val && date_val.isValid && date_val.isValid()) {
-                    val = date_val.format('YYYY-MM-DD');
-                }
-            }
-
-            item[fieldToCheck] = val;
-        });
-
-        //Pull out the geometry
-        item.geometry = {};
-        if (feature.GeometryType) item.geometry.GeometryType = feature.GeometryType;
-        if (feature.Geometry) item.geometry.Geometry = feature.Geometry;
-        if (feature.geometry) item.geometry.geometry = feature.geometry;
-
-        flattened_list.push(item);
-    }
-
-    //Update counts
-    if (imageviewer.$matching_count) {
-        imageviewer.$matching_count.text(matched_list.length);
-        imageviewer.$matching_total.text(total);
-    }
-    imageviewer.matched = matched_list;
-    imageviewer.matched_flattened = flattened_list;
-
-    //Update the grid
-    if (imageviewer.$grid && imageviewer.$grid.css) {
-        imageviewer.$grid.css({
-            display: (matched_list.length > 0) ? 'block' : 'none'
-        });
-        imageviewer.$grid.pqGrid("option", "dataModel", {data: flattened_list})
-    }
-    return matched_list;
+    // update counts
+    $('#imageviewer-matching-count-completed').text('0');
+    $('#imageviewer-matching-count-total').text($('#imageviewer-list tbody tr').length);
 };
+//imageviewer.updateFootprintFilteredResults = function (options) {
+//    var matched_list = [];
+//    var total = aoi_feature_edit.workcell_images.length
+//
+//    if (total == 0) return [];
+//
+//    var workcellGeojson = imageviewer.workcellGeojson;
+//
+//    //Flatten matched_list to show in data table
+//    var flattened_list = [];
+//    for (var i = 0; i < matched_list.length; i++) {
+//        var feature = matched_list[i];
+//        var item = {};
+//
+//        //Only store in the array items mentioned in the schema
+//        _.each(imageviewer.schema, function (schema_item) {
+//            var fieldToCheck = schema_item.name;
+//            var val = feature[fieldToCheck] || feature.attributes[fieldToCheck] || feature._geojson[fieldToCheck];
+//
+//            if ((schema_item.type && schema_item.type == 'date') || (schema_item.filter && schema_item.filter == 'date-range')) {
+//                var date_format = null;
+//                if (schema_item.transform == 'day') {
+//                    val = val.substr(0, 4) + '-' + val.substr(4, 2) + '-' + val.substr(6, 2);
+//                    date_format = "YYYY-MM-DD";
+//                }
+//                var date_val = moment(val, date_format);
+//                if (date_val && date_val.isValid && date_val.isValid()) {
+//                    val = date_val.format('YYYY-MM-DD');
+//                }
+//            }
+//
+//            item[fieldToCheck] = val;
+//        });
+//
+//        //Pull out the geometry
+//        item.geometry = {};
+//        if (feature.GeometryType) item.geometry.GeometryType = feature.GeometryType;
+//        if (feature.Geometry) item.geometry.Geometry = feature.Geometry;
+//        if (feature.geometry) item.geometry.geometry = feature.geometry;
+//
+//        flattened_list.push(item);
+//    }
+//
+//    //Update counts
+//    if (imageviewer.$matching_count) {
+//        imageviewer.$matching_count.text(matched_list.length);
+//        imageviewer.$matching_total.text(total);
+//    }
+//    imageviewer.matched = matched_list;
+//    imageviewer.matched_flattened = flattened_list;
+//
+//    //Update the grid
+//    if (imageviewer.$grid && imageviewer.$grid.css) {
+//        imageviewer.$grid.css({
+//            display: (matched_list.length > 0) ? 'block' : 'none'
+//        });
+//        imageviewer.$grid.pqGrid("option", "dataModel", {data: flattened_list})
+//    }
+//    return matched_list;
+//};
 imageviewer.addResultCount = function ($holder) {
     var $div = $("<div>")
         .css({fontWeight: 'bold'})
         .appendTo($holder);
 
     imageviewer.$matching_total = $("<span>")
+        .attr({id: 'imageviewer-matching-count-completed'})
+        .text('0')
+        .appendTo($div);
+    $("<span>")
+        .html(' out of ')
+        .appendTo($div);
+    $("<span>")
         .attr({id: 'imageviewer-matching-count-total'})
         .text('0')
         .appendTo($div);
     $("<span>")
-        .html(' images available')
+        .html(' completed')
         .appendTo($div);
 };
+
 imageviewer.addResultTable = function ($holder) {
-    var $grid = $("<div>")
-        .attr({id: "pq-image-grid"})
+    //We can change the max height here when we are testing with many elements.
+    var $grid = $("<div class='tableContainer' style='overflow-x:auto; overflow-y: auto; max-height: 400px'>" +
+                  "<table class='tablesorter' id='imageviewer-list'><colgroup><thead><tr></tr></thead><tbody></tbody></table>")
         .appendTo($holder);
 
-    //Set up table
-    var width = 275;
-    //if (imageviewer.featureSelectFunction || imageviewer.featureSelectUrl) {
-    //    width -= 40;
-    //}
-    var obj = {
-        width: width, height: 180, editable: false, resizeable: false,
-        flexHeight: true, topVisible: false, bottomVisible: false, numberCell: false,
-        scrollModel: {horizontal: true, autoFit: false, lastColumn: 'none'}
+    var $row = $grid.find("tr");
+    _.each( imageviewer.schema, function(item) {
+        if (item.show && item.show === 'small-table') {
+            $row.append("<th>" + item.title + "</th>");
+        }
+    });
+
+    // Additional headers for images
+    $row.append("<th>Show Footprint</th>");
+    $row.append("<th>Show Layer Data</th>");
+    $row.append("<th>Image Complete</th>");
+
+    var $pager = $("<div id='pager' class='pager'><form><img src='/static/images/first.png' class='first' alt='First'/><img src='/static/images/prev.png' class='prev'/><span class='pagedisplay'></span><img src='/static/images/next.png' class='next'/><img src='/static/images/last.png' class='last'/></form></div>")
+        .appendTo($holder);
+
+
+    $("#imagelayer-list").trigger('update');
+
+    var pagerOptions = {
+        // target the pager markup - see the HTML block below
+        container: $(".pager"),
+
+        // Taken from the API Documentation
+        // output string - default is '{page}/{totalPages}'
+        // possible variables: {size}, {page}, {totalPages}, {filteredPages}, {startRow}, {endRow}, {filteredRows} and {totalRows}
+        // also {page:input} & {startRow:input} will add a modifiable input in place of the value
+        output: '{startRow:input} to {endRow}',
+
+        // apply disabled classname (cssDisabled option) to the pager arrows when the rows
+        // are at either extreme is visible; default is true
+        updateArrows: true,
+
+        // starting page of the pager (zero based index)
+        page: 0,
+
+        // Number of visible rows
+        size: footprints.csw_max_records,
+
+        // This is important due to the
+        fixedHeight: false,
+
+        // css class names of pager arrows
+        cssNext: '.next', // next page arrow
+        cssPrev: '.prev', // previous page arrow
+        cssFirst: '.first', // go to first page arrow
+        cssLast: '.last', // go to last page arrow
+        cssGoto: '.gotoPage', // select dropdown to allow choosing a page
+
+        cssPageDisplay: '.pagedisplay', // location of where the "output" is displayed
+        cssPageSize: '.pagesize', // page size selector - select dropdown that sets the "size" option
+        cssDisabled: ''
     };
 
-
-    //Pull out just the columns that will be shown
-    var columns = [];
-    var column_count = 0;
-    var cell_width = 25;
-
-    // Add a 'Load' checkbox to each image
-    columns.push({
-        title: 'Load',
-        type: 'checkBoxSelection',
-        align: "center",
-        sortable: false,
-        width: cell_width,
-        minWidth: cell_width,
-        render: function (ui) {
-            var rowData = ui.rowData;
-            var url = rowData["wmsUrl"] || undefined;
-            var id = rowData["id"];
-
-            return ("<input type='checkbox' id='show-checkbox-" + id + "' onclick='imageviewer.displayImage(\"" + id + "\", \"" + url + "\")' />");
+    $(".tablesorter").tablesorter({
+        theme: 'blue',
+        widgets: ['zebra','scroller'],
+        widgetOptions: {
+            //Sticky headers seems to have some sort of problem. Will h ave to come back to this as it is not pressing ATM.
+            //stickyHeaders_attachTo : $('.tableContainer'),
+            scroller_barWidth: null,
+            scroller_rowHighlight: 'hover'
         }
-    });
-    column_count++;
+    })
 
-    _.each(imageviewer.schema, function (schema_item) {
-        if (schema_item.show && schema_item.show == 'small-table') {
-            if (schema_item.filter && schema_item.filter == 'options') {
-                columns.push({
-                    title: schema_item.title || schema_item.name,
-                    dataType: 'string',
-                    dataIndx: schema_item.name,
-                    width: cell_width * schema_item.showSizeMultiplier,
-                    minWidth: cell_width * schema_item.showSizeMultiplier
-                });
-            }
-            else if (schema_item.filter && schema_item.filter == 'checkbox') {
-                columns.push({
-                    title: schema_item.title || "",
-                    type: 'checkBoxSelection',
-                    dataIndx: schema_item.name,
-                    cls: 'checkboxColumn',
-                    align: "center",
-                    sortable: false,
-                    width:cell_width * schema_item.showSizeMultiplier,
-                    render: function (ui) {
-                        try {
-                            var rowData = ui.rowData, dataIndx = ui.dataIndx;
-                            var val = rowData["examined"];
-                            var id = rowData["id"];
+        // initialize the pager plugin
+        // ****************************
+        .tablesorterPager(pagerOptions)
 
-                            str = "";
-                            if (val) {
-                                str = "checked='checked'";
-                            }
-                        }
-                        catch (exx) {
-                            var laa = exx;
-                        }
-                        return "<input type='checkbox' " + str + " id='finish-checkbox-" + id + "' onclick='imageviewer.finishImage(\"" + id + "\")' />";
-                    },
-                    className: "checkboxColumn"
-                })
-            } else if (schema_item.filter && schema_item.filter == 'hidden') {
-                // add a hidden column with the image id
-                columns.push({
-                    title: schema_item.title || "",
-                    hidden: true,
-                    dataIndx: schema_item.name,
-                    sortable: false
-                });
-            } else if (schema_item.filter && schema_item.filter == 'datetime') {
-                // TODO: create datetime filter object
-                columns.push({
-                    title: schema_item.title || "Date",
-                    dataIndx: schema_item.name,
-                    width: cell_width * schema_item.showSizeMultiplier,
-                    minWidth: cell_width * schema_item.showSizeMultiplier
-                });
-            }
+        // and listen for page changes for us to get updated results
+        .bind('pagerChange pageMoved', function(e,c) {
+            //console.log("moved to page " + c.page);
+        });
 
-            column_count += schema_item.showSizeMultiplier || 1;
-        }
-    });
+    $("#imagelayer-list").trigger('update');
+    //Have to call this function
+    $('#imagelayer-list').trigger('pageAndSize');
 
-    //Shrink them to fit width, apply showSizeMultiplier
-    //_.each(columns, function (column) {
-    //    column.width = parseInt((width / column_count) - 10);
-    //    if (column.showSizeMultiplier) column.width *= column.showSizeMultiplier;
-    //});
 
-    //If featureSelectFunction exists as a function, have a checkbox
-    obj.colModel = [];
-//    if (imageviewer.featureSelectUrl || imageviewer.featureSelectFunction) {
-//        obj.colModel = [
-//            {
-//                title: "Accept",
-//                width: 10,
-//                dataType: "string",
-//                dataIndx: columns.length + 2,
-//                editable: false,
-//                sortable: false,
-//                align: "center",
-//                resizable: false,
-//                render: function (ui) {
-//                    var id = ui.rowIndx;
-//                    var data = ui.data[id];
-//
-//                    var c1 = (data.status && data.status == 'Accepted') ? 'checked' : '';
-//                    var c2 = (!data.status || (data.status && data.status == 'NotEvaluated')) ? 'checked' : '';
-//                    var c3 = (data.status && data.status == 'RejectedQuality') ? 'checked' : '';
-//
-//                    var bg = '<input class="accept" id="r1-' + id + '" type="radio" name="acceptance-' + id + '" '+c1+' value="Accepted"/><label for="r1-' + id + '"></label>';
-//                    bg += '<input class="unsure" id="r2-' + id + '" type="radio" name="acceptance-' + id + '" '+c2+' value="NotEvaluated"/>';
-//                    bg += '<input class="reject" id="r3-' + id + '" type="radio" name="acceptance-' + id + '" '+c3+' value="RejectedQuality"/><label for="r3-' + id + '"></label>';
-//
-//                    return bg;
-//                }
-//            }];
-//        obj.cellClick = function (evt, ui) {
-//            var clicked_on = evt.srcElement;
-//            if (!clicked_on) {
-//                //Firefox
-//                clicked_on = evt.originalEvent.target ? evt.originalEvent.target : false;
-//                if (!clicked_on) {
-//                    throw "imageviewer error - Could not determine what was clicked on using this browser";
-//                }
-//            }
-//
-//            if (clicked_on.nodeName != "INPUT") {
-//                return; //Fires for row and for cell, nly want for cell
-//            }
-//            var $target = $("input:radio[name ='acceptance-" + ui.rowIndx + "']:checked");
-//
-//            var val = $target.val();
-//            if (val && imageviewer.featureSelectUrl) {
-//                var data_row = ui.dataModel.data[ui.rowIndx];
-//                var image_id = data_row.image_id;
-//
-//                var inputs = {
-//                    id: image_id,
-//                    evaluation: val
-//                };
-//
-//                //Apply all the above inputs to the url template to build out the final url
-//                var proxy = leaflet_helper.proxy_path || '/geoq/proxy/';
-//                var url_template = _.template(imageviewer.featureSelectUrl);
-//                var url = url_template(inputs);
-//
-//                if (_.str.startsWith(url, 'http')) url = proxy + url;
-//
-//                var geometry = {
-//                    "type": "Polygon",
-//                    "coordinates": [[]]
-//                };
-//                _.each(data_row.geometry.geometry.rings[0], function(point) {
-//                   geometry.coordinates[0].push(point);
-//                });
-//
-//                var data = {
-//                    image_id: data_row.image_id,
-//                    nef_name: data_row.value,
-//                    sensor: data_row.image_sensor,
-//                    platform: data_row.layerId,
-//                    cloud_cover: data_row.cloud_cover,
-//                    acq_date: data_row.date_image,
-//                    img_geom: JSON.stringify(geometry),
-//                    area: 1,
-//                    status: val,
-//                    workcell: aoi_feature_edit.aoi_id
-//                };
-//
-//                console.log(url);
-//                $.ajax({
-//                    type: "POST",
-//                    url: url,
-//                    data: data,
-//                    dataType: "json",
-//                    success: function (data) {
-//                        console.log(data)
-//                    }
-//                });
-//            } else if (val && imageviewer.featureSelectFunction) {
-//                imageviewer.featureSelectFunction(ui, val);
-//            }
-//        };
-//    }
-    obj.colModel = obj.colModel.concat(columns);
-    //obj.dataModel = {data: imageviewer.matched_flattened};
-
-    $grid.pqGrid(obj);
-    imageviewer.$grid = $grid;
 };
 
 imageviewer.finishImage = function(id) {
