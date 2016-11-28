@@ -655,9 +655,6 @@ aoi_feature_edit.map_init = function (map, bounds) {
         aoi_feature_edit.watch_layer(e.layer, false);
     });
 
-    // for some reason nginx isn't keeping MAX_ZOOM defined in settings.py. TODO: Figure out why
-    // map.options.maxZoom = 21;
-
     var custom_map = aoi_feature_edit.aoi_map_json || {};
     aoi_feature_edit.map = map;
 
@@ -1225,11 +1222,11 @@ aoi_feature_edit.buildDrawingControl = function (drawnItems) {
         draw: {
             circle: false,
             rectangle: false,
-
             markers: aoi_feature_edit.all_markers,
             geomarkers: aoi_feature_edit.all_geomarkers,
             polygons: aoi_feature_edit.all_polygons,
             polylines: aoi_feature_edit.all_polylines
+
         },
         edit: {
             featureGroup: drawnItems,
@@ -1240,6 +1237,7 @@ aoi_feature_edit.buildDrawingControl = function (drawnItems) {
     //Create the drawing objects control
     aoi_feature_edit.map.addControl(drawControl);
     aoi_feature_edit.drawcontrol = drawControl;
+
 
     //Change the color of the icons or add an Image of the icon if there is one
     var icons = $('div.leaflet-draw.leaflet-control').find('a');
@@ -1336,6 +1334,7 @@ aoi_feature_edit.addMapControlButtons = function (map) {
     if ($.inArray("Title",aoi_feature_edit.hidden_tools) == -1) {
         var titleInfoButton = new L.Control.Button(titleInfoOptions).addTo(map);
     }
+
 
     //TODO: Fix to make controls positioning more robust (and force to move to top when created)
     // Quick work-around for moving header to top of the page
@@ -1624,6 +1623,7 @@ aoi_feature_edit.buildDropdownMenu = function() {
 
     return $div;
 };
+
 aoi_feature_edit.complete_button_onClick = function(url) {
     var data = {"feature_ids":feature_manager.featuresInWorkcellAsIds()};
     $.ajax({
