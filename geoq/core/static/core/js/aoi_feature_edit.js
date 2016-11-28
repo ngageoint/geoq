@@ -611,9 +611,6 @@ aoi_feature_edit.map_init = function (map, bounds) {
         aoi_feature_edit.watch_layer(e.layer, false);
     });
 
-    // for some reason nginx isn't keeping MAX_ZOOM defined in settings.py. TODO: Figure out why
-    map.options.maxZoom = 18;
-
     var custom_map = aoi_feature_edit.aoi_map_json || {};
     aoi_feature_edit.map = map;
 
