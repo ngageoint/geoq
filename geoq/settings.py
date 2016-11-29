@@ -187,6 +187,7 @@ MIDDLEWARE_CLASSES = (
     'geoq.core.middleware.UserPermsMiddleware',             # works w/ guardian
     'geoq.core.middleware.Http403Middleware',
     'geoq.core.middleware.UpdateLastActivityMiddleware',
+    'geoq.cors.middleware.corsMiddleware'
 )
 
 # auth setup
@@ -245,12 +246,10 @@ INSTALLED_APPS = (
     'geoq.training',
     'geoq.mage',
 
-
     'django.contrib.gis',
     'django.contrib.humanize',
     'django.contrib.staticfiles',
     'django.contrib.humanize',
-
 
     'compressor',
     'geoexplorer',
