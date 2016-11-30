@@ -96,6 +96,20 @@ L.MAGELayer = L.GeoJSON.extend({
 
                 // signal data loaded
                 _this.fire("MageLoaded");
+            } else if (msg.users_loading) {
+                console.log('MAGE users loading');
+                _this.clearLayers();
+            } else if (msg.users_loaded) {
+                console.log('MAGE users loaded');
+
+                var fc = {
+                    "type": "FeatureCollection",
+                    "features": magehelper.getAllUsers()
+                }
+                _this.addData(fc);
+
+                // signal data loaded
+                _this.fire("MageLoaded");
             }
         };
 
