@@ -8,6 +8,8 @@
     <script src="{{ STATIC_URL }}core/js/leaflet_helper.js"></script>
     <script src="{{ STATIC_URL }}bootstrap/js/bootstrap-dialog.js"></script>
     <script src="{{ STATIC_URL }}core/js/maths.js"></script>
+    <script src="{{ STATIC_URL }}core/js/split-aois.js"></script>
+   	<script src="{{ STATIC_URL }}core/js/geojson-js-utils/geojson-utils.js"></script>
     <script src="{{ STATIC_URL }}core/js/leafletcontrols/leaflet.simple_button.js"></script>
     <script src="{{ STATIC_URL }}leaflet/L.Control.Button.js"></script>
     <script type="text/javascript">
@@ -17,6 +19,9 @@
         var timeToCompletion = 0;
         var map_toggle=false;
         var selected_workcell;
+        
+        // to split workcells
+        split_aois.csrftoken = "{{ csrf_token }}";
 
         var status_colors = [
             {name:'Assigned', color: leaflet_helper.styles.assigned, slug:'assigned'},  //TODO: Are we still using 'Assigned'?
@@ -60,6 +65,7 @@
 
 
                     job_properties = feature.properties;
+                    job_properties._leaflet_id = layer._leaflet_id;
                     {% if user.is_authenticated %}
                     var popupContent = _.template('{% filter escapejs %}{% include "core/job_detail_aoi_popup.html" %}{% endfilter %}', job_properties);
                     layer.bindPopup(popupContent);
@@ -165,7 +171,7 @@
         }
 
         function deleteAOI(id, delete_url) {
-            BootstrapDialog.confirm('Delete AOI # ' + id + '?',
+            BootstrapDialog.confirm('Delete workcell # ' + id + '?',
                     function(result) {
                         if (result) {
                             $.ajax({
@@ -179,6 +185,42 @@
                         }
                     }
             );
+        }
+        
+        function splitAOI(id, delete_url, leaflet_id) {
+        	BootstrapDialog.confirm('Split Workcell into 4?',
+        			function(result) {
+        				var create_url = "{% url 'job-create-aois' object.id %}";
+        				if (result) {
+        					// perform code for doing split. Need layer
+        					var layer = aoi_extents.getLayer(leaflet_id);
+        					if (layer) {
+            					var layers = split_aois.splitFeature(layer,4);
+            					if (layers.length > 0) {
+            						// we were successful in splitting the layer. Delete the old one and add the new ones
+            						$.ajax({
+            							url: delete_url,
+            							type: 'GET'
+            						})
+            						.done(function(data) {
+										// now create the new workcells 
+										$.post(create_url, {aois: JSON.stringify(layers), csrftoken: split_aois.csrftoken}, 
+												function(data, status) {
+													// reload page
+													window.location.reload();
+												});
+            						})
+            						.fail(function() {
+            							alert("Unable to delete original workcell");
+            						})
+            						.always(function() {
+            							// close dialog if necessary
+            						});
+            					}
+        					}
+        				}
+        			}
+        	);
         }
 
         function updatePriority(id, select) {

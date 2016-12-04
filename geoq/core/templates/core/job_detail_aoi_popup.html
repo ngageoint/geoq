@@ -22,8 +22,11 @@
 		<label>Analyst: </label>
 		<span>{{ job_properties.analyst }}</span>
 	</div>
-    <div>
+    <div style="margin-top:5px">
         <a onclick="javascript:deleteAOI('{{ job_properties.id }}','{{ job_properties.delete_url }}');">Delete Work Cell</a>
+    </div>
+    <div style="margin-top:5px">
+    	<a onclick="javascript:splitAOI('{{ job_properties.id }}','{{ job_properties.delete_url }}','{{ job_properties._leaflet_id }}');">Split Work Cell</a>
     </div>
 </div>
 {% endverbatim %}
