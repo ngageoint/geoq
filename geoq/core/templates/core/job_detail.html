@@ -188,14 +188,15 @@
         }
         
         function splitAOI(id, delete_url, leaflet_id) {
-        	BootstrapDialog.confirm('Split Workcell into 4?',
+        	BootstrapDialog.confirm('Split Workcell?',
         			function(result) {
         				var create_url = "{% url 'job-create-aois' object.id %}";
         				if (result) {
         					// perform code for doing split. Need layer
         					var layer = aoi_extents.getLayer(leaflet_id);
         					if (layer) {
-            					var layers = split_aois.splitFeature(layer,4);
+        						var count = parseInt($('#cell-'+id+'-split').val());
+            					var layers = split_aois.splitFeature(layer,count);
             					if (layers.length > 0) {
             						// we were successful in splitting the layer. Delete the old one and add the new ones
             						$.ajax({

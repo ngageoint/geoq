@@ -6,7 +6,7 @@ split_aois.priority_to_use = 5;
 split_aois.splitFeature = function (layer, num) {
 
     var simplerLayer = _.toArray(layer._layers)[0];
-    var layers = split_aois.splitPolygonsIntoSections(simplerLayer, 4);
+    var layers = split_aois.splitPolygonsIntoSections(simplerLayer, num);
     var properties = layer.feature.properties || {};
     var priority = properties.priority || split_aois.priority_to_use || 5;
     properties.priority = priority > 1 ? priority - 1 : 1;
