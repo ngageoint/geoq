@@ -1794,7 +1794,7 @@ aoi_feature_edit.addJOSMControl = function(map) {
 		try {
 			// using the current workcell bounds, determine where to try and zoom JOSM
 			var workcell = L.geoJson(aoi_feature_edit.aoi_extents_geojson, {});
-			var bounds = workcell.getBounds();		
+			var bounds = workcell.getBounds();
 			
 			$.get( "http://localhost:8111/load_and_zoom", {
 				left: bounds._southWest.lng,
@@ -1803,7 +1803,7 @@ aoi_feature_edit.addJOSMControl = function(map) {
 				top: bounds._northEast.lat
 			})
 			.fail(function() {
-				alert("Error contacting JOSM. Make sure it is running on your system");
+				BootstrapDialog.alert("Error contacting JOSM. Make sure it is running on your system");
 			});
 		}
 		catch (e) {
