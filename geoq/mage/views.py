@@ -21,7 +21,7 @@ def mage_login(request):
             expirationDatetime = datetime.strptime(resp['expirationDate'],'%Y-%m-%dT%H:%M:%S.%fZ')
             cache.set("mage.token", resp['token'], (expirationDatetime-datetime.now()).seconds)
         except Exception as e:
-            print('Unable to connect to MAGE: %s' % e.msg)
+            print('Unable to connect to MAGE')
             raise requests.exceptions.ConnectionError('Unable to connect to MAGE server')
 
 
