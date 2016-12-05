@@ -785,6 +785,9 @@ aoi_feature_edit.map_init = function (map, bounds) {
     if ($.inArray("Drawing",aoi_feature_edit.hidden_tools) == -1) {
         aoi_feature_edit.buildDrawingControl(aoi_feature_edit.drawnItems);
     }
+    if ($.inArray("JOSM", aoi_feature_edit.hiddent_tools) == -1) {
+    	aoi_feature_edit.addJOSMControl(map);
+    }
     if ($.inArray("Select", aoi_feature_edit.hidden_tools) == -1) {
         aoi_feature_edit.addSelectControl(map);
     }
@@ -1781,4 +1784,39 @@ aoi_feature_edit.addDeleteControl = function (map) {
     });
     
     delete_control.addTo(map); 
+};
+
+aoi_feature_edit.addJOSMControl = function(map) {
+	function loadAndZoomJOSM() {
+		try {
+			// using the current workcell bounds, determine where to try and zoom JOSM
+			var workcell = L.geoJson(aoi_feature_edit.aoi_extents_geojson, {});
+			var bounds = workcell.getBounds();
+			
+			$.get( "http://localhost:8111/load_and_zoom", {
+				left: bounds._southWest.lng,
+				bottom: bounds._southWest.lat,
+				right: bounds._northEast.lng,
+				top: bounds._northEast.lat
+			})
+			.fail(function() {
+				BootstrapDialog.alert("Error contacting JOSM. Make sure it is running on your system");
+			});
+		}
+		catch (e) {
+			log.warn("Error trying to open JOSM: " );
+		}
+	};
+	
+	var josm_control = new L.Control.Button({
+		'iconUrl': aoi_feature_edit.static_root + 'images/pencil.png',
+		'title': 'Edit in JOSM',
+		'onClick': loadAndZoomJOSM,
+		'position': 'topleft',
+		'hideText': true,
+		'doToggle': false,
+		'toggleStatus': false
+	});
+	
+	josm_control.addTo(map);
 };

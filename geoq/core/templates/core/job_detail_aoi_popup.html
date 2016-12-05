@@ -3,7 +3,7 @@
 	<h5>
 		<a href="{{ job_properties.absolute_url }}">Work Cell # {{ job_properties.id }}</a>
 	</h5>
-	<div>
+	<div style="margin-bottom:3px">
 		<label>Priority: </label>
 		<span><select id="cell-{{ job_properties.id }}" onchange="updatePriority({{ job_properties.id}}, this);" style="width:40px;height:20px;line-height:20px;padding:2px;font-size:10px;">
                 <option value="1" {% if (job_properties.priority == 1){ %} selected="selected" {% } %}>1</option>
@@ -22,7 +22,17 @@
 		<label>Analyst: </label>
 		<span>{{ job_properties.analyst }}</span>
 	</div>
-    <div>
+    <div style="margin-top:3px">
+    	<label>Split into:</label>
+		<span><select id="cell-{{ job_properties.id }}-split" onchange="splitAOI('{{ job_properties.id }}', '{{ job_properties.delete_url }}',
+					'{{ job_properties._leaflet_id }}')" style="width:40px;height:20px;line-height:20px;padding:2px;font-size:10px;">
+			<option value=0 selected="selected">-</option>
+			<option value=2>2</option>
+			<option value=4>4</option>
+			<option value=8>8</option>
+		</select></span>
+    </div>
+    <div style="margin-top:10px">
         <a onclick="javascript:deleteAOI('{{ job_properties.id }}','{{ job_properties.delete_url }}');">Delete Work Cell</a>
     </div>
 </div>

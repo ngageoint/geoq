@@ -50,6 +50,7 @@ L.Control.Button = L.Control.extend({
   setButton: function (options) {
     var button = {
       'text': options.text || '',                 //string
+      'title': options.title || '',				// string
       'iconUrl': options.iconUrl || '',           //string
       'onClick': options.onClick || function(){},           //callback function
       'hideText': !!options.hideText,         //forced bool
@@ -102,7 +103,12 @@ L.Control.Button = L.Control.extend({
     	L.DomUtil.addClass(newButton,'leaflet-buttons-control-toggleon');
 
     if (button.iconUrl != '') {
-        var image = L.DomUtil.create('img', 'leaflet-buttons-control-img', newButton);
+    	// wrap in an anchor tag so we can add title as a hover
+    	var anchor = L.DomUtil.create('a', undefined, newButton);
+    	if (button.title != '') {
+    		anchor.setAttribute('title', button.title);
+    	}
+        var image = L.DomUtil.create('img', 'leaflet-buttons-control-img', anchor);
         image.setAttribute('src',button.iconUrl);
     }
 
