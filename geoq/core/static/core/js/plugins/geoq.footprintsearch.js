@@ -37,6 +37,19 @@ footprints.csw_max_records = 50;
 footprints.current_page = 0;
 
 
+// This would be better in a utilities files
+footprints.keysToLowerCase = function(obj) {
+    _.keys(obj).forEach(function (key) {
+        var k = key.toLowerCase();
+
+        if (k !== key) {
+            obj[k] = obj[key];
+            delete obj[key];
+        }
+    });
+    return (obj);
+};
+
 footprints.selectStyle = function(status) {
     switch(status) {
         case 'Accepted':
@@ -79,7 +92,7 @@ footprints.ops = ['equal', 'not_equal', 'less', 'less_or_equal', 'greater', 'gre
                     'contains'];
 
 footprints.schema = [
-    {name: 'image_id', title: 'Id', id: true},
+    {name: 'image_id', title: 'Id', id: true, show: 'small-table', type: 'string'},
     {name: 'layerName', title: 'Name', show: 'small-table',
         query_filter: {id: 'name', field: 'dc:title', label: 'Name', type: 'string', operators: footprints.ops} },
     {name: 'format', title: 'Format', show: 'small-table',
@@ -743,7 +756,11 @@ footprints.removeCSWOutline = function (identifier,status) {
             // see if there's an image layer as well. If so, remove it
             if (layer.image_layer) {
                 // footprints.image_layer_group.removeLayer(layer.image_layer);
-                layer.image_layer.setStyle({opacity: 0, fillOpacity: 0});
+                if (layer.image_layer.setStyle) {
+                    layer.image_layer.setStyle({opacity: 0, fillOpacity: 0});
+                } else if (layer.image_layer.setOpacity) {
+                    layer.image_layer.setOpacity(0);
+                }
             }
 
             footprints.getLayerGroup(status).removeLayer(layer);
@@ -755,26 +772,7 @@ footprints.removeCSWOutline = function (identifier,status) {
                 row[0].remove();
                 $("#imagelayer-list").trigger('update');
             }
-/*            var data = footprints.$grid.pqGrid("option","dataModel");
-            for (var index = 0; index < data.data.length; index++) {
-                if (data.data[index]['image_id'] == identifier) {
-                    data.data.splice(index,1);
-                    index--;
-                    break;
-                }
-            }
 
-            var newData = footprints.dataInTable;
-            for (var index = 0; index < newData.length; index++) {
-                if (newData[index]['image_id'] == identifier) {
-                    newData.splice(index,1);
-                    index--;
-                    break;
-                }
-            }
-
-            footprints.addToResultTable(newData);
-            footprints.$grid.pqGrid("option","dataModel", {data: data.data });*/
             return;
         }
     });
@@ -792,23 +790,17 @@ footprints.saveInspectedImage = function (identifier, accepted) {
                     inputs[2].click();
                 }
             }
-/*            var data = footprints.$grid.pqGrid("option", "dataModel");
-            if (data.data && data.data.length > 0) {
-                for (var index = 0; index < data.data.length; index++) {
-                    if (data.data[index]['image_id'] == identifier) {
-                        // index is the row. if accepted is true, we want to keep it. Otherwise reject
-                        if (accepted) {
-                            $('#r1-'+index).click();
-                        } else {
-                            $('#r3-'+index).click();
-                        }
-                    }
-                }
-            }*/
-            // remove outline
-            // since we're not keeping this one, go ahead and clear from map
-            if (! accepted) {
-                footprints.removeCSWOutline(identifier);
+
+            // remove image
+            if (layer.image_layer) {
+                footprints.image_layer_group.removeLayer(layer.image_layer);
+            }
+
+            // set footprint to appropriate style, either accepted or rejected
+            if (accepted) {
+                layer.setStyle(footprints.acceptedFootprintStyle);
+            } else {
+                layer.setStyle(footprints.rejectedFootprintStyle);
             }
         }
     })
@@ -823,13 +815,14 @@ footprints.replaceCSWOutlineWithLayer = function (identifier) {
                 layer.unbindPopup();
                 var func = 'footprints.saveInspectedImage("' + layer.options.image_id + '", ' + true + ')';
                 var func2 = 'footprints.saveInspectedImage("' + layer.options.image_id + '", ' + false + ')';
-                var html = "<p><a href=\'#\' onclick=\'" + func + "\'>Save Image for Analysis</a><br/><a href=\'#\' onclick=\'" + func2 + "\'>Remove Image</a></p>";
+                var html = "<p><a href=\'#\' onclick=\'" + func + "\'>Save Image for Analysis</a><br/><a href=\'#\' onclick=\'" + func2 + "\'>Reject Image</a></p>";
                 layer.bindPopup(html);
 
                 var parser = document.createElement('a');
                 parser.href = layer.options.wmsUrl;
                 var search = parser.search.substring(1);
                 var parts = JSON.parse('{"' + decodeURI(search).replace(/"/g, '\\"').replace(/&amp;/g, '&').replace(/&/g, '","').replace(/=/g,'":"') + '"}');
+                footprints.keysToLowerCase(parts);
                 if (parts.service === 'WMS') {
                     newlayer = L.tileLayer.wms(parser.protocol + "//" + parser.host + parser.pathname, {
                         layers: parts.layers,
