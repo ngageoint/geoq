@@ -221,6 +221,9 @@ aoi_feature_edit.getMapTextDivSize = function(text){
     }
     return mapTextSize;
 };
+aoi_feature_edit.showPanel = function(panelname) {
+    return $.inArray(panelname, site_settings.hidden_panels[aoi_feature_edit.status]) == -1
+};
 aoi_feature_edit.buildCustomIcon = function (feature, featureType) {
     feature.properties = feature.properties || {};
     var featureTypeID = parseInt(feature.properties.template);
@@ -1115,46 +1118,24 @@ aoi_feature_edit.map_init = function (map, bounds) {
 
     $('div.leaflet-draw.leaflet-control').find('a').popover({trigger:"hover",placement:"right"});
 
-    //footprints.init({
-	 //   url_template: 'http://dev.femadata.com/arcgis/rest/services/ImageEvents/ImageEvents/MapServer/{{layer}}/query?geometry={{bounds}}&geometryType=esriGeometryEnvelope&spatialRel=esriSpatialRelIntersects&outFields=*&outSR=4326&f=json',
-		//layerList: [1,2,3,4,5,6,7,8,9],
-		///*promptFields: [
-		//	       {name: 'mission', title: 'Mission ID#', popover: 'Comma-separated list of missions to search for', default: '75, 76', type: 'integer', format:'where', compare:'='}
-		//	       ],
-		//*/
-		//title: 'CAP Image',
-		//markerColorMax: '#ffdf00',
-		//markerColorMin: '#332200',
-		//schema: [
-		//	 {name: 'Id', id: true, visualize: 'none'},
-		//	 {name: 'layerId', title:'Image Type', color_by_layerid:true, filter:'options', show: 'small-table'},
-		//	 {name: 'EXIFCameraMaker', title: 'Camera Type', filter: 'options'},
-		//	 {name: 'ImageMissionName', title: 'Mission Name', filter: 'options', show: 'small-table', showSizeMultiplier: 2},
-		//	 {name: 'Altitude', title: 'Alt', type: 'integer', filter: 'slider-max', min: 0, max: 10000, start: 2000, show: 'small-table', sizeMarker: true},
-		//	 {name: 'Heading', title: 'Dir', type: 'integer', show: 'small-table'},
-		//	 {name: 'UploadDate', title: 'Date', type: 'date', filter: 'date-range', initialDateRange: 100, colorMarker: true},
-		//	 {name: 'ThumbnailURL', title: 'Thumbnail', visualize: 'thumbnail', linkField: 'ImageURL'},
-		//	 {name: 'Filename', title: 'File Name', filter: 'textbox', visualize: 'none', onNotFound: function (name) {
-		//		 console.log("TODO: Load If not found: " + name)
-		//		     }}
-		//	 ],
-		//featureSelectFunction: null
-    //            });
+    if (aoi_feature_edit.showPanel(footprints.plugin_title)) {
+        footprints.init({
+            url_template: '/geoq/api/test/image_footprints/?bbox={{bounds}}',
+            layerList: [1],
+            title: 'Images',
+            markerColorMax: '#ffdf00',
+            markerColorMin: '#332200',
+            showRejectOption: true,
+            featureSelectUrl: '/geoq/api/workcell-image/{{id}}'
+        });
+    }
 
+    if (aoi_feature_edit.showPanel(imageviewer.plugin_title)) {
+        imageviewer.init({
+            finishImageUrl: '/geoq/api/workcell-image/{{id}}/examined'
+        });
+    }
 
-    footprints.init({
-        url_template: '/geoq/api/test/image_footprints/?bbox={{bounds}}',
-        layerList: [1],
-        title: 'Images',
-        markerColorMax: '#ffdf00',
-        markerColorMin: '#332200',
-        showRejectOption: true,
-        featureSelectUrl: '/geoq/api/workcell-image/{{id}}'
-    });
-
-    imageviewer.init({
-        finishImageUrl: '/geoq/api/workcell-image/{{id}}/examined'
-    });
 
     //Resize the map
     aoi_feature_edit.mapResize();
