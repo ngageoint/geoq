@@ -6,7 +6,6 @@
 
  TODO: Show Workcell as highest vis layer
  TODO: Allow this class to be loaded multiple times in separate namespaces via closure
- TODO: Update pqgrid to v 2.0.4 to improve scrolling
 
  */
 var imageviewer = {};
@@ -24,8 +23,12 @@ imageviewer.$matching_total = null;
 imageviewer.$error_div = null;
 imageviewer.displayed_layers = {};
 
+imageviewer.defaultFootprintStyle = {color: 'blue', weight: 1, opacity: 0.8, fillOpacity: 0.5};
+imageviewer.hiddenFootprintStyle = {color: 'blue', weight: 1, opacity: 0, fillOpacity: 0};
+
 imageviewer.schema = [
     {name: 'image_id', title: 'Id', id: true},
+    {name: 'id', title: 'GeoQ Id' },
     {name: 'layerName', title: 'Name', show: 'small-table' },
     {name: 'format', title: 'Format' },
     {name: 'platformCode', title: 'Source' },
@@ -65,13 +68,6 @@ imageviewer.init = function (options) {
     imageviewer.$accordion = $(imageviewer.accordion_id);
     imageviewer.buildAccordionPanel();
 
-//    function onEachFeature(feature, layer) {
-//        // If this feature has a property named popupContent, show it
-//        if (feature.popupContent) {
-//            layer.bindPopup(feature.popupContent);
-//        }
-//    }
-
     //Set up map and workcells
     if (!imageviewer.map && aoi_feature_edit && aoi_feature_edit.map) {
         imageviewer.map = aoi_feature_edit.map;
@@ -79,17 +75,6 @@ imageviewer.init = function (options) {
     if (!imageviewer.workcellGeojson && aoi_feature_edit && aoi_feature_edit.aoi_extents_geojson) {
         imageviewer.workcellGeojson = aoi_feature_edit.aoi_extents_geojson;
     }
-
-    //Set up GeoJSON layer
-//    if (imageviewer.map) {
-//        imageviewer.layerHolder = L.geoJson([], {
-//            onEachFeature: onEachFeature,
-//            style: imageviewer.polyToLayer,
-//            pointToLayer: imageviewer.pointToLayer
-//        }).addTo(imageviewer.map);
-//    } else {
-//        console.error("Imageviewer Plugin could not load layerHolder");
-//    }
 
     // Set up layers for overlays
     if (imageviewer.map) {
@@ -120,7 +105,7 @@ imageviewer.addInitialImages = function () {
         //Convert the json output from saved images into the format the list is expecting
         var data = {
             options:{
-                id: data_row.image_id,
+                id: data_row.id,
                 image_id: data_row.image_id,
                 platformCode: data_row.platform,
                 image_sensor: data_row.sensor,
@@ -136,6 +121,14 @@ imageviewer.addInitialImages = function () {
         };
 
         imageviewer.populateTable(data);
+
+        // now add footprint to map, but not shown
+        var style = imageviewer.defaultFootprintStyle;
+        var footprint = ogc_csw.createPolygonFromGeometry(data.options.geometry, data.options, imageviewer.defaultFootprintStyle);
+        footprint.bindPopup("<p><a href='#'>Open with RemoteView</a></p>");
+
+        imageviewer.footprint_layer_group.addLayer(footprint);
+        footprint.setStyle(imageviewer.hiddenFootprintStyle);
     });
 
 };
@@ -166,59 +159,6 @@ imageviewer.userMessage = function (text, color) {
         .css({backgroundColor: color || ''})
         .delay(3000).fadeOut('slow');
 };
-
-
-/*imageviewer.updateImageList = function(options) {
-    var width = 280;
-    if (aoi_feature_edit.workcell_images && aoi_feature_edit.workcell_images.length) {
-        var matched_list = _.where(aoi_feature_edit.workcell_images,{status: "Accepted"});
-    } else {
-        return [];
-    }
-
-    var flattened_list = [];
-    for (var i = 0; i < matched_list.length; i++) {
-        var feature = matched_list[i];
-        var item = {};
-
-        //Only store in the array items mentioned in the schema
-        _.each(imageviewer.schema, function (schema_item) {
-            var fieldToCheck = schema_item.name;
-            var val = feature[fieldToCheck];
-
-            if ((schema_item.type && schema_item.type == 'date') || (schema_item.filter && schema_item.filter == 'date-range')) {
-                var date_format = null;
-                if (schema_item.transform == 'day') {
-                    val = val.substr(0, 4) + '-' + val.substr(4, 2) + '-' + val.substr(6, 2);
-                    date_format = "YYYY-MM-DD";
-                }
-                var date_val = moment(val, date_format);
-                if (date_val && date_val.isValid && date_val.isValid()) {
-                    val = date_val.format('YYYY-MM-DD');
-                }
-            }
-
-            if (schema_item.type && schema_item.type == 'bool') {
-                val = (val == "true");
-            }
-
-            item[fieldToCheck] = val;
-        });
-
-        flattened_list.push(item);
-    }
-
-
-    //Update the grid
-    if (imageviewer.$grid && imageviewer.$grid.css) {
-        imageviewer.$grid.css({
-            display: (flattened_list.length > 0) ? 'block' : 'none'
-        });
-        imageviewer.$grid.pqGrid("option", "dataModel", {data: flattened_list});
-        $('#imageviewer-matching-count-total').text(flattened_list.length);
-    }
-    return flattened_list;
-};*/
 
 imageviewer.updateImageFootprints = function (images) {
     //Add the feature to the map
@@ -326,11 +266,14 @@ imageviewer.populateTable = function (data) {
         $('<td>')
             .text(d.ObservationDate)
             .appendTo($row);
-        $('<td><input type="checkbox"></td>')
+        $('<td><input type="checkbox" onclick="imageviewer.showFootprint(this);" value="' + d.id + '"></td>')
             .appendTo($row);
-        $('<td><input type="checkbox"></td>')
+        $('<td><input type="checkbox" onclick="imageviewer.showLayer(this);" value="' + d.id + '"></td>')
             .appendTo($row);
         $('<td><input type="checkbox" class="image-completed"></td>')
+            .appendTo($row);
+        $('<td style="display:none;">' + JSON.stringify(data.options) + '</td>')
+            .attr('id', 'details-' + data.options.id)
             .appendTo($row);
 
         $row.appendTo($body);
@@ -340,66 +283,49 @@ imageviewer.populateTable = function (data) {
     $('#imageviewer-matching-count-completed').text('0');
     $('#imageviewer-matching-count-total').text($('#imageviewer-list tbody tr').length);
 };
-//imageviewer.updateFootprintFilteredResults = function (options) {
-//    var matched_list = [];
-//    var total = aoi_feature_edit.workcell_images.length
-//
-//    if (total == 0) return [];
-//
-//    var workcellGeojson = imageviewer.workcellGeojson;
-//
-//    //Flatten matched_list to show in data table
-//    var flattened_list = [];
-//    for (var i = 0; i < matched_list.length; i++) {
-//        var feature = matched_list[i];
-//        var item = {};
-//
-//        //Only store in the array items mentioned in the schema
-//        _.each(imageviewer.schema, function (schema_item) {
-//            var fieldToCheck = schema_item.name;
-//            var val = feature[fieldToCheck] || feature.attributes[fieldToCheck] || feature._geojson[fieldToCheck];
-//
-//            if ((schema_item.type && schema_item.type == 'date') || (schema_item.filter && schema_item.filter == 'date-range')) {
-//                var date_format = null;
-//                if (schema_item.transform == 'day') {
-//                    val = val.substr(0, 4) + '-' + val.substr(4, 2) + '-' + val.substr(6, 2);
-//                    date_format = "YYYY-MM-DD";
-//                }
-//                var date_val = moment(val, date_format);
-//                if (date_val && date_val.isValid && date_val.isValid()) {
-//                    val = date_val.format('YYYY-MM-DD');
-//                }
-//            }
-//
-//            item[fieldToCheck] = val;
-//        });
-//
-//        //Pull out the geometry
-//        item.geometry = {};
-//        if (feature.GeometryType) item.geometry.GeometryType = feature.GeometryType;
-//        if (feature.Geometry) item.geometry.Geometry = feature.Geometry;
-//        if (feature.geometry) item.geometry.geometry = feature.geometry;
-//
-//        flattened_list.push(item);
-//    }
-//
-//    //Update counts
-//    if (imageviewer.$matching_count) {
-//        imageviewer.$matching_count.text(matched_list.length);
-//        imageviewer.$matching_total.text(total);
-//    }
-//    imageviewer.matched = matched_list;
-//    imageviewer.matched_flattened = flattened_list;
-//
-//    //Update the grid
-//    if (imageviewer.$grid && imageviewer.$grid.css) {
-//        imageviewer.$grid.css({
-//            display: (matched_list.length > 0) ? 'block' : 'none'
-//        });
-//        imageviewer.$grid.pqGrid("option", "dataModel", {data: flattened_list})
-//    }
-//    return matched_list;
-//};
+
+imageviewer.showFootprint = function(box) {
+    var id = $(box).val();
+    var layer = _.find(imageviewer.footprint_layer_group.getLayers(), function(o) { return o.options.id == id;});
+    if ($(box).is(':checked')) {
+        // show the layer
+        if (layer) {
+            layer.setStyle(imageviewer.defaultFootprintStyle);
+        }
+    } else {
+        if (layer) {
+            layer.setStyle(imageviewer.hiddenFootprintStyle);
+        }
+    }
+};
+
+imageviewer.showLayer = function(box) {
+    var id = $(box).val();
+    var details = JSON.parse($('#details-' + id).text()) || {};
+    var layer = _.find(imageviewer.image_layer_group.getLayers(), function(o) { return o.options.id == id;});
+    if ($(box).is(':checked')) {
+        if (layer) {
+            // layer was already loaded. Just display
+            layer.setOpacity(1.0);
+        } else {
+            if (details.wmsUrl) {
+                options = {url : details.wmsUrl };
+                var layer = layerBuilder.buildLayer(layerBuilder.layers.wms, options );
+                if (layer) {
+                    layer.options.id = id;
+                    imageviewer.image_layer_group.addLayer(layer);
+                }
+            }
+        }
+    } else {
+        if (layer && layer.setOpacity) {
+            // hide the layer
+            layer.setOpacity(0);
+        }
+    }
+
+};
+
 imageviewer.addResultCount = function ($holder) {
     var $div = $("<div>")
         .css({fontWeight: 'bold'})
@@ -430,7 +356,11 @@ imageviewer.addResultTable = function ($holder) {
     var $row = $grid.find("tr");
     _.each( imageviewer.schema, function(item) {
         if (item.show && item.show === 'small-table') {
-            $row.append("<th>" + item.title + "</th>");
+            var $header = $("<th>" + item.title + "</th>");
+            if (item.type && item.type === 'hidden') {
+                $header.hide();
+            }
+            $row.append($header);
         }
     });
 
