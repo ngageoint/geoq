@@ -34,7 +34,8 @@ layerBuilder.checkParameters = function( type, parameters ) {
     return valid;
 };
 
-layerBuilder.buildLayer = function( type, parameters) {
+layerBuilder.buildLayer = function( format, parameters) {
+    var type = _.find(layerBuilder.layers, function(layer) { return layer.format == format;})
     return type.builder(parameters);
 };
 
@@ -58,12 +59,20 @@ layerBuilder.WMS = function( parameters ) {
 };
 
 layerBuilder.WMTS = function( parameters ) {
+    var defaults = {tileSize: 256, noWrap: true, continuousWorld: true, format: 'image/png'};
 
+    try {
+        newLayer = new L.tileLayer(parameters.url, defaults);
+    }
+    catch (e) {
+        log.warn('Unable to create WMTS layer: ' + e.toString());
+    }
+
+    return newLayer;
 };
 
 
-
 layerBuilder.layers = {
-    wms: { builder: layerBuilder.WMS, parameters: ["url","format"]},
-    wmts: { builder: layerBuilder.WMTS, parameters: ["url","subdomains","maxZoom","minZoom"]}
+    wms: { builder: layerBuilder.WMS, format: "OGC:WMS", parameters: ["url","format"]},
+    wmts: { builder: layerBuilder.WMTS, format: "OGC:WMTS", parameters: ["url","subdomains","maxZoom","minZoom"]}
 };

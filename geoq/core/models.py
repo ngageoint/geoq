@@ -528,7 +528,7 @@ class WorkcellImage(models.Model):
             img_geom=str(self.img_geom.geojson),
             area=float(area),
             status=str(self.status),
-            wmsUrl=str(self.wmsUrl),
+            url=str(self.wmsUrl),
             workcell=int(self.workcell.id)
         )
         return _json

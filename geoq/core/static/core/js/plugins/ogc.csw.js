@@ -17,7 +17,7 @@ ogc_csw.current_layer_list = [];
 
 ogc_csw.schema = {
     'image_id': { key: 'dc:identifier', default: 'unknown'},
-    'wmsUrl': { key: 'dct:references', default: null },
+    'url': { key: 'dct:references', default: null },
     'format': { key: 'dc:format', default: 'OGC:WMS'},
     'ObservationDate': { key: 'dct:modified', default: moment().format('YYYY-MM-DD')},
     'maxCloudCoverPercentageRate': { key: null, default: 1},

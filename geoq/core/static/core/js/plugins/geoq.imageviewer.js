@@ -37,7 +37,7 @@ imageviewer.schema = [
         title: 'Cloud%'
     },
     {name: 'status', title: 'Status'},
-    {name: 'wmsUrl', title: "WMS Url"},
+    {name: 'url', title: "Url"},
     {
         name: 'ObservationDate',
         title: 'Observe Date',
@@ -116,7 +116,7 @@ imageviewer.addInitialImages = function () {
                 area: data_row.area,
                 geometry: { rings: [rings]},
                 status: data_row.status,
-                wmsUrl: data_row.wmsUrl
+                url: data_row.url
             }
         };
 
@@ -308,9 +308,8 @@ imageviewer.showLayer = function(box) {
             // layer was already loaded. Just display
             layer.setOpacity(1.0);
         } else {
-            if (details.wmsUrl) {
-                options = {url : details.wmsUrl };
-                var layer = layerBuilder.buildLayer(layerBuilder.layers.wms, options );
+            if (details.url) {
+                var layer = layerBuilder.buildLayer(details.format, details );
                 if (layer) {
                     layer.options.id = id;
                     imageviewer.image_layer_group.addLayer(layer);
@@ -450,44 +449,6 @@ imageviewer.finishImage = function(id) {
             console.log(data)
         }
     });
-};
-
-imageviewer.displayImage = function(id, url) {
-    if (! url) {
-        return;
-    }
-    var showImage = $('#show-checkbox-'+id).is(':checked');
-
-    if (showImage) {
-        // if a layer for this image has already been created, then display it again.
-        // else go ahead and create a WMS layer using a layer name we get from somewhere...
-        var layerOptions = {};
-        if (imageviewer.displayed_layers[id]) {
-            imageviewer.displayed_layers[id].setOpacity(1.0);
-        } else {
-            var parser = document.createElement('a');
-            parser.href = url;
-            var search = parser.search.substring(1);
-            var parts = JSON.parse('{"' + decodeURI(search).replace(/"/g, '\\"').replace(/&amp;/g, '&').replace(/&/g, '","').replace(/=/g,'":"') + '"}');
-            if (parts.service === 'WMS') {
-                newlayer = L.tileLayer.wms(parser.protocol + "//" + parser.host + parser.pathname, {
-                    layers: parts.layers,
-                    format: 'image/png',
-                    transparent: true,
-                    attribution: parser.host
-                });
-
-                newlayer.addTo(imageviewer.map);
-                imageviewer.displayed_layers[id] = newlayer;
-            }
-        }
-
-    } else {
-        // make sure we have a handle to the layer
-        if (imageviewer.displayed_layers[id]) {
-            imageviewer.displayed_layers[id].setOpacity(0.0);
-        }
-    }
 };
 
 

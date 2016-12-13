@@ -37,19 +37,6 @@ footprints.csw_max_records = 50;
 footprints.current_page = 0;
 
 
-// This would be better in a utilities files
-footprints.keysToLowerCase = function(obj) {
-    _.keys(obj).forEach(function (key) {
-        var k = key.toLowerCase();
-
-        if (k !== key) {
-            obj[k] = obj[key];
-            delete obj[key];
-        }
-    });
-    return (obj);
-};
-
 footprints.selectStyle = function(status) {
     switch(status) {
         case 'Accepted':
@@ -114,7 +101,7 @@ footprints.schema = [
         query_filter: {id: 'cloud', field: 'wst:CloudCover', label: 'Cloud %', type: 'integer', size: 40, operators: footprints.ops}
     },
     {name: 'status', title: 'Status', filter: 'options'},
-    {name: 'wmsUrl', title: "WMS Url"},
+    {name: 'url', title: "Url"},
     {
         name: 'ObservationDate',
         title: 'Observe Date',
@@ -294,7 +281,7 @@ footprints.addInitialImages = function () {
                 area: data_row.area,
                 geometry: { rings: [rings]},
                 status: data_row.status,
-                wmsUrl: data_row.wmsUrl
+                url: data_row.url
             }
         };
 
@@ -818,26 +805,39 @@ footprints.replaceCSWOutlineWithLayer = function (identifier) {
                 var html = "<p><a href=\'#\' onclick=\'" + func + "\'>Save Image for Analysis</a><br/><a href=\'#\' onclick=\'" + func2 + "\'>Reject Image</a></p>";
                 layer.bindPopup(html);
 
-                var parser = document.createElement('a');
-                parser.href = layer.options.wmsUrl;
-                var search = parser.search.substring(1);
-                var parts = JSON.parse('{"' + decodeURI(search).replace(/"/g, '\\"').replace(/&amp;/g, '&').replace(/&/g, '","').replace(/=/g,'":"') + '"}');
-                footprints.keysToLowerCase(parts);
-                if (parts.service === 'WMS') {
-                    newlayer = L.tileLayer.wms(parser.protocol + "//" + parser.host + parser.pathname, {
-                        layers: parts.layers,
-                        format: 'image/png',
-                        transparent: true,
-                        attribution: layer.options.identifier
-                    });
+                var newlayer = layerBuilder.buildLayer(layer.options.format, layer.options);
+                if (newlayer) {
                     if (footprints.image_layer_group == null) {
                         footprints.image_layer_group = L.layerGroup();
                         footprints.image_layer_group.lastHighlight = {'id': undefined, 'status': undefined};
                         footprints.image_layer_group.addTo(footprints.map);
                     }
                     footprints.image_layer_group.addLayer(newlayer);
+                    newlayer.bringToFront();
+                    newlayer.setOpacity(1);
                     layer.image_layer = newlayer;
                 }
+
+//                var parser = document.createElement('a');
+//                parser.href = layer.options.url;
+//                var search = parser.search.substring(1);
+//                var parts = JSON.parse('{"' + decodeURI(search).replace(/"/g, '\\"').replace(/&amp;/g, '&').replace(/&/g, '","').replace(/=/g,'":"') + '"}');
+//                footprints.keysToLowerCase(parts);
+//                if (parts.service === 'WMS') {
+//                    newlayer = L.tileLayer.wms(parser.protocol + "//" + parser.host + parser.pathname, {
+//                        layers: parts.layers,
+//                        format: 'image/png',
+//                        transparent: true,
+//                        attribution: layer.options.identifier
+//                    });
+//                    if (footprints.image_layer_group == null) {
+//                        footprints.image_layer_group = L.layerGroup();
+//                        footprints.image_layer_group.lastHighlight = {'id': undefined, 'status': undefined};
+//                        footprints.image_layer_group.addTo(footprints.map);
+//                    }
+//                    footprints.image_layer_group.addLayer(newlayer);
+//                    layer.image_layer = newlayer;
+//                }
             } catch (e) {
                 console.error(e);
             }
@@ -1362,7 +1362,7 @@ footprints.updateValueFromRadio = function(id, value) {
         cloud_cover: data_row.maxCloudCoverPercentageRate,
         acq_date: data_row.ObservationDate,
         img_geom: JSON.stringify(geometry),
-        wmsUrl: data_row.wmsUrl,
+        url: data_row.url,
         area: 1,
         status: val,
         workcell: aoi_feature_edit.aoi_id
