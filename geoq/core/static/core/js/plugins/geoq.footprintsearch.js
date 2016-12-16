@@ -768,6 +768,7 @@ footprints.saveInspectedImage = function (identifier, accepted) {
     _.each(footprints.outline_layer_group.getLayers(), function(layer) {
         if (layer.options.image_id === identifier) {
             // find the correct row in the table, then click the save radio button
+            footprints.map.closePopup();
             var row = $('#imagelayer-list td').filter(function() { return $(this).text() == identifier;}).closest('tr');
             if (row.length > 0) {
                 var inputs = row.find(":input");
@@ -1362,7 +1363,7 @@ footprints.updateValueFromRadio = function(id, value) {
         cloud_cover: data_row.maxCloudCoverPercentageRate,
         acq_date: data_row.ObservationDate,
         img_geom: JSON.stringify(geometry),
-        url: data_row.url,
+        wmsUrl: data_row.url,
         area: 1,
         status: val,
         workcell: aoi_feature_edit.aoi_id
