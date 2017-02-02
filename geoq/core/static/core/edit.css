@@ -375,3 +375,16 @@ input + label {
 .query-builder input[type=text] {
     width: 50%;
 }
+
+table.hover-highlight td:before,
+table.focus-highlight td:before {
+    background: #fff;
+}
+
+.focus-highlight td:focus::before, .focus-highlight th:focus::before {
+    background-color: lightblue;
+}
+
+.focus-highlight td:focus::after, .focus-highlight th:focus::after {
+    background-color: lightblue;
+}

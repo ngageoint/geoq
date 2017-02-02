@@ -113,7 +113,8 @@ footprints.schema = [
         showSizeMultiplier: 2,
         initialDateRange: 365,
         colorMarker: true
-    }
+    },
+    {name: 'keyword', title: 'keyword', query_filter: {id: 'keyword', field: 'dc:subject', label: 'Keyword', type: 'string', size: 50, operators: footprints.ops} }
 ];
 
 footprints.url_template = 'http://server.com/arcgis/rest/services/ImageEvents/MapServer/req_{{layer}}/query?&geometry={{bounds}}&geometryType=esriGeometryEnvelope&spatialRel=esriSpatialRelIntersects&outFields=*&outSR=4326&f=json';
