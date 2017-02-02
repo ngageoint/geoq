@@ -850,6 +850,12 @@ aoi_feature_edit.map_init = function (map, bounds) {
     leaflet_filter_bar.init();
     leaflet_filter_bar.addLayerControl(map, {hiddenTagInput:true});
 
+    // Add RemoteView Control
+    if (remoteview_controller) {
+        remoteview_controller.init();
+        remoteview_controller.addLayerControl(map);
+    }
+
     //Build the layer tree on the left
     var $accordion = leaflet_layer_control.init();
     var options = aoi_feature_edit.buildTreeLayers();
