@@ -125,10 +125,9 @@ imageviewer.addInitialImages = function () {
         // now add footprint to map, but not shown
         var style = imageviewer.defaultFootprintStyle;
         var footprint = ogc_csw.createPolygonFromGeometry(data.options.geometry, data.options, imageviewer.defaultFootprintStyle);
-        footprint.bindPopup("<p><a href='#'>Open with RemoteView</a></p>");
 
         imageviewer.footprint_layer_group.addLayer(footprint);
-        footprint.setStyle(imageviewer.hiddenFootprintStyle);
+        imageviewer.hideFootprint(footprint);
     });
 
 };
@@ -158,6 +157,19 @@ imageviewer.userMessage = function (text, color) {
         .html(text)
         .css({backgroundColor: color || ''})
         .delay(3000).fadeOut('slow');
+};
+
+imageviewer.hideFootprint = function (layer) {
+    layer.setStyle(imageviewer.hiddenFootprintStyle);
+    layer.bringToBack();
+    layer.unbindPopup();
+};
+
+imageviewer.unhideFootprint = function (layer) {
+    layer.setStyle(imageviewer.defaultFootprintStyle);
+    layer.bringToFront();
+    var title = layer.options['layerName'] || layer.options['image_id'];
+    layer.bindPopup("<p><a href='http://localhost:4000'>Open " + title + " with RemoteView</a></p>");
 };
 
 imageviewer.updateImageFootprints = function (images) {
@@ -290,11 +302,11 @@ imageviewer.showFootprint = function(box) {
     if ($(box).is(':checked')) {
         // show the layer
         if (layer) {
-            layer.setStyle(imageviewer.defaultFootprintStyle);
+            imageviewer.unhideFootprint(layer);
         }
     } else {
         if (layer) {
-            layer.setStyle(imageviewer.hiddenFootprintStyle);
+            imageviewer.hideFootprint(layer);
         }
     }
 };
@@ -307,12 +319,18 @@ imageviewer.showLayer = function(box) {
         if (layer) {
             // layer was already loaded. Just display
             layer.setOpacity(1.0);
+            if (remoteview_controller && remoteview_controller.connected) {
+                remoteview_controller.onLoad(layer._url, layer.options.layers);
+            }
         } else {
             if (details.url) {
                 var layer = layerBuilder.buildLayer(details.format, details );
                 if (layer) {
                     layer.options.id = id;
                     imageviewer.image_layer_group.addLayer(layer);
+                    if (remoteview_controller && remoteview_controller.connected) {
+                        remoteview_controller.onLoad(layer._url, layer.options.layers);
+                    }
                 }
             }
         }
