@@ -88,7 +88,7 @@ leaflet_helper.layer_conversion = function (lyr, map) {
             log.warn('Unable to create WMTS layer: ' + e.toString());
         }
     } else if (lyr.type == 'ESRI Tiled Map Service' && esriPluginInstalled) {
-        outputLayer = L.esri.tiledMapLayer(layerOptions);
+        outputLayer = L.esri.tiledMapLayer(lyr.url, layerOptions);
     } else if (lyr.type == 'ESRI Dynamic Map Layer' && esriPluginInstalled) {
         // SRJ - DynamicMapLayer looking for an array passed in
         try {
@@ -99,9 +99,9 @@ leaflet_helper.layer_conversion = function (lyr, map) {
         // this layer disables features as it wants to be on top. Position it behind other overlays
         layerOptions['position'] = "back";
 
-        outputLayer = L.esri.dynamicMapLayer(layerOptions);
+        outputLayer = L.esri.dynamicMapLayer(lyr.url, layerOptions);
     } else if (lyr.type == 'ESRI Feature Layer' && esriPluginInstalled) {
-        outputLayer = L.esri.featureLayer(layerOptions);
+        outputLayer = L.esri.featureLayer(lyr.url, layerOptions);
         if (layerOptions.popupTemplate) {
             var template = layerOptions.popupTemplate;
             outputLayer.bindPopup(function (feature) {
