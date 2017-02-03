@@ -34,8 +34,9 @@ footprints.acceptedFootprintStyle = {color: 'green', weight: 1};
 footprints.rejectedFootprintStyle = {color: 'red', weight: 1};
 footprints.selectedFootprintStyle = {color: 'yellow', weight: 1};
 footprints.csw_max_records = 50;
-footprints.current_page = 0;
-
+footprints.next_index = 1;
+footprints.current_index = 1;
+footprints.record_count = 0;
 
 footprints.selectStyle = function(status) {
     switch(status) {
@@ -490,15 +491,17 @@ footprints.updateFootprintDataFromCSWServer = function () {
         resultType: "results",
         elementSetName: "full",
         maxRecords: footprints.csw_max_records,
-        startPosition: footprints.csw_max_records * footprints.current_page + 1,
+        startPosition: footprints.current_index,
         outputSchema: "http://www.opengis.net/cat/csw/2.0.2"
     };
     var callback = function (xml,lang) {
         var $xml = $(xml);
-        var count = $xml.filterNode('csw:SearchResults').attr('numberOfRecordsMatched') || "0";
-        if (count && footprints.$matching_count) {
-            footprints.$matching_count.text(count);
-            footprints.$matching_total.text(count);
+        footprints.record_count = parseInt($xml.filterNode('csw:SearchResults').attr('numberOfRecordsMatched')) || 0;
+        footprints.next_index = parseInt($xml.filterNode('csw:SearchResults').attr('nextRecord')) || 1;
+
+        if (footprints.record_count && footprints.$matching_count) {
+            footprints.$matching_count.text(footprints.record_count);
+            footprints.$matching_total.text(footprints.record_count);
         }
         var data = $xml.filterNode('csw:Record') || [];
         footprints.newCSWFeaturesArrived(data);
@@ -819,27 +822,6 @@ footprints.replaceCSWOutlineWithLayer = function (identifier) {
                     newlayer.setOpacity(1);
                     layer.image_layer = newlayer;
                 }
-
-//                var parser = document.createElement('a');
-//                parser.href = layer.options.url;
-//                var search = parser.search.substring(1);
-//                var parts = JSON.parse('{"' + decodeURI(search).replace(/"/g, '\\"').replace(/&amp;/g, '&').replace(/&/g, '","').replace(/=/g,'":"') + '"}');
-//                footprints.keysToLowerCase(parts);
-//                if (parts.service === 'WMS') {
-//                    newlayer = L.tileLayer.wms(parser.protocol + "//" + parser.host + parser.pathname, {
-//                        layers: parts.layers,
-//                        format: 'image/png',
-//                        transparent: true,
-//                        attribution: layer.options.identifier
-//                    });
-//                    if (footprints.image_layer_group == null) {
-//                        footprints.image_layer_group = L.layerGroup();
-//                        footprints.image_layer_group.lastHighlight = {'id': undefined, 'status': undefined};
-//                        footprints.image_layer_group.addTo(footprints.map);
-//                    }
-//                    footprints.image_layer_group.addLayer(newlayer);
-//                    layer.image_layer = newlayer;
-//                }
             } catch (e) {
                 console.error(e);
             }
@@ -1414,7 +1396,29 @@ footprints.rowClicked = function (index) {
 
     $("#imagelayer-list").trigger('update');
 
-}
+};
+
+// pager functions
+footprints.first = function() {
+    footprints.current_index = 1;
+    footprints.updateFootprintDataFromCSWServer();
+};
+
+footprints.prev = function() {
+    footprints.current_index = (footprints.current_index - footprints.csw_max_records > 0 )?
+        footprints.current_index -= footprints.csw_max_records : 1;
+    footprints.updateFootprintDataFromCSWServer();
+};
+
+footprints.next = function() {
+    footprints.current_index = footprints.next_index;
+    footprints.updateFootprintDataFromCSWServer();
+};
+
+footprints.last = function() {
+    footprints.current_index = footprints.record_count - (footprints.record_count % footprints.csw_max_records) + 1;
+    footprints.updateFootprintDataFromCSWServer();
+};
 
 footprints.addResultTable = function ($holder) {
     //We can change the max height here when we are testing with many elements.
@@ -1432,7 +1436,11 @@ footprints.addResultTable = function ($holder) {
         }
     });
 
-    var $pager = $("<div id='pager' class='pager'><form><img src='/static/images/first.png' class='first' alt='First'/><img src='/static/images/prev.png' class='prev'/><span class='pagedisplay'></span><img src='/static/images/next.png' class='next'/><img src='/static/images/last.png' class='last'/></form></div>")
+    var $pager = $("<div id='pager' class='pager'><form>" +
+        "<img src='/static/images/first.png' class='first' onclick='footprints.first()' alt='First'/>" +
+        "<img src='/static/images/prev.png' class='prev' onclick='footprints.prev()'/><span id='page-view' class='gpagedisplay'></span>" +
+        "<img src='/static/images/next.png' class='next' onclick='footprints.next()'/>" +
+        "<img src='/static/images/last.png' class='last' onclick='footprints.last()'/></form></div>")
         .appendTo($holder);
 
 
@@ -1446,7 +1454,7 @@ footprints.addResultTable = function ($holder) {
 		// output string - default is '{page}/{totalPages}'
 		// possible variables: {size}, {page}, {totalPages}, {filteredPages}, {startRow}, {endRow}, {filteredRows} and {totalRows}
 		// also {page:input} & {startRow:input} will add a modifiable input in place of the value
-		output: '{startRow:input} to {endRow}',
+		output: 'Page {page} of {totalPages}',
 
 		// apply disabled classname (cssDisabled option) to the pager arrows when the rows
 		// are at either extreme is visible; default is true
@@ -1492,8 +1500,10 @@ footprints.addResultTable = function ($holder) {
     .tablesorterPager(pagerOptions)
 
     // and listen for page changes for us to get updated results
-    .bind('pagerChange pageMoved', function(e,c) {
-        //console.log("moved to page " + c.page);
+    .bind('pagerComplete', function(e,c) {
+        var total_pages = Math.floor(footprints.record_count / footprints.csw_max_records) + 1;
+        var page_num = Math.floor(footprints.current_index / footprints.csw_max_records) + 1;
+        $('#page-view').text('Page ' + page_num + " of " + total_pages);
     });
 
     $("#imagelayer-list").trigger('update');
@@ -1677,6 +1687,7 @@ footprints.addFilterButton = function ($holder) {
         .attr({type: 'button'})
         .html('<i class="icon-filter"></i>&nbspSearch for ' + footprints.title + ' within view extents')
         .on('click', function () {
+            footprints.next_index = footprints.last_index = 1;
             footprints.updateFootprintDataFromCSWServer();
         })
         .appendTo($holder);
