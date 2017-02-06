@@ -47,10 +47,14 @@ remoteview_controller.onLoad = function(url, layer) {
         if (jqXHR.readyState === 0) {
             aoi_feature_edit.map.on('zoomend', function(e,t) {
                 // figure out what the zoom level is, then go to same level in rv
-                remoteview_controller.onZoom(aoi_feature_edit.map.getZoom());
+                if (remoteview_controller.connected) {
+                    remoteview_controller.onZoom(aoi_feature_edit.map.getZoom());
+                }
             });
             aoi_feature_edit.map.on('moveend', function(e,t) {
-                remoteview_controller.onPan(aoi_feature_edit.map.getCenter().toString().match(re)[1]);
+                if (remoteview_controller.connected) {
+                    remoteview_controller.onPan(aoi_feature_edit.map.getCenter().toString().match(re)[1]);
+                }
             });
 
             remoteview_controller.onZoom(aoi_feature_edit.map.getZoom());
