@@ -154,6 +154,17 @@ aoi_feature_edit.init = function () {
     //Close Alert field if shown
     setTimeout(function(){$('div.alert').css({display:'none'});},3000);
 
+    // for footprints if we're using them
+    if (site_settings.csw) {
+        ogc_csw.init({
+            server: site_settings.csw['server'],
+            port: site_settings.csw['port'],
+            protocol: site_settings.csw['protocol'],
+            path: site_settings.csw['path']
+        });
+
+    }
+
     //Open Terms of Use prompt if necessary
     $(document).ready(aoi_feature_edit.promptForUserAcceptance);
 };
@@ -232,6 +243,9 @@ aoi_feature_edit.getMapTextDivSize = function(text){
         mapTextSize = [240,65];
     }
     return mapTextSize;
+};
+aoi_feature_edit.showPanel = function(panelname) {
+    return $.inArray(panelname, site_settings.hidden_panels[aoi_feature_edit.status]) == -1
 };
 aoi_feature_edit.buildCustomIcon = function (feature, featureType) {
     feature.properties = feature.properties || {};
@@ -419,6 +433,10 @@ aoi_feature_edit.featureLayer_onEachFeature = function (feature, layer, featureL
             popupContent += aoi_feature_edit.addFeatureTable(feature, template);
         }
 
+        if (feature.properties.metadata) {
+            popupContent += aoi_feature_edit.create_metadata_popup_content(id, feature.properties.metadata)
+        }
+
         if (id && !dontAddDelete) {
             popupContent += '<br/><a onclick="aoi_feature_edit.deleteFeature(\'' + id + '\', \'' + leaflet_helper.home_url + 'features/delete/' + id + '\');">Delete Feature</a>';
             popupContent += leaflet_helper.addLinksToPopup(featureLayer.name, id, false, false, true);
@@ -426,6 +444,68 @@ aoi_feature_edit.featureLayer_onEachFeature = function (feature, layer, featureL
 
         layer.bindPopup(popupContent);
         feature.layer = layer;
+    }
+};
+
+aoi_feature_edit.create_metadata_popup_content = function(id, metadata) {
+    function create_threshold_popup_string(defval) {
+        var highselect = (defval === 'high') ? "selected" : "";
+        var lowselect = (defval === 'low') ? "selected" : "";
+
+        var pstring = '<br/><b>Threshold:</b><select name="threshold" style="width: 100px; margin-left: 5px;">';
+        pstring += '<option value="none">---</option>';
+        pstring += '<option value="high" ' + highselect + '>high</option>';
+        pstring += '<option value="low" ' + lowselect + '>low</option>';
+        pstring += '</select>';
+
+        return pstring;
+    };
+
+    var threshold = metadata["threshold"] || "none";
+    var content = "";
+
+    content += '<br/><br/><div id="metadata-' + id + '" ><b>Name:</b><input style="width: 120px; margin-left: 5px;" name="name" type="text" value="' + metadata.name + '"/>';
+    content += create_threshold_popup_string(threshold);
+    content += '<br/><button type="button" onclick="aoi_feature_edit.update_metadata(' + id + ');">Update</button></div>';
+
+    return content;
+};
+
+aoi_feature_edit.update_metadata = function(id) {
+    var data = {};
+    $('#metadata-'+id).find(':input').each(function() {
+        // data.push($(this).val());
+        if ($(this).attr('name')) {
+            data[$(this).attr('name')] = $(this).val();
+        }
+    });
+    if (data.name && data.threshold) {
+        $.ajax({
+            url: "/maps/api/features/update-metadata/" + id,
+            data: data,
+            type: 'POST',
+            success: function (ret) {
+                log.info('Updated feature ' + id);
+                // find the open popup and update contents with new info
+                $.each(aoi_feature_edit.map._layers, function(ml) {
+                    if (aoi_feature_edit.map._layers[ml].feature) {
+                        if (aoi_feature_edit.map._layers[ml]._popup && aoi_feature_edit.map._layers[ml]._popup._isOpen) {
+                            var oldContent = aoi_feature_edit.map._layers[ml]._popup.getContent();
+                            var newMetaContent = aoi_feature_edit.create_metadata_popup_content(id, data);
+                            var start = oldContent.substring(0, oldContent.indexOf("<div"));
+                            var end = oldContent.substring(oldContent.indexOf("</div>")+6);
+                            aoi_feature_edit.map._layers[ml]._popup.setContent(start + newMetaContent + end);
+                            aoi_feature_edit.map._layers[ml]._popup.update();
+                        }
+                    }
+                })
+                aoi_feature_edit.map.closePopup();
+            },
+            failure: function () {
+                log.error('Failed to delete feature ' + id);
+                aoi_feature_edit.map.closePopup();
+            }
+        })
     }
 };
 aoi_feature_edit.fulcrumfeatureLayer_onEachFeature = function (feature, layer, featureLayer, dontAddDelete) {
@@ -670,7 +750,14 @@ aoi_feature_edit.map_init = function (map, bounds) {
            return (l.type!="Social Networking Link" && l.type!="Web Data Link")
         });
         _.each(layers, function (layer_data) {
-            var built_layer = leaflet_helper.layer_conversion(layer_data, map);
+            var built_layer;
+
+            // only load layers if we're actually going to display them in the panel
+            if (site_settings.hidden_panels && site_settings.hidden_panels[aoi_feature_edit.status]) {
+                if ($.inArray("Geo Layers for Map", site_settings.hidden_panels[aoi_feature_edit.status]) < 0) {
+                    built_layer = leaflet_helper.layer_conversion(layer_data, map);
+                }
+            }
             if (! built_layer) {
                 // skip this layer and go to next
                 log.error("Tried to add a layer, but didn't work: "+layer_data.url)
@@ -1174,31 +1261,23 @@ aoi_feature_edit.map_init = function (map, bounds) {
 
     $('div.leaflet-draw.leaflet-control').find('a').popover({trigger:"hover",placement:"right"});
 
-//    footprints.init({
-//	    url_template: 'http://dev.femadata.com/arcgis/rest/services/ImageEvents/ImageEvents/MapServer/{{layer}}/query?geometry={{bounds}}&geometryType=esriGeometryEnvelope&spatialRel=esriSpatialRelIntersects&outFields=*&outSR=4326&f=json',
-//		layerList: [1,2,3,4,5,6,7,8,9],
-//		/*promptFields: [
-//			       {name: 'mission', title: 'Mission ID#', popover: 'Comma-separated list of missions to search for', default: '75, 76', type: 'integer', format:'where', compare:'='}
-//			       ],
-//		*/
-//		title: 'CAP Image',
-//		markerColorMax: '#ffdf00',
-//		markerColorMin: '#332200',
-//		schema: [
-//			 {name: 'Id', id: true, visualize: 'none'},
-//			 {name: 'layerId', title:'Image Type', color_by_layerid:true, filter:'options', show: 'small-table'},
-//			 {name: 'EXIFCameraMaker', title: 'Camera Type', filter: 'options'},
-//			 {name: 'ImageMissionName', title: 'Mission Name', filter: 'options', show: 'small-table', showSizeMultiplier: 2},
-//			 {name: 'Altitude', title: 'Alt', type: 'integer', filter: 'slider-max', min: 0, max: 10000, start: 2000, show: 'small-table', sizeMarker: true},
-//			 {name: 'Heading', title: 'Dir', type: 'integer', show: 'small-table'},
-//			 {name: 'UploadDate', title: 'Date', type: 'date', filter: 'date-range', initialDateRange: 100, colorMarker: true},
-//			 {name: 'ThumbnailURL', title: 'Thumbnail', visualize: 'thumbnail', linkField: 'ImageURL'},
-//			 {name: 'Filename', title: 'File Name', filter: 'textbox', visualize: 'none', onNotFound: function (name) {
-//				 console.log("TODO: Load If not found: " + name)
-//				     }}
-//			 ],
-//		featureSelectFunction: null
-//                });
+    if (aoi_feature_edit.showPanel(footprints.plugin_title)) {
+        footprints.init({
+            url_template: '/geoq/api/test/image_footprints/?bbox={{bounds}}',
+            layerList: [1],
+            title: 'Images',
+            markerColorMax: '#ffdf00',
+            markerColorMin: '#332200',
+            showRejectOption: true,
+            featureSelectUrl: '/geoq/api/workcell-image/{{id}}'
+        });
+    }
+
+    if (aoi_feature_edit.showPanel(imageviewer.plugin_title)) {
+        imageviewer.init({
+            finishImageUrl: '/geoq/api/workcell-image/{{id}}/examined'
+        });
+    }
 
 
     //Resize the map
