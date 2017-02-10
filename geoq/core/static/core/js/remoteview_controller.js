@@ -33,6 +33,12 @@ remoteview_controller.toggle = function(e) {
     }
 };
 
+remoteview_controller.fireHideEvent = function(l) {
+    if (remoteview_controller.connected) {
+        aoi_feature_edit.map.fire('hide');
+    }
+};
+
 remoteview_controller.onLoad = function(url, layer) {
     var script = "var args = { \n" +
         "'FileName': '" + url + "', 'Layer': '" + layer + "','LoadElevation': false };\n" +
@@ -56,9 +62,24 @@ remoteview_controller.onLoad = function(url, layer) {
                     remoteview_controller.onPan(aoi_feature_edit.map.getCenter().toString().match(re)[1]);
                 }
             });
+            aoi_feature_edit.map.on('hide', function(e) {
+                if (remoteview_controller.connected) {
+                    remoteview_controller.onUnload(e);
+                }
+            });
 
             remoteview_controller.onZoom(aoi_feature_edit.map.getZoom());
         }
+    };
+
+    remoteview_controller.sendToRV(script, callback);
+};
+
+remoteview_controller.onUnload = function(e) {
+    var script = "Viewer.CloseFolder(true);";
+
+    var callback = function(jqXHR) {
+        console.log('Closing image');
     };
 
     remoteview_controller.sendToRV(script, callback);

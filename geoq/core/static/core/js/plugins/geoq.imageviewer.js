@@ -338,6 +338,12 @@ imageviewer.showLayer = function(box) {
         if (layer && layer.setOpacity) {
             // hide the layer
             layer.setOpacity(0);
+
+            // unload layer in RemoteView if connected
+            if (remoteview_controller && remoteview_controller.connected) {
+                remoteview_controller.fireHideEvent(layer);
+            }
+
         }
     }
 
