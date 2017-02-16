@@ -71,8 +71,22 @@ layerBuilder.WMTS = function( parameters ) {
     return newLayer;
 };
 
+layerBuilder.DML = function( parameters ) {
+    var defaults = {position: 'back', layers: [0], url: parameters.url};
+
+    try {
+        newLayer = new L.DynamicMapLayer(defaults);
+    }
+    catch (e) {
+        log.warn("Unable to create DML layer: " + e.toString());
+    }
+
+    return newLayer;
+};
+
 
 layerBuilder.layers = {
     wms: { builder: layerBuilder.WMS, format: "OGC:WMS", parameters: ["url","format"]},
-    wmts: { builder: layerBuilder.WMTS, format: "OGC:WMTS", parameters: ["url","subdomains","maxZoom","minZoom"]}
+    wmts: { builder: layerBuilder.WMTS, format: "OGC:WMTS", parameters: ["url","subdomains","maxZoom","minZoom"]},
+    dml: {builder: layerBuilder.DML, format: "ESRI:DynamicMapLayer", parameters: ["url","format"]}
 };

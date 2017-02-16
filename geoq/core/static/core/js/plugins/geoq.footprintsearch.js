@@ -11,7 +11,7 @@
  */
 var footprints = {};
 footprints.title = "Footprint";
-footprints.plugin_title = "Imagery Query";
+footprints.plugin_title = "CSW Query";
 footprints.accordion_id = "#layer-control-accordion";
 
 footprints.$accordion = null;
@@ -80,13 +80,12 @@ footprints.ops = ['equal', 'not_equal', 'less', 'less_or_equal', 'greater', 'gre
                     'contains'];
 
 footprints.schema = [
-    {name: 'image_id', title: 'Id', id: true, show: 'small-table', type: 'string'},
+    {name: 'image_id', title: 'Id', id: true, type: 'string'},
     {name: 'layerName', title: 'Name', show: 'small-table',
         query_filter: {id: 'name', field: 'dc:title', label: 'Name', type: 'string', operators: footprints.ops} },
     {name: 'format', title: 'Format', show: 'small-table',
         query_filter: {id: 'format', field: 'dc:format', label: 'Format', type: 'string', size: 30, operators: footprints.ops} },
-    {name: 'platformCode', title: 'Source', filter: 'options', show: 'small-table',
-        query_filter: {id: 'platform', field: 'dc:subject', label: 'Platform', type: 'string', size: 40, operators: footprints.ops} },
+    {name: 'platformCode', title: 'Source', filter: 'options', show: 'small-table' },
     //TODO: Show image name as mouseover or small text field?
     {
         name: 'maxCloudCoverPercentageRate',
@@ -97,9 +96,7 @@ footprints.schema = [
         min: 0,
         max: 100,
         start: 10,
-        show: 'small-table',
-        sizeMarker: true,
-        query_filter: {id: 'cloud', field: 'wst:CloudCover', label: 'Cloud %', type: 'integer', size: 40, operators: footprints.ops}
+        sizeMarker: true
     },
     {name: 'status', title: 'Status', filter: 'options'},
     {name: 'url', title: "Url"},
