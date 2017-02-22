@@ -60,6 +60,7 @@ layerBuilder.WMS = function( parameters ) {
 
 layerBuilder.WMTS = function( parameters ) {
     var defaults = {tileSize: 256, noWrap: true, continuousWorld: true, format: 'image/png'};
+    var newlayer;
 
     try {
         newLayer = new L.tileLayer(parameters.url, defaults);
@@ -72,10 +73,29 @@ layerBuilder.WMTS = function( parameters ) {
 };
 
 layerBuilder.DML = function( parameters ) {
-    var defaults = {position: 'back', layers: [0], url: parameters.url};
+    var defaults = {position: 'front', format: 'png', useCors: false, url: parameters.url};
+    var newLayer;
 
     try {
-        newLayer = new L.DynamicMapLayer(defaults);
+        newLayer = new L.esri.dynamicMapLayer(defaults);
+        newLayer.identifiedFeature = null;
+
+        newLayer.clickListener = function(e) {
+            if (this.identifiedFeature) {
+            }
+        }
+    }
+    catch (e) {
+        log.warn("Unable to create DML layer: " + e.toString());
+    }
+
+    return newLayer;
+};
+
+layerBuilder.GeoJSON = function( parameters ) {
+    var newLayer;
+    try {
+        newLayer = leaflet_helper.constructors.geojson(parameters, aoi_feature_edit.map);
     }
     catch (e) {
         log.warn("Unable to create DML layer: " + e.toString());
@@ -88,5 +108,6 @@ layerBuilder.DML = function( parameters ) {
 layerBuilder.layers = {
     wms: { builder: layerBuilder.WMS, format: "OGC:WMS", parameters: ["url","format"]},
     wmts: { builder: layerBuilder.WMTS, format: "OGC:WMTS", parameters: ["url","subdomains","maxZoom","minZoom"]},
-    dml: {builder: layerBuilder.DML, format: "ESRI:DynamicMapLayer", parameters: ["url","format"]}
+    dml: {builder: layerBuilder.DML, format: "ESRI:DynamicMapLayer", parameters: ["url","format"]},
+    geojson: {builder: layerBuilder.GeoJSON, format: "GeoJSON", parameters: ["url"]}
 };

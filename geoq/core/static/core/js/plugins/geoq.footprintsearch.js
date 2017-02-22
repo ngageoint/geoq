@@ -11,7 +11,7 @@
  */
 var footprints = {};
 footprints.title = "Footprint";
-footprints.plugin_title = "CSW Query";
+footprints.plugin_title = "Layer Discovery";
 footprints.accordion_id = "#layer-control-accordion";
 
 footprints.$accordion = null;
@@ -29,7 +29,8 @@ footprints.rejected_layer_group = null;
 footprints.accepted_layer_group = null;
 footprints.dataInTable = null;
 
-footprints.defaultFootprintStyle = {color: 'blue', weight: 1};
+footprints.defaultFootprintStyle = {color: 'blue', weight: 1, opacity: 0.8, fillOpacity: 0.3};
+footprints.hiddenFootprintStyle = {color: 'blue', weight: 1, opacity: 0, fillOpacity: 0};
 footprints.acceptedFootprintStyle = {color: 'green', weight: 1};
 footprints.rejectedFootprintStyle = {color: 'red', weight: 1};
 footprints.selectedFootprintStyle = {color: 'yellow', weight: 1};
@@ -182,6 +183,8 @@ footprints.init = function (options) {
         footprints.outline_layer_group.addTo(footprints.map);
         footprints.rejected_layer_group = L.layerGroup();
         footprints.accepted_layer_group = L.layerGroup();
+        footprints.image_layer_group = L.layerGroup();
+        footprints.image_layer_group.addTo(footprints.map);
     }
 
     // finally add any layers that have already been vetted
@@ -221,11 +224,11 @@ footprints.buildAccordionPanel = function () {
         }
     });
     footprints.addWorkcellBounds(footprints.$filter_holder);
-    footprints.addAcceptedButton(footprints.$filter_holder);
-    footprints.addRejectButton(footprints.$filter_holder);
+    //footprints.addAcceptedButton(footprints.$filter_holder);
+    //footprints.addRejectButton(footprints.$filter_holder);
 
     footprints.addResultTable(footprints.$filter_holder);
-    footprints.addHideButton(footprints.$filter_holder);
+    //footprints.addHideButton(footprints.$filter_holder);
 };
 footprints.clamp = function (num, min, max) {
     return num < min ? min : (num > max ? max : num);
@@ -640,7 +643,7 @@ footprints.newFeaturesArrived = function (data, url, layer_id, layer_name) {
                         console.error("No coordinates found. Skipping this layer");
                         break;
                     }
-                    wms.bindPopup(ogc_csw.createLayerPopup(record.options));
+                    // wms.bindPopup(ogc_csw.createLayerPopup(record.options));
 
                     if (style == footprints.rejectedFootprintStyle) {
                         footprints.rejected_layer_group.addLayer(wms);
@@ -707,7 +710,7 @@ footprints.newCSWFeaturesArrived = function (items) {
                     console.error("No coordinates found. Skipping this layer");
                     return;
                 }
-                wms.bindPopup(ogc_csw.createLayerPopup(record.options));
+                // wms.bindPopup(ogc_csw.createLayerPopup(record.options));
 
                 // add geometry of layer to record
                 var latlngs = wms.getLatLngs();
@@ -765,66 +768,62 @@ footprints.removeCSWOutline = function (identifier,status) {
         }
     });
 };
-footprints.saveInspectedImage = function (identifier, accepted) {
-    _.each(footprints.outline_layer_group.getLayers(), function(layer) {
-        if (layer.options.image_id === identifier) {
-            // find the correct row in the table, then click the save radio button
-            footprints.map.closePopup();
-            var row = $('#imagelayer-list td').filter(function() { return $(this).text() == identifier;}).closest('tr');
-            if (row.length > 0) {
-                var inputs = row.find(":input");
-                if (accepted) {
-                    inputs[0].click();
-                } else {
-                    inputs[2].click();
+
+
+footprints.showFootprint = function(box) {
+    var id = $(box).val();
+    var layer = _.find(footprints.outline_layer_group.getLayers(), function(o) { return o.options.image_id == id;});
+    if ($(box).is(':checked')) {
+        // show the layer
+        if (layer) {
+            footprints.unhideFootprint(layer);
+        }
+    } else {
+        if (layer) {
+            footprints.hideFootprint(layer);
+        }
+    }
+};
+
+footprints.hideFootprint = function (layer) {
+    layer.setStyle(footprints.hiddenFootprintStyle);
+    layer.bringToBack();
+    layer.unbindPopup();
+};
+
+footprints.unhideFootprint = function (layer) {
+    layer.setStyle(footprints.defaultFootprintStyle);
+    layer.bringToFront();
+    var title = layer.options['layerName'] || layer.options['image_id'];
+    layer.bindPopup("<p>Name: " + title + "</p>");
+};
+
+footprints.showLayer = function(box) {
+    var id = $(box).val();
+    var details = JSON.parse($('#details-' + id).text()) || {};
+    var layer = _.find(footprints.image_layer_group.getLayers(), function(o) { return o.options.image_id == id;});
+    if ($(box).is(':checked')) {
+        if (layer && layer.setOpacity) {
+            // layer was already loaded. Just display
+            layer.setOpacity(1.0);
+        } else {
+            if (details.url) {
+                var layer = layerBuilder.buildLayer(details.format, details );
+                if (layer) {
+                    layer.options.image_id = id;
+                    footprints.image_layer_group.addLayer(layer);
                 }
             }
-
-            // remove image
-            if (layer.image_layer) {
-                footprints.image_layer_group.removeLayer(layer.image_layer);
-            }
-
-            // set footprint to appropriate style, either accepted or rejected
-            if (accepted) {
-                layer.setStyle(footprints.acceptedFootprintStyle);
-            } else {
-                layer.setStyle(footprints.rejectedFootprintStyle);
-            }
         }
-    })
-};
-footprints.replaceCSWOutlineWithLayer = function (identifier) {
-    _.each(footprints.outline_layer_group.getLayers(), function(layer) {
-        if (layer.options.image_id === identifier) {
-            try {
-                // hide footprint, then add wms image
-                layer.setStyle({opacity: 0, fillOpacity: 0});
-                footprints.map.closePopup();
-                layer.unbindPopup();
-                var func = 'footprints.saveInspectedImage("' + layer.options.image_id + '", ' + true + ')';
-                var func2 = 'footprints.saveInspectedImage("' + layer.options.image_id + '", ' + false + ')';
-                var html = "<p><a href=\'#\' onclick=\'" + func + "\'>Save Image for Analysis</a><br/><a href=\'#\' onclick=\'" + func2 + "\'>Reject Image</a></p>";
-                layer.bindPopup(html);
-
-                var newlayer = layerBuilder.buildLayer(layer.options.format, layer.options);
-                if (newlayer) {
-                    if (footprints.image_layer_group == null) {
-                        footprints.image_layer_group = L.layerGroup();
-                        footprints.image_layer_group.lastHighlight = {'id': undefined, 'status': undefined};
-                        footprints.image_layer_group.addTo(footprints.map);
-                    }
-                    footprints.image_layer_group.addLayer(newlayer);
-                    newlayer.bringToFront();
-                    newlayer.setOpacity(1);
-                    layer.image_layer = newlayer;
-                }
-            } catch (e) {
-                console.error(e);
-            }
+    } else {
+        if (layer && layer.setOpacity) {
+            // hide the layer
+            layer.setOpacity(0);
         }
-    })
+    }
+
 };
+
 footprints.updateFeatureMinMaxes = function () {
     //If it's a number or date, find the min and max and save it with the schema
 
@@ -1256,13 +1255,8 @@ footprints.addToResultTable = function (flattenedList) {
         var c2 = (!flattenedList[i].status || (flattenedList[i].status && flattenedList[i].status == 'NotEvaluated')) ? 'checked' : '';
         var c3 = (flattenedList[i].status && flattenedList[i].status == 'RejectedQuality') ? 'checked' : '';
 
-        var bg = '<input class="accept" id="r1-' + flattenedList[i].image_id + '" type="radio" name="acceptance-' + flattenedList[i].image_id + '" ' + c1 + ' value="Accepted" onclick="footprints.updateValueFromRadio(&quot;'+flattenedList[i].image_id + '&quot;, 1)"/><label for="r1-' + flattenedList[i].image_id + '"></label>';
-        bg += '<input class="unsure" id="r2-' + flattenedList[i].image_id + '" type="radio" name="acceptance-' + flattenedList[i].image_id + '" ' + c2 + ' value="NotEvaluated" onclick="footprints.updateValueFromRadio(&quot;'+ flattenedList[i].image_id + '&quot;, 0)"/>';
-        bg += '<input class="reject" id="r3-' + flattenedList[i].image_id + '" type="radio" name="acceptance-' + flattenedList[i].image_id + '" ' + c3 + ' value="RejectedQuality" onclick="footprints.updateValueFromRadio(&quot;'+ flattenedList[i].image_id + '&quot;, -1)"/><label for="r3-' + flattenedList[i].image_id + '"></label>';
-
-
         var $tr = $('<tr>').on('click', function() {
-            footprints.rowClicked((this.rowIndex - 1));
+            footprints.rowClicked(this);
         });
 
         var headers = [];
@@ -1271,6 +1265,11 @@ footprints.addToResultTable = function (flattenedList) {
             headers.push($(this).find('div')[0].textContent);
         });
 
+        $('<td><input type="checkbox" onclick="footprints.showFootprint(this);" value="' + flattenedList[i]['image_id'] +
+            '" checked="checked"></td>').appendTo($tr);
+        $('<td><input type="checkbox" onclick="footprints.showLayer(this);" value="' + flattenedList[i]['image_id'] +
+            '"></td>').appendTo($tr);
+
         _.each(headers, function(hdr) {
             var schemaItem = _.findWhere( footprints.schema, { title: hdr});
             if (schemaItem) {
@@ -1278,14 +1277,11 @@ footprints.addToResultTable = function (flattenedList) {
                     .html(flattenedList[i][schemaItem.name])
                     .css("border", "0px solid black")
                     .appendTo($tr);
-            } else {
-                // should be Accept column
-                $('<td>')
-                    .html(bg)
-                    .css("border", "0px solid black")
-                    .appendTo($tr);
             }
         });
+        $('<td style="display:none;">' + JSON.stringify(flattenedList[i]) + '</td>')
+            .attr('id', 'details-' + flattenedList[i]['image_id'])
+            .appendTo($tr);
 
 
         $('#imagelayer-list tbody').append($tr);
@@ -1368,7 +1364,8 @@ footprints.updateValueFromRadio = function(id, value) {
 
 };
 
-footprints.rowClicked = function (index) {
+footprints.rowClicked = function (row) {
+    var index = row.rowIndex -1;
     var imageid = footprints.dataInTable[index].image_id;
     var image_status = footprints.dataInTable[index].status;
 
@@ -1377,8 +1374,12 @@ footprints.rowClicked = function (index) {
         var pastlayers = footprints.getLayerGroup(footprints.outline_layer_group.lastHighlight.status).getLayers();
         var player = pastlayers.filter(function(e) {return e.options.image_id == footprints.outline_layer_group.lastHighlight.id})[0];
         if (player) {
-            player.setStyle(footprints.selectStyle(player.options.status));
-            player.bringToBack();
+            if ($(':input[value=' + player.options.image_id + ']').first().is(':checked')) {
+                player.setStyle(footprints.defaultFootprintStyle);
+                footprints.unhideFootprint(player);
+            } else {
+                footprints.hideFootprint(player);
+            }
         }
     }
 
@@ -1425,7 +1426,9 @@ footprints.addResultTable = function ($holder) {
     var $row = $grid.find("tr");
 
     // first row is the accept/reject buttons
-    $row.append("<th>Accept</th>");
+    //$row.append("<th>Accept</th>");
+    $row.append("<th>FP</th>");
+    $row.append("<th>Data</th>");
 
     _.each( footprints.schema, function(item) {
         if (item.show && item.show === 'small-table') {
