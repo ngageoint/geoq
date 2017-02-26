@@ -148,7 +148,7 @@ The ``geoq/settings.py`` file contains installation-specific settings. The Datab
 The following commands worked on a 64-bit CentOS 6.x system (as a privileged user):
 
 		% yum update
-		% yum localinstall http://yum.postgresql.org/9.4/redhat/rhel-6-x86_64/pgdg-centos94-9.4-1.noarch.rpm
+		% yum localinstall http://yum.postgresql.org/9.4/redhat/rhel-6-x86_64/pgdg-centos94-9.4-3.noarch.rpm
 		% yum install postgresql94-server postgresql94-python postgresql94-devel
 		% rpm -Uvh http://download.fedoraproject.org/pub/epel/6/x86_64/epel-release-6-8.noarch.rpm
 		% yum install postgis2_94 postgis2_94-devel python-virtualenv python-pip nodejs jodejs-devel npm git mod_wsgi
