@@ -892,6 +892,32 @@ aoi_feature_edit.map_init = function (map, bounds) {
         location_control.addTo(map, {'position': 'topleft'});
     }
 
+    // capture chip if we have remoteview
+    if ($.inArray("Chipper",aoi_feature_edit.hidden_tools) == -1) {
+        var retrieve_chip = function() {
+            alert("Retrieving Chip");
+            var center = aoi_feature_edit.map.getCenter();
+            var imageIcon = L.icon({
+                iconUrl: aoi_feature_edit.static_root + 'images/camera.png',
+                iconSize: [40,40]
+            });
+            m = L.marker(center, {icon: imageIcon});
+            var popup = "<p><img src=\'" + aoi_feature_edit.static_root + "images/stadium.png\'></p>";
+            m.bindPopup(popup);
+            m.addTo(aoi_feature_edit.map);
+        };
+
+        var chipper_control = new L.Control.Button({
+            'iconUrl': aoi_feature_edit.static_root + 'images/camera.png',
+            'onClick': retrieve_chip,
+            'hideText': true,
+            'doToggle': false,
+            'toggleStatus': false
+        });
+
+        chipper_control.addTo(map, {'position': 'topleft'});
+    }
+
     function pruneTemp(jqXHR) {
         var tmpId = jqXHR.getResponseHeader("Temp-Point-Id");
         var tmpLayer = aoi_feature_edit._pendingPoints[tmpId];

@@ -160,4 +160,8 @@ urlpatterns = patterns('',
         name='create-workcell-image'),
     url(r'^api/workcell-image/(?P<id>\w+)/examined/?$', 'core.views.workcell_image_examined',
         name='workcell-image-examined'),
+
+    #Chips
+    #url(r'^chips/?$',
+    #    ChipListView.as_view(queryset=Layer.objects.all()), name='chip-list'),
 )
