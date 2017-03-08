@@ -418,12 +418,19 @@ class AOI(GeoQBase, Assignment):
         if self.id is None:
             self.id = 1
 
+        user_label = 'None'
+        if self.analyst is not None:
+            if len(self.analyst.last_name) > 0:
+                user_label = "%s %s" % (self.analyst.first_name, self.analyst.last_name)
+            else:
+                user_label = self.analyst.username
+
         geojson = SortedDict()
         geojson["type"] = "Feature"
         geojson["properties"] = dict(
             id=self.id,
             status=self.status,
-            analyst=(self.analyst.username if self.analyst is not None else 'None'),
+            analyst=user_label,
             assignee=self.assignee_name,
             priority=self.priority,
             atc_id=self.properties['GEO_ID'] if 'GEO_ID' in self.properties else '000000',
