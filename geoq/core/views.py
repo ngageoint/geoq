@@ -236,8 +236,9 @@ class CreateFeaturesView(UserAllowedMixin, DetailView):
             aoi.save()
             return True
         elif aoi.status == 'In work':
-            if aoi.started_at is None:
-                aoi.started_at = utils.timezone.now()
+            # TODO: replace this with new time metrics
+            #if aoi.started_at is None:
+            #    aoi.started_at = utils.timezone.now()
             if is_admin:
                 return True
             elif aoi.analyst != self.request.user:

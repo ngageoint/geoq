@@ -362,9 +362,6 @@ class AOI(GeoQBase, Assignment):
     priority = models.SmallIntegerField(choices=PRIORITIES, max_length=1, default=5)
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='Unassigned')
 
-    started_at = models.DateTimeField(blank=True,null=True)
-    finished_at = models.DateTimeField(blank=True,null=True)
-
     class Meta:
         permissions = (
             ('assign_workcells', 'Assign Workcells'), ('certify_workcells', 'Certify Workcells'),
