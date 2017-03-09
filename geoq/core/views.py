@@ -887,7 +887,7 @@ def list_groups(request, job_pk):
 @permission_required('core.assign_workcells', return_403=True)
 def list_group_users(request, group_pk):
     group = get_object_or_404(Group, pk=group_pk)
-    users = group.user_set.values('username','id').order_by('username')
+    users = group.user_set.values('username','id','first_name','last_name').order_by('username')
 
     return HttpResponse(json.dumps(list(users)), mimetype="application/json")
 

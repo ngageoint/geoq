@@ -249,9 +249,13 @@ job_map.setList = function(listmembers) {
         .text('Select one...')
         .appendTo(clist);
     _.each(listmembers, function(member) {
+        var member_name = member['username'];
+        if (member['last_name'].length > 0) {
+            member_name = member['first_name'] + " " + member['last_name'];
+        }
         $option = $('<option>')
             .attr('value', member['id'])
-            .text(member['username'])
+            .text(member_name)
             .appendTo(clist);
     });
 };

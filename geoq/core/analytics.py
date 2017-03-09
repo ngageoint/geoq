@@ -12,7 +12,10 @@ class UserGroupStats(object):
     @property
     def name(self):
         if type(self.userOrGroup) is User:
-            return self.userOrGroup.username
+            users_name = self.userOrGroup.username
+            if len(self.userOrGroup.last_name) > 0:
+                users_name = "%s %s" % (self.userOrGroup.first_name, self.userOrGroup.last_name)
+            return users_name
         else:
             return self.userOrGroup.name
 
@@ -21,6 +24,8 @@ class UserGroupStats(object):
         self.stats[k] += 1
 
         username = "No assigned analyst" if user is None else user.username
+        if user and len(user.last_name) > 0:
+            username = "%s %s" % (user.first_name, user.last_name)
 
         if not username in self.users:
             self.users[username] = dict([(s.lower().replace(" ","_"),0) for s in STATUS_VALUES_LIST])
