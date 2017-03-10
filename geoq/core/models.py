@@ -5,6 +5,8 @@
 import json
 import cgi
 import ast
+import datetime
+from pytz import utc
 
 from django.contrib.auth.models import User, Group
 from django.contrib.gis.db import models
@@ -592,3 +594,38 @@ class Organization(models.Model):
     class Meta:
         verbose_name_plural = 'Organizations'
         ordering = ['order', 'name']
+
+
+class AOITimer(models.Model):
+    """
+    Capture start/stop times for different phases of the workcell (AOI)
+    """
+    user = models.ForeignKey(User, blank=False, help_text="User who worked on workcell")
+    aoi = models.ForeignKey(AOI, blank=False, help_text="Workcell that was changed")
+    status = models.CharField(max_length=20, blank=False, choices=AOI.STATUS_CHOICES, default='Unassigned')
+    started_at = models.DateTimeField(auto_now_add=True)
+    completed_at = models.DateTimeField(auto_now_add=False, blank=True, null=True)
+
+    def __unicode__(self):
+        return "%s activity on %s" % (self.user.username, self.aoi.id)
+
+    class Meta:
+        permissions = (
+
+        )
+        ordering = ('user','aoi',)
+
+    @property
+    def running(self):
+        return self.completed_at is None
+
+    @property
+    def timeLapse(self):
+        if self.completed_at is None:
+            return datetime.datetime.now(utc) - self.started_at
+        else:
+            return self.competed_at - self.started_at
+
+
+
+

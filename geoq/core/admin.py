@@ -7,7 +7,7 @@ from django.contrib.gis import admin
 from django.shortcuts import render
 from django.http import HttpResponseRedirect
 from django import forms
-from models import Project, Job, AOI, Setting, Organization
+from models import Project, Job, AOI, Setting, Organization, AOITimer
 from guardian.admin import GuardedModelAdmin
 
 
@@ -65,8 +65,16 @@ class ProjectAdmin(admin.ModelAdmin):
     filter_horizontal = ('project_admins', 'contributors',)
 
 
+class AOITimerAdmin(admin.ModelAdmin):
+    list_display = ('user', 'aoi', 'status', 'started_at', 'completed_at',)
+
+    fields = ('user','aoi','status','completed_at',)
+    readonly_fields = ('started_at',)
+
+
 admin.site.register(Setting, SettingAdmin)
 admin.site.register(Project, ProjectAdmin)
 admin.site.register(Job, JobAdmin)
 admin.site.register(AOI, AOIAdmin)
 admin.site.register(Organization)
+admin.site.register(AOITimer, AOITimerAdmin)
