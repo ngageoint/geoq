@@ -68,8 +68,7 @@ class ProjectAdmin(admin.ModelAdmin):
 class AOITimerAdmin(admin.ModelAdmin):
     list_display = ('user', 'aoi', 'status', 'started_at', 'completed_at',)
 
-    fields = ('user','aoi','status','completed_at',)
-    readonly_fields = ('started_at',)
+    fields = ('user','aoi','status','started_at','completed_at',)
 
 
 admin.site.register(Setting, SettingAdmin)

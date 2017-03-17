@@ -14,7 +14,7 @@ class Migration(SchemaMigration):
             ('user', self.gf('django.db.models.fields.related.ForeignKey')(to=orm['auth.User'])),
             ('aoi', self.gf('django.db.models.fields.related.ForeignKey')(to=orm['core.AOI'])),
             ('status', self.gf('django.db.models.fields.CharField')(default='Unassigned', max_length=20)),
-            ('started_at', self.gf('django.db.models.fields.DateTimeField')(auto_now_add=True, blank=True)),
+            ('started_at', self.gf('django.db.models.fields.DateTimeField')()),
             ('completed_at', self.gf('django.db.models.fields.DateTimeField')(null=True, blank=True)),
         ))
         db.send_create_signal(u'core', ['AOITimer'])
@@ -85,7 +85,7 @@ class Migration(SchemaMigration):
             'aoi': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['core.AOI']"}),
             'completed_at': ('django.db.models.fields.DateTimeField', [], {'null': 'True', 'blank': 'True'}),
             u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
-            'started_at': ('django.db.models.fields.DateTimeField', [], {'auto_now_add': 'True', 'blank': 'True'}),
+            'started_at': ('django.db.models.fields.DateTimeField', [], {}),
             'status': ('django.db.models.fields.CharField', [], {'default': "'Unassigned'", 'max_length': '20'}),
             'user': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['auth.User']"})
         },

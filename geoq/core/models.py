@@ -603,7 +603,7 @@ class AOITimer(models.Model):
     user = models.ForeignKey(User, blank=False, help_text="User who worked on workcell")
     aoi = models.ForeignKey(AOI, blank=False, help_text="Workcell that was changed")
     status = models.CharField(max_length=20, blank=False, choices=AOI.STATUS_CHOICES, default='Unassigned')
-    started_at = models.DateTimeField(auto_now_add=True)
+    started_at = models.DateTimeField(auto_now_add=False, blank=False)
     completed_at = models.DateTimeField(auto_now_add=False, blank=True, null=True)
 
     def __unicode__(self):

@@ -21,7 +21,7 @@ from django.views.decorators.http import require_POST, require_http_methods
 from django import utils
 import distutils
 
-from models import Project, Job, AOI, Comment, AssigneeType, Organization, WorkcellImage
+from models import Project, Job, AOI, Comment, AssigneeType, Organization, WorkcellImage, AOITimer
 from geoq.maps.models import *
 from utils import send_assignment_email, increment_metric
 from geoq.training.models import Training
@@ -204,6 +204,16 @@ class CreateFeaturesView(UserAllowedMixin, DetailView):
     queryset = AOI.objects.all()
     user_check_failure_path = ''
 
+    def startTimer(self, user, aoi, status):
+        timer,created = AOITimer.objects.get_or_create(
+            user=self.request.user,
+            aoi=aoi,
+            status='In work',
+            completed_at=None)
+        if created:
+            timer.save()
+
+
     def check_user(self, user, kwargs):
         try:
             aoi = AOI.objects.get(id=kwargs.get('pk'))
@@ -236,15 +246,14 @@ class CreateFeaturesView(UserAllowedMixin, DetailView):
             aoi.save()
             return True
         elif aoi.status == 'In work':
-            # TODO: replace this with new time metrics
-            #if aoi.started_at is None:
-            #    aoi.started_at = utils.timezone.now()
             if is_admin:
+                self.startTimer(self.request.user, aoi, aoi.status)
                 return True
             elif aoi.analyst != self.request.user:
                 kwargs['error'] = "Another analyst is already working on this workcell. Please select another workcell"
                 return False
             else:
+                self.startTimer(self.request.user, aoi, aoi.status)
                 return True
         elif aoi.status == 'Assigned' or aoi.status == 'Awaiting Imagery':
             if is_admin:
@@ -544,7 +553,13 @@ class ChangeAOIStatus(View):
 
         # if completed, mark completion date/time
         if status == 'Completed':
-            aoi.finished_at = utils.timezone.now()
+            # attempt to find the timer for this workcell and close
+            try:
+                timer = AOITimer.objects.get(user=request.user, aoi=aoi, status='In work', complete_at=None)
+                timer.completed_at = datetime.datetime.now()
+                timer.save()
+            except DoesNotExist:
+                pass
 
         aoi.save()
         return aoi
