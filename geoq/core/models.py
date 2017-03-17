@@ -424,11 +424,17 @@ class AOI(GeoQBase, Assignment):
             else:
                 user_label = self.analyst.username
 
+        # see if we have the size of the AOI
+        size = "unknown"
+        if 'MISQRD' in self.properties or 'KMSQRD' in self.properties:
+            size = "%s km2" % self.properties['KMSQRD'] if 'KMSQRD' in self.properties else "%s mi2" % self.properties['MISQRD']
+
         geojson = SortedDict()
         geojson["type"] = "Feature"
         geojson["properties"] = dict(
             id=self.id,
             status=self.status,
+            size = size,
             analyst=user_label,
             assignee=self.assignee_name,
             priority=self.priority,
