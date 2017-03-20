@@ -3,7 +3,7 @@
 {% load leaflet_tags %}
 {% load geoserver_job_link %}
 {% block title %}GeoQ Assign workcells: {{ object.name }}{% endblock %}
-{% block static_libraries %}                                                                  f
+{% block static_libraries %}
 {% leaflet_js plugins="draw" %}
 {% compress css %}
 {% leaflet_css plugins="draw"%}
@@ -91,14 +91,13 @@
 {% endblock %}
 
 {% block container %}
-    <div class="row-fluid container-narrow">
+    <div class="row-fluid container">
 
         <div class="projectlist">
 
             {% include 'core/_job_stat_list.html' %}
 
             <h3>
-                <span class="icon-inbox icon-1x pull-left list-icon"></span>
                 <span class="title header">
                     <a href="{%url 'job-detail' object.id %}">{{ object.name }} - Assign Workcells</a>
                 </span>
@@ -109,7 +108,7 @@
             </p>
 
             <div class="row body" style="height:500px; margin-top:25px">
-                <div class="span4 thumbnail" id="map" style="height:450px; width: 700px; vertical-alignment:middle;">
+                <div class="span4 thumbnail" id="map" style="height:450px; width: 850px; vertical-alignment:middle;">
                 {% leaflet_map "map" creatediv=False%}
                 </div>
             </div>
@@ -120,8 +119,8 @@
                             <colgroup>
                                 <col width="5%" />
                                 <col width="15%" />
-                                <col width="20%" />
-                                <col width="10%" />
+                                <col width="15%" />
+                                <col width="15%" />
                                 <col width="25%" />
                                 <col width="20%" />
                             </colgroup>
