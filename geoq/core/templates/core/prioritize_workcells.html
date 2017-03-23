@@ -58,15 +58,16 @@
         });
 
     </script>
+<form action="{% url 'job-prioritize-workcells' object.id %}" method="post">
+    {% csrf_token %}
     <div class="row-fluid container-narrow">
-                 <form action="{% url 'job-prioritize-workcells' object.id %}" method="post">
-                     {% csrf_token %}
+
         <div class="span6">
             <!--- div class="list-view-header">Workcells</div -->
             <h3>
                 <span class="title header">
                     <a href="{%url 'job-detail' object.id %}">{{ object.name }} Workcells</a>
-                                    <a class="icon-download pull-right" href="{% url 'json-job-grid' object.id %}"></a>
+                                    <a class="icon-download pull-right" href="{% url 'json-job-grid' object.id %}" title="Download GeoJSON"></a>
                 </span>
 
             </h3>
@@ -74,10 +75,11 @@
                 <table class="table table-bordered table-striped header-fixed">
                     <thead>
                         <tr>
-                            <th>Workcell ID</th>
-                            <th>Priority</th>
+                            <th>Name</th>
+                            <th>GeoQ ID</th>
+                            <th>Rank</th>
                             <th>Status</th>
-                            <th>Location</th>
+                            <th>Size</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -85,10 +87,13 @@
                         <tr>
                             <input type="hidden" name="id" value="{{ cell.id }}">
                             <td value="{{ cell.id }}">
-                                <a href='{% url 'aoi-work' cell.id %}' target="_blank">{{ cell.id }}</a>
+                                {{ cell.properties.GEO_ID }}
+                            </td>
+                            <td value="{{ cell.id }}">
+                                {{ cell.id }}
                             </td>
                             <td>
-                                <select name="priority" id="priority-{{ cell.id }}">
+                                <select name="priority" id="priority-{{ cell.id }}" style="width: 75px;">
                                     <option value="1" {% if cell.priority == 1 %}selected="selected"{% endif %}>1</option>
                                     <option value="2" {% if cell.priority == 2 %}selected="selected"{% endif %}>2</option>
                                     <option value="3" {% if cell.priority == 3 %}selected="selected"{% endif %}>3</option>
@@ -100,8 +105,7 @@
                                 {{ cell.status }}
                             </td>
                             <td>
-                                {{ cell.properties.usng }}
-                                {{ cell.properties.mgrs }}
+                                {{ cell.properties.MISQRD }}
                             </td>
                         </tr>
                         {% endfor %}
@@ -110,22 +114,24 @@
                 </div>
 
         </div>
+        </div>
 
-    <div class="row-fluid container-narrow">
-        <div class="span8">
-            <div style="position:relative; padding-top: 20px;">
+    <div class="row-fluid container-narrow" style="margin-top: 40px;">
+        <div class="span3">
+            <div>
                 <div class="btn btn-primary" id="file" style="position:absolute;">Click here to import priority values</div>
                 <input type="file" id="import-file" style="opacity:0; z-index:1;" onchange="('#file').value = this.value;" />
             </div>
 
         </div>
-    </div>
-    <div class="row-fluid container-narrow">
-        <div class="span5">
-            <button type="submit" class="btn btn-default">Submit to GeoQ</button>
+        <div class="span2">
+            <button type="submit" class="btn btn-primary">Submit Values</button>
+        </div>
+        <div class="span1">
+            <button type="button" class="btn btn-primary" onclick="location.href='{%url 'job-detail' object.id %}'">Return</button>
         </div>
     </div>
         </form>
-        </div>
+
 {% endblock %}
 
