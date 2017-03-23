@@ -109,6 +109,7 @@ urlpatterns = patterns('',
 
     # Report Pages
     url(r'^reports/work/(?P<job_pk>\d+)/?$', login_required(WorkSummaryView.as_view()), name='work-summary'),
+    url(r'^reports/job/(?P<job_pk>\d+)/?$', JobReportView.as_view(), name='job-report'),
 
     # OTHER URLS
     url(r'^edit/?$', TemplateView.as_view(template_name='core/edit.html'), name='edit'),

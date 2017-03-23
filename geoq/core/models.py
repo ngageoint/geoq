@@ -5,7 +5,7 @@
 import json
 import cgi
 import ast
-import datetime
+from datetime import datetime, timedelta
 from pytz import utc
 
 from django.contrib.auth.models import User, Group
@@ -344,6 +344,13 @@ class Job(GeoQBase, Assignment):
 
         return obj
 
+    def work_summary_json(self):
+        summary = dict()
+        for a in self.aois.order_by('id').all():
+            summary[a.id] = a.summary_properties_json()
+
+        return clean_dumps(summary)
+
 
 class AOI(GeoQBase, Assignment):
     """
@@ -465,6 +472,49 @@ class AOI(GeoQBase, Assignment):
         prop_json = dict(properties_built.items() + properties_main.items())
 
         return clean_dumps(prop_json)
+
+    def summary_properties_json(self):
+        """
+        Return json with additional properties
+        """
+
+        properties_main = self.properties or {}
+        properties_built = dict(
+            status = self.status,
+            analyst = (self.analyst.username if self.analyst is not None else 'Unassigned'),
+            team = (self.assignee_name if self.assignee_id is not None else 'Unassigned'),
+            priority = self.priority)
+        prop_json = dict(properties_built.items() + properties_main.items())
+
+        # capture how much time was spent on each state for the AOI
+        # We'll make this configurable later on, but just capture 'In work' for now
+        capture_states =  ['In work']
+        capture_metrics = dict()
+        for c in capture_states:
+            #TODO: really not querying for state (c)
+            tdelta = AOITimer.objects.extra(select={'elapsed': 'SELECT SUM(completed_at - started_at) FROM core_aoitimer WHERE aoi_id=%s' % self.id}).values('elapsed')
+            capture_metrics[c] = tdelta[0]['elapsed'].seconds if tdelta[0]['elapsed'] is not None else 0
+
+        prop_json['timer'] = capture_metrics
+
+        # see if there's a completion date
+        if AOITimer.objects.filter(aoi=self,status='In work').count() > 0:
+            fin_date = AOITimer.objects.filter(aoi=self,status='In work').latest('id').completed_at
+            prop_json['completion_date'] = fin_date.strftime("%m/%d/%Y") if fin_date is not None else 'Not finished'
+
+        # And see if we've completed any analysis
+        images = WorkcellImage.objects.filter(workcell=self,status='Accepted')
+        if images.count() == 0:
+            prop_json['analyzed'] = "0/0 0%"
+        else:
+            total = images.count()
+            analyzed = images.filter(exam_date__isnull=False).count()
+            prop_json['analyzed'] = "%d/%d %d%%" % (analyzed,total,int(analyzed/float(total)*100))
+
+        # And objects found
+        prop_json['features'] = self.features.count()
+
+        return prop_json
 
 
     def map_detail(self):
@@ -631,6 +681,13 @@ class AOITimer(models.Model):
             return datetime.datetime.now(utc) - self.started_at
         else:
             return self.competed_at - self.started_at
+
+    @property
+    def savable(self):
+        if self.completed_at is None:
+            return False
+
+        return self.completed_at - self.started_at > timedelta(minutes=1)
 
 
 

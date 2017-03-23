@@ -34,6 +34,7 @@ from guardian.decorators import permission_required
 from kml_view import *
 from shape_view import *
 from analytics import UserGroupStats
+from pytz import utc
 
 
 class Dashboard(TemplateView):
@@ -209,6 +210,7 @@ class CreateFeaturesView(UserAllowedMixin, DetailView):
             user=self.request.user,
             aoi=aoi,
             status='In work',
+            started_at=datetime.now(utc),
             completed_at=None)
         if created:
             timer.save()
@@ -551,15 +553,17 @@ class ChangeAOIStatus(View):
         aoi.analyst = request.user
         aoi.status = status
 
-        # if completed, mark completion date/time
-        if status == 'Completed':
-            # attempt to find the timer for this workcell and close
-            try:
-                timer = AOITimer.objects.get(user=request.user, aoi=aoi, status='In work', complete_at=None)
-                timer.completed_at = datetime.datetime.now()
-                timer.save()
-            except DoesNotExist:
-                pass
+        try:
+            timer = AOITimer.objects.filter(user=request.user, aoi=aoi, completed_at=None).order_by('-id')
+            if len(timer) > 0:
+                t = timer[0]
+                t.completed_at = datetime.now(utc)
+                if t.savable:
+                    t.save()
+                else:
+                    t.delete()
+        except AOITimer.DoesNotExist:
+            pass
 
         aoi.save()
         return aoi
@@ -724,6 +728,21 @@ class WorkSummaryView(TemplateView):
 
         return cv
 
+#TODO fix
+class JobReportView(TemplateView):
+    http_method_names = ['get']
+    template_name = 'core/reports/aoi_summary.html'
+    model = Job
+
+    def get_context_data(self, **kwargs):
+        cv = super(JobReportView, self).get_context_data(**kwargs)
+        # get users and groups assigned to the Job
+        job = get_object_or_404(Job, pk=self.kwargs.get('job_pk'))
+
+        cv['object'] = job
+        cv['data'] = job.work_summary_json()
+
+        return cv
 
 def image_footprints(request):
     """
