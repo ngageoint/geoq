@@ -80,7 +80,7 @@ class JobForm(StyledModelForm):
 
     analysts = forms.ModelMultipleChoiceField(
         queryset = User.objects.all(),
-
+        widget = ItemSelectWidget(option_title_field='email')
     )
     layers = forms.ModelMultipleChoiceField(
         queryset = Layer.objects.all(),

@@ -12,7 +12,7 @@ def version_date():
         timestamp = ""
     return timestamp
 
-__version__ = "2.2"
+__version__ = "2.3"
 
 @register.simple_tag
 def version_number():

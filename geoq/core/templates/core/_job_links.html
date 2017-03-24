@@ -6,18 +6,24 @@
     {% endfor %}
 </td></tr>
 {% endif %}
-<tr><td colspan="1" style="padding-top:20px;">
+<tr>
+    <td colspan="1" style="padding-top:20px;">
     <button type="button" class="btn btn-primary btn-lg" data-toggle="modal" data-target="#save_changes_modal">
         Share Your Work
     </button>
-</td>
-<td colspan="2" style="padding-top:20px;">
+    </td>
+    <td colspan="1" style="padding-top: 20px;">
     <a href="{% url 'job-statistics' object.id %}">
     <button type="button" class="btn btn-primary btn-lg">
         View Job Statistics
     </button> </a>
-    <a href="{{ object.get_export_url }}" <button type="button" class="btn btn-default btn-lg" > Export Job </button> </a>
-</td></tr>
+    </td>
+    <td colspan="1" style="padding-top: 20px;">
+        <a href="{% url 'job-report' object.id %}" class="btn btn-primary btn-lg">
+            Reports
+        </a>
+    </td>
+</tr>
 
 <!-- Added by Jared -->
 <div id="save_changes_modal" class="modal hide fade">

@@ -4,6 +4,9 @@
 
 import json
 import cgi
+import ast
+from datetime import datetime, timedelta
+from pytz import utc
 
 from django.contrib.auth.models import User, Group
 from django.contrib.gis.db import models
@@ -14,7 +17,7 @@ from django.core.urlresolvers import reverse
 from django.utils.datastructures import SortedDict
 from managers import AOIManager
 from jsonfield import JSONField
-from collections import defaultdict
+from collections import defaultdict, OrderedDict
 from django.db.models import Q
 from geoq.training.models import Training
 from geoq.core.utils import clean_dumps
@@ -211,9 +214,10 @@ class Job(GeoQBase, Assignment):
 
     @property
     def aoi_counts_html(self):
-        count = defaultdict(int)
+        count = OrderedDict([(i,0) for i in STATUS_VALUES_LIST])
         for cell in AOI.objects.filter(job__id=self.id):
-            count[cell.status] += 1
+            if cell.status in count:
+                count[cell.status] += 1
 
         return str(', '.join("%s: <b>%r</b>" % (key, val) for (key, val) in count.iteritems()))
 
@@ -334,10 +338,26 @@ class Job(GeoQBase, Assignment):
         """
 
         obj = {}
+        try:
+            proj = int(self.map.projection[-4:])
+        except ValueError:
+            proj = 3857
+
+        if (proj != 3857):
+            obj['srid'] = proj
+
         if len(self.base_layer) > 0:
             obj["layers"] = [self.base_layer]
 
         return obj
+
+    def work_summary_json(self):
+        summary = dict()
+        for a in self.aois.order_by('id').all():
+            summary[a.id] = a.summary_properties_json()
+
+        return clean_dumps(summary)
+
 
 class AOI(GeoQBase, Assignment):
     """
@@ -357,19 +377,6 @@ class AOI(GeoQBase, Assignment):
     polygon = models.MultiPolygonField()
     priority = models.SmallIntegerField(choices=PRIORITIES, max_length=1, default=5)
     status = models.CharField(max_length=15, choices=STATUS_CHOICES, default='Unassigned')
-
-    #Signifies When the work cell is created
-    cellCreated_at = models.DateTimeField(blank=True,null=True)
-    #signifies when the work cell enters the assigned state
-    cellAssigned_at = models.DateTimeField(blank=True,null=True)
-    #signifies when the work cell enters the "In Work " state
-    cellStarted_at = models.DateTimeField(blank=True,null=True)	
-    #Cell enters the waiting for review state
-    cellWaitingReview_at = models.DateTimeField(blank=True,null=True)
-    #cell enters QA
-    cellInReview_at = models.DateTimeField(blank=True,null=True)
-    #cell enters completed state
-    cellFinished_at = models.DateTimeField(blank=True,null=True)	
 
     class Meta:
         verbose_name = 'Area of Interest'
@@ -415,22 +422,29 @@ class AOI(GeoQBase, Assignment):
         if self.id is None:
             self.id = 1
 
+        user_label = 'None'
+        if self.analyst is not None:
+            if len(self.analyst.last_name) > 0:
+                user_label = "%s %s" % (self.analyst.first_name, self.analyst.last_name)
+            else:
+                user_label = self.analyst.username
+
+        # see if we have the size of the AOI
+        size = "unknown"
+        if 'MISQRD' in self.properties or 'KMSQRD' in self.properties:
+            size = "%s km2" % self.properties['KMSQRD'] if 'KMSQRD' in self.properties else "%s mi2" % self.properties['MISQRD']
+
         geojson = SortedDict()
         geojson["type"] = "Feature"
         geojson["properties"] = dict(
             id=self.id,
             status=self.status,
+            size = size,
             analyst=(self.analyst.username if self.analyst is not None else 'None'),
             assignee=self.assignee_name,
             priority=self.priority,
-            delete_url=reverse('aoi-deleter', args=[self.id]),
-            time=dict(
-                assigned=str(self.cellAssigned_at), 
-                in_work=str(self.cellStarted_at),
-                waiting_review=str(self.cellWaitingReview_at),
-                in_review=str(self.cellInReview_at),
-                finished=str(self.cellFinished_at)
-                ))
+            name=self.properties['GEO_ID'] if 'GEO_ID' in self.properties else '000000',
+            delete_url=reverse('aoi-deleter', args=[self.id]))
         geojson["geometry"] = json.loads(self.polygon.json)
 
         geojson["properties"]["absolute_url"] = self.get_absolute_url()
@@ -456,6 +470,49 @@ class AOI(GeoQBase, Assignment):
         prop_json = dict(properties_built.items() + properties_main.items())
 
         return clean_dumps(prop_json)
+
+    def summary_properties_json(self):
+        """
+        Return json with additional properties
+        """
+
+        properties_main = self.properties or {}
+        properties_built = dict(
+            status = self.status,
+            analyst = (self.analyst.username if self.analyst is not None else 'Unassigned'),
+            team = (self.assignee_name if self.assignee_id is not None else 'Unassigned'),
+            priority = self.priority)
+        prop_json = dict(properties_built.items() + properties_main.items())
+
+        # capture how much time was spent on each state for the AOI
+        # We'll make this configurable later on, but just capture 'In work' for now
+        capture_states =  ['In work']
+        capture_metrics = dict()
+        for c in capture_states:
+            #TODO: really not querying for state (c)
+            tdelta = AOITimer.objects.extra(select={'elapsed': 'SELECT SUM(completed_at - started_at) FROM core_aoitimer WHERE aoi_id=%s' % self.id}).values('elapsed')
+            capture_metrics[c] = tdelta[0]['elapsed'].seconds if tdelta[0]['elapsed'] is not None else 0
+
+        prop_json['timer'] = capture_metrics
+
+        # see if there's a completion date
+        if AOITimer.objects.filter(aoi=self,status='In work').count() > 0:
+            fin_date = AOITimer.objects.filter(aoi=self,status='In work').latest('id').completed_at
+            prop_json['completion_date'] = fin_date.strftime("%m/%d/%Y") if fin_date is not None else 'Not finished'
+
+        # And see if we've completed any analysis
+        images = WorkcellImage.objects.filter(workcell=self,status='Accepted')
+        if images.count() == 0:
+            prop_json['analyzed'] = "0/0 0%"
+        else:
+            total = images.count()
+            analyzed = images.filter(exam_date__isnull=False).count()
+            prop_json['analyzed'] = "%d/%d %d%%" % (analyzed,total,int(analyzed/float(total)*100))
+
+        # And objects found
+        prop_json['features'] = self.features.count()
+
+        return prop_json
 
 
     def map_detail(self):
@@ -528,3 +585,45 @@ class Organization(models.Model):
     class Meta:
         verbose_name_plural = 'Organizations'
         ordering = ['order', 'name']
+
+
+class AOITimer(models.Model):
+    """
+    Capture start/stop times for different phases of the workcell (AOI)
+    """
+    user = models.ForeignKey(User, blank=False, help_text="User who worked on workcell")
+    aoi = models.ForeignKey(AOI, blank=False, help_text="Workcell that was changed")
+    status = models.CharField(max_length=20, blank=False, choices=AOI.STATUS_CHOICES, default='Unassigned')
+    started_at = models.DateTimeField(auto_now_add=False, blank=False)
+    completed_at = models.DateTimeField(auto_now_add=False, blank=True, null=True)
+
+    def __unicode__(self):
+        return "%s activity on %s" % (self.user.username, self.aoi.id)
+
+    class Meta:
+        permissions = (
+
+        )
+        ordering = ('user','aoi',)
+
+    @property
+    def running(self):
+        return self.completed_at is None
+
+    @property
+    def timeLapse(self):
+        if self.completed_at is None:
+            return datetime.datetime.now(utc) - self.started_at
+        else:
+            return self.competed_at - self.started_at
+
+    @property
+    def savable(self):
+        if self.completed_at is None:
+            return False
+
+        return self.completed_at - self.started_at > timedelta(minutes=1)
+
+
+
+

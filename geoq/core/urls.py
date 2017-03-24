@@ -74,6 +74,9 @@ urlpatterns = patterns('',
     url(r'^jobs/(?P<job_pk>\d+)/assign-workcells/?$',
         login_required(AssignWorkcellsView.as_view()),
         name='job-assign-workcells'),
+    url(r'^jobs/(?P<job_pk>\d+)/job-summary/?$',
+        login_required(SummaryView.as_view()),
+        name='job-summary'),
 
     url(r'^jobs/(?P<job_pk>\d+)/batch-create-aois/?$',
         #login required set in views
@@ -115,11 +118,16 @@ urlpatterns = patterns('',
 
     url(r'^features/delete/(?P<pk>\d+)/?$', login_required( feature_delete ), name='feature-delete'),
 
+    # Report Pages
+    url(r'^reports/work/(?P<job_pk>\d+)/?$', login_required(WorkSummaryView.as_view()), name='work-summary'),
+    url(r'^reports/job/(?P<job_pk>\d+)/?$', JobReportView.as_view(), name='job-report'),
+
     # OTHER URLS
     url(r'^edit/?$', TemplateView.as_view(template_name='core/edit.html'), name='edit'),
     url(r'^help/?$', display_help, name='help_page'),
     url(r'^api/jobs/(?P<job_pk>\d+)/users/?$', list_users, name='list_users'),
     url(r'^api/jobs/(?P<job_pk>\d+)/groups/?$', list_groups, name='list_groups'),
+    url(r'^api/group/(?P<group_pk>\d+)/users/?$', list_group_users, name='list_group_users'),
     url(r'^api/geo/usng/?$', 'core.views.usng', name='usng'),
     url(r'^api/geo/mgrs/?$', 'core.views.mgrs', name='mgrs'),
     url(r'^api/geo/ipaws/?$', 'core.views.ipaws', name='ipaws'),
@@ -141,21 +149,22 @@ urlpatterns = patterns('',
 
     url(r'^api/prioritize/(?P<method>\w+)?$',
         'core.views.prioritize_cells', name='batch-prioritize-cells'),
+
     #TEAMS
     url(r'^admin/jsi18n/$', 'django.views.i18n.javascript_catalog'),
     url(r'^teams/?$', TeamListView.as_view(template_name='core/team_list.html'), name='team-list'),
     url(r'^teams/create/?$',
         login_required(CreateTeamView.as_view(queryset=Group.objects.all(),
-                           template_name='core/generic_form.html',
-                           form_class=TeamForm)),
-        name='team-create'),
+            template_name='core/generic_form.html',
+            form_class=TeamForm)),
+            name='team-create'),
     url(r'^teams/update/(?P<pk>\d+)/?$',
         login_required(UpdateTeamView.as_view(queryset=Group.objects.all(),
-                           template_name='core/generic_form.html',
-                           form_class=TeamForm)),
-        name='team-update'),
+            template_name='core/generic_form.html',
+            form_class=TeamForm)),
+            name='team-update'),
     url(r'^team/delete/(?P<pk>\d+)/?$',
         login_required(TeamDelete.as_view()),
         name='team-delete'),
-    
+
 )

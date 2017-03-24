@@ -3,7 +3,7 @@
 	<h5>
 		<a href="{{ job_properties.absolute_url }}">Work Cell # {{ job_properties.id }}</a>
 	</h5>
-	<div>
+	<div style="height: 20px;">
 		<label>Priority: </label>
 		<span><select id="cell-{{ job_properties.id }}" onchange="updatePriority({{ job_properties.id}}, this);" style="width:40px;height:20px;line-height:20px;padding:2px;font-size:10px;">
                 <option value="1" {% if (job_properties.priority == 1){ %} selected="selected" {% } %}>1</option>
@@ -18,12 +18,18 @@
 		<label>Status: </label>
 		<span>{{ job_properties.status }}</span>
 	</div>
-	<div>
-		<label>Analyst: </label>
-		<span>{{ job_properties.analyst }}</span>
+    <div>
+        <label>Analyst: </label>
+        <span>{{ job_properties.analyst }}</span>
+    </div>
+    <div>
+		<label>Team: </label>
+		<span>{{ job_properties.assignee }}</span>
 	</div>
+    {% if (job_properties.can_delete) { %}
     <div>
         <a onclick="javascript:deleteAOI('{{ job_properties.id }}','{{ job_properties.delete_url }}');">Delete Work Cell</a>
     </div>
+    {% } %}
 </div>
 {% endverbatim %}

@@ -60,6 +60,9 @@
 
 
                     job_properties = feature.properties;
+                    {% if 'core.delete_aoi' in request.base_perms %}
+                        job_properties.can_delete = true;
+                    {% endif %}
                     {% if user.is_authenticated %}
                     var popupContent = _.template('{% filter escapejs %}{% include "core/job_detail_aoi_popup.html" %}{% endfilter %}', job_properties);
                     layer.bindPopup(popupContent);
@@ -68,7 +71,7 @@
                     layer.on({
                         mouseover: highlightFeature,
                         mouseout: resetHighlight,
-                        click: cellClick,
+                        click: cellClick
                         popupopen: recenter
                     });
                 }
