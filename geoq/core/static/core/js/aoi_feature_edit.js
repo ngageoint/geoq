@@ -1631,13 +1631,15 @@ aoi_feature_edit.buildDropdownMenu = function() {
         } else {
             //Unrecognized input
         }
-
-        // add a return option
-        $return = $("<li>")
-            .append($("<a>")
-                .text("Return")
-                .click(function() { location.href=}))
     }
+
+    // add a return option
+    $return = $("<li>")
+        .append($("<a>")
+            .text("Return")
+            .click(function() { location.href=aoi_feature_edit.job_absolute_url;}))
+    $return.appendTo($ull);
+
     $div.dropdown();
 
     return $div;
