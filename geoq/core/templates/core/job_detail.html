@@ -45,18 +45,18 @@
                 },
                 onEachFeature: function(feature, layer) {
 
-                    if (feature["properties"]["time"]["in_work"] != "None" && feature["properties"]["time"]["finished"] != "None") {
-                        console.log(feature);
-                        startedDate = new Date(feature["properties"]["time"]["in_work"]);
-                        finishedDate = new Date(feature["properties"]["time"]["finished"]);
-                        var hours = Math.abs(startedDate - finishedDate) / 36e5;
-
-                        runningAverage = ((runningAverage * count) + hours) / (count+1);
-                        count++;
-
-                      	timeToCompletion = runningAverage * ( {{object.aoi_count}} - count);	
-                      
-                    }
+//                    if (feature["properties"]["time"]["in_work"] != "None" && feature["properties"]["time"]["finished"] != "None") {
+//                        console.log(feature);
+//                        startedDate = new Date(feature["properties"]["time"]["in_work"]);
+//                        finishedDate = new Date(feature["properties"]["time"]["finished"]);
+//                        var hours = Math.abs(startedDate - finishedDate) / 36e5;
+//
+//                        runningAverage = ((runningAverage * count) + hours) / (count+1);
+//                        count++;
+//
+//                      	timeToCompletion = runningAverage * ( {{object.aoi_count}} - count);
+//
+//                    }
 
 
                     job_properties = feature.properties;
@@ -71,7 +71,7 @@
                     layer.on({
                         mouseover: highlightFeature,
                         mouseout: resetHighlight,
-                        click: cellClick
+                        click: cellClick,
                         popupopen: recenter
                     });
                 }

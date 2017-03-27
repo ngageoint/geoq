@@ -372,6 +372,7 @@ class JobDetailedListView(ListView):
 
     paginate_by = 15
     model = Job
+    default_status = 'in work'
     default_status_assigner = 'assigned'
     default_status_analyst = 'awaiting imagery'
     request = None
