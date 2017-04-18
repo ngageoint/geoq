@@ -80,6 +80,7 @@ workcell_report.filterTimeline = function(ids) {
     });
 
     timeline.setItems(timeline_data);
+    timeline.fit();
 };
 
 workcell_report.onEachFeature = function(feature,layer) {
