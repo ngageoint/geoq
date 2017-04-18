@@ -34,7 +34,7 @@ function mapInit(map, bounds) {
         },
         onEachFeature: function(feature, layer) {
 
-            var job_properties = feature.properties;
+            job_properties = feature.properties;
             var popupContent = _.template(job_map.popup_template, job_properties);
             layer.bindPopup(popupContent);
 
