@@ -58,10 +58,10 @@ workcell_report.filterLayers = function(ids) {
             id = layer.feature.geometry.key;
         }
 
-        if (!ids.includes(id)) {
-            layer.setStyle(workcell_report.getStyle(status,false));
+        if (_.contains(ids,id)) {
+            layer.setStyle(workcell_report.getStyle(status,true));
         } else {
-            layer.setStyle(workcell_report.getStyle(status, true));
+            layer.setStyle(workcell_report.getStyle(status,false));
         }
     })
 };
@@ -92,7 +92,7 @@ workcell_report.onEachFeature = function(feature,layer) {
 };
 
 workcell_report.getStyle = function(status,visible) {
-    var system_style = workcell_report.status_colors.find(function(e) { return e.name == status; });
+    var system_style = _.find(workcell_report.status_colors, function(e) { return e.name == status; });
     var style = workcell_report.default_style;
     if (system_style && system_style.color) {
         style = system_style.color;
