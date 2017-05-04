@@ -898,10 +898,10 @@ aoi_feature_edit.map_init = function (map, bounds) {
 
 
     //aoi_feature_edit.YouTube = L.layerGroup().addTo(map);
-    aoi_feature_edit.YouTube = L.markerClusterGroup({
-        spiderfyDistanceMultiplier: 2,
-        spiderLegPolylineOptions: { weight: 2, color: '#000', opacity: 1.0},
-    }).addTo(map);
+//    aoi_feature_edit.YouTube = L.markerClusterGroup({
+//        spiderfyDistanceMultiplier: 2,
+//        spiderLegPolylineOptions: { weight: 2, color: '#000', opacity: 1.0},
+//    }).addTo(map);
     
 
     function help_onclick() {

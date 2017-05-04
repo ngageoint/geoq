@@ -14,12 +14,14 @@ from crispy_forms.layout import HTML, Layout, Fieldset, ButtonHolder, Submit
 class FeatureForm(StyledModelForm):
     class Meta:
         model = Feature
-        excluded_fields = ("aoi")
+        excluded = ('aoi',)
+        fields = ('template',)
 
 
 class FeatureTypeForm(StyledModelForm):
     class Meta:
         model = FeatureType
+        fields = ('name','type','category','order','properties','style',)
 
     def __init__(self, *args, **kwargs):
         super(FeatureTypeForm, self).__init__(*args, **kwargs)
@@ -61,6 +63,7 @@ class FeatureTypeForm(StyledModelForm):
 class MapForm(StyledModelForm):
     class Meta:
         model = Map
+        fields = ('title','description',)
 
 class UploadKMZForm(forms.Form):
     title = forms.CharField(max_length=50)
@@ -73,6 +76,8 @@ class UploadJSONForm(forms.Form):
 class LayerForm(StyledModelForm):
     class Meta:
         model = Layer
+        fields = ('name','type','url','layer','attribution','description','image_format','refreshrate','transparent',
+                'token','additional_domains','downloadableLink','layer_params','dynamic_params',)
 
     def __init__(self, *args, **kwargs):
         super(LayerForm, self).__init__(*args, **kwargs)
@@ -112,5 +117,6 @@ class LayerForm(StyledModelForm):
 class MapLayerForm(StyledModelForm):
     class Meta:
         model = MapLayer
+        fields = ('map','layer',)
 
-MapInlineFormset = inlineformset_factory(Map, MapLayer, extra=3)
+MapInlineFormset = inlineformset_factory(Map, MapLayer, fields=('map',), extra=3)

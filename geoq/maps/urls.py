@@ -3,14 +3,14 @@
 # is subject to the Rights in Technical Data-Noncommercial Items clause at DFARS 252.227-7013 (FEB 2012)
 
 from django.contrib.auth.decorators import login_required
-from django.conf.urls import patterns, url
+from django.conf.urls import url
 from django.views.generic import CreateView, UpdateView, ListView
 from forms import FeatureTypeForm, MapForm, LayerForm, MapLayerForm
 from views import CreateFeatures, EditFeatures, create_update_map, FeatureTypeListView, FeatureTypeDelete, MapListView,\
  MapDelete, LayerListView, LayerDelete, LayerImport, KMZLayerImport, JSONLayerImport, JSONLayerExport, update_user_maplayer_param
 from models import FeatureType, Map, Layer
 
-urlpatterns = patterns('',
+urlpatterns = [
 
     url(r'^feature-types/?$',
         FeatureTypeListView.as_view(queryset=FeatureType.objects.all()),
@@ -25,7 +25,7 @@ urlpatterns = patterns('',
         name='feature-edit'),
     
     url(r'^feature-types/create/?',
-        login_required(CreateView.as_view(template_name='core/crispy_form.html', form_class=FeatureTypeForm)),
+        login_required(CreateView.as_view(template_name='maps/crispy_form.html', form_class=FeatureTypeForm)),
         name='feature-type-create'),
     
     url(r'^feature-types/update/(?P<pk>\d+)/?$',
@@ -62,11 +62,11 @@ urlpatterns = patterns('',
                          name='layer-list'),
 
     url(r'^layers/create/?$',
-        login_required(CreateView.as_view(template_name='core/crispy_form.html', form_class=LayerForm)),
+        login_required(CreateView.as_view(template_name='maps/crispy_form.html', form_class=LayerForm)),
         name='layer-create'),
 
     url(r'^layers/update/(?P<pk>\d+)/?$',
-        login_required(UpdateView.as_view(template_name='core/crispy_form.html',
+        login_required(UpdateView.as_view(template_name='maps/crispy_form.html',
                            queryset=LayerForm.Meta.model.objects.all(),
                            form_class=LayerForm)),
         name='layer-update'),
@@ -83,12 +83,12 @@ urlpatterns = patterns('',
     # MapLayer CRUD Views
 
     url(r'^map-layers/create/?$',
-        login_required(CreateView.as_view(template_name='core/generic_form.html',
+        login_required(CreateView.as_view(template_name='maps/generic_form.html',
                            form_class=MapLayerForm)),
         name='map-layer-create'),
 
     url(r'^map-layers/update/(?P<pk>\d+)/?$',
-        login_required(UpdateView.as_view(template_name='core/generic_form.html',
+        login_required(UpdateView.as_view(template_name='maps/generic_form.html',
                            queryset=MapLayerForm.Meta.model.objects.all(),
                            form_class=MapLayerForm)),
         name='map-layer-update'),
@@ -104,4 +104,4 @@ urlpatterns = patterns('',
     url(r'^api/map-layers[s ]?/create/create-json-layer', JSONLayerImport.as_view(), name='create-json-layer'),
 
     url(r'^api/map-layers[s ]?/(?P<pk>.+).json', JSONLayerExport.as_view(), name='json-layer-export'),
-)
+]

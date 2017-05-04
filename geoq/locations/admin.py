@@ -3,14 +3,12 @@
 # is subject to the Rights in Technical Data-Noncommercial Items clause at DFARS 252.227-7013 (FEB 2012)
 
 from django.contrib.gis import admin
-import reversion
+from reversion.admin import VersionAdmin
 from models import *
 
-
-class CountiesAdmin(reversion.VersionAdmin, admin.ModelAdmin):
+@admin.register(Counties)
+class CountiesAdmin(VersionAdmin, admin.ModelAdmin):
     model = Counties
     list_display = ['name']
     save_as = True
     ordering = ['name']
-
-admin.site.register(Counties, CountiesAdmin)

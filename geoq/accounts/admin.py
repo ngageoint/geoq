@@ -1,7 +1,7 @@
 # This technical data was produced for the U. S. Government under Contract No. W15P7T-13-C-F600, and
 # is subject to the Rights in Technical Data-Noncommercial Items clause at DFARS 252.227-7013 (FEB 2012)
 
-import reversion
+from reversion.admin import VersionAdmin
 from django.contrib.gis import admin
 from models import EmailDomain, Organization, UserAuthorization, UserProfile
 
@@ -13,7 +13,7 @@ from django.contrib.admin import widgets
 from django.contrib.auth.models import User, Group, Permission
 
 
-class ObjectAdmin(reversion.VersionAdmin,):
+class ObjectAdmin(VersionAdmin,):
     pass
 
 
@@ -77,6 +77,7 @@ class GroupAdminForm(forms.ModelForm):
 
     class Meta:
         model = Group
+        fields = ['id','name']
 
     def __init__(self, *args, **kwargs):
         super(GroupAdminForm, self).__init__(*args, **kwargs)

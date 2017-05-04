@@ -3,13 +3,23 @@
 # is subject to the Rights in Technical Data-Noncommercial Items clause at DFARS 252.227-7013 (FEB 2012)
 
 import os
+import django
 
-#DJANGO_ROOT = os.path.dirname(os.path.realpath(django.__file__))
 SITE_ROOT = os.path.dirname(os.path.realpath(__file__))
 
+# Build paths inside the project like this: os.path.join(BASE_DIR, ...)
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
+
+# Quick-start development settings - unsuitable for production
+# See https://docs.djangoproject.com/en/1.10/howto/deployment/checklist/
+
+# SECURITY WARNING: keep the secret key used in production secret!
+SECRET_KEY = 'wp88fi$)5dbve^!(@-k2%5tqep+16uoz078h*sttghy2%uid7c'
+
+
+# SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
-TEMPLATE_DEBUG = True
 
 ADMINS = (
     ('Admin User', 'admin@domain.com'),
@@ -29,12 +39,9 @@ DATABASES = {
     }
 }
 
-# Use this to change the base bootstrap library
-BOOTSTRAP_BASE_URL = '/static/bootstrap/'
-
 # Hosts/domain names that are valid for this site; required if DEBUG is False
 # See https://docs.djangoproject.com/en/1.5/ref/settings/#allowed-hosts
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['192.168.5.132','localhost']
 
 # Local time zone for this installation. Choices can be found here:
 # http://en.wikipedia.org/wiki/List_of_tz_zones_by_name
@@ -46,7 +53,6 @@ TIME_ZONE = 'America/New_York'
 # http://www.i18nguy.com/unicode/language-identifiers.html
 LANGUAGE_CODE = 'en-us'
 
-SITE_ID = 1
 
 # If you set this to False, Django will make some optimizations so as not
 # to load the internationalization machinery.
@@ -61,7 +67,7 @@ USE_TZ = True
 
 # Absolute filesystem path to the directory that will hold user-uploaded files.
 # Example: "/var/www/example.com/media/"
-MEDIA_ROOT = '/opt/src/pyenv/geoq/nga-geoq'
+MEDIA_ROOT = '/usr/local/src/geoq'
 
 # URL that handles the media served from MEDIA_ROOT. Make sure to use a
 # trailing slash.
@@ -104,7 +110,6 @@ COMPRESS_PRECOMPILERS = (
     ('text/less', 'lessc {infile} {outfile}'),
 )
 
-
 LEAFLET_CSS = [
     STATIC_URL + 'leaflet/leaflet-draw/leaflet.draw.css',
     os.path.join(STATIC_ROOT, '/static/leaflet/leaflet-draw/leaflet.draw.css')
@@ -114,6 +119,11 @@ LEAFLET_CONFIG = {
     'RESET_VIEW' : False,
     'MAX_ZOOM' : 22,
     'PLUGINS': {
+        'proj4js': {
+            'css': [],
+            'js': [STATIC_URL + 'leaflet/proj4js.js',STATIC_URL + 'leaflet/proj4leaflet.js'],
+            'repo': 'https://github.com/proj4js'
+        },
         'draw': {
             'css': LEAFLET_CSS,
             'js': STATIC_URL + 'leaflet/leaflet-draw/leaflet.draw-src.js',
@@ -157,38 +167,108 @@ LEAFLET_CONFIG = {
     }
 }
 
+# List of callables that know how to import templates from various sources
+# Location of template files
+#TEMPLATE_DIRS = (
+#    os.path.join(SITE_ROOT, 'templates'),
+#    SITE_ROOT,
+#)
+#.
+#TEMPLATE_LOADERS = (
+#    'django.template.loaders.filesystem.Loader',
+#    'django.template.loaders.app_directories.Loader',
+#    #'django.template.loaders.eggs.Loader',
+#)
+#
+#TEMPLATE_CONTEXT_PROCESSORS = (
+##    'django.contrib.auth.context_processors.auth',
+#    'django.core.context_processors.request',
+#    'django.core.context_processors.static',
+#    'django.contrib.messages.context_processors.messages',
+#    'geoq.core.contextprocessors.app_settings',
+#)
 
-# Make this unique, and don't share it with anybody.
-SECRET_KEY = '2t=^l2e$e5!du$0^c@3&qk4h_*stwwgp#1o$*n7#eisc)^2(wk'
+TEMPLATES = [
+{
+    'BACKEND': 'django.template.backends.django.DjangoTemplates',
+    'DIRS': [ os.path.join(SITE_ROOT, 'templates'),
+                  SITE_ROOT ],
+    'OPTIONS': {
+        'loaders': [
 
-# List of callables that know how to import templates from various sources.
-TEMPLATE_LOADERS = (
-    'django.template.loaders.filesystem.Loader',
-    'django.template.loaders.app_directories.Loader',
-    #'django.template.loaders.eggs.Loader',
-)
+                'django.template.loaders.filesystem.Loader',
+                'django.template.loaders.app_directories.Loader',
+                #'django.template.loaders.eggs.Loader'
+            ],
+        'context_processors': [
+                'django.template.context_processors.debug',
+                'django.template.context_processors.request',
+                'django.contrib.auth.context_processors.auth',
+                'django.contrib.messages.context_processors.messages',
+                'geoq.core.contextprocessors.app_settings'
+        ]
+    }
 
-TEMPLATE_CONTEXT_PROCESSORS = (
-    'django.contrib.auth.context_processors.auth',
-    'django.core.context_processors.request',
-    'django.core.context_processors.static',
-    'django.contrib.messages.context_processors.messages',
-    'geoq.core.contextprocessors.app_settings',
-)
+}
+]
 
-MIDDLEWARE_CLASSES = (
-    'django.middleware.common.CommonMiddleware',
+# Application definition
+
+INSTALLED_APPS = [
+    'django.contrib.admin',
+    'django.contrib.auth',
+    'django.contrib.contenttypes',
+    'django.contrib.sessions',
+    'django.contrib.messages',
+    'django.contrib.staticfiles',
+    'django.contrib.sites',
+    'django.contrib.gis',
+    'django.contrib.humanize',
+
+    'django_select2',
+    'reversion',
+    'easy_thumbnails',
+    'userena',
+    'guardian',
+    'compressor',
+    'geoexplorer',
+    'bootstrap_toolkit',
+    'leaflet',
+    'jsonfield',
+    'crispy_forms',
+    'django_extensions',
+    'debug_toolbar',
+    'httpproxy',
+    'bootstrap3',
+    'future',
+
+    'geoq.feedback.apps.FeedbackConfig',
+    'geoq.accounts.apps.AccountsConfig',
+    'geoq.locations.apps.LocationsConfig',
+    'geoq.mage.apps.MageConfig',
+    'geoq.mgrs.apps.MgrsConfig',
+    'geoq.proxy.apps.ProxyConfig',
+    'geoq.training.apps.TrainingConfig',
+    'geoq.core.apps.CoreConfig',
+    'geoq.maps.apps.MapsConfig',
+
+]
+
+MIDDLEWARE = [
+    'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
+    'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
-    # Uncomment the next line for simple clickjacking protection:
-    #'django.middleware.clickjacking.XFrameOptionsMiddleware',
-    'geoq.core.middleware.UserPermsMiddleware',             # works w/ guardian
-    'geoq.core.middleware.Http403Middleware',
-    'geoq.core.middleware.UpdateLastActivityMiddleware',
-    'geoq.cors.middleware.corsMiddleware'
-)
+    'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'debug_toolbar.middleware.DebugToolbarMiddleware'
+]
+
+# removed middleware
+#     'geoq.core.middleware.UserPermsMiddleware',
+#      'geoq.core.middleware.Http403Middleware',
+#      'geoq.core.middleware.UpdateLastActivityMiddleware',
 
 # auth setup
 AUTHENTICATION_BACKENDS = (
@@ -197,8 +277,13 @@ AUTHENTICATION_BACKENDS = (
     'django.contrib.auth.backends.ModelBackend', # default
 )
 
+
+
+SITE_ID = 1
+
 ANONYMOUS_USER_ID = -1
 AUTH_PROFILE_MODULE = 'accounts.UserProfile'
+
 
 LOGIN_REDIRECT_URL = '/accounts/%(username)s/' #'/geoq/'   #
 LOGIN_URL = '/accounts/signin/'
@@ -209,60 +294,29 @@ USERENA_MUGSHOT_DEFAULT = 'identicon'
 USERENA_HIDE_EMAIL = True
 USERENA_HTML_EMAIL = False
 
+
 ROOT_URLCONF = 'geoq.urls'
 
-# Python dotted path to the WSGI application used by Django's runserver.
 WSGI_APPLICATION = 'geoq.wsgi.application'
 
-TEMPLATE_DIRS = (
-    os.path.join(SITE_ROOT, 'templates'),
-    SITE_ROOT,
-)
 
-# works with crispy forms.
-CRISPY_TEMPLATE_PACK = 'bootstrap'
+# Password validation
+# https://docs.djangoproject.com/en/1.10/ref/settings/#auth-password-validators
 
-INSTALLED_APPS = (
-    'django.contrib.auth',
-    'django.contrib.contenttypes',
-    'django.contrib.sessions',
-    'django.contrib.sites',
-    'django.contrib.admin',
-    'south',
-    'django_select2',
-    'reversion',
-    'easy_thumbnails',
-    'userena',
-    'geoq.accounts',
-    'geoq.core',
-    'geoq.maps',
-    'httpproxy',
-    'guardian',
-    'geoq.feedback',
-    'django.contrib.messages',
-    'userena.contrib.umessages',
-    'geoq.locations',
-    'geoq.proxy',
-    'geoq.training',
-    'geoq.mage',
-
-    'django.contrib.gis',
-    'django.contrib.humanize',
-    'django.contrib.staticfiles',
-    'django.contrib.humanize',
-
-    'compressor',
-    'geoexplorer',
-    'bootstrap_toolkit',
-    'leaflet',
-    'jsonfield',
-    'crispy_forms',
-    'django_extensions',
-    'debug_toolbar',
-
-    'geoq.mgrs',
-
-)
+AUTH_PASSWORD_VALIDATORS = [
+    {
+        'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator',
+    },
+    {
+        'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator',
+    },
+    {
+        'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator',
+    },
+    {
+        'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator',
+    },
+]
 
 # A sample logging configuration. The only tangible logging
 # performed by this configuration is to send an email to
@@ -293,9 +347,13 @@ LOGGING = {
     }
 }
 
+# take out later
+REST_FRAMEWORK = {
+    'UNAUTHENTICATED_USER': None,
+}
+
 # Set default login location
 #LOGIN_REDIRECT_URL = '/'
-
 
 # Gamification variables
 GAMIFICATION_SERVER = ''
@@ -310,24 +368,155 @@ DEBUG_TOOLBAR_PATCH_SETTINGS = False
 # Bootstrap variables to work with django-bootstrap-toolkit
 # Comment these out to use cdnjs.cloudflare.com versions of Bootstrap
 BOOTSTRAP_BASE_URL = STATIC_URL
-BOOTSTRAP_JS_BASE_URL = BOOTSTRAP_BASE_URL + 'js/'
+BOOTSTRAP_JS_BASE_URL = BOOTSTRAP_BASE_URL + 'bootstrap/js/'
 BOOTSTRAP_JS_URL =  BOOTSTRAP_JS_BASE_URL + 'bootstrap.min.js'
-BOOTSTRAP_CSS_BASE_URL = BOOTSTRAP_BASE_URL + 'css/'
+BOOTSTRAP_CSS_BASE_URL = BOOTSTRAP_BASE_URL + 'bootstrap/css/'
 BOOTSTRAP_CSS_URL = BOOTSTRAP_CSS_BASE_URL + 'bootstrap.css'
 
 #Time to check if users online (in milliseconds)
 ONLINE_TIME = 10 * 60 * 1000
 
-#MAGE Settings
+########## Select2 Settings
+CACHES = {
+    'default': {
+        'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
+        'LOCATION': 'default-cache',
+    },
+    'select2': {
+        'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
+        'LOCATION': 'select2-cache',
+    }
+}
+
+SELECT2_CACHE_BACKEND = 'select2'
+
+########## MAGE Settings
 MAGE_USERNAME = 'username'
 MAGE_UID = '12345'
 MAGE_PASSWORD = 'password'
 MAGE_URL = 'https://mage.server.com/api'
+########## End MAGE Settings
+
+########## DEBUG TOOLBAR CONFIGURATION
+DEBUG_TOOLBAR_PATCH_SETTINGS = False
+DEBUG_TOOLBAR_PANELS = [
+    'debug_toolbar.panels.request.RequestPanel',
+    'debug_toolbar.panels.headers.HeadersPanel',
+    'debug_toolbar.panels.staticfiles.StaticFilesPanel',
+    'debug_toolbar.panels.templates.TemplatesPanel',
+    ]
+
+INTERNAL_IPS = ['127.0.0.1']
+
+########## COMPRESSION CONFIGURATION
+# COMPRESS_ENABLED = True
+# Default : the opposite of DEBUG
+
+# see https://github.com/jezdez/django_compressor/issues/226
+COMPRESS_OUTPUT_DIR = 'STATIC_CACHE'
+
+# See: http://django_compressor.readthedocs.org/en/latest/settings/#django.conf.settings.COMPRESS_OFFLINE
+COMPRESS_OFFLINE = False
+
+# See: http://django_compressor.readthedocs.org/en/latest/settings/#django.conf.settings.COMPRESS_STORAGE
+COMPRESS_STORAGE = 'compressor.storage.CompressorFileStorage'
+
+# See: http://django_compressor.readthedocs.org/en/latest/settings/#django.conf.settings.COMPRESS_CSS_FILTERS
+COMPRESS_CSS_FILTERS = [
+    'compressor.filters.cssmin.CSSMinFilter',
+]
+
+# See: http://django_compressor.readthedocs.org/en/latest/settings/#django.conf.settings.COMPRESS_JS_FILTERS
+COMPRESS_JS_FILTERS = [
+    'compressor.filters.jsmin.JSMinFilter',
+]
+
+COMPRESS_DEBUG_TOGGLE = 'nocompress'
+
+COMPRESS_JS_COMPRESSOR = 'compressor.js.JsCompressor'
+COMPRESS_CSS_COMPRESSOR = 'compressor.css.CssCompressor'
+COMPRESS_PARSER = 'compressor.parser.AutoSelectParser'
+COMPRESS_URL = STATIC_URL
+COMPRESS_ROOT = STATIC_ROOT
+COMPRESS_VERBOSE = False
+COMPRESS_CACHEABLE_PRECOMPILERS = (
+    'text/coffeescript',
+    )
+########## END COMPRESSION CONFIGURATION
+
+########## BOOTSTRAP 3 CONFIGURATION
+
+# Default settings
+BOOTSTRAP3 = {
+
+    # The URL to the jQuery JavaScript file
+    'jquery_url': STATIC_URL + 'jquery/jquery.min.js',
+
+    # The Bootstrap base URL
+    'base_url': STATIC_URL + 'bootstrap/',
+
+    # The complete URL to the Bootstrap CSS file (None means derive it from base_url)
+    'css_url': None,
+
+    # The complete URL to the Bootstrap CSS file (None means no theme)
+    'theme_url': None,
+
+    # The complete URL to the Bootstrap JavaScript file (None means derive it from base_url)
+    'javascript_url': None,
+
+    # Put JavaScript in the HEAD section of the HTML document (only relevant if you use bootstrap3.html)
+    'javascript_in_head': False,
+
+    # Include jQuery with Bootstrap JavaScript (affects django-bootstrap3 template tags)
+    'include_jquery': False,
+
+    # Label class to use in horizontal forms
+    'horizontal_label_class': 'col-md-3',
+
+    # Field class to use in horizontal forms
+    'horizontal_field_class': 'col-md-9',
+
+    # Set HTML required attribute on required fields, for Django <= 1.8 only
+    'set_required': True,
+
+    # Set HTML disabled attribute on disabled fields, for Django <= 1.8 only
+    'set_disabled': False,
+
+    # Set placeholder attributes to label if no placeholder is provided
+    'set_placeholder': True,
+
+    # Class to indicate required (better to set this in your Django form)
+    'required_css_class': '',
+
+    # Class to indicate error (better to set this in your Django form)
+    'error_css_class': 'has-error',
+
+    # Class to indicate success, meaning the field has valid input (better to set this in your Django form)
+    'success_css_class': 'has-success',
+
+    # Renderers (only set these if you have studied the source and understand the inner workings)
+    'formset_renderers':{
+        'default': 'bootstrap3.renderers.FormsetRenderer',
+    },
+    'form_renderers': {
+        'default': 'bootstrap3.renderers.FormRenderer',
+    },
+    'field_renderers': {
+        'default': 'bootstrap3.renderers.FieldRenderer',
+        'inline': 'bootstrap3.renderers.InlineFieldRenderer',
+    },
+}
+
+
+########## END BOOTSTRAP 3 CONFIGURATION
+
+# initialize apps
+django.setup()
 
 # Override production settings with local settings if they exist
-try:
-    from local_settings import *
-
-except ImportError, e:
-    # local_settings does not exist
-    pass
+#try:
+#    from local_settings import *
+#
+#except ImportError, e:
+#    # local_settings does not exist
+#    pass

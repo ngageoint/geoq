@@ -8,7 +8,7 @@
         <i class="icon-th"></i>
         {% if object.status == 'In work' %}
             {% if object.analyst == request.user %}You are{% else %}{{ object.analyst }} is{% endif %} on it.
-        {% elif object.status == 'Assigned' %}
+        {% elif object.status != 'Unassigned' %}
             Assigned to {% if object.assignee_name == request.user %}you{% else %}{{ object.assignee_name }}{% endif %}
         {% else %}
         {{ object.status }}

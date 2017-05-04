@@ -13,7 +13,7 @@ class Training(models.Model):
     gamification_signals = models.CharField(max_length=250, help_text="After training which Signals should be sent to gamification server?", null=True, blank=True)
     content_link = models.CharField(max_length=500, help_text="Link to PDF/PPT/training or web page for training that will open in a new window", null=True, blank=True)
     quiz_data = JSONField(help_text="If user should be quized after, list of questions and answers and percent_complete if not 100%", null=True, blank=True)
-    users_completed = models.ManyToManyField(User, blank=True, null=True, related_name="users_completed", help_text='Users that completed this training.')
+    users_completed = models.ManyToManyField(User, blank=True, related_name="users_completed", help_text='Users that completed this training.')
     description = models.TextField(null=True, blank=True, help_text="Details to show potential student.")
     updated_at = models.DateTimeField(auto_now=True, help_text="Last updated time/date")
     private = models.BooleanField(default=False, help_text="Check to hide in public list")

@@ -2,14 +2,15 @@
 {% load compress %}
 {% load leaflet_tags %}
 {% load geoserver_job_link %}
+{% load staticfiles %}
+
 {% block title %}GeoQ Job: {{ object.name }}{% endblock %}
 {% block static_libraries %}
     {% leaflet_js %}
-    <script src="{{ STATIC_URL }}core/js/leaflet_helper.js"></script>
-    <script src="{{ STATIC_URL }}bootstrap/js/bootstrap-dialog.js"></script>
-    <script src="{{ STATIC_URL }}core/js/maths.js"></script>
-    <script src="{{ STATIC_URL }}core/js/leafletcontrols/leaflet.simple_button.js"></script>
-    <script src="{{ STATIC_URL }}leaflet/L.Control.Button.js"></script>
+    <script src="{% static 'core/js/leaflet_helper.js' %}"></script>
+    <script src="{% static 'core/js/maths.js' %}"></script>
+    <script src="{% static 'core/js/leafletcontrols/leaflet.simple_button.js' %}"></script>
+    <script src="{% static 'leaflet/L.Control.Button.js' %}"></script>
     <script type="text/javascript">
 
         var map_object;
@@ -45,21 +46,24 @@
                 },
                 onEachFeature: function(feature, layer) {
 
-                    if (feature["properties"]["time"]["in_work"] != "None" && feature["properties"]["time"]["finished"] != "None") {
-                        console.log(feature);
-                        startedDate = new Date(feature["properties"]["time"]["in_work"]);
-                        finishedDate = new Date(feature["properties"]["time"]["finished"]);
-                        var hours = Math.abs(startedDate - finishedDate) / 36e5;
-
-                        runningAverage = ((runningAverage * count) + hours) / (count+1);
-                        count++;
-
-                      	timeToCompletion = runningAverage * ( {{object.aoi_count}} - count);	
-                      
-                    }
+//                    if (feature["properties"]["time"]["in_work"] != "None" && feature["properties"]["time"]["finished"] != "None") {
+//                        console.log(feature);
+//                        startedDate = new Date(feature["properties"]["time"]["in_work"]);
+//                        finishedDate = new Date(feature["properties"]["time"]["finished"]);
+//                        var hours = Math.abs(startedDate - finishedDate) / 36e5;
+//
+//                        runningAverage = ((runningAverage * count) + hours) / (count+1);
+//                        count++;
+//
+//                      	timeToCompletion = runningAverage * ( {{object.aoi_count}} - count);
+//
+//                    }
 
 
                     job_properties = feature.properties;
+                    {% if 'core.delete_aoi' in perms %}
+                        job_properties.can_delete = true;
+                    {% endif %}
                     {% if user.is_authenticated %}
                     var popupContent = _.template('{% filter escapejs %}{% include "core/job_detail_aoi_popup.html" %}{% endfilter %}', job_properties);
                     layer.bindPopup(popupContent);
@@ -254,9 +258,9 @@
             border-color: black;
         }
     </style>
+{% leaflet_css %}
     {% compress css %}
-    {% leaflet_css %}
-    <link href="{{ STATIC_URL }}core/less/geoq.less" media="all" rel="stylesheet" type="text/less" />
+    <link href="{% static 'core/less/geoq.less' %}" media="all" rel="stylesheet" type="text/less" />
 {% endcompress %}
 {% endblock %}
 
@@ -336,38 +340,36 @@
             </script>
 
             <div class="row body" style="height:250px; margin-top:25px; margin-left:5px;">
-                <div class="span4 thumbnail" id="map" style="height:290px; margin-left: 0px; width: 400px;">
+                <div class="col-sm-4 thumbnail" id="map" style="height:290px; margin-left: 0px; width: 400px;">
                 {% leaflet_map "map" creatediv=False%}
                 </div>
-                <div class="span6" id="attribute-table" style="float:left">
+                <div class="col-sm-6" id="attribute-table">
 
-                {% if 'core.change_aoi' in request.base_perms %}
-                <div class="btn-group pull-right">
-                    <a class="btn btn-mini" href="{{ object.get_update_url }}">
-                        <b> Edit Job </b>
-                    </a>
-                    <button class="btn btn-mini dropdown-toggle" data-toggle="dropdown">
-                        <span class="caret"></span>
-                    </button>
-                    <ul class="dropdown-menu">
-                        {% if 'core.add_job' in request.base_perms %}
-                        <li><a href="{% url 'job-create-aois' object.id%}">Create Workcells</a></li>
-                        {% endif %}
-                        {% if 'core.add_job' in request.base_perms %}
-                        <li><a href="{% url 'job-prioritize-workcells' object.id %}">Prioritize Workcells</a></li>
-                        {% endif %}
-                        {% if 'core.assign_workcells' in request.base_perms %}
-                        <li><a href="{% url 'job-assign-workcells' object.id%}">Assign Workcells</a></li>
-                        {% endif %}
-                        {% if 'core.delete_job' in request.base_perms %}
-                        <li><a href="{% url 'job-delete' object.id %}">Delete Job</a></li>
-                        {% endif %}
-                        {% if 'core.change_job' in request.base_perms and object.map%}
-                        <li><a href="{% url 'map-update' object.id object.map.id %}">Edit Map</a></li>
-                        {% endif %}
-                    </ul>
-                </div>
-                {% endif %}
+                    <div class="btn-group pull-right">
+                        <a class="btn btn-mini" href="{{ object.get_update_url }}">
+                            <b> Edit Job </b>
+                        </a>
+                        <button class="btn btn-mini dropdown-toggle" data-toggle="dropdown">
+                            <span class="caret"></span>
+                        </button>
+                        <ul class="dropdown-menu">
+                            {% if 'core.add_aoi' in perms %}
+                            <li><a href="{% url 'job-create-aois' object.id%}">Create Workcells</a></li>
+                            {% endif %}
+                            {% if 'core.add_aoi' in perms %}
+                            <li><a href="{% url 'job-prioritize-workcells' object.id %}">Prioritize Workcells</a></li>
+                            {% endif %}
+                            {% if 'core.assign_workcells' in perms %}
+                            <li><a href="{% url 'job-assign-workcells' object.id%}">Assign Workcells</a></li>
+                            {% endif %}
+                            {% if 'core.delete_job' in perms %}
+                            <li><a href="{% url 'job-delete' object.id %}">Delete Job</a></li>
+                            {% endif %}
+                            {% if 'core.change_job' in perms and object.map%}
+                            <li><a href="{% url 'map-update' object.id object.map.id %}">Edit Map</a></li>
+                            {% endif %}
+                        </ul>
+                    </div>
 
                     <table style="clear: both">
                         <tr>
@@ -455,7 +457,7 @@
 
         {% if not workcell_count %}
             <div class="row body" style="margin-left: 5px;">
-            {% if 'accounts.add_job' in request.base_perms %}
+            {% if 'accounts.add_job' in perms %}
                 <span><b>No workcells. Next step: </b> <a class="btn btn-large btn-success" href="{% url 'job-create-aois' job_pk=object.id %}">Create workcells</a></span>
             {% else %}
                 <span><b>This job doesn't have any workcells yet, please ask a supervisor to create some</b></span>

@@ -1,5 +1,5 @@
 {% load static %}
-{% load url from future %}
+
 {% load settings_variables %}
 {% load version %}
 
@@ -18,23 +18,30 @@
 </script>
 
 
-<div class="navbar navbar-fixed-top">
+<nav class="navbar navbar-fixed-top">
 
-    <div class="navbar-inner">
+
         {% block menu %}
             <div class="container-fluid">
-                <a class="btn btn-navbar" data-toggle="collapse" data-target=".nav-collapse">
-                    <span class="icon-bar"></span>
-                    <span class="icon-bar"></span>
-                    <span class="icon-bar"></span>
-                </a>
+                <div class="navbar-header">
+                    <a class="btn btn-navbar" data-toggle="collapse" data-target=".nav-collapse">
+                        <span class="icon-bar"></span>
+                        <span class="icon-bar"></span>
+                        <span class="icon-bar"></span>
+                    </a>
+                    <a class="brand" style="padding:10px 20px" href="{%url 'home' %}">{% block brand %}
+                        <img id="menu-logo" src="{% static 'images/GeoQ-Logo.png' %}"/>GeoQ{% endblock %}</a>
+                </div>
 
-                <a class="brand" style="padding:5px 20px" href="{%url 'home' %}">{% block brand %}<img id="menu-logo" src="{% static 'images/GeoQ-Logo.png' %}"/>GeoQ{% endblock %}</a>
                 <div class="btn-group pull-right">
-                    <a class="btn dropdown-toggle" data-toggle="dropdown" href="#">
+                    <!-- a class="btn dropdown-toggle" data-toggle="dropdown" href="#">
                         <i class="icon-user"></i> {{request.user.username}}
                         <span class="caret"></span>
-                    </a>
+                    </a -->
+                    <button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown" aria-haspopup="true"
+                            aria-expanded="false" style="margin-top: 10px;">
+                        User: {{ request.user.username }} <span class="caret"></span>
+                    </button>
                     <ul class="dropdown-menu">
                         {% if request.user.is_authenticated %}
                             {% if request.user.is_staff%}
@@ -52,8 +59,9 @@
                         <li><a href="#">{% version_date %}</a></li>
                         <li><a href="#">{% version_number %}</a></li>
                     </ul>
+
                 </div>
-                <div class="nav-collapse">
+                <div class="collapse navbar-collapse">
                     <ul class="nav navbar-nav">
                         {%for key,value in menu_items.items%}
                             {%if not value.dropdown%}
@@ -96,5 +104,5 @@
                 </div><!--/.nav-collapse -->
             </div>
         {% endblock %}
-    </div>
-</div>
+
+</nav>

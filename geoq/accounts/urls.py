@@ -1,8 +1,8 @@
 
-from django.conf.urls import patterns, include, url
+from django.conf.urls import include, url
 from django.views.generic import RedirectView
 from django.conf import settings
-from accounts.views import OnlineUserView
+from geoq.accounts.views import OnlineUserView
 
 from forms import SignupFormExtra
 from django.contrib.auth.decorators import login_required
@@ -12,7 +12,7 @@ from views import accept_terms_of_use, UserExpertiseView
 logout_page = getattr(settings, 'LOGOUT_URL', '/geoq')
 
 
-urlpatterns = patterns('',
+urlpatterns = [
 
     # TODO:Accounts -- when you remove accounts, add this back in
     # # Signup
@@ -110,5 +110,5 @@ urlpatterns = patterns('',
     # If nothing overrides the urls, then load the default with userena.
     url(r'^', include('userena.urls'))
 
-    )
+]
 

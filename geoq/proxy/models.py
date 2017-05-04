@@ -1,6 +1,6 @@
 from django.db import models
 from django.conf import settings
-from django.core.urlresolvers import reverse_lazy
+from django.urls import reverse_lazy
 from django.template.defaultfilters import slugify
 from django.utils import timezone
 
@@ -14,7 +14,7 @@ from zipfile import ZipFile
 class SourceDocument(models.Model):
     Name = models.CharField(max_length=1024)
     OriginalDocument = models.TextField(blank=True)
-    LastUpdated = models.DateTimeField(auto_now=True,auto_now_add=True)
+    LastUpdated = models.DateTimeField(auto_now=True)
     Refresh = models.IntegerField(default=-1,blank=True,null=True)
     Expires = models.DateTimeField(null=True,blank=True)
     TranslatedDocument = models.TextField(blank=True)

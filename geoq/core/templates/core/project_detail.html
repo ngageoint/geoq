@@ -1,10 +1,11 @@
 {% extends "core/base.html" %}
 {% load compress %}
 {% load leaflet_tags %}
+{% load staticfiles %}
 {% block title %}GeoQ Project: {{ object.name }}{% endblock %}
 
 {% block static_libraries %}
-    {% leaflet_js %}
+    {% leaflet_js plugins="proj4js, draw, esri" %}
 
     <script type="text/javascript">
     function mapInit(map, bounds) {
@@ -66,11 +67,11 @@
 
     }
 </script>
-
+{% leaflet_css %}
     {% compress css %}
-    {% leaflet_css %}
-    <link href="{{ STATIC_URL }}core/less/geoq.less" media="all" rel="stylesheet" type="text/less" />
-{% endcompress %}
+
+    <link href="{% static 'core/less/geoq.less' %}" media="all" rel="stylesheet" type="text/less" />
+    {% endcompress %}
 {% endblock %}
 
 {% block container %}
@@ -92,7 +93,7 @@
             </p>
 
             <div class="row body" style="margin-top:25px">
-                {% if 'core.add_job' in request.base_perms %}
+                {% if 'core.add_job' in perms %}
                 <div class="btn-group pull-right">
                     <a class="btn btn-mini" href="{{ object.get_update_url }}">
                         <b> Edit Project </b>
@@ -101,16 +102,16 @@
                         <span class="caret"></span>
                     </button>
                     <ul class="dropdown-menu">
-                        {% if 'core.add_job' in request.base_perms %}
+                        {% if 'core.add_job' in perms %}
                         <li><a href="{% url 'job-create' %}?project={{ object.id }}">Add New Job</a></li>
                         {% endif %}
                     </ul>
                 </div>
                 {% endif %}
-                <div class="span6 thumbnail" id="map" style="height:260px; vertical-alignment:middle;">
-                {% leaflet_map "map" creatediv=False%}
+                <div class=col-sm-6 thumbnail" id="map" style="height:260px; vertical-alignment:middle;">
+                {% leaflet_map "map" creatediv=False callback="window.mapInit" %}
                 </div>
-                <div class="span5">
+                <div class="col-sm-5">
                     <table class="project_info_list">
                         <tr>
                             <th style="min-width: 100px"></th>

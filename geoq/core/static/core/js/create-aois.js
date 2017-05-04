@@ -162,7 +162,7 @@ create_aois.init = function () {
     });
 
     // only create geocompletion if we're able to load the appropriate javascript file
-    if (google && google.maps) {
+    if (typeof(google) != 'undefined' && google.maps) {
         $("#geocomplete").geocomplete()
             .bind("geocode:result", function (event, result) {
                 create_aois.update_info("Geocode Result: " + result.formatted_address);
@@ -721,7 +721,7 @@ create_aois.splitPolygonsIntoSections = function (layer, num, splitIntoSized) {
         []
     ]};
     var cs = layer.getLatLngs();
-    _.each(cs, function (c) {
+    _.each(cs[0], function (c) {
         layer_poly.coordinates[0].push([c.lng, c.lat]);
     });
 

@@ -2,17 +2,19 @@
 # This technical data was produced for the U. S. Government under Contract No. W15P7T-13-C-F600, and
 # is subject to the Rights in Technical Data-Noncommercial Items clause at DFARS 252.227-7013 (FEB 2012)
 
-from django.conf.urls import patterns, url
+from django.conf.urls import url
 from django.contrib.auth.decorators import login_required
 
 from django.views.generic import CreateView, TemplateView, ListView, UpdateView
-from forms import AOIForm, JobForm, ProjectForm, TeamForm# ExportJobForm
+from django.views.i18n import javascript_catalog
+from forms import AOIForm, JobForm, ProjectForm, TeamForm, ExportJobForm
 from models import AOI, Project, Job
 from proxies import proxy_to
 from views import *
 from geoq.maps.views import feature_delete
+from geoq.core.views import batch_create_aois, usng, mgrs, ipaws, prioritize_cells
 
-urlpatterns = patterns('',
+urlpatterns = [
     url(r'^$', Dashboard.as_view(), name='home'),
 
     # PROJECTS
@@ -74,10 +76,12 @@ urlpatterns = patterns('',
     url(r'^jobs/(?P<job_pk>\d+)/assign-workcells/?$',
         login_required(AssignWorkcellsView.as_view()),
         name='job-assign-workcells'),
+    url(r'^jobs/(?P<job_pk>\d+)/job-summary/?$',
+        login_required(SummaryView.as_view()),
+        name='job-summary'),
 
     url(r'^jobs/(?P<job_pk>\d+)/batch-create-aois/?$',
-        #login required set in views
-        'core.views.batch_create_aois', name='job-batch-create-aois'),
+        batch_create_aois, name='job-batch-create-aois'),
 
     url(r'^jobs/statistics/(?P<job_pk>\d+)/?$', JobStatistics.as_view(), name='job-statistics'),
 
@@ -115,14 +119,19 @@ urlpatterns = patterns('',
 
     url(r'^features/delete/(?P<pk>\d+)/?$', login_required( feature_delete ), name='feature-delete'),
 
+    # Report Pages
+    url(r'^reports/work/(?P<job_pk>\d+)/?$', login_required(WorkSummaryView.as_view()), name='work-summary'),
+    url(r'^reports/job/(?P<job_pk>\d+)/?$', JobReportView.as_view(), name='job-report'),
+
     # OTHER URLS
     url(r'^edit/?$', TemplateView.as_view(template_name='core/edit.html'), name='edit'),
     url(r'^help/?$', display_help, name='help_page'),
     url(r'^api/jobs/(?P<job_pk>\d+)/users/?$', list_users, name='list_users'),
     url(r'^api/jobs/(?P<job_pk>\d+)/groups/?$', list_groups, name='list_groups'),
-    url(r'^api/geo/usng/?$', 'core.views.usng', name='usng'),
-    url(r'^api/geo/mgrs/?$', 'core.views.mgrs', name='mgrs'),
-    url(r'^api/geo/ipaws/?$', 'core.views.ipaws', name='ipaws'),
+    url(r'^api/group/(?P<group_pk>\d+)/users/?$', list_group_users, name='list_group_users'),
+    url(r'^api/geo/usng/?$', usng, name='usng'),
+    url(r'^api/geo/mgrs/?$', mgrs, name='mgrs'),
+    url(r'^api/geo/ipaws/?$', ipaws, name='ipaws'),
     url(r'^proxy/(?P<path>.*)$', proxy_to, {'target_url': ''}),
     url(r'^proxy/?$', proxy_to, name='proxy'),
     url(r'^api/job[s ]?/(?P<pk>\d+).geojson$', JobGeoJSON.as_view(), name='json-job'),
@@ -140,22 +149,22 @@ urlpatterns = patterns('',
     url(r'^api/cell[s ]?/(?P<pk>\d+)?.geojson$', CellJSON.as_view(), name='json-workcell'),
 
     url(r'^api/prioritize/(?P<method>\w+)?$',
-        'core.views.prioritize_cells', name='batch-prioritize-cells'),
+        prioritize_cells, name='batch-prioritize-cells'),
+
     #TEAMS
-    url(r'^admin/jsi18n/$', 'django.views.i18n.javascript_catalog'),
+    url(r'^admin/jsi18n/$', javascript_catalog),
     url(r'^teams/?$', TeamListView.as_view(template_name='core/team_list.html'), name='team-list'),
     url(r'^teams/create/?$',
         login_required(CreateTeamView.as_view(queryset=Group.objects.all(),
-                           template_name='core/generic_form.html',
-                           form_class=TeamForm)),
-        name='team-create'),
+            template_name='core/generic_form.html',
+            form_class=TeamForm)),
+            name='team-create'),
     url(r'^teams/update/(?P<pk>\d+)/?$',
         login_required(UpdateTeamView.as_view(queryset=Group.objects.all(),
-                           template_name='core/generic_form.html',
-                           form_class=TeamForm)),
-        name='team-update'),
+            template_name='core/generic_form.html',
+            form_class=TeamForm)),
+            name='team-update'),
     url(r'^team/delete/(?P<pk>\d+)/?$',
         login_required(TeamDelete.as_view()),
-        name='team-delete'),
-    
-)
+        name='team-delete')
+]

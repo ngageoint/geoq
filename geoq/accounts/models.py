@@ -55,7 +55,7 @@ class UserProfile(UserenaBaseProfile):
     defaultScore = 1
     score = models.IntegerField(default=defaultScore)
 
-    last_activity = models.DateTimeField(default = timezone.now())
+    last_activity = models.DateTimeField(auto_now_add=True)
 
     # OpenBadge id
     openbadge_id = models.CharField(max_length=250, null=True, blank=True)
@@ -116,7 +116,7 @@ class UserAuthorization(models.Model):
     authorized = models.BooleanField(help_text='Check this to approve member access.')
     permissions_granted_by = models.ForeignKey(User, null=True, blank=True,
         related_name='permissions_granted_by')
-    permission_granted_on = models.DateTimeField(auto_now_add=True, default=datetime.now())
+    permission_granted_on = models.DateTimeField(auto_now_add=True)
     user_accepted_terms_on = models.DateTimeField(null=True, blank=True)
 
     def __str__(self):

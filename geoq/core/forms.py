@@ -3,17 +3,17 @@
 # is subject to the Rights in Technical Data-Noncommercial Items clause at DFARS 252.227-7013 (FEB 2012)
 
 from django import forms
-from django.forms.widgets import (RadioInput, RadioSelect, CheckboxInput,
+from django.forms.widgets import (RadioSelect, CheckboxInput,
     CheckboxSelectMultiple)
 from django.contrib.auth.models import User, Group
 from django.utils.html import escape, conditional_escape
 from django.db.models import Max
 from itertools import chain
 from models import AOI, Job, Project
-from maps.models import Layer, MapLayer
+from geoq.maps.models import Layer, MapLayer
 from django.contrib.admin.widgets import FilteredSelectMultiple
 
-no_style = [RadioInput, RadioSelect, CheckboxInput, CheckboxSelectMultiple]
+no_style = [RadioSelect, CheckboxInput, CheckboxSelectMultiple]
 
 class StyledModelForm(forms.ModelForm):
     """
@@ -78,14 +78,20 @@ class ItemSelectWidget(forms.SelectMultiple):
 
 class JobForm(StyledModelForm):
 
+#    analysts = forms.ModelMultipleChoiceField(
+#        queryset = User.objects.all(),
+#        widget = ItemSelectWidget(option_title_field='email')
+#    )
+#    layers = forms.ModelMultipleChoiceField(
+#        queryset = Layer.objects.all(),
+#        widget = ItemSelectWidget()
+#    )
     analysts = forms.ModelMultipleChoiceField(
-        queryset = User.objects.all(),
-
-    )
+        queryset = User.objects.all()
+        )
     layers = forms.ModelMultipleChoiceField(
-        queryset = Layer.objects.all(),
-        widget = ItemSelectWidget()
-    )
+        queryset = Layer.objects.all()
+        )
 
     class Meta:
 
@@ -145,7 +151,7 @@ class JobForm(StyledModelForm):
 # #form extending original job form to export old job data into new job
 class ExportJobForm(JobForm):
     class Meta:
-      #  fields = ('workcells')
+        fields = ('map',)
         model = Job
 
 class ProjectForm(StyledModelForm):

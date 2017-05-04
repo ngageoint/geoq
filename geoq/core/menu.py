@@ -3,14 +3,14 @@
 # is subject to the Rights in Technical Data-Noncommercial Items clause at DFARS 252.227-7013 (FEB 2012)
 
 from django.core.urlresolvers import reverse_lazy
-from django.utils.datastructures import SortedDict
+from collections import OrderedDict
 import re
 
 
 def menu(active=None, request_path=None, request_user=None):
 
     def order_dict(d, key):
-        return SortedDict(sorted(d.items(), key=key))
+        return OrderedDict(sorted(d.items(), key=key))
 
     sort_key = lambda t: t[1].get('index', None)
 

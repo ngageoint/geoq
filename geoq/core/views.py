@@ -14,18 +14,22 @@ from django.core.cache import cache
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User, Group, Permission
 from django.contrib.gis.geos import GEOSGeometry
+from django.contrib.contenttypes.models import ContentType
 from django.core.urlresolvers import reverse, reverse_lazy
-from django.core.exceptions import ObjectDoesNotExist
+from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.db.models import Q
-from django.forms.util import ValidationError
+# from django.forms.util import ValidationError
 from django.http import Http404, HttpResponse, HttpResponseRedirect, HttpResponseForbidden
 from django.shortcuts import get_object_or_404, redirect, render
 from django.views.generic import DetailView, ListView, TemplateView, View, DeleteView, CreateView, UpdateView
+from django.views.decorators.http import require_POST, require_http_methods
+from django import utils
+import distutils
 
 from datetime import datetime, timedelta
 from django.utils.dateparse import parse_datetime
 
-from models import Project, Job, AOI, Comment, AssigneeType, Organization
+from models import Project, Job, AOI, Comment, AssigneeType, Organization, AOITimer
 from geoq.maps.models import *
 from utils import send_assignment_email, increment_metric
 from geoq.training.models import Training
@@ -38,6 +42,8 @@ from guardian.decorators import permission_required
 
 from kml_view import *
 from shape_view import *
+from analytics import UserGroupStats
+from pytz import utc
 
 from django.views.generic.detail import SingleObjectTemplateResponseMixin
 from django.views.generic.edit import ModelFormMixin, ProcessFormView
@@ -210,6 +216,17 @@ class CreateFeaturesView(UserAllowedMixin, DetailView):
     queryset = AOI.objects.all()
     user_check_failure_path = ''
 
+    def startTimer(self, user, aoi, status):
+        timer,created = AOITimer.objects.get_or_create(
+            user=self.request.user,
+            aoi=aoi,
+            status='In work',
+            started_at=datetime.now(utc),
+            completed_at=None)
+        if created:
+            timer.save()
+
+
     def check_user(self, user, kwargs):
         try:
             aoi = AOI.objects.get(id=kwargs.get('pk'))
@@ -239,16 +256,17 @@ class CreateFeaturesView(UserAllowedMixin, DetailView):
         if aoi.status == 'Unassigned':
             aoi.analyst = self.request.user
             aoi.status = 'In work'
-            aoi.cellStarted_at = datetime.now(tz=pytz.timezone('UTC'));
             aoi.save()
             return True
         elif aoi.status == 'In work':
             if is_admin:
+                self.startTimer(self.request.user, aoi, aoi.status)
                 return True
             elif aoi.analyst != self.request.user:
                 kwargs['error'] = "Another analyst is already working on this workcell. Please select another workcell"
                 return False
             else:
+                self.startTimer(self.request.user, aoi, aoi.status)
                 return True
         elif aoi.status == 'Assigned':
             if is_admin:
@@ -263,7 +281,6 @@ class CreateFeaturesView(UserAllowedMixin, DetailView):
         elif aoi.status == 'Awaiting review':
             if self.request.user in aoi.job.reviewers.all() or is_admin:
                 aoi.status = 'In review'
-                aoi.cellInReview_at = datetime.now(tz=pytz.timezone('UTC'))
                 aoi.reviewers.add(self.request.user)
                 aoi.save()
                 increment_metric('workcell_analyzed')
@@ -325,9 +342,10 @@ class CreateFeaturesView(UserAllowedMixin, DetailView):
 
 #TODO: Add Job specific layers, and add these here
 
-        cv['user_custom_params'] =\
-            json.dumps(dict((e['maplayer'], e['values']) for e in
-                            MapLayerUserRememberedParams.objects.filter(user=self.request.user, map=cv['map']).values('maplayer','values')))
+        # cv['user_custom_params'] =\
+        #    json.dumps(dict((e['maplayer'], e['values']) for e in
+        #                    MapLayerUserRememberedParams.objects.filter(user=self.request.user, map=cv['map']).values('maplayer','values')))
+        cv['user_custom_params'] = {}
         cv['layers_on_map'] = json.dumps(layers)
         cv['base_layer'] = json.dumps(self.object.job.base_layer_object())
 
@@ -356,12 +374,17 @@ class JobDetailedListView(ListView):
     paginate_by = 15
     model = Job
     default_status = 'in work'
+    default_status_assigner = 'assigned'
+    default_status_analyst = 'awaiting imagery'
     request = None
     metrics = False
 
     def get_queryset(self):
         status = getattr(self, 'status', None)
-        q_set = AOI.objects.filter(job=self.kwargs.get('pk'))
+        if self.request.user.has_perm('core.assign_workcells'):
+            q_set = AOI.objects.filter(job=self.kwargs.get('pk')).order_by('assignee_id','id')
+        else:
+            q_set = AOI.objects.filter(job=self.kwargs.get('pk'),analyst_id=self.request.user.id).order_by('id')
 
         # # If there is a user logged in, we want to show their stuff
         # # at the top of the list
@@ -395,7 +418,7 @@ class JobDetailedListView(ListView):
         cv = super(JobDetailedListView, self).get_context_data(**kwargs)
         job_id = self.kwargs.get('pk')
         cv['object'] = get_object_or_404(self.model, pk=job_id)
-        cv['statuses'] = AOI.STATUS_VALUES
+        cv['statuses'] = AOI.STATUS_VALUES if self.request.user.has_perm('core.assign_workcells') else AOI.STATUS_VALUES[2:]
         cv['active_status'] = self.status
         cv['workcell_count'] = cv['object'].aoi_count()
         cv['metrics'] = self.metrics
@@ -406,7 +429,7 @@ class JobDetailedListView(ListView):
         for i in temp_id:
             key = User.objects.filter(id=i).values_list('username', flat=True)[0]
             cv['dict'][key] = cv['dict'].get(key, 0) + 1
-      
+
         #TODO: Add feature_count
 
         cv['completed'] = cv['object'].complete_percent()
@@ -478,6 +501,7 @@ class CreateProjectView(CreateView):
         self.object.save()
 
         return HttpResponseRedirect(self.get_success_url())
+
 
 class CreateJobView(CreateView):
     """
@@ -781,26 +805,25 @@ class ChangeAOIStatus(View):
     def _update_aoi(self, request, aoi, status):
         aoi.analyst = request.user
         aoi.status = status
-        timestamp = datetime.now(tz=pytz.timezone('UTC'))
-        if status == "Assigned":
-        	aoi.cellAssigned_at = timestamp
-        elif status == "In work":
-        	aoi.cellStarted_at = timestamp
-        elif status == "Awaiting review":
-        	aoi.cellWaitingReview_at = timestamp
-        elif status == "In review":
-        	aoi.cellInReview_at = timestamp
-        elif status == "Completed":
-        	aoi.cellFinished_at = timestamp
-        else:
-        	print "Update AOI hit end of if statement BAD"
 
+        try:
+            timer = AOITimer.objects.filter(user=request.user, aoi=aoi, completed_at=None).order_by('-id')
+            if len(timer) > 0:
+                t = timer[0]
+                t.completed_at = datetime.now(utc)
+                if t.savable:
+                    t.save()
+                else:
+                    t.delete()
+        except AOITimer.DoesNotExist:
+            pass
 
         aoi.save()
         return aoi
 
     def get(self, request, **kwargs):
         # Used to unassign tasks on the job detail, 'in work' tab
+
         status, aoi = self._get_aoi_and_update(self.kwargs.get('pk'))
 
         if aoi.user_can_complete(request.user):
@@ -812,6 +835,7 @@ class ChangeAOIStatus(View):
     def post(self, request, **kwargs):
 
         status, aoi = self._get_aoi_and_update(self.kwargs.get('pk'))
+
         if aoi.user_can_complete(request.user):
             aoi = self._update_aoi(request, aoi, status)
             Comment(aoi=aoi,user=request.user,text='changed status to %s' % status).save()
@@ -888,6 +912,8 @@ class AssignWorkcellsView(TemplateView):
         utype = request.POST['user_type']
         id = request.POST['user_data']
         send_email = request.POST['email'] in ["true","True"]
+        group = Group.objects.get(pk=group_id)
+        user = User.objects.get(pk=user_id) if int(user_id) > 0 else None
 
         if utype and id and workcells:
             Type = User if utype == 'user' else Group
@@ -911,6 +937,128 @@ class AssignWorkcellsView(TemplateView):
         else:
             return HttpResponse('{"status":"required field missing"}', status=500)
 
+
+class SummaryView(TemplateView):
+    template_name = 'core/summary.html'
+    model = Job
+
+    def get_queryset(self):
+        status = getattr(self, 'status', None)
+        q_set = AOI.objects.filter(job=self.kwargs.get('job_pk'))
+
+    def get_context_data(self, **kwargs):
+        cv = super(SummaryView, self).get_context_data(**kwargs)
+        cv['object'] = get_object_or_404(Job, pk=self.kwargs.get('job_pk'))
+        cv['workcells'] = AOI.objects.filter(job_id=self.kwargs.get('job_pk')).order_by('id')
+        return cv
+
+class WorkSummaryView(TemplateView):
+    http_method_names = ['get']
+    template_name = 'core/reports/work_summary.html'
+    model = Job
+
+    # we'll use these ContentTypes for filtering
+#    ct_user = ContentType.objects.get(app_label="auth",model="user")
+#    ct_group = ContentType.objects.get(app_label="auth",model="group")
+
+    def get_context_data(self, **kwargs):
+        cv = super(WorkSummaryView, self).get_context_data(**kwargs)
+
+        # get users and groups assigned to the Job
+        job = get_object_or_404(Job, pk=self.kwargs.get('job_pk'))
+        job_team_data = dict([(g,UserGroupStats(g)) for g in job.teams.all()])
+
+#        for uorg in job_team_data:
+#            ct = self.ct_group
+#            their_aois = job.aois.filter(assignee_id=uorg.id, assignee_type = ct)
+#            for aoi in their_aois:
+#                job_team_data[uorg].increment(aoi.analyst, aoi.status)
+
+        cv['object'] = job
+        cv['data'] = []
+        for key,value in job_team_data.iteritems():
+            cv['data'].append(value.toJSON())
+
+        return cv
+
+#TODO fix
+class JobReportView(TemplateView):
+    http_method_names = ['get']
+    template_name = 'core/reports/aoi_summary.html'
+    model = Job
+
+    def get_context_data(self, **kwargs):
+        cv = super(JobReportView, self).get_context_data(**kwargs)
+        # get users and groups assigned to the Job
+        job = get_object_or_404(Job, pk=self.kwargs.get('job_pk'))
+
+        cv['object'] = job
+        cv['data'] = job.work_summary_json()
+
+        return cv
+
+def image_footprints(request):
+    """
+    Stub to return sample JSON of fake image footprints with sample data. Used to test workcell_images model and footprints tool
+    Take in bbox:  s, w, n, e
+    """
+    import random, time
+
+    bbox = request.GET.get('bbox')
+
+    if not bbox:
+        return HttpResponse()
+
+    bb = bbox.split(',')
+    output = ""
+
+    if not len(bb) == 4:
+        output = json.dumps(dict(error=500, message='Need 4 corners of a bounding box passed in using EPSG 4386 lat/long format', grid=str(bb)))
+    else:
+        try:
+            month = str(time.strftime('%m'))
+            day = int(time.strftime('%d'))
+            year = str(time.strftime('%Y'))
+
+            samples = dict()
+            samples['features'] = []
+
+
+            for x in range(0, 8):
+                feature = dict()
+                feature['attributes'] = dict()
+                feature['attributes']['id'] = random.randint(1,1000000000)
+                feature['attributes']['image_id'] = feature['attributes']['id']
+                feature['attributes']['layerId'] = random.choice(['overwatch','eyesight','birdofprey','jupiter','eagle'])
+                feature['attributes']['image_sensor'] = random.choice(['xray','visible','gamma ray','telepathy','bw'])
+                feature['attributes']['cloud_cover'] = random.randint(1,100)
+                feature['attributes']['date_image'] = year + month + str(random.randint(1,day))
+                feature['attributes']['value'] = 'NEF-' + str(random.randint(1,10000)) + '-ABC-' + str(random.randint(1,10000))
+
+                feature['geometry'] = dict()
+
+                s = random.uniform(float(bb[0]), float(bb[2]))
+                w = random.uniform(float(bb[1]), float(bb[3]))
+                n = random.uniform(float(s), float(bb[2]))
+                e = random.uniform(float(w), float(bb[3]))
+
+                rings = []
+                rings.append([n, w])
+                rings.append([n, e])
+                rings.append([s, e])
+                rings.append([s, w])
+                rings.append([n, w])
+                feature['geometry']['rings'] = [rings]
+
+                samples['features'].append(feature)
+
+            output = json.dumps(samples)
+
+        except Exception, e:
+            import traceback
+            output = json.dumps(dict(error=500, message='Generic Exception', details=traceback.format_exc(), exception=str(e), grid=str(bb)))
+
+    return HttpResponse(output, mimetype="application/json")
 
 def usng(request):
     """
@@ -1059,6 +1207,13 @@ def list_groups(request, job_pk):
 
     return HttpResponse(json.dumps(groups), mimetype="application/json")
 
+@permission_required('core.assign_workcells', return_403=True)
+def list_group_users(request, group_pk):
+    group = get_object_or_404(Group, pk=group_pk)
+    users = group.user_set.values('username','id','first_name','last_name').order_by('username')
+
+    return HttpResponse(json.dumps(list(users)), mimetype="application/json")
+
 
 @login_required
 def update_job_data(request, *args, **kwargs):
@@ -1067,19 +1222,9 @@ def update_job_data(request, *args, **kwargs):
     value = request.POST.get('value')
     if attribute and value:
         aoi = get_object_or_404(AOI, pk=aoi_pk)
+
         if attribute == 'status':
             aoi.status = value
-            timestamp = datetime.now(tz=pytz.timezone('UTC'))
-            if value == "Assigned":
-            	aoi.cellAssigned_at = timestamp
-            elif value == "In Work":
-            	aoi.cellStarted_at = timestamp
-            elif value == "Awaiting review":
-            	aoi.cellWaitingReview_at = timestamp
-            elif value == "In review":
-            	aoi.cellInReview_at = timestamp
-            elif value == "Completed":
-            	aoi.cellFinished_at = timestamp
         elif attribute == 'priority':
             aoi.priority = int(value)
         else:
@@ -1280,7 +1425,7 @@ class TeamListView(ListView):
     model = Group
     def get_queryset(self):
         search = self.request.GET.get('search', None)
-        return Group.objects.all() if search is None else Group.objects.filter(name__iregex=re.escape(search))
+        return Group.objects.all().order_by('name') if search is None else Group.objects.filter(name__iregex=re.escape(search)).order_by('name')
     
 class TeamDetailedListView(ListView):
     paginate_by = 15
@@ -1293,7 +1438,7 @@ class TeamDetailedListView(ListView):
         cv = super(TeamDetailedListView, self).get_context_data(**kwargs)
         cv['object'] = get_object_or_404(self.model, pk=self.kwargs.get('pk'))
         return cv
-    
+
 class CreateTeamView(CreateView):
     """
     Create Team
@@ -1303,12 +1448,12 @@ class CreateTeamView(CreateView):
         kwargs = super(CreateTeamView, self).get_form_kwargs()
         kwargs['team_id'] = 0
         return kwargs
-    
+
     def get_context_data(self, **kwargs):
         cv = super(CreateTeamView, self).get_context_data(**kwargs)
         cv['custom_form'] = "core/_generic_form_onecol.html"
         return cv
-    
+
     def form_valid(self, form):
         errors = []
         if not self.request.POST.get('name', ''):
@@ -1321,7 +1466,7 @@ class CreateTeamView(CreateView):
                 user.groups.add(Group.objects.get(id=self.object.id))
 
         return HttpResponseRedirect(reverse('team-list'), )
-        
+
 class UpdateTeamView(UpdateView):
     """
     Update Team
@@ -1331,35 +1476,35 @@ class UpdateTeamView(UpdateView):
         kwargs = super(UpdateTeamView, self).get_form_kwargs()
         kwargs['team_id'] = self.kwargs.get('pk')
         return kwargs
-    
+
     def get_context_data(self, **kwargs):
         cv = super(UpdateTeamView, self).get_context_data(**kwargs)
         cv['custom_form'] = "core/_generic_form_onecol.html"
         return cv
-    
+
     def form_valid(self, form):
         team_id = self.kwargs.get('pk')
         user_list = self.request.POST.getlist('users')
         team = Group.objects.get(id=team_id)
         team.user_set.clear()
-        
+
         users = User.objects.filter(id__in=user_list)
         count = users.count()
         if users.count() >0:
             for user in users:
                 team.user_set.add(user);
-                
+
         return HttpResponseRedirect(reverse('team-list'))
-    
-    
+
+
 class TeamDelete(DeleteView):
     model = Group
     template_name = "core/generic_confirm_delete.html"
-    
+
     def get_success_url(self):
         return reverse("team-list")
-    
 
-            
-            
-        
+
+
+
+

@@ -8,4 +8,4 @@ from models import Feedback,Topic
 class FeedbackForm(forms.ModelForm):
     class Meta:
         model = Feedback
-        field = ('name','email','topic', 'message')
+        fields = ('name','email','topic', 'message')

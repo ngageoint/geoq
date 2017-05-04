@@ -9,12 +9,12 @@ from geoq.locations.models import Counties
 from django.contrib.auth.models import User
 from django.contrib.gis.db import models
 from django.core.exceptions import ValidationError
-from django.utils.datastructures import SortedDict
+# from django.utils.datastructures import SortedDict
 from django.core.urlresolvers import reverse
 from jsonfield import JSONField
 from datetime import datetime
 from geoq.core.utils import clean_dumps
-from denorm import denormalized, depend_on_related
+# from denorm import denormalized, depend_on_related
 
 import sys
 
@@ -305,8 +305,8 @@ class MapLayer(models.Model):
     shown = models.BooleanField(default=True)
     stack_order = models.IntegerField()
     opacity = models.FloatField(default=0.80)
-    is_base_layer = models.BooleanField(help_text="Only one Base Layer can be enabled at any given time.")
-    display_in_layer_switcher = models.BooleanField()
+    is_base_layer = models.BooleanField(default=False,help_text="Only one Base Layer can be enabled at any given time.")
+    display_in_layer_switcher = models.BooleanField(default=True)
 
     class Meta:
         ordering = ["stack_order"]
@@ -323,8 +323,8 @@ class MapLayerUserRememberedParams(models.Model):
     user = models.ForeignKey(User, related_name="map_layer_saved_params_set")
     values = JSONField(null=True, blank=True, help_text='URL Variables that may be modified by the analyst. ex: "date"')
 
-    @denormalized(models.ForeignKey, to=Map)
-    @depend_on_related(MapLayer)
+#    @denormalized(models.ForeignKey, to=Map)
+#    @depend_on_related(MapLayer)
     def map(self):
         return self.maplayer.map.pk
 
@@ -397,7 +397,7 @@ class Feature(models.Model):
 
         feature_type = FeatureType.objects.get(id=self.template.id)
 
-        geojson = SortedDict()
+        geojson = OrderedDict()
         geojson["type"] = "Feature"
         geojson["properties"] = properties
         geojson["geometry"] = json.loads(self.the_geom.json)

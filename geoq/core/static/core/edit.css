@@ -6,6 +6,7 @@ h4 {
     top: -20px;
     left: 0px;
     margin-left: 0px;
+    margin-top: 20px;
     cursor: crosshair;
 }
 div.alert {
@@ -26,6 +27,7 @@ div.alert {
     width: 300px;
     padding-top: 50px;
     margin-left: -300px;
+    margin-top: 10px;
 }
 .gray-header {
     padding: 3px 7px;
