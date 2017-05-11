@@ -133,7 +133,7 @@ class Project(GeoQBase):
 
     @property
     def aois_envelope(self):
-        return MultiPolygon([n.aois_envelope() for n in self.jobs if n.aois.count()])
+        return MultiPolygon([n.aois_envelope().envelope for n in self.jobs if n.aois.count()])
 
     @property
     def aois_envelope_by_job(self):
@@ -204,7 +204,7 @@ class Job(GeoQBase, Assignment):
         """
         Returns the envelope of related AOIs geometry.
         """
-        return getattr(self.aois.all().collect(), 'envelope', None)
+        return self.aois.all().aggregate(envelope=models.Collect('polygon')).get('envelope')
 
     def aoi_count(self):
         return self.aois.count()
