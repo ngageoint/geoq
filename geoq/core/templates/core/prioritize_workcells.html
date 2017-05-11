@@ -1,11 +1,12 @@
 {% extends "core/base.html" %}
 {% load compress %}
+{% load staticfiles %}
 {% block static_libraries %}
 
 {% compress css %}
-    <link href="{{ STATIC_URL }}core/less/geoq.less" media="all" rel="stylesheet" type="text/less" />
+    <link href="{% static 'core/less/geoq.less' %}" media="all" rel="stylesheet" type="text/less" />
 {% endcompress %}
-    <script src="{{ STATIC_URL }}bootstrap/js/bootstrap-dialog.js"></script>
+    <script src="{% static 'bootstrap/js/bootstrap-dialog.js' %}"></script>
     <style>
         tbody {
             overflow-y: scroll;
@@ -48,7 +49,7 @@
             reader.onload = function(e) {
                 text = reader.result;
                 updateValues(text);
-            }
+            };
 
             reader.readAsText(file);
         }
@@ -117,17 +118,17 @@
         </div>
 
     <div class="row-fluid container-narrow" style="margin-top: 40px;">
-        <div class="span3">
+        <div class="col-md-4">
             <div>
                 <div class="btn btn-primary" id="file" style="position:absolute;">Click here to import priority values</div>
                 <input type="file" id="import-file" style="opacity:0; z-index:1;" onchange="('#file').value = this.value;" />
             </div>
 
         </div>
-        <div class="span2">
+        <div class="col-md-2">
             <button type="submit" class="btn btn-primary">Submit Values</button>
         </div>
-        <div class="span1">
+        <div class="col-md-2">
             <button type="button" class="btn btn-primary" onclick="location.href='{%url 'job-detail' object.id %}'">Return</button>
         </div>
     </div>
