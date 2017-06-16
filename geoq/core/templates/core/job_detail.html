@@ -344,15 +344,15 @@
                 {% leaflet_map "map" creatediv=False%}
                 </div>
                 <div class="col-sm-6" id="attribute-table">
-
                     <div class="btn-group pull-right">
-                        <a class="btn btn-mini" href="{{ object.get_update_url }}">
-                            <b> Edit Job </b>
-                        </a>
-                        <button class="btn btn-mini dropdown-toggle" data-toggle="dropdown">
-                            <span class="caret"></span>
+                        <button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown" aria-haspopup="true"
+                                aria-expanded="false" style="margin-top: 10px;">
+                            Job Tasks <span class="caret"></span>
                         </button>
                         <ul class="dropdown-menu">
+                            {% if 'core.change_job' in perms and object.map%}
+                            <li><a href="{{ object.get_update_url }}">Edit Job</a></li>
+                            {% endif %}
                             {% if 'core.add_aoi' in perms %}
                             <li><a href="{% url 'job-create-aois' object.id%}">Create Workcells</a></li>
                             {% endif %}
@@ -365,7 +365,7 @@
                             {% if 'core.delete_job' in perms %}
                             <li><a href="{% url 'job-delete' object.id %}">Delete Job</a></li>
                             {% endif %}
-                            {% if 'core.change_job' in perms and object.map%}
+                            {% if 'core.change_job' in perms and object.map %}
                             <li><a href="{% url 'map-update' object.id object.map.id %}">Edit Map</a></li>
                             {% endif %}
                         </ul>

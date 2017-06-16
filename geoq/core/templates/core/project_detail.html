@@ -95,16 +95,17 @@
             <div class="row body" style="margin-top:25px;margin-bottom: 10px;">
                 {% if 'core.add_job' in perms %}
                 <div class="btn-group pull-right">
-                    <a class="btn btn-mini" href="{{ object.get_update_url }}">
-                        <b> Edit Project </b>
-                    </a>
-                    <button class="btn btn-mini dropdown-toggle" data-toggle="dropdown">
-                        <span class="caret"></span>
+                    <button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown" aria-haspopup="true"
+                            aria-expanded="false" style="margin-top: 10px;">
+                        Project Tasks <span class="caret"></span>
                     </button>
                     <ul class="dropdown-menu">
-                        {% if 'core.add_job' in perms %}
-                        <li><a href="{% url 'job-create' %}?project={{ object.id }}">Add New Job</a></li>
+                        {% if request.user.is_authenticated %}
+                        {% if request.user.is_staff%}
+                        <li><a href="{{ object.get_update_url }}">Edit Project</a></li>
+                        <li><a href="{% url 'job-create' %}?project={{ object.id }}">Add Job</a></li>
                         {% endif %}
+                        {% endif%}
                     </ul>
                 </div>
                 {% endif %}
