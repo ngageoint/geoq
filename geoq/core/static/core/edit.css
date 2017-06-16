@@ -23,7 +23,7 @@ div.alert {
 #layer_info_drawer {
     position: absolute;
     top: 0px;
-    left: 0px;
+    left: 10px;
     width: 300px;
     padding-top: 50px;
     margin-left: -300px;
