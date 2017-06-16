@@ -1,1 +1,158 @@
-[]
+[
+{
+    "model": "core.setting",
+    "pk": 1,
+    "fields": {
+        "name": "google_analytics",
+        "value": "{\"enabled\":true,\"key\":\"UA-61113494-1\"}"
+    }
+},
+{
+    "model": "core.setting",
+    "pk": 2,
+    "fields": {
+        "name": "YouTube",
+        "value": "{\"key\":\"123456\"}"
+    }
+},
+{
+    "model": "core.setting",
+    "pk": 3,
+    "fields": {
+        "name": "hidden_panels",
+        "value": "{\"Assigned\":[\"Imagery Query\"],\"Awaiting Review\":[\"Imagery Query\"],\"In Review\":[\"Imagery Query\"],\"Completed\":[\"Imagery Query\"],\"In work\":[\"Imagery Query\"]}"
+    }
+},
+{
+    "model": "core.project",
+    "pk": 1,
+    "fields": {
+        "active": true,
+        "created_at": "2017-04-04T20:37:16.599Z",
+        "name": "Massachusetts Snow Storm",
+        "description": "April snow storm that dumped several inches of snow across the region",
+        "updated_at": "2017-04-04T20:37:16.599Z",
+        "properties": null,
+        "project_type": "Extreme Weather",
+        "private": false,
+        "project_admins": [
+            2
+        ],
+        "contributors": [
+            2
+        ]
+    }
+},
+{
+    "model": "core.job",
+    "pk": 2,
+    "fields": {
+        "assignee_type": null,
+        "assignee_id": null,
+        "active": true,
+        "created_at": "2017-04-21T14:41:25.018Z",
+        "name": "Mark blocked roads",
+        "description": "Show which roads are impassable due to snow or other debris",
+        "updated_at": "2017-05-02T13:05:02.195Z",
+        "properties": null,
+        "progress": null,
+        "project": 1,
+        "grid": "usng",
+        "tags": "roads",
+        "editor": "geoq",
+        "editable_layer": null,
+        "map": 1,
+        "analysts": [
+            2
+        ],
+        "teams": [],
+        "reviewers": [
+            2
+        ],
+        "feature_types": [
+            1
+        ],
+        "required_courses": []
+    }
+},
+{
+    "model": "core.aoi",
+    "pk": 3,
+    "fields": {
+        "assignee_type": null,
+        "assignee_id": null,
+        "active": true,
+        "created_at": "2017-05-01T17:58:58.743Z",
+        "name": "Mark blocked roads",
+        "description": "Show which roads are impassable due to snow or other debris",
+        "updated_at": "2017-05-04T18:00:20.259Z",
+        "properties": "{\"priority\":5}",
+        "analyst": 2,
+        "job": 2,
+        "polygon": "SRID=4326;MULTIPOLYGON (((-71.32049560546876 42.44423463900535, -71.32049560546876 42.48411180255594, -71.25938415527345 42.48411180255594, -71.25938415527345 42.44423463900535, -71.32049560546876 42.44423463900535)))",
+        "priority": 5,
+        "status": "In work",
+        "reviewers": []
+    }
+},
+{
+    "model": "core.aoi",
+    "pk": 4,
+    "fields": {
+        "assignee_type": null,
+        "assignee_id": null,
+        "active": true,
+        "created_at": "2017-05-01T17:58:58.744Z",
+        "name": "Mark blocked roads",
+        "description": "Show which roads are impassable due to snow or other debris",
+        "updated_at": "2017-06-16T11:52:35.222Z",
+        "properties": "{\"priority\":5}",
+        "analyst": 2,
+        "job": 2,
+        "polygon": "SRID=4326;MULTIPOLYGON (((-71.32049560546876 42.48411180255594, -71.32049560546876 42.52398896610653, -71.25938415527345 42.52398896610653, -71.25938415527345 42.48411180255594, -71.32049560546876 42.48411180255594)))",
+        "priority": 5,
+        "status": "In work",
+        "reviewers": []
+    }
+},
+{
+    "model": "core.aoi",
+    "pk": 5,
+    "fields": {
+        "assignee_type": null,
+        "assignee_id": null,
+        "active": true,
+        "created_at": "2017-05-01T17:58:58.744Z",
+        "name": "Mark blocked roads",
+        "description": "Show which roads are impassable due to snow or other debris",
+        "updated_at": "2017-05-02T12:49:38.829Z",
+        "properties": "{\"priority\":5}",
+        "analyst": 2,
+        "job": 2,
+        "polygon": "SRID=4326;MULTIPOLYGON (((-71.25938415527345 42.44423463900535, -71.25938415527345 42.48411180255594, -71.19827270507814 42.48411180255594, -71.19827270507814 42.44423463900535, -71.25938415527345 42.44423463900535)))",
+        "priority": 5,
+        "status": "In work",
+        "reviewers": []
+    }
+},
+{
+    "model": "core.aoi",
+    "pk": 6,
+    "fields": {
+        "assignee_type": null,
+        "assignee_id": null,
+        "active": true,
+        "created_at": "2017-05-01T17:58:58.744Z",
+        "name": "Mark blocked roads",
+        "description": "Show which roads are impassable due to snow or other debris",
+        "updated_at": "2017-05-01T17:58:58.744Z",
+        "properties": "{\"priority\":5}",
+        "analyst": null,
+        "job": 2,
+        "polygon": "SRID=4326;MULTIPOLYGON (((-71.25938415527345 42.48411180255594, -71.25938415527345 42.52398896610653, -71.19827270507814 42.52398896610653, -71.19827270507814 42.48411180255594, -71.25938415527345 42.48411180255594)))",
+        "priority": 5,
+        "status": "Unassigned",
+        "reviewers": []
+    }
+}
+]

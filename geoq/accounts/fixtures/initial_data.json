@@ -1,3 +1,16 @@
 [
-
+{
+    "model": "accounts.userprofile",
+    "pk": 1,
+    "fields": {
+        "mugshot": "",
+        "privacy": "registered",
+        "user": 2,
+        "email": null,
+        "organization": null,
+        "score": 1,
+        "last_activity": "2017-04-04T20:31:51.944Z",
+        "openbadge_id": null
+    }
+}
 ]
