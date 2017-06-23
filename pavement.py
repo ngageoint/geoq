@@ -56,8 +56,6 @@ def install_dev_fixtures():
     for fixture in fixtures:
         sh("python manage.py loaddata {fixture}".format(fixture=fixture))
 
-    _perms_check()
-
 
 @task
 def sync():
