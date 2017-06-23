@@ -50,13 +50,12 @@ def install_dev_fixtures():
         'geoq/accounts/fixtures/initial_data.json',  # dummy users and groups
         'geoq/maps/fixtures/initial_data_types.json',  # Maps
         'geoq/core/fixtures/initial_data.json',
-        #'geoq/badges/fixtures/initial_data.json', # Removing badges for now, b/c not working
+        'geoq/feedback/fixtures/initial_data.json', # feedback
         ]
 
     for fixture in fixtures:
         sh("python manage.py loaddata {fixture}".format(fixture=fixture))
 
-    sh("python manage.py migrate --all")
     _perms_check()
 
 
