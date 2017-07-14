@@ -5,7 +5,9 @@
 {% block title %}GeoQ Project: {{ object.name }}{% endblock %}
 
 {% block static_libraries %}
-    {% leaflet_js plugins="proj4js, draw, esri" %}
+// {% leaflet_js plugins="proj4js, draw, esri" %}
+        {% leaflet_js %}
+<script src="{% static 'leaflet/proj4js.js' %}"></script>
 
     <script type="text/javascript">
     function mapInit(map, bounds) {

@@ -117,11 +117,11 @@ LEAFLET_CSS = [
 
 LEAFLET_CONFIG = {
     'RESET_VIEW' : False,
-    'MAX_ZOOM' : 22,
+    'MAX_ZOOM' : 18,
     'PLUGINS': {
         'proj4js': {
             'css': [],
-            'js': [STATIC_URL + 'leaflet/proj4js.js',STATIC_URL + 'leaflet/proj4leaflet.js'],
+            'js': [STATIC_URL + 'leaflet/proj4-src.js', STATIC_URL + 'leaflet/proj4defs.js', STATIC_URL + 'leaflet/proj4leaflet.js'],
             'repo': 'https://github.com/proj4js'
         },
         'draw': {
