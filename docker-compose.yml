@@ -11,8 +11,9 @@ services:
   web:
     build: .
     volumes:
-      - /usr/src/geoq
+      - /usr/local/src/geoq/geoq:/usr/src/geoq
     ports:
       - "8000:8000"
     depends_on:
       - db
+    command: ["./wait-for-postgres.sh", "db:5432", "python", "app.py"]

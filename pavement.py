@@ -49,6 +49,7 @@ def install_dev_fixtures():
         'geoq/fixtures/initial_data.json',  # user permissions
         'geoq/accounts/fixtures/initial_data.json',  # dummy users and groups
         'geoq/maps/fixtures/initial_data_types.json',  # Maps
+        'geoq/maps/fixtures/initial_data.json',
         'geoq/core/fixtures/initial_data.json',
         'geoq/feedback/fixtures/initial_data.json', # feedback
         ]
