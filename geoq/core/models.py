@@ -375,6 +375,7 @@ class AOI(GeoQBase, Assignment):
         permissions = (
             ('assign_workcells', 'Assign Workcells'), ('certify_workcells', 'Certify Workcells'),
         )
+        ordering = [id]
 
     def __unicode__(self):
         aoi_obj = '%s - AOI %s' % (self.name, self.id)

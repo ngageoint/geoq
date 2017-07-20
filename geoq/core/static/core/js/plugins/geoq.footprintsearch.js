@@ -1258,6 +1258,8 @@ footprints.addToResultTable = function (flattenedList) {
 
         var $tr = $('<tr>').on('click', function() {
             footprints.rowClicked(this);
+            $('.focus-hl').removeClass('focus-hl');
+            $(this).addClass('focus-hl');
         });
 
         var headers = [];
@@ -1436,6 +1438,7 @@ footprints.addResultTable = function ($holder) {
     //We can change the max height here when we are testing with many elements.
     var $grid = $("<div class='tableContainer' style='overflow-x:auto; overflow-y: auto; max-height: 250px'><table class='tablesorter' id='imagelayer-list'><colgroup><thead><tr></tr></thead><tbody></tbody></table>")
         .appendTo($holder);
+    $('.tablesorter').addClass('focus-highlight');   // for row highlighting
 
     var $row = $grid.find("tr");
 
