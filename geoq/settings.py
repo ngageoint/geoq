@@ -204,8 +204,7 @@ TEMPLATES = [
                 'django.template.context_processors.debug',
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
-                'django.contrib.messages.context_processors.messages',
-                'geoq.core.contextprocessors.app_settings'
+                'django.contrib.messages.context_processors.messages'
         ]
     }
 
@@ -509,6 +508,9 @@ BOOTSTRAP3 = {
 
 
 ########## END BOOTSTRAP 3 CONFIGURATION
+
+# Special case
+IMAGE_TRACKING = False
 
 # initialize apps
 django.setup()
