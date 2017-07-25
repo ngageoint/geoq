@@ -1271,7 +1271,7 @@ def update_feature_data(request, *args, **kwargs):
         feature.save()
         return HttpResponse(value, mimetype="application/json", status=200)
     else:
-        return HttpResponse('{"status":"attribute and value not passed in"}', mimetype="application/json", status=400)
+        return HttpResponse('{"status":"attribute and value not passed in"}', content_type="application/json", status=400)
 
 
 @login_required
@@ -1296,9 +1296,9 @@ def prioritize_cells(request, method, **kwargs):
         errorCode = 'Program Error: ' + traceback.format_exc()
 
         log = dict(error='Could not prioritize Work Cells', message=str(ex), details=errorCode, method=method)
-        return HttpResponse(json.dumps(log), mimetype="application/json", status=500)
+        return HttpResponse(json.dumps(log), content_type="application/json", status=500)
 
-    return HttpResponse(json.dumps(output), mimetype="application/json", status=200)
+    return HttpResponse(json.dumps(output), content_type="application/json", status=200)
 
 
 @login_required
@@ -1339,7 +1339,7 @@ class LogJSON(ListView):
         aoi = get_object_or_404(AOI, id=kwargs.get('pk'))
         log = aoi.logJSON()
 
-        return HttpResponse(json.dumps(log), mimetype="application/json", status=200)
+        return HttpResponse(json.dumps(log), content_type="application/json", status=200)
 
 
 class LayersJSON(ListView):
@@ -1369,7 +1369,7 @@ class LayersJSON(ListView):
 
         out_json = dict(objects=objects)
 
-        return HttpResponse(json.dumps(out_json), mimetype="application/json", status=200)
+        return HttpResponse(json.dumps(out_json), content_type="application/json", status=200)
 
 
 class CellJSON(ListView):
@@ -1379,7 +1379,7 @@ class CellJSON(ListView):
         aoi = get_object_or_404(AOI, id=kwargs.get('pk'))
         cell = aoi.grid_geoJSON()
 
-        return HttpResponse(cell, mimetype="application/json", status=200)
+        return HttpResponse(cell, content_type="application/json", status=200)
 
 
 class JobGeoJSON(ListView):
@@ -1389,7 +1389,7 @@ class JobGeoJSON(ListView):
         job = get_object_or_404(Job, pk=self.kwargs.get('pk'))
         geojson = job.features_geoJSON()
 
-        return HttpResponse(geojson, mimetype="application/json", status=200)
+        return HttpResponse(geojson, content_type="application/json", status=200)
 
 class JobStyledGeoJSON(ListView):
     model = Job
@@ -1398,7 +1398,7 @@ class JobStyledGeoJSON(ListView):
         job = get_object_or_404(Job, pk=self.kwargs.get('pk'))
         geojson = job.features_geoJSON(using_style_template=False)
 
-        return HttpResponse(geojson, mimetype="application/json", status=200)
+        return HttpResponse(geojson, content_type="application/json", status=200)
 
 
 class JobFeaturesJSON(ListView):
@@ -1409,7 +1409,7 @@ class JobFeaturesJSON(ListView):
         job = get_object_or_404(Job, pk=self.kwargs.get('pk'))
         features_json = json.dumps([f.json_item(self.show_detailed_properties) for f in job.feature_set.all()], indent=2)
 
-        return HttpResponse(features_json, mimetype="application/json", status=200)
+        return HttpResponse(features_json, content_type="application/json", status=200)
 
 
 class GridGeoJSON(ListView):
@@ -1419,7 +1419,7 @@ class GridGeoJSON(ListView):
         job = get_object_or_404(Job, pk=self.kwargs.get('pk'))
         geojson = job.grid_geoJSON()
 
-        return HttpResponse(geojson, mimetype="application/json", status=200)
+        return HttpResponse(geojson, content_type="application/json", status=200)
     
 class TeamListView(ListView):
     model = Group

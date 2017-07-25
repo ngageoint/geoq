@@ -1,0 +1,113 @@
+{% extends "core/base.html" %}
+{% load compress %}
+{% block title %}GeoQ Workcell Report {% endblock %}
+{% block static_libraries %}
+
+<link rel="stylesheet" href="{{ STATIC_URL }}/css/theme.blue.css" />
+
+<script src="{{ STATIC_URL }}core/js/maths.js"></script>
+<script src="{{ STATIC_URL }}js/jquery.tablesorter.min.js"></script>
+<script src="{{ STATIC_URL }}js/jquery.tablesorter.widgets.min.js"></script>
+<script src="{{ STATIC_URL }}js/widget-scroller.min.js"></script>
+<script src="{{ STATIC_URL }}core/js/reports/workcell_report.js"></script>
+
+<script>
+    var aoi_data = {{ object.work_summary_json|safe }};
+    $(function() {
+
+        $(".tablesorter")
+                .tablesorter({
+                    theme: 'blue',
+                    cssChildRow: 'tablesorter-childRow',
+                    widgets: ['zebra', 'filter', 'scroller'],
+                    headers: {
+                        0: {
+                            sorter: 'checkbox'
+                        }
+                    },
+                    widgetOptions: {
+                        filter_childRows: true,
+                        filter_cssFilter: 'tablesorter-filter',
+                        filter_startsWith: false,
+                        filter_ignoreCase: true
+                    }
+                });
+
+        $('.tablesorter-childRow td').hide();
+
+        $('.tablesorter').delegate('.toggle', 'click', function() {
+            $(this).closest('tr').nextUntil('tr.tablesorter-hasChildRow').find('td').toggle();
+
+            return false;
+        });
+
+        $('button.toggle-option').click(function() {
+            var c = $('.tablesorter')[1].config.widgetOptions,
+                    o = !c.filter_childRows;
+            c.filter_childRows = o;
+            $('.state').html(o.toString());
+            $('table').trigger('search', false);
+            return false;
+        });
+
+        // now populate table
+        workcell_report.setList(aoi_data);
+    });
+
+</script>
+
+
+{% endblock %}
+
+{% block container %}
+        <!-- TODO: Figure out why we need to move the margin 50px -->
+<div class="row-fluid container" style="margin-left: 50px">
+    <h3>
+                <span class="title header">
+                    <a href="{%url 'job-detail' object.id %}">{{ object.name }} Workcell Report</a>
+                </span>
+    </h3>
+
+    <div class="aoilist">
+
+        <div class="row body">
+            <div id="workcells" class="row-fluid">
+                <div id="a_form" style="" class="span10">
+                    <table class="tablesorter" id="workcell-status-list">
+                        <colgroup>
+                            <col width="10%" />
+                            <col width="10%" />
+                            <col width="15%" />
+                            <col width="15%" />
+                            <col width="10%" />
+                            <col width="10%" />
+                            <col width="10%" />
+                            <col width="10%" />
+                            <col width="5%" />
+                        </colgroup>
+                        <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Size</th>
+                            <th>Analyst</th>
+                            <th>Team</th>
+                            <th>Status</th>
+                            <th>Percent Complete</th>
+                            <th>Analysis time</th>
+                            <th>Date Complete</th>
+                            <th>Items found</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        </tbody>
+                    </table>
+
+                </div><!-- end c_form -->
+            </div><!-- end contact -->
+        </div>
+
+    </div>
+
+</div>
+
+{% endblock %}
