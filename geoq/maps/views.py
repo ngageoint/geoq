@@ -78,7 +78,7 @@ class CreateFeatures(View):
 
             feature.save()
         except ValidationError as e:
-            response =  HttpResponse(content=json.dumps(dict(errors=e.messages)), mimetype="application/json", status=400)
+            response =  HttpResponse(content=json.dumps(dict(errors=e.messages)), content_type="application/json", status=400)
             response['Temp-Point-Id'] = tpi
             return response
         # This feels a bit ugly but it does get the GeoJSON into the response
@@ -86,7 +86,7 @@ class CreateFeatures(View):
         feature_list = json.loads(feature_json)
         feature_list[0]['geojson'] = feature.geoJSON(True)
 
-        response = HttpResponse(json.dumps(feature_list), mimetype="application/json")
+        response = HttpResponse(json.dumps(feature_list), content_type="application/json")
         response['Temp-Point-Id'] = tpi
         return response
 
@@ -122,9 +122,9 @@ class EditFeatures(View):
             feature.full_clean()
             feature.save()
         except ValidationError as e:
-            return HttpResponse(content=json.dumps(dict(errors=e.messages)), mimetype="application/json", status=400)
+            return HttpResponse(content=json.dumps(dict(errors=e.messages)), content_type="application/json", status=400)
 
-        return HttpResponse("{}", mimetype="application/json")
+        return HttpResponse("{}", content_type="application/json")
 
 @login_required
 @require_http_methods(["POST"])
@@ -134,7 +134,7 @@ def update_user_maplayer_param(request, *args, **kwargs):
     try:
         json_stuff = json.loads(request.body)
     except ValueError:
-        return HttpResponse("{\"status\":\"Bad Request\"}", mimetype="application/json", status=400)
+        return HttpResponse("{\"status\":\"Bad Request\"}", content_type="application/json", status=400)
 
     mlq = MapLayer.objects.filter(id=json_stuff['maplayer'])
 
@@ -152,7 +152,7 @@ def update_user_maplayer_param(request, *args, **kwargs):
 
         mlurp.save()
 
-    return HttpResponse(json.dumps(mlurp.values), mimetype="application/json", status=200)
+    return HttpResponse(json.dumps(mlurp.values), content_type="application/json", status=200)
 
 def feature_delete(request, pk):
     try:
@@ -342,4 +342,4 @@ class JSONLayerExport(ListView):
         name = self.kwargs.get('pk').replace("%20", " ");
         layer = Layer.objects.get(name__iexact = name)
         layerJson = json.dumps(layer.layer_json(), indent=2);
-        return HttpResponse(layerJson, mimetype="application/json", status=200)
+        return HttpResponse(layerJson, content_type="application/json", status=200)

@@ -854,7 +854,7 @@ class ChangeAOIStatus(View):
 
             # send aoi completion event for badging
             send_aoi_create_event(request.user, aoi.id, aoi.features.all().count())
-            return HttpResponse(json.dumps({aoi.id: aoi.status, 'features_updated': features_updated}), mimetype="application/json")
+            return HttpResponse(json.dumps({aoi.id: aoi.status, 'features_updated': features_updated}), content_type="application/json")
         else:
             error = dict(error=403,
                          details="User not allowed to modify the status of this AOI.",)
@@ -1058,7 +1058,7 @@ def image_footprints(request):
             import traceback
             output = json.dumps(dict(error=500, message='Generic Exception', details=traceback.format_exc(), exception=str(e), grid=str(bb)))
 
-    return HttpResponse(output, mimetype="application/json")
+    return HttpResponse(output, content_type="application/json")
 
 def usng(request):
     """
@@ -1081,7 +1081,7 @@ def usng(request):
     params['outputFormat'] = 'json'
     params['srsName'] = 'EPSG:4326'
     resp = requests.get(base_url, params=params)
-    return HttpResponse(resp, mimetype="application/json")
+    return HttpResponse(resp, content_type="application/json")
 
 
 def mgrs(request):
@@ -1106,18 +1106,18 @@ def mgrs(request):
             output = json.dumps(fc)
         except GridException:
             error = dict(error=500, details="Can't create grids across longitudinal boundaries. Try creating a smaller bounding box",)
-            return HttpResponse(json.dumps(error), status=error.get('error'), mimetype="application/json")
+            return HttpResponse(json.dumps(error), status=error.get('error'), content_type="application/json")
         except GeoConvertException, e:
             error = dict(error=500, details="GeoConvert doesn't recognize those cooridnates", exception=str(e))
-            return HttpResponse(json.dumps(error), status=error.get('error'), mimetype="application/json")
+            return HttpResponse(json.dumps(error), status=error.get('error'), content_type="application/json")
         except ProgramException, e:
             error = dict(error=500, details="Error executing external GeoConvert application. Make sure it is installed on the server", exception=str(e))
-            return HttpResponse(json.dumps(error), status=error.get('error'), mimetype="application/json")
+            return HttpResponse(json.dumps(error), status=error.get('error'), content_type="application/json")
         except Exception, e:
             import traceback
             output = json.dumps(dict(error=500, message='Generic Exception', details=traceback.format_exc(), exception=str(e), grid=str(bb)))
 
-    return HttpResponse(output, mimetype="application/json")
+    return HttpResponse(output, content_type="application/json")
 
 
 def ipaws(request):
@@ -1146,10 +1146,10 @@ def ipaws(request):
         response = requests.get(baseURL)
         cache.set("file", response.content, 60 * 30)
         print 'Not cached'
-        return HttpResponse(response.content, mimetype="text/xml", status=200)
+        return HttpResponse(response.content, content_type="text/xml", status=200)
     else:
         print 'Cached'
-        return HttpResponse(content, mimetype="text/xml", status=200)
+        return HttpResponse(content, content_type="text/xml", status=200)
 
 
 def geocode(request):
@@ -1195,7 +1195,7 @@ def list_users(request, job_pk):
     for u in usernames:
         users.append(u['username'])
 
-    return HttpResponse(json.dumps(users), mimetype="application/json")
+    return HttpResponse(json.dumps(users), content_type="application/json")
 
 @permission_required('core.assign_workcells', return_403=True)
 def list_groups(request, job_pk):
@@ -1205,14 +1205,14 @@ def list_groups(request, job_pk):
     for g in groupnames:
         groups.append(g['name'])
 
-    return HttpResponse(json.dumps(groups), mimetype="application/json")
+    return HttpResponse(json.dumps(groups), content_type="application/json")
 
 @permission_required('core.assign_workcells', return_403=True)
 def list_group_users(request, group_pk):
     group = get_object_or_404(Group, pk=group_pk)
     users = group.user_set.values('username','id','first_name','last_name').order_by('username')
 
-    return HttpResponse(json.dumps(list(users)), mimetype="application/json")
+    return HttpResponse(json.dumps(list(users)), content_type="application/json")
 
 
 @login_required
@@ -1233,9 +1233,9 @@ def update_job_data(request, *args, **kwargs):
             aoi.properties = properties_main
 
         aoi.save()
-        return HttpResponse(value, mimetype="application/json", status=200)
+        return HttpResponse(value, content_type="application/json", status=200)
     else:
-        return HttpResponse('{"status":"attribute and value not passed in"}', mimetype="application/json", status=400)
+        return HttpResponse('{"status":"attribute and value not passed in"}', content_type="application/json", status=400)
 
 
 @login_required
@@ -1269,7 +1269,7 @@ def update_feature_data(request, *args, **kwargs):
         feature.properties = properties_main
 
         feature.save()
-        return HttpResponse(value, mimetype="application/json", status=200)
+        return HttpResponse(value, content_type="application/json", status=200)
     else:
         return HttpResponse('{"status":"attribute and value not passed in"}', content_type="application/json", status=400)
 
