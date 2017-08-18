@@ -58,7 +58,7 @@ L.KML = L.FeatureGroup.extend({
         // check first if this is a NetworkLink KML
         var nl = xml.getElementsByTagName('NetworkLink');
         if (nl.length > 0) {
-            this._networklink = L.KMLNetworkLink(xml,this,options);
+            this._networklink = new L.KMLNetworkLink(xml,this,this.options);
             return;
         }
 		var layers = L.KML.parseKML(xml);
@@ -502,15 +502,16 @@ L.KMLNetworkLink = L.KML.extend({
         this._KmlLayer = layer;
         this.parseNetworkLink(kml);
         if (this.options._href) {
-            this.addKML(this.options._href, options);
+            this.addNLKML(this.options._href, options);
             this.addLayer(this._KmlLayer);
         }
     },
 
-    addKML: function (url, options, async) {
+    addNLKML: function (url, options, async) {
+        var kmlNL = this;
         setInterval( function() {
-            this._KmlLayer.clearLayers();
-            this._KmlLayer.loadXML(url, cb, options, async);
+            kmlNL._KmlLayer.clearLayers();
+            kmlNL._KmlLayer.addKML(url, options, async);
         }, this.options.rate * 1000);
     },
 
