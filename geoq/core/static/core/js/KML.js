@@ -498,6 +498,9 @@ L.KMLNetworkLink = L.KML.extend({
     },
 
     initialize: function (kml, layer, options) {
+        // From LayerGroup initialize
+        this._layers = {};
+
         L.Util.setOptions(this, options);
         this._KmlLayer = layer;
         this.parseNetworkLink(kml);
