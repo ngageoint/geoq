@@ -502,19 +502,19 @@ L.KMLNetworkLink = L.KML.extend({
         this._layers = {};
 
         L.Util.setOptions(this, options);
-        this._KmlLayer = layer;
+        this._kmlLayer = layer;
         this.parseNetworkLink(kml);
         if (this.options._href) {
             this.addNLKML(this.options._href, options);
-            this.addLayer(this._KmlLayer);
+            this.addLayer(this._kmlLayer);
         }
     },
 
     addNLKML: function (url, options, async) {
         var kmlNL = this;
         setInterval( function() {
-            kmlNL._KmlLayer.clearLayers();
-            kmlNL._KmlLayer.addKML(url, options, async);
+            kmlNL._kmlLayer.clearLayers();
+            kmlNL._kmlLayer.addKML(url, options, async);
         }, this.options.rate * 1000);
     },
 
