@@ -31,6 +31,7 @@
     <![endif]-->
     <script src="{% static 'jquery/jquery.min.js' %}" type="text/javascript"></script>
     <script src="{% static 'jquery/jquery-ui.min.js' %}" type="text/javascript"></script>
+    {% bootstrap_javascript %}
     {% compress js %}
 
         <script src="{% static 'underscore/underscore-min.js' %}" type="text/javascript"></script>
@@ -56,8 +57,6 @@
     </script>
     {% block static_libraries %}
     {% endblock %}
-
-    {% bootstrap_javascript %}
 
     <script>
         // Added the following for Google Analytics

@@ -4,7 +4,7 @@
 from geoq.core.models import Setting
 import json
 
-
+# used to set the site_settings variable
 def app_settings(request):
     """Global values to pass to templates"""
     settings_dict = dict()

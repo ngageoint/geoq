@@ -511,6 +511,9 @@ BOOTSTRAP3 = {
 
 ########## END BOOTSTRAP 3 CONFIGURATION
 
+# Special case
+IMAGE_TRACKING = False
+
 # initialize apps
 django.setup()
 

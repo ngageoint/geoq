@@ -1,4 +1,5 @@
 {% load staticfiles %}
+        {% load settings_variables %}
 {% if object.required_courses.all %}
 <tr><td colspan="2" style="padding-top:20px;">
     {% for course in object.required_courses.all %}
@@ -18,11 +19,14 @@
         View Job Statistics
     </button> </a>
     </td>
+    {% settings_value "IMAGE_TRACKING" as image_tracking %}
+    {% if image_tracking %}
     <td colspan="1" style="padding-top: 20px;">
         <a href="{% url 'job-report' object.id %}" class="btn btn-primary btn-med">
             Reports
         </a>
     </td>
+    {% endif %}
 </tr>
 
 <!-- Added by Jared -->

@@ -10,6 +10,7 @@ from django.contrib.auth.models import User
 from django.contrib.gis.db import models
 from django.core.exceptions import ValidationError
 # from django.utils.datastructures import SortedDict
+from collections import OrderedDict
 from django.core.urlresolvers import reverse
 from jsonfield import JSONField
 from datetime import datetime
