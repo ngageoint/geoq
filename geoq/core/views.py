@@ -663,7 +663,7 @@ class JobStatistics(ListView):
             temp['aoi'] = allData["features"][x]["properties"]["id"]
             internalData = {}
             internalData["analyst"] = allData["features"][x]["properties"]["analyst"]
-            internalData['time'] = allData["features"][x]["properties"]["time"]
+            # internalData['time'] = allData["features"][x]["properties"]["time"]
             internalData["priority"] = allData["features"][x]["properties"]["priority"]
             temp["data"] = internalData
             data.append(temp)
@@ -687,29 +687,29 @@ class JobStatistics(ListView):
             totalTime = inReviewTime = inWorkTime = waitingForReviewTime = 0
 
         	#Total Time from InWork - Complete
-            if str(data[i]['data']['time']['in_work']) != "None" and str(data[i]['data']['time']['finished']) != "None":
-                isCompleted = True;
-                startedDate = parse_datetime(data[i]['data']['time']['in_work'])
-                finishedDate = parse_datetime(data[i]['data']['time']['finished'])
-                totalTime = getTotalTime(startedDate,finishedDate) / 3600
+            #if str(data[i]['data']['time']['in_work']) != "None" and str(data[i]['data']['time']['finished']) != "None":
+            #    isCompleted = True;
+            #    startedDate = parse_datetime(data[i]['data']['time']['in_work'])
+            #    finishedDate = parse_datetime(data[i]['data']['time']['finished'])
+            #    totalTime = getTotalTime(startedDate,finishedDate) / 3600
 
         	#Time In review
-            if str(data[i]['data']['time']['finished']) != "None" and str(data[i]['data']['time']['in_review']) != "None":
-                finishedDate = parse_datetime(data[i]['data']['time']['finished'])
-                inReviewDate = parse_datetime(data[i]['data']['time']['in_review'])
-                inReviewTime = getTotalTime(inReviewDate,finishedDate) / 3600
+            #if str(data[i]['data']['time']['finished']) != "None" and str(data[i]['data']['time']['in_review']) != "None":
+            #    finishedDate = parse_datetime(data[i]['data']['time']['finished'])
+            #    inReviewDate = parse_datetime(data[i]['data']['time']['in_review'])
+            #    inReviewTime = getTotalTime(inReviewDate,finishedDate) / 3600
 
             #Time waiting in work
-            if str(data[i]['data']['time']['in_work']) != "None" and str(data[i]['data']['time']['waiting_review']) != "None":
-                inWorkDate = parse_datetime(data[i]['data']['time']['in_work'])
-                waitingReviewDate = parse_datetime(data[i]['data']['time']['waiting_review'])
-                inWorkTime = getTotalTime(waitingReviewDate,inWorkDate) / 3600
+            #if str(data[i]['data']['time']['in_work']) != "None" and str(data[i]['data']['time']['waiting_review']) != "None":
+            #    inWorkDate = parse_datetime(data[i]['data']['time']['in_work'])
+            #    waitingReviewDate = parse_datetime(data[i]['data']['time']['waiting_review'])
+            #    inWorkTime = getTotalTime(waitingReviewDate,inWorkDate) / 3600
 
             #Time waiting for Review
-            if str(data[i]['data']['time']['in_review']) != "None" and str(data[i]['data']['time']['waiting_review']) != "None":
-                inReviewDate = parse_datetime(data[i]['data']['time']['in_review'])
-                waitingReviewDate = parse_datetime(data[i]['data']['time']['waiting_review'])
-                waitingForReviewTime = getTotalTime(inReviewDate,waitingReviewDate) / 3600
+            #if str(data[i]['data']['time']['in_review']) != "None" and str(data[i]['data']['time']['waiting_review']) != "None":
+            #    inReviewDate = parse_datetime(data[i]['data']['time']['in_review'])
+            #    waitingReviewDate = parse_datetime(data[i]['data']['time']['waiting_review'])
+            #    waitingForReviewTime = getTotalTime(inReviewDate,waitingReviewDate) / 3600
 
 
             if isCompleted:

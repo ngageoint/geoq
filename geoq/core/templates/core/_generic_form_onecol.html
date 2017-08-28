@@ -2,11 +2,8 @@
 <form method="post" action="">
     {% csrf_token %}
     {% load object_class %}
-    
-    <script type="text/javascript" src="{{ STATIC_URL }}admin/js/jquery.init.js"></script>
-    {{form.media}}
 
-    <div class="span12" style="margin-left: 0;" id="first_column">
+    <div class="col-md-12" style="margin-left: 0;" id="first_column">
     {% for field in form %}
         <dl class="form">
             {%  if field.field.widget|object_class == "CheckboxInput" %}
@@ -53,15 +50,16 @@
     {% endfor %}
     </div>
 
-    <input class="btn btn-success" type="submit" value="Save" data-role="button" />
-
-    
-    {% block extra_buttons%}
+    <div class="row col-md-12">
+        <input class="btn btn-success" type="submit" value="Save" data-role="button" />
+        {% block extra_buttons%}
         {% if object %}
-            &nbsp;&nbsp;
-            <a class="btn deletelink-box" href="{%url 'team-delete' object.id %}"><b>Delete Team</b> </a>
+        &nbsp;&nbsp;
+        <a class="btn btn-success" href="{%url 'team-delete' object.id %}"><b>Delete Team</b> </a>
         {% endif %}
-    {% endblock %}
+        {% endblock %}
+    </div>
+
     
 </form>
 
@@ -69,7 +67,7 @@
     $(document).ready(function(){
         var $sels=$('select[multiple="multiple"]');
 
-        $('input, select, textarea').css('width','80%');
+        $('select, textarea').css('width','40%');
 
         //If select boxes are here, make them bigger and order them alphabetically
         if ($sels.length) {
