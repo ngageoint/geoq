@@ -9,11 +9,9 @@ services:
       POSTGRES_DB: geoq
 
   web:
-    build: .
-    volumes:
-      - /usr/local/src/geoq/geoq:/usr/src/geoq
+    image: stephenrjones/geoq-django10
     ports:
-      - "8000:8000"
+      - "80:80"
     command: sh -c './wait-for db:5432 -- python app.py'
     depends_on:
       - db

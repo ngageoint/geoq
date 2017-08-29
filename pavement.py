@@ -132,6 +132,20 @@ def create_db_user():
     sh('psql -d {database} -c {sql}'.format(
         database=database,
         sql='"CREATE USER {user} WITH PASSWORD \'{password}\';"'.format(user=user, password=password)))
+
+@task
+def create_admin():
+    """ Create an admin user with default password """
+    from geoq import settings
+    from django.contrib.auth.models import User
+
+    u = User(username='admin')
+    u.set_password('adminadmin')
+    u.is_superuser = True
+    u.is_staff = True
+    u.save()
+
+
 # Order matters for the list of apps, otherwise migrations reset may fail.
 _APPS = ['maps', 'accounts', 'badges', 'core']
 
