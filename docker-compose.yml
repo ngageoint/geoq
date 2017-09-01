@@ -9,11 +9,12 @@ services:
       POSTGRES_DB: geoq
 
   web:
+    image: centos7
     build: .
     volumes:
       - /usr/local/src/geoq/geoq:/usr/src/geoq
     ports:
       - "8000:8000"
-    command: sh -c './wait-for db:5432 -- python app.py'
+    command: sh -c 'python app.py'
     depends_on:
       - db

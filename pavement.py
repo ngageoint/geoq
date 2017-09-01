@@ -113,11 +113,11 @@ def start():
 
 
 @task
-def createdb(options):
+def createdb():
     """ Creates the database in postgres. """
     from geoq import settings
     database = settings.DATABASES.get('default').get('NAME')
-    sh('createdb {database}'.format(database=database))
+    sh('/usr/lib/postgresql/9.4/bin/createdb {database}'.format(database=database))
     sh('echo "CREATE EXTENSION postgis;CREATE EXTENSION postgis_topology" | psql -d  {database}'.format(database=database))
 
 
@@ -129,7 +129,7 @@ def create_db_user():
     user = settings.DATABASES.get('default').get('USER')
     password = settings.DATABASES.get('default').get('PASSWORD')
 
-    sh('psql -d {database} -c {sql}'.format(
+    sh('/usr/lib/postgresql/9.4/bin/psql -d {database} -c {sql}'.format(
         database=database,
         sql='"CREATE USER {user} WITH PASSWORD \'{password}\';"'.format(user=user, password=password)))
 
@@ -139,11 +139,13 @@ def create_admin():
     from geoq import settings
     from django.contrib.auth.models import User
 
-    u = User(username='admin')
-    u.set_password('adminadmin')
-    u.is_superuser = True
-    u.is_staff = True
-    u.save()
+    a = User.objects.filter(username='admin')
+    if not a:
+        u = User(username='admin')
+        u.set_password('adminadmin')
+        u.is_superuser = True
+        u.is_staff = True
+        u.save()
 
 
 # Order matters for the list of apps, otherwise migrations reset may fail.
