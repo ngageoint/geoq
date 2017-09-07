@@ -242,9 +242,20 @@
     $(document).ready(function(){
         var $att = $('#attribute-table');
         var $map = $('#map');
-        var height = $att.height();
-        $map.height(height);
         $att.css('marginBottom','20px');
+
+        $('#map').css({height:'290px', width: '400px'});
+        setTimeout(function(){
+            map_object.invalidateSize();
+
+            try {
+                //AOI is sometimes getting no bounds data, which causes error
+                var test = aoi_extents.getBounds().getCenter();
+                map.fitBounds(aoi_extents.getBounds());
+            } catch(ex){
+            }
+
+        },500);
     });
 
     </script>
