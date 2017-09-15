@@ -23,7 +23,7 @@
         "fields": {
             "password": "pbkdf2_sha256$10000$sAQ1D0P8lLOR$P2NYGVruL9P+BZiYvzbWwVAyAtBb2WzJMGppFa8Y98k=",
             "last_login": null,
-            "is_superuser": false,
+            "is_superuser": true,
             "username": "admin",
             "first_name": "",
             "last_name": "",
