@@ -152,12 +152,10 @@ version of the server and has not yet been fully tested.
 The following commands worked on a 64-bit CentOS 6.x system (as a privileged user):
 
 		% yum update
-		% yum localinstall http://yum.postgresql.org/9.4/redhat/rhel-6-x86_64/pgdg-centos94-9.4-3.noarch.rpm
-		% yum install postgresql94-server postgresql94-python postgresql94-devel
+		% yum localinstall https://download.postgresql.org/pub/repos/yum/9.4/redhat/rhel-6-x86_64/pgdg-centos94-9.4-3.noarch.rpm
 		% rpm -Uvh http://download.fedoraproject.org/pub/epel/6/x86_64/epel-release-6-8.noarch.rpm
-		% yum install postgis2_94 postgis2_94-devel python-virtualenv python-pip nodejs jodejs-devel npm git mod_wsgi
-		% service postgresql-9.4 initdb
-		% service postgresql-9.4 start
+		% yum install postgresql94-server postgresql94-plpython postgresql94-devel postgis2_94 postgis2_94-devel python-virtualenv python-pip nodejs nodejs-devel npm git mod_wsgi gcc
+		% service postgresql-9.4 initdb && service postgresql-9.4 start
 
 From a shell:
 
@@ -166,10 +164,12 @@ From a shell:
 export http_proxy=<your proxy setting>
 export https_proxy=<your proxy setting>
 
-cd /usr/local/src
+cd /usr/local/
+sudo chown centos src 
+cd src
 mkdir geoq
-virtualenv ~/geoq
-cd ~/geoq
+virtualenv ./geoq
+cd geoq
 source bin/activate
 git clone https://github.com/ngageoint/geoq.git
 cd geoq
@@ -182,13 +182,21 @@ create extension postgis_topology;
 EOF
 
 export PATH=$PATH:/usr/pgsql-9.4/bin
-pip install paver
+pip install paver packaging appdirs
+# Modify geoq/requirements.txt so that the line 'six==1.4.1' reads 'six>=1.6.0'
 paver install_dependencies
+
+
+sudo su
+vi /var/lib/pgsql/9.4/data/pg_hba.conf # modify /var/lib/pgsql/9.4/data/pg_hba.conf, BOTH 'ident' for IPv4 and IPV6 become 'md5'
+service postgresql-9.4 restart
+exit
 
 * Before executing the following commands, make sure the configuration for PostgreSQL allows the connection
 * This can be done by modifying /var/lib/pgsql/9.4/data and changing the connection METHOD near the bottom of the file for 
 * the 'local' connections. Changing the METHOD from 'ident' to 'md5' should be sufficient
 * Restart postgresql (or reload config) afterwards
+
 
 paver sync
 paver install_dev_fixtures
@@ -201,7 +209,7 @@ cat << EOF > geoq/local_settings.py
 STATIC_URL_FOLDER = '/static'
 STATIC_ROOT = '{0}{1}'.format('/var/www/html', STATIC_URL_FOLDER)
 EOF
-
+sudo chown centos /var/www/html
 python manage.py collectstatic
 
 ```
