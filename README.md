@@ -55,6 +55,10 @@ The ``geoq/settings.py`` file contains installation-specific settings. The Datab
 
 ### GeoQ Installation ###
 
+**Docker Installation::**
+A new docker implementation has been developed and is available at [https://hub.docker.com/r/stephenrjones/geoq-django10]. This is an upgraded
+version of the server and has not yet been fully tested.
+
 **Cloud Installation::**
 
 1. You can optionally deploy GeoQ with all dependencies to a Virtual Machine or a cloud VM (such as an Amazon Web Services EC2 box) by using the chef installer at [https://github.com/ngageoint/geoq-chef-installer](https://github.com/ngageoint/geoq-chef-installer)
