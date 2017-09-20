@@ -56,8 +56,9 @@ The ``geoq/settings.py`` file contains installation-specific settings. The Datab
 ### GeoQ Installation ###
 
 **Docker Installation::**
-A new docker implementation has been developed and is available at [https://hub.docker.com/r/stephenrjones/geoq-django10]. This is an upgraded
-version of the server and has not yet been fully tested.
+
+1. A new docker implementation has been developed and is available at [https://hub.docker.com/r/stephenrjones/geoq-django10](https://hub.docker.com/r/stephenrjones/geoq-django10).
+This is an upgraded version of the server and has not yet been fully tested.
 
 **Cloud Installation::**
 
