@@ -507,6 +507,10 @@ footprints.updateFootprintDataFromCSWServer = function () {
         if (footprints.record_count && footprints.$matching_count) {
             footprints.$matching_count.text(footprints.record_count);
             footprints.$matching_total.text(footprints.record_count);
+        } else {
+            footprints.$matching_count.text(0);
+            footprints.$matching_total.text(0);
+            BootstrapDialog.alert('No records found for that search');
         }
         var data = $xml.filterNode('csw:Record') || [];
         footprints.newCSWFeaturesArrived(data);
