@@ -1521,6 +1521,8 @@ leaflet_layer_control.drawEachLayer=function(data,map,doNotMoveToTop){
 
     // All of the layers currently checked
     var selectedLayers = data.tree.getSelectedNodes();
+    // All of the partially selected nodes. Can only be a category
+    var partSelectedNodes = _.difference(data.tree.getPartSelectedNodes(),selectedLayers);
     // Layers that used to be checked, but are no longer
     var layersUnClicked = _.difference(leaflet_layer_control.lastSelectedNodes, selectedLayers);
     // Layers that used to be unchecked, but now are.
@@ -1532,10 +1534,12 @@ leaflet_layer_control.drawEachLayer=function(data,map,doNotMoveToTop){
 
             leaflet_layer_control.setLayerOpacity(layer,0,doNotMoveToTop);
         } else if (layer_obj.children && layer_obj.children.length) {
-            //A category was clicked
-            _.each(layer_obj.children, function(layer_obj_item){
-                layer_obj_item.setSelected(false);
-            });
+            //A category was clicked. Make sure it's not partially selected
+            if (!_.contains(partSelectedNodes, layer_obj)) {
+                _.each(layer_obj.children, function(layer_obj_item){
+                    layer_obj_item.setSelected(false);
+                });
+            }
         }
     });
 

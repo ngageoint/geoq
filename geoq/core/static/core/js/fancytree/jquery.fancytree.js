@@ -1968,6 +1968,24 @@ Fancytree.prototype = /** @lends Fancytree# */{
 		});
 		return nodeList;
 	},
+    /**
+     * Return an array of partially selected nodes.
+     * @param {boolean} [stopOnParents=false] only return the topmost selected
+     *     node (useful with selectMode 3)
+     * @returns {FancytreeNode[]}
+     */
+    getPartSelectedNodes: function(stopOnParents) {
+        var nodeList = [];
+        this.rootNode.visit(function(node){
+            if( node.partsel ) {
+                nodeList.push(node);
+                if( stopOnParents === true ){
+                    return "skip"; // stop processing this branch
+                }
+            }
+        });
+        return nodeList;
+    },
 	/** Return true if the tree control has keyboard focus
 	 * @returns {boolean}
 	 */
