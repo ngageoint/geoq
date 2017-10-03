@@ -153,7 +153,7 @@ footprints.init = function (options) {
     footprints.buildAccordionPanel();
 
     function onEachFeature(feature, layer) {
-        // If this feature have a property named popupContent, show it
+        // If this feature has a property named popupContent, show it
         if (feature.popupContent) {
             layer.bindPopup(feature.popupContent);
         }
@@ -652,7 +652,8 @@ footprints.newFeaturesArrived = function (data, url, layer_id, layer_name) {
                         console.error("No coordinates found. Skipping this layer");
                         break;
                     }
-                    // wms.bindPopup(ogc_csw.createLayerPopup(record.options));
+                    var popupText = footprints.createLayerPopup(wms.options);
+                    wms.bindPopup(popupText);
 
                     if (style == footprints.rejectedFootprintStyle) {
                         footprints.rejected_layer_group.addLayer(wms);
@@ -664,8 +665,10 @@ footprints.newFeaturesArrived = function (data, url, layer_id, layer_name) {
                         footprints.outline_layer_group.addLayer(wms);
                     }
 
-
-                    footprints.features.push(feature.options);
+                    var details = _.clone(wms.options);
+                    details.leaflet_id = wms._leaflet_id;
+                    wms.popupContent = popupText;
+                    footprints.features.push(details);
                     count_added++;
                 }
 
@@ -719,7 +722,8 @@ footprints.newCSWFeaturesArrived = function (items) {
                     console.error("No coordinates found. Skipping this layer");
                     return;
                 }
-                // wms.bindPopup(ogc_csw.createLayerPopup(record.options));
+                var popupText = footprints.createLayerPopup(record.options);
+                wms.bindPopup(popupText);
 
                 // add geometry of layer to record
                 var latlngs = wms.getLatLngs();
@@ -730,7 +734,10 @@ footprints.newCSWFeaturesArrived = function (items) {
 
                 footprints.outline_layer_group.addLayer(wms);
 
-                footprints.features.push(wms.options);
+                var details = _.clone(wms.options);
+                details.leaflet_id = wms._leaflet_id;
+                wms.popupContent = popupText;
+                footprints.features.push(details);
                 count_added++;
             }
 
@@ -804,7 +811,9 @@ footprints.unhideFootprint = function (layer) {
     layer.setStyle(footprints.defaultFootprintStyle);
     layer.bringToFront();
     var title = layer.options['layerName'] || layer.options['image_id'];
-    layer.bindPopup("<p>Name: " + title + "</p>");
+    if (layer.popupContent) {
+        layer.bindPopup(layer.popupContent);
+    }
 };
 
 footprints.showLayer = function(box) {
@@ -1389,6 +1398,9 @@ footprints.rowClicked = function (row) {
     var imageid = footprints.dataInTable[index].image_id;
     var image_status = footprints.dataInTable[index].status;
 
+    // if a popup showing, close it
+    footprints.map.closePopup();
+
     // change back previous selection if necessary
     if ( footprints.outline_layer_group.lastHighlight.id ) {
         var pastlayers = footprints.getLayerGroup(footprints.outline_layer_group.lastHighlight.status).getLayers();
@@ -1858,6 +1870,38 @@ footprints.addFilterOptions = function ($holder, schema_item) {
     update();
     return update;
 
+};
+footprints.popupTemplate = "<p><b>Name: </b>{layerName}<br/>" +
+                           "<b>ID: </b>{image_id}<br/>" +
+                           "<a href='#' onclick='footprints.selectRow(\"{image_id}\")'>Highlight</a><br/>" +
+                           "<a href='#' onclick='footprints.moveToBack(\"{image_id}\")'>Send to back</a></p>";
+
+footprints.createLayerPopup = function(options) {
+    var html = L.Util.template(footprints.popupTemplate, options);
+
+    return html;
+};
+footprints.moveToBack = function(id) {
+    var layer = footprints.findLayer(id);
+    if (layer) {
+        layer.bringToBack();
+        layer.closePopup();
+    }
+};
+footprints.selectRow = function(id) {
+    try {
+        $('#imagelayer-list td').filter(function() { return $(this).text() == id;}).closest('tr').click();
+    } catch (ex) {
+        console.log('Unable to highlight row');
+    }
+};
+footprints.findLayer = function(id) {
+    var details = _.find(footprints.features, function(o) { return o.image_id == id; });
+    if (details && details.leaflet_id) {
+        return footprints.outline_layer_group.getLayer(details.leaflet_id) || footprints.image_layer_group.getLayer(details.leaflet_id) ||
+            footprints.accepted_layer_group.getLayer(details.leaflet_id) || footprints.rejected_layer_group.getLayer(details.leaflet_id);
+    }
+    return undefined;
 };
 
 geoq.footprints = footprints;

@@ -433,11 +433,3 @@ ogc_csw.createPolygonFromGeometry = function(geometry, options, style) {
     return outlineLayer;
 };
 
-ogc_csw.createLayerPopup = function(options) {
-    var layerName = options.layerName;
-    var func2 = 'footprints.replaceCSWOutlineWithLayer("' + options.image_id + '")';
-    var html = "<p><b>Name: </b>" + layerName +
-        "<br/><a href=\'#\' onclick=\'" + func2 + "\'>Replace with layer data</a>";
-
-    return html;
-};
