@@ -390,7 +390,7 @@ class Feature(models.Model):
         if using_style_template:
             properties_built['template'] = self.template.id if hasattr(self.template, "id") else None
 
-        properties = dict(properties_built.items() + properties_main.items() + properties_template.items())
+        properties = dict(properties_template.items() + properties_main.items() + properties_built.items())
 
         feature_type = FeatureType.objects.get(id=self.template.id)
 

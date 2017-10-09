@@ -5,6 +5,25 @@
 {% load django_select2_tags %}
 {% block title %}GeoQ: Workcell {{ object.id }}{% endblock %}
 {% block static_libraries %}
+{% compress css %}
+{% leaflet_css plugins="draw"%}
+{% import_django_select2_css %}
+<link rel="stylesheet" href="{{ STATIC_URL }}core/js/leaflet.OSMGeocoder/Control.OSMGeocoder.css" />
+<link rel="stylesheet" href="{{ STATIC_URL }}bootstrap/css/bootstrap.min.css" />
+<link rel="stylesheet" href="{{ STATIC_URL }}images/maki/maki-sprite.css" />
+<link rel="stylesheet" href="{{ STATIC_URL }}core/edit.css" />
+<link rel="stylesheet" href="{{ STATIC_URL }}core/css/pqgrid.css" />
+<link rel="stylesheet" href="{{ STATIC_URL }}core/css/daterangepicker.css" />
+
+<link rel="stylesheet" href="{{ STATIC_URL }}css/theme.blue.min.css" />
+<link rel="stylesheet" href="{{ STATIC_URL }}css/tablesorter-highlight.css" />
+<!--link rel="stylesheet" href="{{ STATIC_URL }}css/tablesorter.pager.css" />
+<link rel="stylesheet" href="{{ STATIC_URL }}css/tablesorter.pager.custom.css" /-->
+
+<link rel="stylesheet" href="{{ STATIC_URL }}core/css/query-builder.default.min.css" />
+
+
+{% endcompress %}
 
     {% leaflet_js plugins="draw, esri, esriCluster, MakiMarkers, MediaQ" %}
     {% import_django_select2_js %}
@@ -50,8 +69,7 @@
     <script src="{{ STATIC_URL }}core/js/daterangepicker.js"></script>
 
     <script src="{{ STATIC_URL }}core/js/bootstrap_slider/bootstrap-slider.js" type="text/javascript"></script>
-    <script src="{{ STATIC_URL }}js/jquery.tablesorter.js"></script>
-    <script src="{{ STATIC_URL }}js/jquery.tablesorter.widgets.js"></script>
+    <script src="{{ STATIC_URL }}js/jquery.tablesorter.combined.min.js"></script>
     <script src="{{ STATIC_URL }}js/tablesorter.pager.js"></script>
 
     <script src="{{ STATIC_URL }}core/js/query-builder/query-builder.min.js" type="text/javascript"></script>
@@ -149,24 +167,7 @@
 
     </script>
 
-    {% compress css %}
-        {% leaflet_css plugins="draw"%}
-        {% import_django_select2_css %}
-        <link rel="stylesheet" href="{{ STATIC_URL }}core/js/leaflet.OSMGeocoder/Control.OSMGeocoder.css" />
-        <link rel="stylesheet" href="{{ STATIC_URL }}bootstrap/css/bootstrap.min.css" />
-        <link rel="stylesheet" href="{{ STATIC_URL }}images/maki/maki-sprite.css" />
-        <link rel="stylesheet" href="{{ STATIC_URL }}core/edit.css" />
-	<link rel="stylesheet" href="{{ STATIC_URL }}core/css/pqgrid.css" />
-	<link rel="stylesheet" href="{{ STATIC_URL }}core/css/daterangepicker.css" />
 
-    <link rel="stylesheet" href="{{ STATIC_URL }}css/theme.blue.css" />
-    <link rel="stylesheet" href="{{ STATIC_URL }}css/tablesorter.pager.css" />
-    <link rel="stylesheet" href="{{ STATIC_URL }}css/tablesorter.pager.custom.css" />
-
-    <link rel="stylesheet" href="{{ STATIC_URL }}core/css/query-builder.default.min.css" />
-
-
-    {% endcompress %}
 {% endblock %}
 
 {% block container %}

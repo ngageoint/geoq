@@ -728,7 +728,6 @@ class WorkSummaryView(TemplateView):
 
         return cv
 
-#TODO fix
 class JobReportView(TemplateView):
     http_method_names = ['get']
     template_name = 'core/reports/aoi_summary.html'

@@ -375,6 +375,7 @@ class AOI(GeoQBase, Assignment):
         permissions = (
             ('assign_workcells', 'Assign Workcells'), ('certify_workcells', 'Certify Workcells'),
         )
+        ordering = [id]
 
     def __unicode__(self):
         aoi_obj = '%s - AOI %s' % (self.name, self.id)
@@ -485,6 +486,7 @@ class AOI(GeoQBase, Assignment):
             team = (self.assignee_name if self.assignee_id is not None else 'Unassigned'),
             priority = self.priority)
         prop_json = dict(properties_built.items() + properties_main.items())
+        prop_json["geometry"] = json.loads(self.polygon.json);
 
         # capture how much time was spent on each state for the AOI
         # We'll make this configurable later on, but just capture 'In work' for now
@@ -501,6 +503,10 @@ class AOI(GeoQBase, Assignment):
         if AOITimer.objects.filter(aoi=self,status='In work').count() > 0:
             fin_date = AOITimer.objects.filter(aoi=self,status='In work').latest('id').completed_at
             prop_json['completion_date'] = fin_date.strftime("%m/%d/%Y") if fin_date is not None else 'Not finished'
+            start_date = AOITimer.objects.filter(aoi=self,status='In work').order_by('started_at')[0].started_at
+            prop_json['started_date'] = start_date.strftime("%m/%d/%Y")
+        else:
+            prop_json['completion_date'] = 'Not finished'
 
         # And see if we've completed any analysis
         images = WorkcellImage.objects.filter(workcell=self,status='Accepted')

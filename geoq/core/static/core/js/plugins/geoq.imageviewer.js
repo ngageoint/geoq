@@ -272,6 +272,10 @@ imageviewer.populateTable = function (data) {
 
     _.each(data, function(d) {
         var $row = $('<tr>');
+        $row.on('click', function() {
+            $('.focus-hl').removeClass('focus-hl');
+            $(this).addClass('focus-hl');
+        });
         $('<td>')
             .text(d.layerName)
             .appendTo($row);
@@ -375,6 +379,7 @@ imageviewer.addResultTable = function ($holder) {
     var $grid = $("<div class='tableContainer' style='overflow-x:auto; overflow-y: auto; max-height: 400px'>" +
                   "<table class='tablesorter' id='imageviewer-list'><colgroup><thead><tr></tr></thead><tbody></tbody></table>")
         .appendTo($holder);
+    $('.tablesorter').addClass('focus-highlight');   // for highlighting
 
     var $row = $grid.find("tr");
     _.each( imageviewer.schema, function(item) {

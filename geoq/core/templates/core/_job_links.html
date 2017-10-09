@@ -7,17 +7,15 @@
 </td></tr>
 {% endif %}
 <tr>
-    <td colspan="1" style="padding-top:20px;">
-    <button type="button" class="btn btn-primary btn-lg" data-toggle="modal" data-target="#save_changes_modal">
-        Share Your Work
-    </button>
+    <td style="padding-top:20px;">
     </td>
-    <td colspan="1" style="padding-top: 20px;">
+    <td style="padding-top: 20px;">
+        <button type="button" class="btn btn-primary btn-lg" data-toggle="modal" data-target="#save_changes_modal">
+            Share Your Work
+        </button>
         <a href="{% url 'work-summary' object.id %}" class="btn btn-primary btn-lg">
             Analytics
         </a>
-    </td>
-    <td colspan="1" style="padding-top: 20px;">
         <a href="{% url 'job-report' object.id %}" class="btn btn-primary btn-lg">
             Reports
         </a>

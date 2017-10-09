@@ -70,6 +70,11 @@ function mapInit(map, bounds) {
                 .text(job_properties.analyst)
                 .appendTo($tr);
 
+            $tr.click(function() {
+                $('.focus-hl').removeClass('focus-hl');
+                $(this).addClass('focus-hl');
+            });
+
             $('#workcell-list tbody').append($tr);
 
             layer.on({

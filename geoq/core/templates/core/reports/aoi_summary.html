@@ -1,30 +1,44 @@
 {% extends "core/base.html" %}
 {% load compress %}
+{% load leaflet_tags %}
 {% block title %}GeoQ Workcell Report {% endblock %}
 {% block static_libraries %}
+{% leaflet_js plugins="draw" %}
+{% compress css %}
+{% leaflet_css plugins="draw"%}
+{% endcompress %}
 
-<link rel="stylesheet" href="{{ STATIC_URL }}/css/theme.blue.css" />
+<link rel="stylesheet" href="{{ STATIC_URL }}css/theme.blue.min.css" />
+<link rel="stylesheet" href="{{ STATIC_URL }}css/vis-timeline-graph2d.min.css" />
 
 <script src="{{ STATIC_URL }}core/js/maths.js"></script>
-<script src="{{ STATIC_URL }}js/jquery.tablesorter.min.js"></script>
-<script src="{{ STATIC_URL }}js/jquery.tablesorter.widgets.min.js"></script>
+<script src="{{ STATIC_URL }}core/js/leaflet_helper.js"></script>
+<script src="{{ STATIC_URL }}js/jquery.tablesorter.combined.min.js"></script>
 <script src="{{ STATIC_URL }}js/widget-scroller.min.js"></script>
+<script src="{{ STATIC_URL }}js/vis.js"></script>
 <script src="{{ STATIC_URL }}core/js/reports/workcell_report.js"></script>
+
+<style>
+    table th:nth-child(1),
+    table td:nth-child(1) {
+        display: none;
+    }
+</style>
 
 <script>
     var aoi_data = {{ object.work_summary_json|safe }};
-    $(function() {
+    var timeline = null;
+    workcell_report.popup_template = '{% filter escapejs %}{% include "core/reports/aoi_summary_popup.html" %}{% endfilter %}';
 
-        $(".tablesorter")
+    $(document).ready(function() {
+        // populate table
+        workcell_report.setList(aoi_data);
+
+        $("#workcell-status-list")
                 .tablesorter({
                     theme: 'blue',
                     cssChildRow: 'tablesorter-childRow',
                     widgets: ['zebra', 'filter', 'scroller'],
-                    headers: {
-                        0: {
-                            sorter: 'checkbox'
-                        }
-                    },
                     widgetOptions: {
                         filter_childRows: true,
                         filter_cssFilter: 'tablesorter-filter',
@@ -35,14 +49,14 @@
 
         $('.tablesorter-childRow td').hide();
 
-        $('.tablesorter').delegate('.toggle', 'click', function() {
+        $('#workcell-status-list').delegate('.toggle', 'click', function() {
             $(this).closest('tr').nextUntil('tr.tablesorter-hasChildRow').find('td').toggle();
 
             return false;
         });
 
         $('button.toggle-option').click(function() {
-            var c = $('.tablesorter')[1].config.widgetOptions,
+            var c = $('#workcell-status-list')[1].config.widgetOptions,
                     o = !c.filter_childRows;
             c.filter_childRows = o;
             $('.state').html(o.toString());
@@ -50,8 +64,34 @@
             return false;
         });
 
-        // now populate table
-        workcell_report.setList(aoi_data);
+        $('#workcell-status-list').bind('filterEnd', function(event,config) {
+            // get the remaining rows and pass to filter function
+            var ids = [];
+            $('#workcell-status-list tbody tr:visible').each(function(row) {
+                ids.push($(this).find("td:first").text());
+            });
+
+            workcell_report.filterLayers(ids);
+            workcell_report.filterTimeline(ids);
+        });
+
+        // now setup timeline
+        var container = $('#visualization')[0];
+        // this monstrosity allows us to filter an object
+        var date_set = _.pick.apply({}, [aoi_data].concat(_.filter(_.keys(aoi_data), function(K) {
+            return aoi_data[K].started_date;
+        })));
+        var timeline_data = _.map(date_set, function(o,k) {
+            var record = {id: k, content: o.GEO_ID, start: o.started_date};
+            if (o.completion_date && o.completion_date != 'Not finished' && o.completion_date != o.started_date) {
+                record['end'] = o.completion_date;
+            }
+            return record;
+        });
+
+        var options = {};
+
+        timeline = new vis.Timeline(container, timeline_data, options);
     });
 
 </script>
@@ -68,6 +108,16 @@
                 </span>
     </h3>
 
+    <div class="row body" style="height:500px; margin-top:25px">
+        <div class="span4 thumbnail" id="map" style="height:500px; width: 80%; vertical-alignment:middle;">
+            {% leaflet_map "map" callback="workcell_report.mapInit" creatediv=False%}
+        </div>
+    </div>
+</div>
+<div class="row-fluid container" style="margin-top: 10px; margin-left: 50px; width: 80%;">
+    <div id="visualization"></div>
+</div>
+<div class="row-fluid container" style="margin-top: 20px; margin-left: 50px;">
     <div class="aoilist">
 
         <div class="row body">
@@ -88,6 +138,7 @@
                         <thead>
                         <tr>
                             <th>ID</th>
+                            <th>ATC ID</th>
                             <th>Size</th>
                             <th>Analyst</th>
                             <th>Team</th>
@@ -109,5 +160,6 @@
     </div>
 
 </div>
+
 
 {% endblock %}

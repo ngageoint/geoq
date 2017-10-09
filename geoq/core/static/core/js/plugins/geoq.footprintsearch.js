@@ -11,7 +11,7 @@
  */
 var footprints = {};
 footprints.title = "Footprint";
-footprints.plugin_title = "Imagery Query";
+footprints.plugin_title = "Layer Discovery";
 footprints.accordion_id = "#layer-control-accordion";
 
 footprints.$accordion = null;
@@ -29,7 +29,8 @@ footprints.rejected_layer_group = null;
 footprints.accepted_layer_group = null;
 footprints.dataInTable = null;
 
-footprints.defaultFootprintStyle = {color: 'blue', weight: 1};
+footprints.defaultFootprintStyle = {color: 'blue', weight: 1, opacity: 0.8, fillOpacity: 0.3};
+footprints.hiddenFootprintStyle = {color: 'blue', weight: 1, opacity: 0, fillOpacity: 0};
 footprints.acceptedFootprintStyle = {color: 'green', weight: 1};
 footprints.rejectedFootprintStyle = {color: 'red', weight: 1};
 footprints.selectedFootprintStyle = {color: 'yellow', weight: 1};
@@ -97,7 +98,6 @@ footprints.schema = [
         min: 0,
         max: 100,
         start: 10,
-        show: 'small-table',
         sizeMarker: true,
         query_filter: {id: 'cloud', field: 'wst:CloudCover', label: 'Cloud %', type: 'integer', size: 40, operators: footprints.ops}
     },
@@ -153,7 +153,7 @@ footprints.init = function (options) {
     footprints.buildAccordionPanel();
 
     function onEachFeature(feature, layer) {
-        // If this feature have a property named popupContent, show it
+        // If this feature has a property named popupContent, show it
         if (feature.popupContent) {
             layer.bindPopup(feature.popupContent);
         }
@@ -185,6 +185,8 @@ footprints.init = function (options) {
         footprints.outline_layer_group.addTo(footprints.map);
         footprints.rejected_layer_group = L.layerGroup();
         footprints.accepted_layer_group = L.layerGroup();
+        footprints.image_layer_group = L.layerGroup();
+        footprints.image_layer_group.addTo(footprints.map);
     }
 
     // finally add any layers that have already been vetted
@@ -224,11 +226,11 @@ footprints.buildAccordionPanel = function () {
         }
     });
     footprints.addWorkcellBounds(footprints.$filter_holder);
-    footprints.addAcceptedButton(footprints.$filter_holder);
-    footprints.addRejectButton(footprints.$filter_holder);
+    //footprints.addAcceptedButton(footprints.$filter_holder);
+    //footprints.addRejectButton(footprints.$filter_holder);
 
     footprints.addResultTable(footprints.$filter_holder);
-    footprints.addHideButton(footprints.$filter_holder);
+    //footprints.addHideButton(footprints.$filter_holder);
 };
 footprints.clamp = function (num, min, max) {
     return num < min ? min : (num > max ? max : num);
@@ -495,6 +497,9 @@ footprints.updateFootprintDataFromCSWServer = function () {
         outputSchema: "http://www.opengis.net/cat/csw/2.0.2"
     };
     var callback = function (xml,lang) {
+        // set the table to page 1 if it isn't already
+        footprints.current_index = 1;
+
         var $xml = $(xml);
         footprints.record_count = parseInt($xml.filterNode('csw:SearchResults').attr('numberOfRecordsMatched')) || 0;
         footprints.next_index = parseInt($xml.filterNode('csw:SearchResults').attr('nextRecord')) || 1;
@@ -502,6 +507,10 @@ footprints.updateFootprintDataFromCSWServer = function () {
         if (footprints.record_count && footprints.$matching_count) {
             footprints.$matching_count.text(footprints.record_count);
             footprints.$matching_total.text(footprints.record_count);
+        } else {
+            footprints.$matching_count.text(0);
+            footprints.$matching_total.text(0);
+            BootstrapDialog.alert('No records found for that search');
         }
         var data = $xml.filterNode('csw:Record') || [];
         footprints.newCSWFeaturesArrived(data);
@@ -643,7 +652,8 @@ footprints.newFeaturesArrived = function (data, url, layer_id, layer_name) {
                         console.error("No coordinates found. Skipping this layer");
                         break;
                     }
-                    wms.bindPopup(ogc_csw.createLayerPopup(record.options));
+                    var popupText = footprints.createLayerPopup(wms.options);
+                    wms.bindPopup(popupText);
 
                     if (style == footprints.rejectedFootprintStyle) {
                         footprints.rejected_layer_group.addLayer(wms);
@@ -655,8 +665,10 @@ footprints.newFeaturesArrived = function (data, url, layer_id, layer_name) {
                         footprints.outline_layer_group.addLayer(wms);
                     }
 
-
-                    footprints.features.push(feature.options);
+                    var details = _.clone(wms.options);
+                    details.leaflet_id = wms._leaflet_id;
+                    wms.popupContent = popupText;
+                    footprints.features.push(details);
                     count_added++;
                 }
 
@@ -710,7 +722,8 @@ footprints.newCSWFeaturesArrived = function (items) {
                     console.error("No coordinates found. Skipping this layer");
                     return;
                 }
-                wms.bindPopup(ogc_csw.createLayerPopup(record.options));
+                var popupText = footprints.createLayerPopup(record.options);
+                wms.bindPopup(popupText);
 
                 // add geometry of layer to record
                 var latlngs = wms.getLatLngs();
@@ -721,7 +734,10 @@ footprints.newCSWFeaturesArrived = function (items) {
 
                 footprints.outline_layer_group.addLayer(wms);
 
-                footprints.features.push(wms.options);
+                var details = _.clone(wms.options);
+                details.leaflet_id = wms._leaflet_id;
+                wms.popupContent = popupText;
+                footprints.features.push(details);
                 count_added++;
             }
 
@@ -768,66 +784,64 @@ footprints.removeCSWOutline = function (identifier,status) {
         }
     });
 };
-footprints.saveInspectedImage = function (identifier, accepted) {
-    _.each(footprints.outline_layer_group.getLayers(), function(layer) {
-        if (layer.options.image_id === identifier) {
-            // find the correct row in the table, then click the save radio button
-            footprints.map.closePopup();
-            var row = $('#imagelayer-list td').filter(function() { return $(this).text() == identifier;}).closest('tr');
-            if (row.length > 0) {
-                var inputs = row.find(":input");
-                if (accepted) {
-                    inputs[0].click();
-                } else {
-                    inputs[2].click();
+
+
+footprints.showFootprint = function(box) {
+    var id = $(box).val();
+    var layer = _.find(footprints.outline_layer_group.getLayers(), function(o) { return o.options.image_id == id;});
+    if ($(box).is(':checked')) {
+        // show the layer
+        if (layer) {
+            footprints.unhideFootprint(layer);
+        }
+    } else {
+        if (layer) {
+            footprints.hideFootprint(layer);
+        }
+    }
+};
+
+footprints.hideFootprint = function (layer) {
+    layer.setStyle(footprints.hiddenFootprintStyle);
+    layer.bringToBack();
+    layer.unbindPopup();
+};
+
+footprints.unhideFootprint = function (layer) {
+    layer.setStyle(footprints.defaultFootprintStyle);
+    layer.bringToFront();
+    var title = layer.options['layerName'] || layer.options['image_id'];
+    if (layer.popupContent) {
+        layer.bindPopup(layer.popupContent);
+    }
+};
+
+footprints.showLayer = function(box) {
+    var id = $(box).val();
+    var details = JSON.parse($('#details-' + id).text()) || {};
+    var layer = _.find(footprints.image_layer_group.getLayers(), function(o) { return o.options.image_id == id;});
+    if ($(box).is(':checked')) {
+        if (layer && layer.setOpacity) {
+            // layer was already loaded. Just display
+            layer.setOpacity(1.0);
+        } else {
+            if (details.url) {
+                var layer = layerBuilder.buildLayer(details.format, details );
+                if (layer) {
+                    layer.options.image_id = id;
+                    footprints.image_layer_group.addLayer(layer);
                 }
             }
-
-            // remove image
-            if (layer.image_layer) {
-                footprints.image_layer_group.removeLayer(layer.image_layer);
-            }
-
-            // set footprint to appropriate style, either accepted or rejected
-            if (accepted) {
-                layer.setStyle(footprints.acceptedFootprintStyle);
-            } else {
-                layer.setStyle(footprints.rejectedFootprintStyle);
-            }
         }
-    })
-};
-footprints.replaceCSWOutlineWithLayer = function (identifier) {
-    _.each(footprints.outline_layer_group.getLayers(), function(layer) {
-        if (layer.options.image_id === identifier) {
-            try {
-                // hide footprint, then add wms image
-                layer.setStyle({opacity: 0, fillOpacity: 0});
-                footprints.map.closePopup();
-                layer.unbindPopup();
-                var func = 'footprints.saveInspectedImage("' + layer.options.image_id + '", ' + true + ')';
-                var func2 = 'footprints.saveInspectedImage("' + layer.options.image_id + '", ' + false + ')';
-                var html = "<p><a href=\'#\' onclick=\'" + func + "\'>Save Image for Analysis</a><br/><a href=\'#\' onclick=\'" + func2 + "\'>Reject Image</a></p>";
-                layer.bindPopup(html);
-
-                var newlayer = layerBuilder.buildLayer(layer.options.format, layer.options);
-                if (newlayer) {
-                    if (footprints.image_layer_group == null) {
-                        footprints.image_layer_group = L.layerGroup();
-                        footprints.image_layer_group.lastHighlight = {'id': undefined, 'status': undefined};
-                        footprints.image_layer_group.addTo(footprints.map);
-                    }
-                    footprints.image_layer_group.addLayer(newlayer);
-                    newlayer.bringToFront();
-                    newlayer.setOpacity(1);
-                    layer.image_layer = newlayer;
-                }
-            } catch (e) {
-                console.error(e);
-            }
+    } else {
+        if (layer && layer.setOpacity) {
+            // hide the layer
+            layer.setOpacity(0);
         }
-    })
+    }
+
 };
+
 footprints.updateFeatureMinMaxes = function () {
     //If it's a number or date, find the min and max and save it with the schema
 
@@ -1254,6 +1268,37 @@ footprints.addToResultTable = function (flattenedList) {
 
     $('#imagelayer-list tbody').html("");
     for (var i = 0; i < length; i++) {
+
+        var $tr = $('<tr>').on('click', function() {
+            footprints.rowClicked(this);
+            $('.focus-hl').removeClass('focus-hl');
+            $(this).addClass('focus-hl');
+        });
+
+        var headers = [];
+
+        $('#imagelayer-list tr').find('th').filter(function() {
+            headers.push($(this).find('div')[0].textContent);
+        });
+
+        $('<td><input type="checkbox" onclick="footprints.showFootprint(this);" value="' + flattenedList[i]['image_id'] +
+            '" checked="checked"></td>').appendTo($tr);
+        $('<td><input type="checkbox" onclick="footprints.showLayer(this);" value="' + flattenedList[i]['image_id'] +
+            '"></td>').appendTo($tr);
+
+        _.each(headers, function(hdr) {
+            var schemaItem = _.findWhere( footprints.schema, { title: hdr});
+            if (schemaItem) {
+                $('<td>')
+                    .html(flattenedList[i][schemaItem.name])
+                    .css("border", "0px solid black")
+                    .appendTo($tr);
+            }
+        });
+        $('<td style="display:none;">' + JSON.stringify(flattenedList[i]) + '</td>')
+            .attr('id', 'details-' + flattenedList[i]['image_id'])
+            .appendTo($tr);
+
         //Add accept toggle
         var c1 = (flattenedList[i].status && flattenedList[i].status == 'Accepted') ? 'checked' : '';
         var c2 = (!flattenedList[i].status || (flattenedList[i].status && flattenedList[i].status == 'NotEvaluated')) ? 'checked' : '';
@@ -1263,33 +1308,10 @@ footprints.addToResultTable = function (flattenedList) {
         bg += '<input class="unsure" id="r2-' + flattenedList[i].image_id + '" type="radio" name="acceptance-' + flattenedList[i].image_id + '" ' + c2 + ' value="NotEvaluated" onclick="footprints.updateValueFromRadio(&quot;'+ flattenedList[i].image_id + '&quot;, 0)"/>';
         bg += '<input class="reject" id="r3-' + flattenedList[i].image_id + '" type="radio" name="acceptance-' + flattenedList[i].image_id + '" ' + c3 + ' value="RejectedQuality" onclick="footprints.updateValueFromRadio(&quot;'+ flattenedList[i].image_id + '&quot;, -1)"/><label for="r3-' + flattenedList[i].image_id + '"></label>';
 
-
-        var $tr = $('<tr>').on('click', function() {
-            footprints.rowClicked((this.rowIndex - 1));
-        });
-
-        var headers = [];
-
-        $('#imagelayer-list tr').find('th').filter(function() {
-            headers.push($(this).find('div')[0].textContent);
-        });
-
-        _.each(headers, function(hdr) {
-            var schemaItem = _.findWhere( footprints.schema, { title: hdr});
-            if (schemaItem) {
-                $('<td>')
-                    .html(flattenedList[i][schemaItem.name])
-                    .css("border", "0px solid black")
-                    .appendTo($tr);
-            } else {
-                // should be Accept column
-                $('<td>')
-                    .html(bg)
-                    .css("border", "0px solid black")
-                    .appendTo($tr);
-            }
-        });
-
+        $('<td>')
+            .html(bg)
+            .css("border", "0px solid black")
+            .appendTo($tr);
 
         $('#imagelayer-list tbody').append($tr);
     }
@@ -1371,17 +1393,25 @@ footprints.updateValueFromRadio = function(id, value) {
 
 };
 
-footprints.rowClicked = function (index) {
+footprints.rowClicked = function (row) {
+    var index = row.rowIndex -1;
     var imageid = footprints.dataInTable[index].image_id;
     var image_status = footprints.dataInTable[index].status;
+
+    // if a popup showing, close it
+    footprints.map.closePopup();
 
     // change back previous selection if necessary
     if ( footprints.outline_layer_group.lastHighlight.id ) {
         var pastlayers = footprints.getLayerGroup(footprints.outline_layer_group.lastHighlight.status).getLayers();
         var player = pastlayers.filter(function(e) {return e.options.image_id == footprints.outline_layer_group.lastHighlight.id})[0];
         if (player) {
-            player.setStyle(footprints.selectStyle(player.options.status));
-            player.bringToBack();
+            if ($(':input[value=' + player.options.image_id + ']').first().is(':checked')) {
+                player.setStyle(footprints.defaultFootprintStyle);
+                footprints.unhideFootprint(player);
+            } else {
+                footprints.hideFootprint(player);
+            }
         }
     }
 
@@ -1424,17 +1454,29 @@ footprints.addResultTable = function ($holder) {
     //We can change the max height here when we are testing with many elements.
     var $grid = $("<div class='tableContainer' style='overflow-x:auto; overflow-y: auto; max-height: 250px'><table class='tablesorter' id='imagelayer-list'><colgroup><thead><tr></tr></thead><tbody></tbody></table>")
         .appendTo($holder);
+    $('.tablesorter').addClass('focus-highlight');   // for row highlighting
 
     var $row = $grid.find("tr");
 
+    var $fph = $('<th>').text('FP')
+        .append($('<input>')
+            .attr({'id': 'select-all-footprints', 'type':'checkbox','checked':true})
+            );
+
     // first row is the accept/reject buttons
-    $row.append("<th>Accept</th>");
+    //$row.append("<th>Accept</th>");
+    //$row.append("<th>FP<input type='checkbox' id='select-all-footprints' checked='checked'></th>");
+    $row.append($fph);
+    $row.append("<th>Data</th>");
 
     _.each( footprints.schema, function(item) {
         if (item.show && item.show === 'small-table') {
             $row.append("<th>" + item.title + "</th>");
         }
     });
+
+    // add accept/reject selectors at the end
+    $row.append("<th>Save?</th>");
 
     var $pager = $("<div id='pager' class='pager'><form>" +
         "<img src='/static/images/first.png' class='first' onclick='footprints.first()' alt='First'/>" +
@@ -1509,6 +1551,15 @@ footprints.addResultTable = function ($holder) {
     $("#imagelayer-list").trigger('update');
     //Have to call this function
     $('#imagelayer-list').trigger('pageAndSize');
+
+    // select/deselect all footprints
+    $('#select-all-footprints').bind('click',function() {
+        var checked = $(this).is(':checked');
+
+        $('#imagelayer-list tr td:first-child input').each(function(index) {
+            $(this).click();
+        });
+    });
 
     footprints.$grid = $grid;
 };
@@ -1819,6 +1870,38 @@ footprints.addFilterOptions = function ($holder, schema_item) {
     update();
     return update;
 
+};
+footprints.popupTemplate = "<p><b>Name: </b>{layerName}<br/>" +
+                           "<b>ID: </b>{image_id}<br/>" +
+                           "<a href='#' onclick='footprints.selectRow(\"{image_id}\")'>Highlight</a><br/>" +
+                           "<a href='#' onclick='footprints.moveToBack(\"{image_id}\")'>Send to back</a></p>";
+
+footprints.createLayerPopup = function(options) {
+    var html = L.Util.template(footprints.popupTemplate, options);
+
+    return html;
+};
+footprints.moveToBack = function(id) {
+    var layer = footprints.findLayer(id);
+    if (layer) {
+        layer.bringToBack();
+        layer.closePopup();
+    }
+};
+footprints.selectRow = function(id) {
+    try {
+        $('#imagelayer-list td').filter(function() { return $(this).text() == id;}).closest('tr').click();
+    } catch (ex) {
+        console.log('Unable to highlight row');
+    }
+};
+footprints.findLayer = function(id) {
+    var details = _.find(footprints.features, function(o) { return o.image_id == id; });
+    if (details && details.leaflet_id) {
+        return footprints.outline_layer_group.getLayer(details.leaflet_id) || footprints.image_layer_group.getLayer(details.leaflet_id) ||
+            footprints.accepted_layer_group.getLayer(details.leaflet_id) || footprints.rejected_layer_group.getLayer(details.leaflet_id);
+    }
+    return undefined;
 };
 
 geoq.footprints = footprints;

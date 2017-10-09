@@ -8,13 +8,13 @@
 {% compress css %}
 {% leaflet_css plugins="draw"%}
 {% endcompress %}
-    <link rel="stylesheet" href="{{ STATIC_URL }}/css/theme.blue.css" />
+    <link rel="stylesheet" href="{{ STATIC_URL }}css/theme.blue.min.css" />
+    <link rel="stylesheet" href="{{ STATIC_URL }}css/tablesorter-highlight.css" />
     <script src="{{ STATIC_URL }}core/js/leaflet_helper.js"></script>
     <script src="{{ STATIC_URL }}bootstrap/js/bootstrap-dialog.js"></script>
     <script src="{{ STATIC_URL }}core/js/maths.js"></script>
     <script src="{{ STATIC_URL }}core/js/polygon.js"></script>
-    <script src="{{ STATIC_URL }}js/jquery.tablesorter.min.js"></script>
-    <script src="{{ STATIC_URL }}js/jquery.tablesorter.widgets.min.js"></script>
+    <script src="{{ STATIC_URL }}js/jquery.tablesorter.combined.min.js"></script>
     <script src="{{ STATIC_URL }}js/widget-scroller.min.js"></script>
     <script src="{{ STATIC_URL }}leaflet/leaflet-plugins/leaflet.shapefile-gh-pages/leaflet.shpfile.js" type="text/javascript"></script>
     <script src="{{ STATIC_URL }}leaflet/leaflet-plugins/leaflet.shapefile-gh-pages/shp.js" type="text/javascript"></script>
@@ -70,6 +70,16 @@
 
             return false;
         });
+
+        $('.tablesorter').addClass('focus-highlight');
+
+        if ( $('.focus-highlight').length ) {
+            $('.focus-highlight').find('td, th')
+                    .attr('tabindex', '1')
+                    .on('touchstart', function() {
+                        $(this).focus();
+                    });
+        }
 
         $('button.toggle-option').click(function() {
             var c = $('.tablesorter')[1].config.widgetOptions,

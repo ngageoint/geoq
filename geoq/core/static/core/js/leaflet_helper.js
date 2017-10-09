@@ -262,12 +262,13 @@ leaflet_helper.toWKT = function (layer) {
     }
 };
 
-leaflet_helper.addLayerControl = function (map) {
+leaflet_helper.addLayerControl = function (map,aois) {
     var layers = _.filter(map_layers.layers, function (l) {
         return l.type == "WMS" || l.type == "KML" || l.type == "ESRI Shapefile";
     });
 
     var overlayMaps = {
+        "Workcells": aois
     };
 
     _.each(layers, function (layer) {
