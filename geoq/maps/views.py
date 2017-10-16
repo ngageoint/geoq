@@ -183,14 +183,7 @@ def create_update_map(request, job_id, map_id):
         form = MapForm(prefix='map', instance=map_obj)
         maplayers_formset = MapInlineFormset(prefix='layers', instance=map_obj)
 
-    # form = [f for f in form if f.name not in ['zoom', 'projection', 'center_x', 'center_y']]
 
-#    return render_to_response('core/generic_form.html', {
-#        'form': form,
-#        'layer_formset': maplayers_formset,
-#        'custom_form': 'core/map_create.html',
-#        'object': map_obj,
-#        }, context_instance=RequestContext(request))
     return render(request, 'core/generic_form.html', {
         'form': form,
         'layer_formset': maplayers_formset,
