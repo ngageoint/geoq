@@ -1851,7 +1851,7 @@ leaflet_layer_control.likelyHasFeatures = function(layer){
 leaflet_layer_control.drawerIsOpen = false;
 leaflet_layer_control.openDrawer = function() {
     leaflet_layer_control.$map.animate(
-        {marginLeft: "300px"},
+        {marginLeft: "320px"},
         {
             duration: 600,
             specialEasing: {
