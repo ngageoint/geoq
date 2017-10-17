@@ -5,4 +5,5 @@
 
 # Run database migrations and import initial data
 python manage.py migrate
+python manage.py collectstatic --noinput
 paver install_dev_fixtures
