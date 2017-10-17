@@ -909,15 +909,16 @@ class AssignWorkcellsView(TemplateView):
         job_id = self.kwargs.get('job_pk')
         job = get_object_or_404(self.model, pk=job_id)
         workcells = request.POST.getlist('workcells[]')
-        utype = request.POST['user_type']
-        id = request.POST['user_data']
-        send_email = request.POST['email'] in ["true","True"]
-        group = Group.objects.get(pk=group_id)
-        user = User.objects.get(pk=user_id) if int(user_id) > 0 else None
+        utype = request.POST['type']
+        id = request.POST['choice']
+        send_email = False
+        # send_email = request.POST['email'] in ["true","True"]
+        # group = Group.objects.get(pk=group_id)
+        # user = User.objects.get(pk=user_id) if int(user_id) > 0 else None
 
         if utype and id and workcells:
             Type = User if utype == 'user' else Group
-            keyfield = 'username' if utype == 'user' else 'name'
+            keyfield = 'id'
             q = Q(**{"%s__contains" % keyfield: id})
             user_or_group = Type.objects.filter(q)
             if user_or_group.count() > 0:
@@ -1190,12 +1191,9 @@ def display_help(request):
 @permission_required('core.assign_workcells', return_403=True)
 def list_users(request, job_pk):
     job = get_object_or_404(Job, pk=job_pk)
-    usernames = job.analysts.all().values('username').order_by('username')
-    users = []
-    for u in usernames:
-        users.append(u['username'])
+    users = job.analysts.all().values('username','id','first_name','last_name').order_by('username')
 
-    return HttpResponse(json.dumps(users), content_type="application/json")
+    return HttpResponse(json.dumps(list(users)), content_type="application/json")
 
 @permission_required('core.assign_workcells', return_403=True)
 def list_groups(request, job_pk):
