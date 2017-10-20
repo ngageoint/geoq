@@ -80,6 +80,10 @@
 
             // Map doesn't update without this delay.
             setTimeout(function(){
+                $('#map').css({height:'290px', width: '400px'});
+                map_object.invalidateSize();
+
+
                 try {
                     //AOI is sometimes getting no bounds data, which causes error
                     var test = aoi_extents.getBounds().getCenter();
@@ -109,7 +113,7 @@
                         $title.text("Job Details");
                     } else {
                         $('#attribute-table').show();
-                        $('#map').css({height:'290px', width: '400px'})
+                        $('#map').css({height:'290px', width: '400px'});
                         $title.text("Fullscreen");
                     }
 
