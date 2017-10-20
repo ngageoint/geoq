@@ -373,34 +373,31 @@ class JobDetailedListView(ListView):
 
     paginate_by = 15
     model = Job
-    default_status = 'in work'
+    default_status = 'all'
     default_status_assigner = 'assigned'
-    default_status_analyst = 'awaiting imagery'
+    default_status_analyst = 'in work'
     request = None
     metrics = False
 
     def get_queryset(self):
         status = getattr(self, 'status', None)
-        if self.request.user.has_perm('core.assign_workcells'):
-            q_set = AOI.objects.filter(job=self.kwargs.get('pk')).order_by('assignee_id','id')
-        else:
-            q_set = AOI.objects.filter(job=self.kwargs.get('pk'),analyst_id=self.request.user.id).order_by('id')
-
-        # # If there is a user logged in, we want to show their stuff
-        # # at the top of the list
-        if self.request.user.id is not None and status == 'in work':
-            user = self.request.user
-            clauses = 'WHEN analyst_id=%s THEN %s ELSE 1' % (user.id, 0)
-            ordering = 'CASE %s END' % clauses
-            self.queryset = q_set.extra(
-               select={'ordering': ordering}, order_by=('ordering',))
-        else:
-            self.queryset = q_set
+        user_id = self.request.user.id
+        job_set = AOI.objects.filter(job=self.kwargs.get('pk')).order_by('id')
 
         if status and (status in [value.lower() for value in AOI.STATUS_VALUES]):
-            return self.queryset.filter(status__iexact=status)
+            job_set = job_set.filter(status__iexact=status)
+
+        if self.request.user.has_perm('core.assign_workcells'):
+            self.queryset = job_set.filter(Q(analyst_id=user_id) | Q(assignee_id=user_id))
+            # this is a trick to populate the _result_cache
+            len(self.queryset)
+            non_user_set = job_set.exclude(Q(analyst_id=user_id) | Q(assignee_id=user_id))
+            for workcell in non_user_set:
+                self.queryset._result_cache.append(workcell)
         else:
-            return self.queryset
+            self.queryset = job_set.filter(Q(analyst_id=user_id) | Q(assignee_id=user_id))
+
+        return self.queryset
 
     def get(self, request, *args, **kwargs):
         self.status = self.kwargs.get('status')
