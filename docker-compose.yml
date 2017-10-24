@@ -14,7 +14,7 @@ services:
     volumes:
       - /usr/local/src/geoq/geoq:/usr/src/geoq
     ports:
-      - "8000:8000"
+      - "8000:80"
     command: sh -c 'python app.py'
     depends_on:
       - db
