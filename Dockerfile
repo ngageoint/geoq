@@ -5,7 +5,7 @@ ENV https_proxy http://gatekeeper.mitre.org:80/
 
 RUN apt-get update && apt-get -y upgrade
 RUN apt-get -y install python-gdbm python-tk
-RUN apt-get -y install binutils libproj-dev gdal-bin nodejs nodejs-dev npm postgresql-client-common postgresql-client
+RUN apt-get -y install binutils libproj-dev gdal-bin nodejs nodejs-dev npm postgresql-client-common postgresql-client netcat
 RUN npm install -g less
 RUN ln -s /usr/bin/nodejs /usr/bin/node
 
