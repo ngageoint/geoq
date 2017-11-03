@@ -373,34 +373,31 @@ class JobDetailedListView(ListView):
 
     paginate_by = 15
     model = Job
-    default_status = 'in work'
+    default_status = 'all'
     default_status_assigner = 'assigned'
-    default_status_analyst = 'awaiting imagery'
+    default_status_analyst = 'in work'
     request = None
     metrics = False
 
     def get_queryset(self):
         status = getattr(self, 'status', None)
-        if self.request.user.has_perm('core.assign_workcells'):
-            q_set = AOI.objects.filter(job=self.kwargs.get('pk')).order_by('assignee_id','id')
-        else:
-            q_set = AOI.objects.filter(job=self.kwargs.get('pk'),analyst_id=self.request.user.id).order_by('id')
-
-        # # If there is a user logged in, we want to show their stuff
-        # # at the top of the list
-        if self.request.user.id is not None and status == 'in work':
-            user = self.request.user
-            clauses = 'WHEN analyst_id=%s THEN %s ELSE 1' % (user.id, 0)
-            ordering = 'CASE %s END' % clauses
-            self.queryset = q_set.extra(
-               select={'ordering': ordering}, order_by=('ordering',))
-        else:
-            self.queryset = q_set
+        user_id = self.request.user.id
+        job_set = AOI.objects.filter(job=self.kwargs.get('pk')).order_by('id')
 
         if status and (status in [value.lower() for value in AOI.STATUS_VALUES]):
-            return self.queryset.filter(status__iexact=status)
+            job_set = job_set.filter(status__iexact=status)
+
+        if self.request.user.has_perm('core.assign_workcells'):
+            self.queryset = job_set.filter(Q(analyst_id=user_id) | Q(assignee_id=user_id))
+            # this is a trick to populate the _result_cache
+            len(self.queryset)
+            non_user_set = job_set.exclude(Q(analyst_id=user_id) | Q(assignee_id=user_id))
+            for workcell in non_user_set:
+                self.queryset._result_cache.append(workcell)
         else:
-            return self.queryset
+            self.queryset = job_set.filter(Q(analyst_id=user_id) | Q(assignee_id=user_id))
+
+        return self.queryset
 
     def get(self, request, *args, **kwargs):
         self.status = self.kwargs.get('status')
@@ -909,15 +906,16 @@ class AssignWorkcellsView(TemplateView):
         job_id = self.kwargs.get('job_pk')
         job = get_object_or_404(self.model, pk=job_id)
         workcells = request.POST.getlist('workcells[]')
-        utype = request.POST['user_type']
-        id = request.POST['user_data']
-        send_email = request.POST['email'] in ["true","True"]
-        group = Group.objects.get(pk=group_id)
-        user = User.objects.get(pk=user_id) if int(user_id) > 0 else None
+        utype = request.POST['type']
+        id = request.POST['choice']
+        send_email = False
+        # send_email = request.POST['email'] in ["true","True"]
+        # group = Group.objects.get(pk=group_id)
+        # user = User.objects.get(pk=user_id) if int(user_id) > 0 else None
 
         if utype and id and workcells:
             Type = User if utype == 'user' else Group
-            keyfield = 'username' if utype == 'user' else 'name'
+            keyfield = 'id'
             q = Q(**{"%s__contains" % keyfield: id})
             user_or_group = Type.objects.filter(q)
             if user_or_group.count() > 0:
@@ -1190,12 +1188,9 @@ def display_help(request):
 @permission_required('core.assign_workcells', return_403=True)
 def list_users(request, job_pk):
     job = get_object_or_404(Job, pk=job_pk)
-    usernames = job.analysts.all().values('username').order_by('username')
-    users = []
-    for u in usernames:
-        users.append(u['username'])
+    users = job.analysts.all().values('username','id','first_name','last_name').order_by('username')
 
-    return HttpResponse(json.dumps(users), content_type="application/json")
+    return HttpResponse(json.dumps(list(users)), content_type="application/json")
 
 @permission_required('core.assign_workcells', return_403=True)
 def list_groups(request, job_pk):

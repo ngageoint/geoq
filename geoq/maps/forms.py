@@ -63,7 +63,7 @@ class FeatureTypeForm(StyledModelForm):
 class MapForm(StyledModelForm):
     class Meta:
         model = Map
-        fields = ('title','description',)
+        fields = ('title','description','zoom','projection','center_x','center_y')
 
 class UploadKMZForm(forms.Form):
     title = forms.CharField(max_length=50)
@@ -117,6 +117,6 @@ class LayerForm(StyledModelForm):
 class MapLayerForm(StyledModelForm):
     class Meta:
         model = MapLayer
-        fields = ('map','layer',)
+        fields = ('layer','shown','stack_order','opacity','is_base_layer','display_in_layer_switcher',)
 
-MapInlineFormset = inlineformset_factory(Map, MapLayer, fields=('map',), extra=3)
+MapInlineFormset = inlineformset_factory(Map, MapLayer, fields=('layer','shown','stack_order','opacity','is_base_layer','display_in_layer_switcher',), extra=3)

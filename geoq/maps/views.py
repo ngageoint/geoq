@@ -10,7 +10,7 @@ from django.core import serializers
 from django.core.exceptions import ValidationError, ObjectDoesNotExist
 from django.core.urlresolvers import reverse
 from django.http import HttpResponse, HttpResponseRedirect, Http404
-from django.shortcuts import render_to_response, get_object_or_404
+from django.shortcuts import render, get_object_or_404
 from django.template import RequestContext
 from django.views.generic import ListView, View, DeleteView
 from django.views.decorators.http import require_http_methods
@@ -183,14 +183,13 @@ def create_update_map(request, job_id, map_id):
         form = MapForm(prefix='map', instance=map_obj)
         maplayers_formset = MapInlineFormset(prefix='layers', instance=map_obj)
 
-    # form = [f for f in form if f.name not in ['zoom', 'projection', 'center_x', 'center_y']]
 
-    return render_to_response('core/generic_form.html', {
+    return render(request, 'core/generic_form.html', {
         'form': form,
         'layer_formset': maplayers_formset,
         'custom_form': 'core/map_create.html',
-        'object': map_obj,
-        }, context_instance=RequestContext(request))
+        'object': map_obj
+    })
 
 
 class MapListView(ListView):

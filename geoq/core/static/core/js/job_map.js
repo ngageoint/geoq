@@ -245,7 +245,7 @@ job_map.resetHighlight = function(e) {
 
 
 job_map.setList = function(listmembers) {
-    var clist = $('#analyst-select');
+    var clist = $('#assign-choices');
     clist.empty();
     $option = $('<option>')
         .attr('value', -1)
@@ -260,6 +260,19 @@ job_map.setList = function(listmembers) {
             .attr('value', member['id'])
             .text(member_name)
             .appendTo(clist);
+    });
+};
+
+job_map.getList = function() {
+    var type = $('#type-select :selected').val();
+    url = (type == 'user') ? job_map.users_url : job_map.groups_url;
+    $.ajax({
+        url: url,
+        type: 'GET',
+        success: function(data) {
+            job_map.setList(data);
+        },
+        failure: function() { log.error('Failed to retrieve user/group list');}
     });
 };
 
@@ -303,32 +316,41 @@ job_map.assignAOI = function(selected_workcells) {
             success: function(groups) {
                 BootstrapDialog.show({
                     message: function (dialogItself) {
-                        var $assign_form = $('<form>')
+                        var $assign_form = $('<div>')
                             .attr('id', 'assign-workcell');
-                        $('<label>Assign to Group:</label>')
-                            .appendTo($assign_form);
+                        var $row1 = $('<div>');
+                        $('<label>Type: </label>')
+                            .css('margin-right', '10px')
+                            .appendTo($row1);
                         var $combo1 = $('<select>')
-                            .attr('id', 'group-select')
-                            .attr('onchange', 'job_map.getUsers(this);')
-                            .appendTo($assign_form);
-                        $option = $('<option>')
-                            .attr('value',-1)
-                            .text('Select one...')
-                            .appendTo($combo1);
-                        _.each(groups, function(member) {
-                            $option = $('<option>')
-                                .attr('value', member['id'])
-                                .text(member['name'])
-                                .appendTo($combo1);
-                        });
-                        $('<label>Assign Analyst:</label>')
-                            .appendTo($assign_form);
-                        $('<select>')
-                            .attr('id', 'analyst-select')
-                            .appendTo($assign_form);
-                        $('<div><label class="checkbox inline"><input id="email-users" type="checkbox">Email User(s)</label></div>')
-                            .appendTo($assign_form);
+                            .attr('id', 'type-select')
+                            .attr('onchange', 'job_map.getList(this);');
                         $('<option>')
+                            .attr('value', 'choose')
+                            .text('Choose one')
+                            .appendTo($combo1);
+                        $('<option>')
+                            .attr('value', 'user')
+                            .text('User')
+                            .appendTo($combo1);
+                        $('<option>')
+                            .attr('value', 'group')
+                            .text('Group')
+                            .appendTo($combo1);
+                        $combo1.appendTo($row1);
+                        $row1.appendTo($assign_form);
+
+                        var $row2 = $('<div>');
+                        $('<label>Choices: </label>')
+                            .css('margin-right', '10px')
+                            .appendTo($row2);
+                        $('<select>')
+                            .attr('id', 'assign-choices')
+                            .appendTo($row2);
+                        $row2.appendTo($assign_form);
+                        //$('div')
+                        //    .append($('<label class="checkbox inline"><input id="email-users" type="checkbox">Email User(s)</label>'))
+                        //    .appendTo($assign_form);
 
                         return $assign_form;
                     },
@@ -339,8 +361,8 @@ job_map.assignAOI = function(selected_workcells) {
                                 var data = {};
                                 data.workcells = selected_workcells;
                                 data.email = $('#email-users').filter(':checked').length == 1;
-                                data.group = $('#group-select option').filter(':selected').val();
-                                data.user = $('#analyst-select option').filter(':selected').val();
+                                data.type = $('#type-select option').filter(':selected').val();
+                                data.choice = $('#assign-choices option').filter(':selected').val();
 
                                 $.ajax({
                                     type: 'POST',

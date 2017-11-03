@@ -34,40 +34,12 @@
 },
 {
     "model": "maps.map",
-    "pk": 1,
-    "fields": {
-        "title": "Mark blocked roads Map",
-        "description": "map for Mark blocked roads project",
-        "zoom": 5,
-        "projection": "EPSG:3857",
-        "center_x": 0.0,
-        "center_y": 0.0,
-        "created_at": "2017-04-21T14:33:14.973Z",
-        "updated_at": "2017-04-21T14:33:14.973Z"
-    }
-},
-{
-    "model": "maps.map",
-    "pk": 2,
-    "fields": {
-        "title": "Mark blocked roads Map",
-        "description": "map for Mark blocked roads project",
-        "zoom": 5,
-        "projection": "EPSG:3857",
-        "center_x": 0.0,
-        "center_y": 0.0,
-        "created_at": "2017-04-21T14:41:25.074Z",
-        "updated_at": "2017-04-21T14:41:25.074Z"
-    }
-},
-{
-    "model": "maps.map",
     "pk": 3,
     "fields": {
         "title": "Mark blocked roads Map",
         "description": "map for Mark blocked roads project",
         "zoom": 5,
-        "projection": "EPSG:4326",
+        "projection": "EPSG:3857",
         "center_x": 0.0,
         "center_y": 0.0,
         "created_at": "2017-04-21T14:41:54.663Z",

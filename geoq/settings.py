@@ -34,14 +34,14 @@ DATABASES = {
         # The following settings are not used with sqlite3:
         'USER': 'geoq',
         'PASSWORD': 'geoq',
-        'HOST': 'localhost',  # Empty for localhost through domain sockets or '127.0.0.1' for localhost through TCP.
+        'HOST': 'db',  # Empty for localhost through domain sockets or '127.0.0.1' for localhost through TCP.
         'PORT': '5432',  # Set to empty string for default.
     }
 }
 
 # Hosts/domain names that are valid for this site; required if DEBUG is False
 # See https://docs.djangoproject.com/en/1.5/ref/settings/#allowed-hosts
-ALLOWED_HOSTS = ['192.168.5.132','localhost','centos7']
+ALLOWED_HOSTS = ['192.168.5.132','localhost','centos7','web']
 
 # Local time zone for this installation. Choices can be found here:
 # http://en.wikipedia.org/wiki/List_of_tz_zones_by_name
@@ -121,7 +121,7 @@ LEAFLET_CONFIG = {
     'PLUGINS': {
         'proj4js': {
             'css': [],
-            'js': [STATIC_URL + 'leaflet/proj4js.js',STATIC_URL + 'leaflet/proj4leaflet.js'],
+            'js': [STATIC_URL + 'leaflet/proj4-src.js', STATIC_URL + 'leaflet/proj4defs.js', STATIC_URL + 'leaflet/proj4leaflet.js'],
             'repo': 'https://github.com/proj4js'
         },
         'draw': {
@@ -240,7 +240,6 @@ INSTALLED_APPS = [
     'debug_toolbar',
     'httpproxy',
     'bootstrap3',
-    'future',
 
     'geoq.feedback.apps.FeedbackConfig',
     'geoq.accounts.apps.AccountsConfig',
@@ -323,6 +322,8 @@ AUTH_PASSWORD_VALIDATORS = [
 # the site admins on every HTTP 500 error when DEBUG=False.
 # See http://docs.djangoproject.com/en/dev/topics/logging for
 # more details on how to customize your logging configuration.
+LOGGING_CONFIG = None
+
 LOGGING = {
     'version': 1,
     'disable_existing_loggers': False,

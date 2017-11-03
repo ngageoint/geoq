@@ -36,7 +36,7 @@
         "project_type": "Extreme Weather",
         "private": false,
         "project_admins": [
-            2
+            1,2
         ],
         "contributors": [
             2
@@ -61,13 +61,13 @@
         "tags": "roads",
         "editor": "geoq",
         "editable_layer": null,
-        "map": 1,
+        "map": 3,
         "analysts": [
-            2
+            1,2
         ],
         "teams": [],
         "reviewers": [
-            2
+            1,2
         ],
         "feature_types": [
             1
