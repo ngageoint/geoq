@@ -203,6 +203,7 @@
         $('div.leaflet-right div.leaflet-draw.leaflet-control').find('a').popover({trigger: "hover", placement: "left"});
 
         create_aois.map_updates();
+        create_aois.mapWasZoomed();
     }
 
     function highlightFeature(e) {
@@ -277,13 +278,13 @@
     <h2>Add workcells to Job #{{ object.id }}<span style="font-size: 18px"> ({{ object.name }})</span></h2>
     <b>Name workcells: </b><input type="text" name="aoi-name" id="aoi-name" value="{{ object.name }}" style="width:300px;"/><br/>
 
-    <div class="btn-group" data-toggle="buttons-radio">
-        Draw using:
-        <button class="btn active" id="option_polygon">Draw cells</button>
-        <button class="btn" id="option_shapefile">Drag in Shape or GeoJSON File</button>
-        <button class="btn" id="option_usng">USNG Cells (US only)</button>
-        <button class="btn" id="option_mgrs">MGRS Cells</button>
+    <div class="btn-group" role="group" aria-label="...">
+        <button class="btn btn-default" id="option_polygon">Draw cells</button>
+        <button class="btn btn-default" id="option_shapefile">Drag in Shape or GeoJSON File</button>
+        <!-- button class="btn" id="option_usng">USNG Cells (US only)</button -->
+        <button class="btn btn-default" id="option_mgrs">MGRS Cells</button>
     </div>
+    <span style="margin-left: 10px;">Draw using:</span>
 
     <div style="display:none" id="poly_split_holder">
         <select id="poly_split_holder_select" style="width: inherit; margin-bottom: 0px;">
