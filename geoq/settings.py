@@ -19,7 +19,7 @@ SECRET_KEY = 'wp88fi$)5dbve^!(@-k2%5tqep+16uoz078h*sttghy2%uid7c'
 
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = False
 
 ADMINS = (
     ('Admin User', 'admin@domain.com'),
@@ -41,7 +41,19 @@ DATABASES = {
 
 # Hosts/domain names that are valid for this site; required if DEBUG is False
 # See https://docs.djangoproject.com/en/1.5/ref/settings/#allowed-hosts
-ALLOWED_HOSTS = ['192.168.5.132','localhost','centos7','web']
+ALLOWED_HOSTS = ['localhost','centos7','web']
+
+# for AWS install, get public ip and add to list
+import requests
+PUBLIC_IP = None
+try:
+    PUBLIC_IP = requests.get('http://169.254.169.254/latest/meta-data/public-ipv4', timeout=0.01).text
+except requests.exceptions.RequestException:
+    pass
+
+if PUBLIC_IP and not DEBUG:
+    ALLOWED_HOSTS.append(PUBLIC_IP)
+
 
 # Local time zone for this installation. Choices can be found here:
 # http://en.wikipedia.org/wiki/List_of_tz_zones_by_name
