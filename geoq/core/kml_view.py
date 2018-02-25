@@ -212,7 +212,7 @@ class JobKML(ListView):
         output += '  </Document>\n'
         output += '</kml>'
 
-        return HttpResponse(output, mimetype="application/vnd.google-earth.kml+xml", status=200)
+        return HttpResponse(output, content_type="application/vnd.google-earth.kml+xml", status=200)
 
 
 def get_cookie_trailer(request):
@@ -283,5 +283,5 @@ class JobKMLNetworkLink(ListView):
         output += '  </Folder>\n'
         output += '</kml>'
 
-        return HttpResponse(output, mimetype="application/vnd.google-earth.kml+xml", status=200)
+        return HttpResponse(output, content_type="application/vnd.google-earth.kml+xml", status=200)
 
