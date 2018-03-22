@@ -79,7 +79,7 @@ def proxy_to(request, path, target_url):
 
         errorCode = 'Proxy generic exception: ' + traceback.format_exc()
     else:
-        response = HttpResponse(content, status=status_code, mimetype=mimetype)
+        response = HttpResponse(content, status=status_code, content_type=mimetype)
 
         if ".png" in url or ".jpg" in url:
             patch_cache_control(response, max_age=60 * 60 * 1, public=True) #Cache for 1 hour
