@@ -41,7 +41,7 @@ DATABASES = {
 
 # Hosts/domain names that are valid for this site; required if DEBUG is False
 # See https://docs.djangoproject.com/en/1.5/ref/settings/#allowed-hosts
-ALLOWED_HOSTS = ['192.168.5.132','localhost','centos7','web']
+ALLOWED_HOSTS = ['192.168.5.132','localhost','centos7.mitre.org','web']
 
 # Local time zone for this installation. Choices can be found here:
 # http://en.wikipedia.org/wiki/List_of_tz_zones_by_name
@@ -513,6 +513,9 @@ BOOTSTRAP3 = {
 
 # Special case
 IMAGE_TRACKING = False
+
+# For KML uploads
+KML_REPOSITORY_ROOT = 'kml/'
 
 # initialize apps
 django.setup()
