@@ -20,6 +20,9 @@ RUN pip install -r geoq/requirements.txt --proxy=$http_proxy
 RUN dpkg -i ./geoq/tools/geographiclib_1.36-2_amd64.deb
 RUN apt-get install -f
 
+RUN mkdir -p /var/www/static/kml
+RUN chmod 777 /var/www/static/kml
+
 EXPOSE 8000
 
 COPY ./docker-entrypoint.sh /
