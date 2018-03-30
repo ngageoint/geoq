@@ -1,0 +1,511 @@
+[
+  {
+    "pk": 1, 
+    "model": "auth.user", 
+    "fields": {
+      "username": "test_admin", 
+      "first_name": "", 
+      "last_name": "", 
+      "is_active": true, 
+      "is_superuser": false, 
+      "is_staff": false, 
+      "last_login": "2009-05-25 06:56:14", 
+      "groups": [], 
+      "user_permissions": [], 
+      "password": "sha1$9428b$ed1706975ace1a2b243b861105c7793e34b9340e", 
+      "email": "test_admin@example.com", 
+      "date_joined": "2009-05-25 06:56:14"
+    }
+  }, 
+  {
+    "pk": 2, 
+    "model": "auth.user", 
+    "fields": {
+      "username": "test_manager", 
+      "first_name": "", 
+      "last_name": "", 
+      "is_active": true, 
+      "is_superuser": false, 
+      "is_staff": false, 
+      "last_login": "2009-05-25 06:56:42", 
+      "groups": [], 
+      "user_permissions": [], 
+      "password": "sha1$333dc$64129c72885ab4a75fb8d13c9f6a95b5ab9bb7dd", 
+      "email": "test_manager@example.com", 
+      "date_joined": "2009-05-25 06:56:42"
+    }
+  }, 
+  {
+    "pk": 3, 
+    "model": "auth.user", 
+    "fields": {
+      "username": "test_staff", 
+      "first_name": "", 
+      "last_name": "", 
+      "is_active": true, 
+      "is_superuser": false, 
+      "is_staff": false, 
+      "last_login": "2009-05-25 06:57:03", 
+      "groups": [], 
+      "user_permissions": [], 
+      "password": "sha1$473a9$5b0c8b2b76e3f3c229c23abf415b103d39119580", 
+      "email": "test_staff@example.com", 
+      "date_joined": "2009-05-25 06:57:03"
+    }
+  },
+  {
+    "pk": 1, 
+    "model": "workflow.role", 
+    "fields": {
+      "name": "Administrator", 
+      "description": "An administrative role"
+    }
+  }, 
+  {
+    "pk": 2, 
+    "model": "workflow.role", 
+    "fields": {
+      "name": "Manager", 
+      "description": "A managerial role"
+    }
+  }, 
+  {
+    "pk": 3, 
+    "model": "workflow.role", 
+    "fields": {
+      "name": "Staff", 
+      "description": "A generic staff role"
+    }
+  }, 
+  {
+    "pk": 1, 
+    "model": "workflow.workflow", 
+    "fields": {
+      "status": 0, 
+      "name": "test workflow", 
+      "slug": "test_workflow",
+      "cloned_from": null, 
+      "created_by": 1, 
+      "created_on": "2009-05-25 06:59:19", 
+      "description": "A simple workflow created for the purposes of testing"
+    }
+  }, 
+  {
+    "pk": 1, 
+    "model": "workflow.state", 
+    "fields": {
+      "estimation_unit": 86400, 
+      "name": "Start State", 
+      "roles": [
+        1, 
+        2
+      ], 
+      "workflow": 1, 
+      "description": "The start state for the test workflow", 
+      "is_end_state": false, 
+      "is_start_state": true, 
+      "estimation_value": 1
+    }
+  }, 
+  {
+    "pk": 2, 
+    "model": "workflow.state", 
+    "fields": {
+      "estimation_unit": 604800, 
+      "name": "State2", 
+      "roles": [
+        1, 
+        2, 
+        3
+      ], 
+      "workflow": 1, 
+      "description": "A second state in the test workflow", 
+      "is_end_state": false, 
+      "is_start_state": false, 
+      "estimation_value": 1
+    }
+  }, 
+  {
+    "pk": 3, 
+    "model": "workflow.state", 
+    "fields": {
+      "estimation_unit": 86400, 
+      "name": "State for Branching", 
+      "roles": [
+        1, 
+        2
+      ], 
+      "workflow": 1, 
+      "description": "A state with more than one transition to simulate a branching in the workflow tree", 
+      "is_end_state": false, 
+      "is_start_state": false, 
+      "estimation_value": 0
+    }
+  }, 
+  {
+    "pk": 4, 
+    "model": "workflow.state", 
+    "fields": {
+      "estimation_unit": 86400, 
+      "name": "Branch 1", 
+      "roles": [
+        1, 
+        2, 
+        3
+      ], 
+      "workflow": 1, 
+      "description": "A state in the first branch of the test workflow", 
+      "is_end_state": false, 
+      "is_start_state": false, 
+      "estimation_value": 0
+    }
+  }, 
+  {
+    "pk": 5, 
+    "model": "workflow.state", 
+    "fields": {
+      "estimation_unit": 86400, 
+      "name": "Branch 2", 
+      "roles": [
+        1, 
+        3
+      ], 
+      "workflow": 1, 
+      "description": "A first state on the second branch of the test workflow", 
+      "is_end_state": false, 
+      "is_start_state": false, 
+      "estimation_value": 3
+    }
+  }, 
+  {
+    "pk": 6, 
+    "model": "workflow.state", 
+    "fields": {
+      "estimation_unit": 86400, 
+      "name": "Branch 2 state 2", 
+      "roles": [
+        1, 
+        3
+      ], 
+      "workflow": 1, 
+      "description": "A second state on the second branch of the test workflow", 
+      "is_end_state": false, 
+      "is_start_state": false, 
+      "estimation_value": 2
+    }
+  }, 
+  {
+    "pk": 7, 
+    "model": "workflow.state", 
+    "fields": {
+      "estimation_unit": 86400, 
+      "name": "End state, branch 1", 
+      "roles": [
+        1, 
+        2, 
+        3
+      ], 
+      "workflow": 1, 
+      "description": "An end state only available from branch 1", 
+      "is_end_state": true, 
+      "is_start_state": false, 
+      "estimation_value": 0
+    }
+  }, 
+  {
+    "pk": 8, 
+    "model": "workflow.state", 
+    "fields": {
+      "estimation_unit": 604800, 
+      "name": "Merge branches", 
+      "roles": [
+        1, 
+        2, 
+        3
+      ], 
+      "workflow": 1, 
+      "description": "A state that combines the paths from both branches", 
+      "is_end_state": false, 
+      "is_start_state": false, 
+      "estimation_value": 1
+    }
+  }, 
+  {
+    "pk": 9, 
+    "model": "workflow.state", 
+    "fields": {
+      "estimation_unit": 86400, 
+      "name": "End state", 
+      "roles": [
+        1, 
+        2, 
+        3
+      ], 
+      "workflow": 1, 
+      "description": "An end state that is available from both branches", 
+      "is_end_state": true, 
+      "is_start_state": false, 
+      "estimation_value": 0
+    }
+  }, 
+  {
+    "pk": 1, 
+    "model": "workflow.transition", 
+    "fields": {
+      "from_state": 1, 
+      "to_state": 2, 
+      "name": "Proceed to state 2", 
+      "roles": [
+        1
+      ], 
+      "workflow": 1
+    }
+  }, 
+  {
+    "pk": 2, 
+    "model": "workflow.transition", 
+    "fields": {
+      "from_state": 2, 
+      "to_state": 3, 
+      "name": "Proceed to state 3", 
+      "roles": [
+        1, 
+        2
+      ], 
+      "workflow": 1
+    }
+  }, 
+  {
+    "pk": 3, 
+    "model": "workflow.transition", 
+    "fields": {
+      "from_state": 3, 
+      "to_state": 4, 
+      "name": "Choose branch 1", 
+      "roles": [
+        1, 
+        2
+      ], 
+      "workflow": 1
+    }
+  }, 
+  {
+    "pk": 4, 
+    "model": "workflow.transition", 
+    "fields": {
+      "from_state": 3, 
+      "to_state": 5, 
+      "name": "Choose branch 2", 
+      "roles": [
+        1, 
+        3 
+      ], 
+      "workflow": 1
+    }
+  }, 
+  {
+    "pk": 5, 
+    "model": "workflow.transition", 
+    "fields": {
+      "from_state": 4, 
+      "to_state": 2, 
+      "name": "Go back to state 2", 
+      "roles": [
+        1, 
+        2, 
+        3
+      ], 
+      "workflow": 1
+    }
+  }, 
+  {
+    "pk": 6, 
+    "model": "workflow.transition", 
+    "fields": {
+      "from_state": 4, 
+      "to_state": 7, 
+      "name": "End early", 
+      "roles": [
+        1, 
+        2
+      ], 
+      "workflow": 1
+    }
+  }, 
+  {
+    "pk": 7, 
+    "model": "workflow.transition", 
+    "fields": {
+      "from_state": 4, 
+      "to_state": 8, 
+      "name": "Go to merge branches", 
+      "roles": [
+        1, 
+        2, 
+        3
+      ], 
+      "workflow": 1
+    }
+  }, 
+  {
+    "pk": 8, 
+    "model": "workflow.transition", 
+    "fields": {
+      "from_state": 5, 
+      "to_state": 6, 
+      "name": "Proceed with branch 2", 
+      "roles": [
+        1, 
+        3
+      ], 
+      "workflow": 1
+    }
+  }, 
+  {
+    "pk": 9, 
+    "model": "workflow.transition", 
+    "fields": {
+      "from_state": 6, 
+      "to_state": 3, 
+      "name": "Return to step 3", 
+      "roles": [
+        1, 
+        3
+      ], 
+      "workflow": 1
+    }
+  }, 
+  {
+    "pk": 10, 
+    "model": "workflow.transition", 
+    "fields": {
+      "from_state": 6, 
+      "to_state": 8, 
+      "name": "Go to merge branches", 
+      "roles": [
+        1, 
+        3
+      ], 
+      "workflow": 1
+    }
+  }, 
+  {
+    "pk": 11, 
+    "model": "workflow.transition", 
+    "fields": {
+      "from_state": 8, 
+      "to_state": 9, 
+      "name": "Finish workflow", 
+      "roles": [
+        1, 
+        2, 
+        3
+      ], 
+      "workflow": 1
+    }
+  },
+  {
+    "pk": 1, 
+    "model": "workflow.eventtype", 
+    "fields": {
+      "name": "Meeting", 
+      "description": "A meeting of all those participants related to the specific state the event is associated with"
+    }
+  }, 
+  {
+    "pk": 2, 
+    "model": "workflow.eventtype", 
+    "fields": {
+      "name": "Deadline", 
+      "description": "Something needs to be done by the time this event takes place"
+    }
+  }, 
+  {
+    "pk": 3, 
+    "model": "workflow.eventtype", 
+    "fields": {
+      "name": "Review", 
+      "description": "A decision needs to made about something as part of this event"
+    }
+  }, 
+  {
+    "pk": 4, 
+    "model": "workflow.eventtype", 
+    "fields": {
+      "name": "Assessment", 
+      "description": "A thing requires testing"
+    }
+  }, 
+  {
+    "pk": 1, 
+    "model": "workflow.event", 
+    "fields": {
+      "is_mandatory": true, 
+      "name": "Important meeting", 
+      "roles": [
+        1, 
+        2
+      ], 
+      "workflow": 1, 
+      "state": 2, 
+      "event_types": [
+        1, 
+        3
+      ], 
+      "description": "An event in the test workflow"
+    }
+  }, 
+  {
+    "pk": 2, 
+    "model": "workflow.event", 
+    "fields": {
+      "is_mandatory": false, 
+      "name": "Branching meeting", 
+      "roles": [
+        1, 
+        2
+      ], 
+      "workflow": 1, 
+      "state": 3, 
+      "event_types": [
+        1, 
+        4
+      ], 
+      "description": "A meeting to discuss which branch to choose"
+    }
+  }, 
+  {
+    "pk": 3, 
+    "model": "workflow.event", 
+    "fields": {
+      "is_mandatory": false, 
+      "name": "Project Party!", 
+      "roles": [
+        1, 
+        2, 
+        3
+      ], 
+      "workflow": 1, 
+      "state": 8, 
+      "event_types": [
+        2
+      ], 
+      "description": "A party for getting to the end of the workflow"
+    }
+  },
+  {
+    "pk": 4, 
+    "model": "workflow.event", 
+    "fields": {
+      "is_mandatory": false, 
+      "name": "Team meeting", 
+      "roles": [], 
+      "workflow": null, 
+      "state": null, 
+      "event_types": [
+        1 
+      ], 
+      "description": "Impromptu team meeting"
+    }
+  }
+]

@@ -1,0 +1,4 @@
+{% load i18n %}
+    state{{s.id}} [ 
+        {% if s.is_start_state or s.is_end_state %}shape=box, {% endif %}label="{% if s.is_start_state %}{% trans "START:" %} {% endif %}{% if s.is_end_state %}{% trans "END:" %} {% endif %}{{s.name}}"
+        ]
