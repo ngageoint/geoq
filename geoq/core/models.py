@@ -169,7 +169,7 @@ class Job(GeoQBase, Assignment):
     analysts = models.ManyToManyField(User, blank=True, related_name="analysts")
     teams = models.ManyToManyField(Group, blank=True, related_name="teams")
     reviewers = models.ManyToManyField(User, blank=True, related_name="reviewers")
-    progress = models.SmallIntegerField(blank=True)
+    progress = models.SmallIntegerField(blank=True, null=True)
     project = models.ForeignKey(Project, related_name="project")
 
     grid = models.CharField(max_length=5, choices=GRID_SERVICE_CHOICES, default=GRID_SERVICE_VALUES[0],
@@ -179,6 +179,7 @@ class Job(GeoQBase, Assignment):
     editable_layer = models.ForeignKey( 'maps.EditableMapLayer', blank=True, null=True)
 
     map = models.ForeignKey('maps.Map', blank=True, null=True)
+    workflow = models.ForeignKey('workflow.Workflow', blank=True, null=True, help_text='Workflow to be used for job')
     feature_types = models.ManyToManyField('maps.FeatureType', blank=True)
     required_courses = models.ManyToManyField(Training, blank=True, help_text="Courses that must be passed to open these cells")
 
@@ -625,7 +626,3 @@ class AOITimer(models.Model):
             return False
 
         return self.completed_at - self.started_at > timedelta(minutes=1)
-
-
-
-

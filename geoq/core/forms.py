@@ -97,7 +97,7 @@ class JobForm(StyledModelForm):
 
         fields = ('name', 'description', 'project', 'analysts',
                   'teams', 'reviewers', 'feature_types', 'required_courses', 'tags', 'layers', 'editor',
-                  'editable_layer')
+                  'workflow', 'editable_layer')
         model = Job
 
     def __init__(self, project, *args, **kwargs):
@@ -158,8 +158,8 @@ class ProjectForm(StyledModelForm):
     class Meta:
         fields = ('name', 'description', 'project_type', 'active', 'private')
         model = Project
-        
-        
+
+
 class TeamForm(StyledModelForm):
     users = forms.ModelMultipleChoiceField(
         queryset=[],
@@ -169,19 +169,19 @@ class TeamForm(StyledModelForm):
             is_stacked=False
         )
     )
-    
+
     class Media:
         css = {
             'all':('/static/admin/css/widgets.css',),
         }
-        
+
         js = ('/admin/jsi18n',)
 
     class Meta:
 
         fields = ('name', 'users',)
         model = Group
-        
+
     def __init__(self, *args, **kwargs):
         self.team_id = kwargs.pop('team_id')
         super(TeamForm, self).__init__(*args, **kwargs)
@@ -189,16 +189,10 @@ class TeamForm(StyledModelForm):
         other_teams = Group.objects.exclude(id=self.team_id).values_list('name', flat=True)
         self.fields['users'].queryset = User.objects.exclude(groups__name__in=other_teams)
         self.fields['users'].initial = User.objects.filter(groups__id=self.team_id)
-            
+
         def remove_anonymous(field):
             """ Removes anonymous from choices in form. """
             field_var = self.fields[field].queryset.exclude(id=-1)
             self.fields[field].queryset = field_var
             return None
         remove_anonymous('users')
-
-          
-        
-    
-
-    
