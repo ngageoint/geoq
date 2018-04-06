@@ -394,6 +394,24 @@ class Workflow(models.Model):
             raise UnableToCloneWorkflow, __('Only active or retired workflows'\
                     ' may be cloned')
 
+    def path(self):
+        #if not self.is_valid():
+        #    # throw some error
+        start = self.states.filter(is_start_state=True).first()
+        last = self.states.filter(is_end_state=True).first()
+        return find_path(start,last,[])
+
+    def find_path(start,end,wpath):
+        wpath = wpath + [start]
+        if start == end:
+            return wpath
+        for t in start.transitions_from.all():
+            node = t.to_state
+            if node not in wpath:
+                newpath = find_path(node,end,wpath)
+                if newpath: return newpath
+        return None
+
     def __unicode__(self):
         return self.name
 
