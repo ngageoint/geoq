@@ -399,16 +399,16 @@ class Workflow(models.Model):
         #    # throw some error
         start = self.states.filter(is_start_state=True).first()
         last = self.states.filter(is_end_state=True).first()
-        return find_path(start,last,[])
+        return self.find_path(start,last,[])
 
-    def find_path(start,end,wpath):
+    def find_path(self,start,end,wpath):
         wpath = wpath + [start]
         if start == end:
             return wpath
         for t in start.transitions_from.all():
             node = t.to_state
             if node not in wpath:
-                newpath = find_path(node,end,wpath)
+                newpath = self.find_path(node,end,wpath)
                 if newpath: return newpath
         return None
 
