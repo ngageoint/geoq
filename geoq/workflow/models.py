@@ -1,6 +1,6 @@
 # -*- coding: UTF-8 -*-
 """
-Models for Workflows. 
+Models for Workflows.
 
 Copyright (c) 2009 Nicholas H.Tollervey (http://ntoll.org/contact)
 
@@ -110,11 +110,11 @@ workflow_started = django.dispatch.Signal()
 workflow_pre_change = django.dispatch.Signal()
 # Fired after a WorkflowActivity creates a new item in the Workflow History (the
 # sender is an instance of the WorkflowHistory model)
-workflow_post_change = django.dispatch.Signal() 
+workflow_post_change = django.dispatch.Signal()
 # Fired when a WorkflowActivity causes a transition to a new state (the sender is
 # an instance of the WorkflowHistory model)
 workflow_transitioned = django.dispatch.Signal()
-# Fired when some event happens during the life of a WorkflowActivity (the 
+# Fired when some event happens during the life of a WorkflowActivity (the
 # sender is an instance of the WorkflowHistory model)
 workflow_event_completed = django.dispatch.Signal()
 # Fired when a comment is created during the lift of a WorkflowActivity (the
@@ -162,14 +162,14 @@ class Workflow(models.Model):
     """
 
     # A workflow can be in one of three states:
-    # 
+    #
     # * definition: you're building the thing to meet whatever requirements you
     # have
     #
     # * active: you're using the defined workflow in relation to things in your
     # application - the workflow definition is frozen from this point on.
     #
-    # * retired: you no longer use the workflow (but we keep it so it can be 
+    # * retired: you no longer use the workflow (but we keep it so it can be
     # cloned as the basis of new workflows starting in the definition state)
     #
     # Why do this? Imagine the mess that could be created if a "live" workflow
@@ -210,13 +210,13 @@ class Workflow(models.Model):
             User
             )
     cloned_from = models.ForeignKey(
-            'self', 
+            'self',
             null=True
             )
 
     # To hold error messages created in the validate method
     errors = {
-                'workflow':[], 
+                'workflow':[],
                 'states': {},
                 'transitions':{},
              }
@@ -233,7 +233,7 @@ class Workflow(models.Model):
         Returns a boolean
         """
         self.errors = {
-                'workflow':[], 
+                'workflow':[],
                 'states': {},
                 'transitions':{},
              }
@@ -276,7 +276,7 @@ class Workflow(models.Model):
         # associated with the parent state).
         for state in all_states:
             # *at least* one role from the state must also be associated
-            # with each transition where the state is the from_state 
+            # with each transition where the state is the from_state
             state_roles = state.roles.all()
             for transition in state.transitions_from.all():
                 if not transition.roles.filter(pk__in=[r.id for r in state_roles]):
@@ -310,8 +310,8 @@ class Workflow(models.Model):
     def activate(self):
         """
         Puts the workflow in the "active" state after checking the directed
-        graph doesn't contain any orphaned nodes (is connected), is in 
-        DEFINITION state, has compatible roles for transitions and states and 
+        graph doesn't contain any orphaned nodes (is connected), is in
+        DEFINITION state, has compatible roles for transitions and states and
         contains exactly one start state and at least one end state
         """
         # Only workflows in definition state can be activated
@@ -450,11 +450,11 @@ class State(models.Model):
     # The roles defined here define *who* has permission to view the item in
     # this state.
     roles = models.ManyToManyField(
-            Role, 
+            Role,
             blank=True
             )
     # The following two fields allow a specification of expected duration to be
-    # associated with a state. The estimation_value field stores the amount of 
+    # associated with a state. The estimation_value field stores the amount of
     # time, whilst estimation_unit stores the unit of time estimation_value is
     # in. For example, estimation_value=5, estimation_unit=DAY means something
     # is expected to be in this state for 5 days. By doing estimation_value *
@@ -469,6 +469,17 @@ class State(models.Model):
             _('Estimation unit of time'),
             default=DAY,
             choices = DURATIONS
+            )
+
+    # for display on GeoQ
+    slug = models.SlugField(
+            _('Slug'),
+            blank=True
+            )
+    color = models.CharField(
+            _('Color'),
+            max_length=16,
+            default="gray"
             )
 
     def deadline(self):
@@ -500,7 +511,7 @@ class State(models.Model):
 
 class Transition(models.Model):
     """
-    Represents how a workflow can move between different states. An edge 
+    Represents how a workflow can move between different states. An edge
     between state "nodes" in a directed graph.
     """
     name = models.CharField(
@@ -509,7 +520,7 @@ class Transition(models.Model):
             help_text=_('Use an "active" verb. e.g. "Close Issue", "Open'\
                 ' Vacancy" or "Start Interviews"')
             )
-    # This field is the result of denormalization to help with the Workflow 
+    # This field is the result of denormalization to help with the Workflow
     # class's clone() method.
     workflow = models.ForeignKey(
             Workflow,
@@ -523,7 +534,7 @@ class Transition(models.Model):
             State,
             related_name = 'transitions_into'
             )
-    # The roles referenced here define *who* has permission to use this 
+    # The roles referenced here define *who* has permission to use this
     # transition to move between states.
     roles = models.ManyToManyField(
             Role,
@@ -608,7 +619,7 @@ class Event(models.Model):
 
 class WorkflowActivity(models.Model):
     """
-    Other models in a project reference this model so they become associated 
+    Other models in a project reference this model so they become associated
     with a particular workflow.
 
     The WorkflowActivity object also contains *all* the methods required to
@@ -623,8 +634,8 @@ class WorkflowActivity(models.Model):
             )
 
     def current_state(self):
-        """ 
-        Returns the instance of the WorkflowHistory model that represents the 
+        """
+        Returns the instance of the WorkflowHistory model that represents the
         current state this WorkflowActivity is in.
         """
         if self.history.all():
@@ -642,7 +653,7 @@ class WorkflowActivity(models.Model):
                 disabled=False)
 
         start_state_result = State.objects.filter(
-                workflow=self.workflow, 
+                workflow=self.workflow,
                 is_start_state=True
                 )
         # Validation...
@@ -650,7 +661,7 @@ class WorkflowActivity(models.Model):
         if self.current_state():
             if self.current_state().state:
                 raise UnableToStartWorkflow, __('Already started')
-        # 2. The workflow activity hasn't been force_stopped before being 
+        # 2. The workflow activity hasn't been force_stopped before being
         # started
         if self.completed_on:
             raise UnableToStartWorkflow, __('Already completed')
@@ -671,7 +682,7 @@ class WorkflowActivity(models.Model):
 
     def progress(self, transition, user, note=''):
         """
-        Attempts to progress a workflow activity with the specified transition 
+        Attempts to progress a workflow activity with the specified transition
         as requested by the specified participant.
 
         The transition is validated (to make sure it is a legal "move" in the
@@ -691,7 +702,7 @@ class WorkflowActivity(models.Model):
         if not transition.from_state == current_state.state:
             raise UnableToProgressWorkflow, __('Transition not valid (wrong'\
                     ' parent)')
-        # 3. Make sure all mandatory events for the current state are found in 
+        # 3. Make sure all mandatory events for the current state are found in
         # the WorkflowHistory
         mandatory_events = current_state.state.events.filter(is_mandatory=True)
         for me in mandatory_events:
@@ -727,7 +738,7 @@ class WorkflowActivity(models.Model):
 
     def log_event(self, event, user, note=''):
         """
-        Logs the occurance of an event in the WorkflowHistory of a 
+        Logs the occurance of an event in the WorkflowHistory of a
         WorkflowActivity and returns the resulting record.
 
         If the event is associated with a workflow or state then this method
@@ -777,12 +788,12 @@ class WorkflowActivity(models.Model):
     def add_comment(self, user, note):
         """
         In many sorts of workflow it is necessary to add a comment about
-        something at a particular state in a WorkflowActivity. 
+        something at a particular state in a WorkflowActivity.
         """
         if not note:
             raise UnableToAddCommentToWorkflow, __('Cannot add an empty comment')
         p, created = Participant.objects.get_or_create(workflowactivity=self,
-                user=user)  
+                user=user)
         current_state = self.current_state().state if self.current_state() else None
         deadline = self.current_state().deadline if self.current_state() else None
         wh = WorkflowHistory(
@@ -798,7 +809,7 @@ class WorkflowActivity(models.Model):
 
     def assign_role(self, user, assignee, role):
         """
-        Assigns the role to the assignee for this instance of a workflow 
+        Assigns the role to the assignee for this instance of a workflow
         activity. The arg 'user' logs who made the assignment
         """
         p_as_user = Participant.objects.get(workflowactivity=self, user=user,
@@ -829,9 +840,9 @@ class WorkflowActivity(models.Model):
         logging purposes.
         """
         try:
-            p_as_user = Participant.objects.get(workflowactivity=self, 
+            p_as_user = Participant.objects.get(workflowactivity=self,
                         user=user, disabled=False)
-            p_as_assignee = Participant.objects.get(workflowactivity=self, 
+            p_as_assignee = Participant.objects.get(workflowactivity=self,
                     user=assignee)
             if role in p_as_assignee.roles.all():
                 p_as_assignee.roles.remove(role)
@@ -855,9 +866,9 @@ class WorkflowActivity(models.Model):
                 # nothing to do
                 return None
         except ObjectDoesNotExist:
-            # If we can't find the assignee as a participant then there is 
+            # If we can't find the assignee as a participant then there is
             # nothing to do
-            return None 
+            return None
 
     def clear_roles(self, user, assignee):
         """
@@ -865,9 +876,9 @@ class WorkflowActivity(models.Model):
         logging purposes.
         """
         try:
-            p_as_user = Participant.objects.get(workflowactivity=self, 
+            p_as_user = Participant.objects.get(workflowactivity=self,
                         user=user, disabled=False)
-            p_as_assignee = Participant.objects.get(workflowactivity=self, 
+            p_as_assignee = Participant.objects.get(workflowactivity=self,
                     user=assignee)
             p_as_assignee.roles.clear()
             name = assignee.get_full_name() if assignee.get_full_name() else assignee.username
@@ -899,9 +910,9 @@ class WorkflowActivity(models.Model):
             raise UnableToDisableParticipant, __('Must supply a reason for'\
                     ' disabling a participant. None given.')
         try:
-            p_as_user = Participant.objects.get(workflowactivity=self, 
+            p_as_user = Participant.objects.get(workflowactivity=self,
                             user=user, disabled=False)
-            p_to_disable = Participant.objects.get(workflowactivity=self, 
+            p_to_disable = Participant.objects.get(workflowactivity=self,
                     user=user_to_disable)
             if not p_to_disable.disabled:
                 p_to_disable.disabled = True
@@ -925,8 +936,8 @@ class WorkflowActivity(models.Model):
                 return None
         except ObjectDoesNotExist:
             # If we can't find the assignee then there is nothing to do
-            return None 
-    
+            return None
+
     def enable_participant(self, user, user_to_enable, note):
         """
         Mark the user_to_enable as enabled. Must include a note explaining
@@ -937,15 +948,15 @@ class WorkflowActivity(models.Model):
             raise UnableToEnableParticipant, __('Must supply a reason for'\
                     ' enabling a disabled participant. None given.')
         try:
-            p_as_user = Participant.objects.get(workflowactivity=self, 
+            p_as_user = Participant.objects.get(workflowactivity=self,
                             user=user, disabled=False)
-            p_to_enable = Participant.objects.get(workflowactivity=self, 
+            p_to_enable = Participant.objects.get(workflowactivity=self,
                     user=user_to_enable)
             if p_to_enable.disabled:
-                p_to_enable.disabled = False 
+                p_to_enable.disabled = False
                 p_to_enable.save()
                 name = user_to_enable.get_full_name() if user_to_enable.get_full_name() else user_to_enable.username
-                note = _('Participant %s enabled with the reason: %s')%(name, 
+                note = _('Participant %s enabled with the reason: %s')%(name,
                         note)
                 current_state = self.current_state().state if self.current_state() else None
                 deadline = self.current_state().deadline if self.current_state() else None
@@ -964,7 +975,7 @@ class WorkflowActivity(models.Model):
                 return None
         except ObjectDoesNotExist:
             # If we can't find the participant then there is nothing to do
-            return None 
+            return None
 
     def force_stop(self, user, reason):
         """
@@ -975,7 +986,7 @@ class WorkflowActivity(models.Model):
         # Lets try to create an appropriate entry in the WorkflowHistory table
         current_state = self.current_state()
         participant = Participant.objects.get(
-                        workflowactivity=self, 
+                        workflowactivity=self,
                         user=user)
         if current_state:
             final_step = WorkflowHistory(
@@ -1021,7 +1032,7 @@ class Participant(models.Model):
         if self.roles.all():
             roles = u' - ' + u', '.join([r.__unicode__() for r in self.roles.all()])
         else:
-            roles = '' 
+            roles = ''
         disabled = _(' (disabled)') if self.disabled else ''
         return u"%s%s%s"%(name, roles, disabled)
 
@@ -1034,7 +1045,7 @@ class Participant(models.Model):
 class WorkflowHistory(models.Model):
     """
     Records what has happened and when in a particular run of a workflow. The
-    latest record for the referenced WorkflowActivity will indicate the current 
+    latest record for the referenced WorkflowActivity will indicate the current
     state.
     """
 
@@ -1065,14 +1076,14 @@ class WorkflowHistory(models.Model):
             null=True
             )
     transition = models.ForeignKey(
-            Transition, 
+            Transition,
             null=True,
             related_name='history',
             help_text=_('The transition relating to this happening in the'\
                 ' workflow history')
             )
     event = models.ForeignKey(
-            Event, 
+            Event,
             null=True,
             related_name='history',
             help_text=_('The event relating to this happening in the workflow'\

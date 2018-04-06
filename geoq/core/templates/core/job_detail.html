@@ -32,7 +32,7 @@
         function mapInit(map, bounds) {
             map_object = map;
           	/*
-          		The Map_object is not consistant with the css that is rendering the map on the intial loading and what the CSS looks like on refresh. 
+          		The Map_object is not consistant with the css that is rendering the map on the intial loading and what the CSS looks like on refresh.
           		Changing these two values creates a consistant mapsize between all states. This may want to be looked into eventually.
           	*/
 
@@ -157,13 +157,13 @@
         }
 
        function recenter(e) {
-        	
+
             var px = map_object.project(e.popup._latlng);
-   
+
             px.y -= (e.popup._container.clientHeight/2);
             map_object.panTo(map_object.unproject(px),{animate: true});
         }
-     
+
 
         function resetHighlight(e) {
             aoi_extents.resetStyle(e.target);
@@ -476,4 +476,3 @@
 
     </div>
 {% endblock %}
-
