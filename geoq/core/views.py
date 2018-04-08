@@ -384,8 +384,8 @@ class JobDetailedListView(ListView):
         user_id = self.request.user.id
         job_set = AOI.objects.filter(job=self.kwargs.get('pk')).order_by('id')
 
-        if status and (status in [value.lower() for value in AOI.STATUS_VALUES]):
-            job_set = job_set.filter(status__iexact=status)
+#        if status and (status in [value.lower() for value in AOI.STATUS_VALUES]):
+#            job_set = job_set.filter(status__iexact=status)
 
         if self.request.user.has_perm('core.assign_workcells'):
             self.queryset = job_set.filter(Q(analyst_id=user_id) | Q(assignee_id=user_id))
@@ -414,8 +414,12 @@ class JobDetailedListView(ListView):
     def get_context_data(self, **kwargs):
         cv = super(JobDetailedListView, self).get_context_data(**kwargs)
         job_id = self.kwargs.get('pk')
+        job = Job.objects.get(id=job_id)
+
         cv['object'] = get_object_or_404(self.model, pk=job_id)
-        cv['statuses'] = AOI.STATUS_VALUES if self.request.user.has_perm('core.assign_workcells') else AOI.STATUS_VALUES[2:]
+        cv['workpath'] = cv['object'].workflow.path()
+        STATE_VALUES = [i.name for i in cv['workpath']]
+        cv['statuses'] = STATE_VALUES if self.request.user.has_perm('core.assign_workcells') else STATE_VALUES[2:]
         cv['active_status'] = self.status
         cv['workcell_count'] = cv['object'].aoi_count()
         cv['metrics'] = self.metrics

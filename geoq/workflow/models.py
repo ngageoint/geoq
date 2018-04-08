@@ -36,11 +36,13 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 """
 from django.db import models
+from jsonfield import JSONField
 from django.core.exceptions import ObjectDoesNotExist
 from django.utils.translation import ugettext_lazy as _, ugettext as __
 from django.contrib.auth.models import User
 import django.dispatch
 import datetime
+import json
 
 ############
 # Exceptions
@@ -494,10 +496,9 @@ class State(models.Model):
             _('Slug'),
             blank=True
             )
-    color = models.CharField(
-            _('Color'),
-            max_length=16,
-            default="gray"
+    color = JSONField(
+            null=True,blank=True,
+            help_text="Color properties for this state. Should be json that includes color, fillColor, fillOpacity, opacity and weight"
             )
 
     def deadline(self):
@@ -518,6 +519,10 @@ class State(models.Model):
         To help with the unit tests
         """
         return datetime.datetime.today()
+
+    @property
+    def color_json(self):
+        return eval(json.dumps(self.color))
 
     def __unicode__(self):
         return self.name
