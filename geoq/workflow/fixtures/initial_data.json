@@ -78,7 +78,7 @@
     "model": "workflow.state",
     "pk": 3,
     "fields": {
-        "name": "In Work",
+        "name": "In work",
         "description": "Workcell is being analyzed",
         "is_start_state": false,
         "is_end_state": false,
@@ -98,7 +98,7 @@
     "model": "workflow.state",
     "pk": 4,
     "fields": {
-        "name": "Awaiting Review",
+        "name": "Awaiting review",
         "description": "Workcell has been analyzed and is waiting for review",
         "is_start_state": false,
         "is_end_state": false,
@@ -117,7 +117,7 @@
     "model": "workflow.state",
     "pk": 5,
     "fields": {
-        "name": "In Review",
+        "name": "In review",
         "description": "Workcell analysis is being reviewed",
         "is_start_state": false,
         "is_end_state": false,
