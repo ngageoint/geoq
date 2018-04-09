@@ -348,6 +348,8 @@ class CreateFeaturesView(UserAllowedMixin, DetailView):
         cv['user_custom_params'] = {}
         cv['layers_on_map'] = json.dumps(layers)
         cv['base_layer'] = json.dumps(self.object.job.base_layer_object())
+        cv['state'] = self.object.job.workflow.states.filter(name=kwargs['object'].status).first()
+        cv['transitions'] = [{'name':str(x['name']), 'id':x['id']} for x in cv['state'].transitions_from.values('name','id')]
 
         Comment(user=cv['aoi'].analyst, aoi=cv['aoi'], text="Workcell opened").save()
         return cv

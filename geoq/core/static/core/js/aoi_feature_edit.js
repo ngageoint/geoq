@@ -1704,11 +1704,29 @@ aoi_feature_edit.buildDropdownMenu = function() {
         .attr("role", "menu")
         .appendTo($div);
 
+    // add a back selection
+    $li = $("<li>")
+        .appendTo(ull);
+    $("<a>")
+        .appendTo($li);
+        .text("Back to Job page")
+        .click(function() {
+            aoi_feature_edit.complete_button_onClick("http://none");
+        });
     for (var i=0; i<leaflet_layer_control.finish_options.length; i++) {
         var opt = leaflet_layer_control.finish_options[i];
         var $li;
 
-        if (opt=='awaitingreview'){
+        $li = $("<li>")
+            .appendTo($ull);
+        $("<a>")
+            .appendTo($li)
+            .text(opt)
+            .click(function(){
+                aoi_feature_edit.complete_button_onClick("http://nothing");
+            });
+
+/*        if (opt=='awaitingreview'){
             $li = $("<li>")
                 .appendTo($ull);
             $("<a>")
@@ -1737,7 +1755,7 @@ aoi_feature_edit.buildDropdownMenu = function() {
                 });
         } else {
             //Unrecognized input
-        }
+        }*/
     }
     $div.dropdown();
 
