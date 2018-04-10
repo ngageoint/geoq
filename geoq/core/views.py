@@ -31,6 +31,7 @@ from django.utils.dateparse import parse_datetime
 
 from models import Project, Job, AOI, Comment, AssigneeType, Organization, AOITimer
 from geoq.maps.models import *
+from geoq.workflow.models import Transition
 from utils import send_assignment_email, increment_metric
 from geoq.training.models import Training
 
@@ -862,6 +863,22 @@ class ChangeAOIStatus(View):
             error = dict(error=403,
                          details="User not allowed to modify the status of this AOI.",)
             return HttpResponse(json.dumps(error), status=error.get('error'))
+
+
+class TransitionAOIStatus(View):
+    model = AOI
+    http_method_names = ['put','get']
+
+    def get_context_data(self, **kwargs):
+        pass
+
+    def put(self, request, **kwargs):
+        aoi = get_object_or_404(AOI, id=self.kwargs.get('pk'))
+        transition = get_object_or_404(Transition, id=self.kwargs.get('id))
+
+        # TODO: ensure user has permission to execute this transition
+        aoi.state = transition.to_state
+        aoi.save
 
 
 class PrioritizeWorkcells(TemplateView):

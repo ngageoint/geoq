@@ -99,6 +99,9 @@ urlpatterns = [
     url(r'^aois/update-status/(?P<pk>\d+)/(?P<status>Unassigned|Assigned|In work|Awaiting review|In review|Completed)/?$', login_required(
         ChangeAOIStatus.as_view()),
         name="aoi-update-status"),
+    url(r'^aois/(?P<pk>\d+)/transition/(?P<id>\d+)/?$' login_required(
+        TransitionAOIStatus.as_view()),
+        name="aoi-transition-status"),
     url(r'^aois/update-priority/(?P<pk>\d+)/?$', login_required( update_priority ),
         name="aoi-update-priority"),
     url(r'^aois/create/?$', login_required(
