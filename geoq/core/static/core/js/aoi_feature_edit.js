@@ -1706,56 +1706,27 @@ aoi_feature_edit.buildDropdownMenu = function() {
 
     // add a back selection
     $li = $("<li>")
-        .appendTo(ull);
+        .appendTo($ull);
     $("<a>")
-        .appendTo($li);
+        .appendTo($li)
         .text("Back to Job page")
         .click(function() {
-            aoi_feature_edit.complete_button_onClick("http://none");
+            window.location.href = aoi_feature_edit.job_absolute_url;
         });
-    for (var i=0; i<leaflet_layer_control.finish_options.length; i++) {
-        var opt = leaflet_layer_control.finish_options[i];
+    for (var i=0; i<aoi_feature_edit.transitions.length; i++) {
+        var opt = aoi_feature_edit.transitions[i];
         var $li;
 
         $li = $("<li>")
             .appendTo($ull);
         $("<a>")
             .appendTo($li)
-            .text(opt)
+            .text(opt['name'])
             .click(function(){
-                aoi_feature_edit.complete_button_onClick("http://nothing");
+                aoi_feature_edit.complete_button_onClick(opt['url']);
             });
 
-/*        if (opt=='awaitingreview'){
-            $li = $("<li>")
-                .appendTo($ull);
-            $("<a>")
-                .appendTo($li)
-                .text("Submit for Review")
-                .click(function(){
-                    aoi_feature_edit.complete_button_onClick(aoi_feature_edit.awaitingreview_status_url);
-                });
-        } else if (opt=='unassigned'){
-            $li = $("<li>")
-                .appendTo($ull);
-            $("<a>")
-                .appendTo($li)
-                .text("Return for further analysis")
-                .click(function(){
-                    aoi_feature_edit.complete_button_onClick(aoi_feature_edit.unassigned_status_url);
-                });
-        } else if (opt=='completed'){
-            $li = $("<li>")
-                .appendTo($ull);
-            $("<a>")
-                .appendTo($li)
-                .text("Certify as complete")
-                .click(function(){
-                    aoi_feature_edit.complete_button_onClick(aoi_feature_edit.completed_status_url);
-                });
-        } else {
-            //Unrecognized input
-        }*/
+
     }
     $div.dropdown();
 
@@ -1765,7 +1736,7 @@ aoi_feature_edit.buildDropdownMenu = function() {
 aoi_feature_edit.complete_button_onClick = function(url) {
     var data = {"feature_ids":feature_manager.featuresInWorkcellAsIds()};
     $.ajax({
-        type: "POST",
+        type: "PUT",
         data: data,
         url: url || aoi_feature_edit.awaitingreview_status_url,
         dataType: "json",

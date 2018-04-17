@@ -350,7 +350,8 @@ class CreateFeaturesView(UserAllowedMixin, DetailView):
         cv['layers_on_map'] = json.dumps(layers)
         cv['base_layer'] = json.dumps(self.object.job.base_layer_object())
         cv['state'] = self.object.job.workflow.states.filter(name=kwargs['object'].status).first()
-        cv['transitions'] = [{'name':str(x['name']), 'id':x['id']} for x in cv['state'].transitions_from.values('name','id')]
+        cv['transitions'] = [{'name':str(x['name']), 'url':str(reverse('aoi-transition', args=[self.object.id, x['id']]))}
+            for x in cv['state'].transitions_from.values('name','id')]
 
         Comment(user=cv['aoi'].analyst, aoi=cv['aoi'], text="Workcell opened").save()
         return cv
@@ -865,7 +866,7 @@ class ChangeAOIStatus(View):
             return HttpResponse(json.dumps(error), status=error.get('error'))
 
 
-class TransitionAOIStatus(View):
+class TransitionAOI(View):
     model = AOI
     http_method_names = ['put','get']
 
@@ -873,12 +874,14 @@ class TransitionAOIStatus(View):
         pass
 
     def put(self, request, **kwargs):
-        aoi = get_object_or_404(AOI, id=self.kwargs.get('pk'))
-        transition = get_object_or_404(Transition, id=self.kwargs.get('id))
+        aoi = get_object_or_404(AOI, pk=self.kwargs.get('pk'))
+        transition = get_object_or_404(Transition, id=self.kwargs.get('id'))
 
         # TODO: ensure user has permission to execute this transition
-        aoi.state = transition.to_state
-        aoi.save
+        aoi.status = transition.to_state.name
+        aoi.save()
+
+        return HttpResponse(json.dumps({aoi.id: aoi.status}, content_type="application/json"))
 
 
 class PrioritizeWorkcells(TemplateView):

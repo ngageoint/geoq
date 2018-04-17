@@ -78,12 +78,6 @@
         aoi_feature_edit.unassigned_status_url = "{% url 'aoi-update-status' object.id 'Unassigned' %}";
         aoi_feature_edit.completed_status_url = "{% url 'aoi-update-status' object.id 'Completed' %}";
 
-//        leaflet_layer_control.finish_options.push('awaitingreview');
-//        {% if request.user in reviewers %}
-//            leaflet_layer_control.finish_options.push('unassigned');
-//            leaflet_layer_control.finish_options.push('completed');
-//        {% endif %}
-
         aoi_feature_edit.job_absolute_url = "{{ object.job.get_absolute_url }}";
         aoi_feature_edit.job_name = "{{ object.job.name }}";
         aoi_feature_edit.aoi_id = "{{ object.id }}";
@@ -117,9 +111,6 @@
         aoi_feature_edit.static_root = "{% static '/' %}";
         aoi_feature_edit.help_url = "{% url 'help_page' %}";
         aoi_feature_edit.transitions = {{ transitions|safe }};
-        _.each( aoi_feature_edit.transitions, function(t) {
-            leaflet_layer_control.finish_options.push(t['name']);
-        });
 
         {% if 'user_accepted_terms' in request.base_perms %}aoi_feature_edit.user_accepted_tems = true;{% endif %}
         aoi_feature_edit.terms_acceptance_url = "{% url 'accept_terms_link' %}";
