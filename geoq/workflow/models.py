@@ -401,18 +401,20 @@ class Workflow(models.Model):
         #    # throw some error
         start = self.states.filter(is_start_state=True).first()
         last = self.states.filter(is_end_state=True).first()
-        return self.find_path(start,last,[])
+        return self.bfs(start)
 
-    def find_path(self,start,end,wpath):
-        wpath = wpath + [start]
-        if start == end:
-            return wpath
-        for t in start.transitions_from.all():
-            node = t.to_state
-            if node not in wpath:
-                newpath = self.find_path(node,end,wpath)
-                if newpath: return newpath
-        return None
+    def bfs(self,start):
+        visited, queue = set(), [start]
+        out = []
+        while queue:
+            vertex = queue.pop(0)
+            if vertex not in visited:
+                visited.add(vertex)
+                out.append(vertex)
+                transitions = vertex.transitions_from.all()
+                tstates = set([s.to_state for s in transitions])
+                queue.extend(tstates - visited)
+        return out
 
     def __unicode__(self):
         return self.name
