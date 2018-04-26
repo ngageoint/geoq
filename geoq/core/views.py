@@ -1210,6 +1210,15 @@ def list_group_users(request, group_pk):
     return HttpResponse(json.dumps(list(users)), content_type="application/json")
 
 
+def feed_overall(request):
+    pass
+    #group = get_object_or_404(Group, pk=group_pk)
+    #users = group.user_set.values('username', 'id', 'first_name', 'last_name').order_by('username')
+
+    #return HttpResponse(json.dumps(list(users)), content_type="application/json")
+
+
+
 @login_required
 def update_job_data(request, *args, **kwargs):
     aoi_pk = kwargs.get('pk')
