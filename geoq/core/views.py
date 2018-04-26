@@ -31,6 +31,7 @@ from django.utils.dateparse import parse_datetime
 
 from models import Project, Job, AOI, Comment, AssigneeType, Organization, AOITimer
 from geoq.maps.models import *
+from geoq.workflow.models import Transition
 from utils import send_assignment_email, increment_metric
 from geoq.training.models import Training
 
@@ -348,6 +349,9 @@ class CreateFeaturesView(UserAllowedMixin, DetailView):
         cv['user_custom_params'] = {}
         cv['layers_on_map'] = json.dumps(layers)
         cv['base_layer'] = json.dumps(self.object.job.base_layer_object())
+        cv['state'] = self.object.job.workflow.states.filter(name=kwargs['object'].status).first()
+        cv['transitions'] = [{'name':str(x['name']), 'url':str(reverse('aoi-transition', args=[self.object.id, x['id']]))}
+            for x in cv['state'].transitions_from.values('name','id')]
 
         Comment(user=cv['aoi'].analyst, aoi=cv['aoi'], text="Workcell opened").save()
         return cv
@@ -384,8 +388,8 @@ class JobDetailedListView(ListView):
         user_id = self.request.user.id
         job_set = AOI.objects.filter(job=self.kwargs.get('pk')).order_by('id')
 
-        if status and (status in [value.lower() for value in AOI.STATUS_VALUES]):
-            job_set = job_set.filter(status__iexact=status)
+#        if status and (status in [value.lower() for value in AOI.STATUS_VALUES]):
+#            job_set = job_set.filter(status__iexact=status)
 
         if self.request.user.has_perm('core.assign_workcells'):
             self.queryset = job_set.filter(Q(analyst_id=user_id) | Q(assignee_id=user_id))
@@ -414,8 +418,12 @@ class JobDetailedListView(ListView):
     def get_context_data(self, **kwargs):
         cv = super(JobDetailedListView, self).get_context_data(**kwargs)
         job_id = self.kwargs.get('pk')
+        job = Job.objects.get(id=job_id)
+
         cv['object'] = get_object_or_404(self.model, pk=job_id)
-        cv['statuses'] = AOI.STATUS_VALUES if self.request.user.has_perm('core.assign_workcells') else AOI.STATUS_VALUES[2:]
+        cv['workpath'] = cv['object'].workflow.path()
+        STATE_VALUES = [i.name for i in cv['workpath']]
+        cv['statuses'] = STATE_VALUES if self.request.user.has_perm('core.assign_workcells') else STATE_VALUES[2:]
         cv['active_status'] = self.status
         cv['workcell_count'] = cv['object'].aoi_count()
         cv['metrics'] = self.metrics
@@ -856,6 +864,24 @@ class ChangeAOIStatus(View):
             error = dict(error=403,
                          details="User not allowed to modify the status of this AOI.",)
             return HttpResponse(json.dumps(error), status=error.get('error'))
+
+
+class TransitionAOI(View):
+    model = AOI
+    http_method_names = ['put','get']
+
+    def get_context_data(self, **kwargs):
+        pass
+
+    def put(self, request, **kwargs):
+        aoi = get_object_or_404(AOI, pk=self.kwargs.get('pk'))
+        transition = get_object_or_404(Transition, id=self.kwargs.get('id'))
+
+        # TODO: ensure user has permission to execute this transition
+        aoi.status = transition.to_state.name
+        aoi.save()
+
+        return HttpResponse(json.dumps({aoi.id: aoi.status}, content_type="application/json"))
 
 
 class PrioritizeWorkcells(TemplateView):

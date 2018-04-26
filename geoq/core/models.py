@@ -169,7 +169,7 @@ class Job(GeoQBase, Assignment):
     analysts = models.ManyToManyField(User, blank=True, related_name="analysts")
     teams = models.ManyToManyField(Group, blank=True, related_name="teams")
     reviewers = models.ManyToManyField(User, blank=True, related_name="reviewers")
-    progress = models.SmallIntegerField(blank=True)
+    progress = models.SmallIntegerField(blank=True, null=True)
     project = models.ForeignKey(Project, related_name="project")
 
     grid = models.CharField(max_length=5, choices=GRID_SERVICE_CHOICES, default=GRID_SERVICE_VALUES[0],
@@ -179,6 +179,7 @@ class Job(GeoQBase, Assignment):
     editable_layer = models.ForeignKey( 'maps.EditableMapLayer', blank=True, null=True)
 
     map = models.ForeignKey('maps.Map', blank=True, null=True)
+    workflow = models.ForeignKey('workflow.Workflow', blank=True, null=True, help_text='Workflow to be used for job')
     feature_types = models.ManyToManyField('maps.FeatureType', blank=True)
     required_courses = models.ManyToManyField(Training, blank=True, help_text="Courses that must be passed to open these cells")
 
@@ -215,7 +216,8 @@ class Job(GeoQBase, Assignment):
 
     @property
     def aoi_counts_html(self):
-        count = OrderedDict([(i,0) for i in STATUS_VALUES_LIST])
+        STATE_VALUES = [i.name for i in self.workflow.path()]
+        count = OrderedDict([(i,0) for i in STATE_VALUES])
         for cell in AOI.objects.filter(job__id=self.id):
             if cell.status in count:
                 count[cell.status] += 1
@@ -240,6 +242,7 @@ class Job(GeoQBase, Assignment):
 
     def features_table_html(self):
         counts = {}
+        STATE_VALUES = [i.name for i in self.workflow.path()]
 
         for feature_item in self.feature_set.all():
             status = str(feature_item.status)
@@ -259,7 +262,7 @@ class Job(GeoQBase, Assignment):
                 header = header + "<th><b>" + cgi.escape(featuretype) + "</b></th>"
             output += "<tr>" + header + "</tr>"
 
-            for status in STATUS_VALUES_LIST:
+            for status in STATE_VALUES:
                 status = str(status)
                 row = "<td><b>" + status + "</b></td>"
                 for (featuretype, status_obj) in counts.iteritems():
@@ -365,9 +368,6 @@ class AOI(GeoQBase, Assignment):
     Low-level organizational object. Now (6/1/14) referred to as a 'Workcell'
     """
 
-    STATUS_VALUES = STATUS_VALUES_LIST
-    STATUS_CHOICES = [(choice, choice) for choice in STATUS_VALUES]
-
     PRIORITIES = [(n, n) for n in range(1, 6)]
 
     analyst = models.ForeignKey(User, blank=True, null=True, help_text="User assigned to work the workcell.")
@@ -377,7 +377,7 @@ class AOI(GeoQBase, Assignment):
     objects = AOIManager()
     polygon = models.MultiPolygonField()
     priority = models.SmallIntegerField(choices=PRIORITIES, default=5)
-    status = models.CharField(max_length=15, choices=STATUS_CHOICES, default='Unassigned')
+    status = models.CharField(max_length=15, default='Unassigned')
 
     class Meta:
         verbose_name = 'Area of Interest'
@@ -595,7 +595,7 @@ class AOITimer(models.Model):
     """
     user = models.ForeignKey(User, blank=False, help_text="User who worked on workcell")
     aoi = models.ForeignKey(AOI, blank=False, help_text="Workcell that was changed")
-    status = models.CharField(max_length=20, blank=False, choices=AOI.STATUS_CHOICES, default='Unassigned')
+    status = models.CharField(max_length=20, blank=False, default='Unassigned')
     started_at = models.DateTimeField(auto_now_add=False, blank=False)
     completed_at = models.DateTimeField(auto_now_add=False, blank=True, null=True)
 
@@ -625,7 +625,3 @@ class AOITimer(models.Model):
             return False
 
         return self.completed_at - self.started_at > timedelta(minutes=1)
-
-
-
-

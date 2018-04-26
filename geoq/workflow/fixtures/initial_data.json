@@ -1,0 +1,225 @@
+[
+{
+    "model": "workflow.role",
+    "pk": 1,
+    "fields": {
+        "name": "admin",
+        "description": "administrator of workflow"
+    }
+},
+{
+    "model": "workflow.role",
+    "pk": 2,
+    "fields": {
+        "name": "analyst",
+        "description": "analyzes workcell"
+    }
+},
+{
+    "model": "workflow.role",
+    "pk": 3,
+    "fields": {
+        "name": "reviewer",
+        "description": "provides QA/QC"
+    }
+},
+{
+    "model": "workflow.workflow",
+    "pk": 1,
+    "fields": {
+        "name": "Standard",
+        "slug": "standard",
+        "description": "Standard GeoQ workflow",
+        "status": 1,
+        "created_on": "2018-04-01T23:09:19.334Z",
+        "created_by": 2,
+        "cloned_from": null
+    }
+},
+{
+    "model": "workflow.state",
+    "pk": 1,
+    "fields": {
+        "name": "Unassigned",
+        "description": "Unassigned workcell",
+        "is_start_state": true,
+        "is_end_state": false,
+        "workflow": 1,
+        "estimation_value": 1,
+        "estimation_unit": 3600,
+        "slug": "unassigned",
+        "color": "{\"weight\":\"2\",\"color\":\"green\",\"fillColor\":\"green\",\"fillOpacity\":\".2\",\"opacity\":\"1\"}",
+        "roles": [
+            1
+        ]
+    }
+},
+{
+    "model": "workflow.state",
+    "pk": 2,
+    "fields": {
+        "name": "Assigned",
+        "description": "Workcell has been assigned to an analyst",
+        "is_start_state": false,
+        "is_end_state": false,
+        "workflow": 1,
+        "estimation_value": 1,
+        "estimation_unit": 86400,
+        "slug": "assigned",
+        "color": "{\"weight\":\"2\",\"color\":\"black\",\"fillColor\":\"gray\",\"fillOpacity\":\".9\",\"opacity\":\"1\"}",
+        "roles": [
+            1,
+            2,
+            3
+        ]
+    }
+},
+{
+    "model": "workflow.state",
+    "pk": 3,
+    "fields": {
+        "name": "In work",
+        "description": "Workcell is being analyzed",
+        "is_start_state": false,
+        "is_end_state": false,
+        "workflow": 1,
+        "estimation_value": 6,
+        "estimation_unit": 3600,
+        "slug": "in-work",
+        "color": "{\"weight\":\"2\",\"color\":\"green\",\"fillColor\":\"#cf8601\",\"fillOpacity\":\".3\",\"opacity\":\"1\"}",
+        "roles": [
+            1,
+            2,
+            3
+        ]
+    }
+},
+{
+    "model": "workflow.state",
+    "pk": 4,
+    "fields": {
+        "name": "Awaiting review",
+        "description": "Workcell has been analyzed and is waiting for review",
+        "is_start_state": false,
+        "is_end_state": false,
+        "workflow": 1,
+        "estimation_value": 1,
+        "estimation_unit": 3600,
+        "slug": "awaiting-review",
+        "color": "{\"weight\":\"2\",\"color\":\"red\",\"fillColor\":\"#cf6201\",\"fillOpacity\":\".5\",\"opacity\":\"1\"}",
+        "roles": [
+            1,
+            3
+        ]
+    }
+},
+{
+    "model": "workflow.state",
+    "pk": 5,
+    "fields": {
+        "name": "In review",
+        "description": "Workcell analysis is being reviewed",
+        "is_start_state": false,
+        "is_end_state": false,
+        "workflow": 1,
+        "estimation_value": 1,
+        "estimation_unit": 3600,
+        "slug": "in-review",
+        "color": "{\"weight\":\"2\",\"color\":\"red\",\"fillColor\":\"#cf4001\",\"fillOpacity\":\".7\",\"opacity\":\"1\"}",
+        "roles": [
+            1,
+            3
+        ]
+    }
+},
+{
+    "model": "workflow.state",
+    "pk": 6,
+    "fields": {
+        "name": "Completed",
+        "description": "",
+        "is_start_state": false,
+        "is_end_state": true,
+        "workflow": 1,
+        "estimation_value": 1,
+        "estimation_unit": 3600,
+        "slug": "completed",
+        "color": "{\"weight\":\"2\",\"color\":\"red\",\"fillColor\":\"#cf0101\",\"fillOpacity\":\".9\",\"opacity\":\"1\"}",
+        "roles": [
+            1,
+            3
+        ]
+    }
+},
+{
+    "model": "workflow.transition",
+    "pk": 1,
+    "fields": {
+        "name": "assign",
+        "workflow": 1,
+        "from_state": 1,
+        "to_state": 2,
+        "roles": [
+            1
+        ]
+    }
+},
+{
+    "model": "workflow.transition",
+    "pk": 2,
+    "fields": {
+        "name": "work",
+        "workflow": 1,
+        "from_state": 2,
+        "to_state": 3,
+        "roles": [
+            1,
+            2,
+            3
+        ]
+    }
+},
+{
+    "model": "workflow.transition",
+    "pk": 3,
+    "fields": {
+        "name": "finish",
+        "workflow": 1,
+        "from_state": 3,
+        "to_state": 4,
+        "roles": [
+            1,
+            2,
+            3
+        ]
+    }
+},
+{
+    "model": "workflow.transition",
+    "pk": 4,
+    "fields": {
+        "name": "review",
+        "workflow": 1,
+        "from_state": 4,
+        "to_state": 5,
+        "roles": [
+            1,
+            3
+        ]
+    }
+},
+{
+    "model": "workflow.transition",
+    "pk": 5,
+    "fields": {
+        "name": "complete",
+        "workflow": 1,
+        "from_state": 5,
+        "to_state": 6,
+        "roles": [
+            1,
+            3
+        ]
+    }
+}
+]

@@ -25,7 +25,7 @@ class StateAdmin(admin.ModelAdmin):
     """
     State administration
     """
-    list_display = ['name', 'description']
+    list_display = ['name', 'description', 'color']
     search_fields = ['name', 'description']
     save_on_top = True
 

@@ -15,7 +15,6 @@ leaflet_layer_control.$drawer_tray = undefined;
 leaflet_layer_control.$tree = undefined;
 leaflet_layer_control.accordion_sections = [];
 leaflet_layer_control.$feature_info = undefined;
-leaflet_layer_control.finish_options = [];
 leaflet_layer_control.hidden_panels = [];
 
 leaflet_layer_control.init = function(){
