@@ -12,7 +12,7 @@ services:
     image: centos7
     build: .
     volumes:
-      - /usr/local/src/geoq/geoq:/usr/src/geoq
+      - /work/drms/git/geoq_local:/usr/src/geoq
     ports:
       - "8000:8000"
     command: sh -c 'python app.py'
