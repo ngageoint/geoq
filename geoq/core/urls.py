@@ -129,6 +129,7 @@ urlpatterns = [
     url(r'^api/jobs/(?P<job_pk>\d+)/users/?$', list_users, name='list_users'),
     url(r'^api/jobs/(?P<job_pk>\d+)/groups/?$', list_groups, name='list_groups'),
     url(r'^api/group/(?P<group_pk>\d+)/users/?$', list_group_users, name='list_group_users'),
+    #url(r'^api/feed/overall$', name='feed_overall'),
     url(r'^api/geo/usng/?$', usng, name='usng'),
     url(r'^api/geo/mgrs/?$', mgrs, name='mgrs'),
     url(r'^api/geo/ipaws/?$', ipaws, name='ipaws'),
