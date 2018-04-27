@@ -1450,7 +1450,18 @@ class GridGeoJSON(ListView):
         geojson = job.grid_geoJSON()
 
         return HttpResponse(geojson, content_type="application/json", status=200)
-    
+
+
+class GridAtomFeed(ListView):
+    model = Job
+
+    def get(self, request, *args, **kwargs):
+        job = get_object_or_404(Job, pk=self.kwargs.get('pk'))
+        atom = job.grid_atom()
+
+        return HttpResponse(atom, content_type="application/atom+xml", status=200)
+
+
 class TeamListView(ListView):
     model = Group
     def get_queryset(self):

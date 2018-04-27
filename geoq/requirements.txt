@@ -42,3 +42,4 @@ sqlparse==0.2.3
 statsd==3.2.1
 webcolors==1.7
 wsgiref==0.1.2
+feedgen==0.6.1

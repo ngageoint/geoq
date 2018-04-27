@@ -21,6 +21,7 @@ from collections import defaultdict, OrderedDict
 from django.db.models import Q
 from geoq.training.models import Training
 from geoq.core.utils import clean_dumps
+from feedgen.feed import FeedGenerator
 
 TRUE_FALSE = [(0, 'False'), (1, 'True')]
 STATUS_VALUES_LIST = ['Unassigned', 'Assigned', 'In work', 'Awaiting review', 'In review', 'Completed']
@@ -335,6 +336,41 @@ class Job(GeoQBase, Assignment):
         geojson["features"] = [json.loads(aoi.grid_geoJSON()) for aoi in self.aois.all()]
 
         return clean_dumps(geojson) if as_json else geojson
+
+    def grid_atom(self, as_atom=True):
+        """
+        Return Atom feed of grid for export
+        """
+
+        geojson = OrderedDict()
+        geojson["type"] = "FeatureCollection"
+        geojson["features"] = [json.loads(aoi.grid_geoJSON()) for aoi in self.aois.all()]
+
+        #return clean_dumps(geojson) if as_atom else geojson
+
+        fg = FeedGenerator()
+        fg.id('http://www.mitre.org/drms/')
+        fg.title('DRMS Atom Feed')
+        fg.author({'name': 'DRMS', 'email': 'drms-do-not-reply@mitre.org'})
+        fg.link(href='http://www.mitre.org/', rel='alternate')
+        #fg.logo('http://ex.com/logo.jpg')
+        #fg.subtitle('This is a cool feed!')
+        #fg.link(href='http://larskiesow.de/test.atom', rel='self')
+        fg.language('en')
+
+        fe = fg.add_entry()
+        fe.id('http://www.mitre.org/drms/')
+        fe.title('The First Feed Item')
+        fe.link(href="http://www.mitre.org/drms/")
+
+        atom = fg.atom_str(pretty=True)  # Get the ATOM feed as string
+        #rssfeed = fg.rss_str(pretty=True)  # Get the RSS feed as string
+        #fg.atom_file('atom.xml')  # Write the ATOM feed to a file
+        #fg.rss_file('rss.xml')  # Write the RSS feed to a file
+
+
+
+        return atom
 
     def base_layer_object(self):
         """

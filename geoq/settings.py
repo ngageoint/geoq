@@ -240,6 +240,7 @@ INSTALLED_APPS = [
     'debug_toolbar',
     'httpproxy',
     'bootstrap3',
+    #'feedgen',
 
     'geoq.feedback.apps.FeedbackConfig',
     'geoq.accounts.apps.AccountsConfig',
