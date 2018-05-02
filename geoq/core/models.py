@@ -358,10 +358,25 @@ class Job(GeoQBase, Assignment):
         #fg.link(href='http://larskiesow.de/test.atom', rel='self')
         fg.language('en')
 
-        fe = fg.add_entry()
-        fe.id('http://www.mitre.org/drms/')
-        fe.title('The First Feed Item')
-        fe.link(href="http://www.mitre.org/drms/")
+        # all_aois = self.aois.all()
+        # all_aois_features = all_aois["features"]
+
+        all_aois_features = geojson["features"]
+
+        for i in all_aois_features:
+            fe = fg.add_entry()
+            fe.id('http://www.mitre.org/drms/')
+            ip = i["properties"]
+            title = "feature id {} -- status: {}, priority: {}".format(ip["id"], ip["status"], ip["priority"])
+            fe.title(title)
+            fe.link(href="http://www.mitre.org/drms/")
+
+        # temp2_data = ["feature id {} -- status: ${i.properties.status}, priority: ${i.properties.priority}".format(i.properties.id, i.properties.status, i.properties.priority) for i in temp1_data["features"]]
+        #
+        # fe = fg.add_entry()
+        # fe.id('http://www.mitre.org/drms/')
+        # fe.title('The First Feed Item')
+        # fe.link(href="http://www.mitre.org/drms/")
 
         atom = fg.atom_str(pretty=True)  # Get the ATOM feed as string
         #rssfeed = fg.rss_str(pretty=True)  # Get the RSS feed as string
