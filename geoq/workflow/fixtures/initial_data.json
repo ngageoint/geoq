@@ -37,6 +37,19 @@
     }
 },
 {
+    "model": "workflow.workflow",
+    "pk": 2,
+    "fields": {
+        "name": "Monitor",
+        "slug": "monitor",
+        "description": "This workflow is based on a scenario where analysts may be required to monitor a number of workcells, perform a function when alerted, then go back to a monitor state",
+        "status": 1,
+        "created_on": "2018-04-19T17:08:40.600Z",
+        "created_by": 2,
+        "cloned_from": null
+    }
+},
+{
     "model": "workflow.state",
     "pk": 1,
     "fields": {
@@ -48,7 +61,7 @@
         "estimation_value": 1,
         "estimation_unit": 3600,
         "slug": "unassigned",
-        "color": "{\"weight\":\"2\",\"color\":\"green\",\"fillColor\":\"green\",\"fillOpacity\":\".2\",\"opacity\":\"1\"}",
+        "color": "{\"color\":\"green\",\"opacity\":\"1\",\"fillColor\":\"green\",\"weight\":\"2\",\"fillOpacity\":\".2\"}",
         "roles": [
             1
         ]
@@ -66,7 +79,7 @@
         "estimation_value": 1,
         "estimation_unit": 86400,
         "slug": "assigned",
-        "color": "{\"weight\":\"2\",\"color\":\"black\",\"fillColor\":\"gray\",\"fillOpacity\":\".9\",\"opacity\":\"1\"}",
+        "color": "{\"color\":\"black\",\"opacity\":\"1\",\"fillColor\":\"gray\",\"weight\":\"2\",\"fillOpacity\":\".9\"}",
         "roles": [
             1,
             2,
@@ -86,7 +99,7 @@
         "estimation_value": 6,
         "estimation_unit": 3600,
         "slug": "in-work",
-        "color": "{\"weight\":\"2\",\"color\":\"green\",\"fillColor\":\"#cf8601\",\"fillOpacity\":\".3\",\"opacity\":\"1\"}",
+        "color": "{\"color\":\"green\",\"opacity\":\"1\",\"fillColor\":\"#cf8601\",\"weight\":\"2\",\"fillOpacity\":\".3\"}",
         "roles": [
             1,
             2,
@@ -106,7 +119,7 @@
         "estimation_value": 1,
         "estimation_unit": 3600,
         "slug": "awaiting-review",
-        "color": "{\"weight\":\"2\",\"color\":\"red\",\"fillColor\":\"#cf6201\",\"fillOpacity\":\".5\",\"opacity\":\"1\"}",
+        "color": "{\"color\":\"red\",\"opacity\":\"1\",\"fillColor\":\"#cf6201\",\"weight\":\"2\",\"fillOpacity\":\".5\"}",
         "roles": [
             1,
             3
@@ -125,7 +138,7 @@
         "estimation_value": 1,
         "estimation_unit": 3600,
         "slug": "in-review",
-        "color": "{\"weight\":\"2\",\"color\":\"red\",\"fillColor\":\"#cf4001\",\"fillOpacity\":\".7\",\"opacity\":\"1\"}",
+        "color": "{\"color\":\"red\",\"opacity\":\"1\",\"fillColor\":\"#cf4001\",\"weight\":\"2\",\"fillOpacity\":\".7\"}",
         "roles": [
             1,
             3
@@ -144,9 +157,107 @@
         "estimation_value": 1,
         "estimation_unit": 3600,
         "slug": "completed",
-        "color": "{\"weight\":\"2\",\"color\":\"red\",\"fillColor\":\"#cf0101\",\"fillOpacity\":\".9\",\"opacity\":\"1\"}",
+        "color": "{\"color\":\"red\",\"opacity\":\"1\",\"fillColor\":\"#cf0101\",\"weight\":\"2\",\"fillOpacity\":\".9\"}",
         "roles": [
             1,
+            3
+        ]
+    }
+},
+{
+    "model": "workflow.state",
+    "pk": 7,
+    "fields": {
+        "name": "Monitoring",
+        "description": "Watch a workcell for particular activities",
+        "is_start_state": false,
+        "is_end_state": false,
+        "workflow": 2,
+        "estimation_value": 1,
+        "estimation_unit": 86400,
+        "slug": "monitoring",
+        "color": "{\"color\":\"blue\",\"opacity\":\"1\",\"fillColor\":\"darkcyan\",\"weight\":\"2\",\"fillOpacity\":\".4\"}",
+        "roles": [
+            1,
+            2,
+            3
+        ]
+    }
+},
+{
+    "model": "workflow.state",
+    "pk": 8,
+    "fields": {
+        "name": "Unassigned",
+        "description": "unassigned",
+        "is_start_state": true,
+        "is_end_state": false,
+        "workflow": 2,
+        "estimation_value": 0,
+        "estimation_unit": 86400,
+        "slug": "unassigned",
+        "color": "{\"color\":\"green\",\"opacity\":\"1\",\"fillColor\":\"green\",\"weight\":\"2\",\"fillOpacity\":\".2\"}",
+        "roles": [
+            1
+        ]
+    }
+},
+{
+    "model": "workflow.state",
+    "pk": 9,
+    "fields": {
+        "name": "Assigned",
+        "description": "Workcell assigned to analyst",
+        "is_start_state": false,
+        "is_end_state": false,
+        "workflow": 2,
+        "estimation_value": 1,
+        "estimation_unit": 86400,
+        "slug": "assigned",
+        "color": "{\"color\":\"black\",\"opacity\":\"1\",\"fillColor\":\"gray\",\"weight\":\"2\",\"fillOpacity\":\".9\"}",
+        "roles": [
+            1,
+            2,
+            3
+        ]
+    }
+},
+{
+    "model": "workflow.state",
+    "pk": 10,
+    "fields": {
+        "name": "Alert",
+        "description": "Triggered by defined events within a workcell",
+        "is_start_state": false,
+        "is_end_state": false,
+        "workflow": 2,
+        "estimation_value": 1,
+        "estimation_unit": 86400,
+        "slug": "alert",
+        "color": "{\"color\":\"blue\",\"opacity\":\"1\",\"fillColor\":\"red\",\"weight\":\"2\",\"fillOpacity\":\".4\"}",
+        "roles": [
+            1,
+            2,
+            3
+        ]
+    }
+},
+{
+    "model": "workflow.state",
+    "pk": 11,
+    "fields": {
+        "name": "Completed",
+        "description": "Monitor workflow complete",
+        "is_start_state": false,
+        "is_end_state": true,
+        "workflow": 2,
+        "estimation_value": 0,
+        "estimation_unit": 86400,
+        "slug": "completed",
+        "color": "{\"color\":\"blue\",\"opacity\":\"1\",\"fillColor\":\"saddlebrown\",\"weight\":\"2\",\"fillOpacity\":\".4\"}",
+        "roles": [
+            1,
+            2,
             3
         ]
     }
@@ -155,7 +266,7 @@
     "model": "workflow.transition",
     "pk": 1,
     "fields": {
-        "name": "assign",
+        "name": "Assign to user",
         "workflow": 1,
         "from_state": 1,
         "to_state": 2,
@@ -168,7 +279,7 @@
     "model": "workflow.transition",
     "pk": 2,
     "fields": {
-        "name": "work",
+        "name": "Perform work",
         "workflow": 1,
         "from_state": 2,
         "to_state": 3,
@@ -183,7 +294,7 @@
     "model": "workflow.transition",
     "pk": 3,
     "fields": {
-        "name": "finish",
+        "name": "Submit for Review",
         "workflow": 1,
         "from_state": 3,
         "to_state": 4,
@@ -198,7 +309,7 @@
     "model": "workflow.transition",
     "pk": 4,
     "fields": {
-        "name": "review",
+        "name": "Start review",
         "workflow": 1,
         "from_state": 4,
         "to_state": 5,
@@ -212,12 +323,85 @@
     "model": "workflow.transition",
     "pk": 5,
     "fields": {
-        "name": "complete",
+        "name": "Mark complete",
         "workflow": 1,
         "from_state": 5,
         "to_state": 6,
         "roles": [
             1,
+            3
+        ]
+    }
+},
+{
+    "model": "workflow.transition",
+    "pk": 6,
+    "fields": {
+        "name": "Assign to user",
+        "workflow": 2,
+        "from_state": 8,
+        "to_state": 9,
+        "roles": [
+            1
+        ]
+    }
+},
+{
+    "model": "workflow.transition",
+    "pk": 7,
+    "fields": {
+        "name": "Start Monitoring",
+        "workflow": 2,
+        "from_state": 9,
+        "to_state": 7,
+        "roles": [
+            1,
+            2,
+            3
+        ]
+    }
+},
+{
+    "model": "workflow.transition",
+    "pk": 8,
+    "fields": {
+        "name": "Examine Alert",
+        "workflow": 2,
+        "from_state": 7,
+        "to_state": 10,
+        "roles": [
+            1,
+            2,
+            3
+        ]
+    }
+},
+{
+    "model": "workflow.transition",
+    "pk": 9,
+    "fields": {
+        "name": "Return to Monitoring",
+        "workflow": 2,
+        "from_state": 10,
+        "to_state": 7,
+        "roles": [
+            1,
+            2,
+            3
+        ]
+    }
+},
+{
+    "model": "workflow.transition",
+    "pk": 10,
+    "fields": {
+        "name": "Finish Monitoring",
+        "workflow": 2,
+        "from_state": 7,
+        "to_state": 11,
+        "roles": [
+            1,
+            2,
             3
         ]
     }
