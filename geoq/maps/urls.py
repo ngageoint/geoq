@@ -14,16 +14,24 @@ urlpatterns = [
 
     url(r'^feature-types/?$',
         FeatureTypeListView.as_view(queryset=FeatureType.objects.all()),
-                         name='feature-type-list'),
+        name='feature-type-list'),
 
     url(r'^features/create/?$',
         login_required(CreateFeatures.as_view()),
         name='feature-create'),
 
+    url(r'^features/list/?$',
+        login_required(CreateFeatures.as_view()),
+        name='feature-list'),
+
     url(r'^features/edit/?$',
         login_required(EditFeatures.as_view()),
         name='feature-edit'),
-    
+
+    # url(r'^features/read/?$',
+    #     login_required(ReadFeatures.as_view()),
+    #     name='feature-read'),
+
     url(r'^feature-types/create/?',
         login_required(CreateView.as_view(template_name='maps/crispy_form.html', form_class=FeatureTypeForm)),
         name='feature-type-create'),

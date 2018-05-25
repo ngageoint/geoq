@@ -8,6 +8,7 @@ from django.contrib.auth.decorators import login_required
 from django.views.generic import CreateView, TemplateView, ListView, UpdateView
 from django.views.i18n import javascript_catalog
 from forms import AOIForm, JobForm, ProjectForm, TeamForm, ExportJobForm
+from geoq.core.atom2_view import JobAtom
 from models import AOI, Project, Job
 from proxies import proxy_to
 from views import *
@@ -133,6 +134,8 @@ urlpatterns = [
     url(r'^api/jobs/(?P<job_pk>\d+)/groups/?$', list_groups, name='list_groups'),
     url(r'^api/group/(?P<group_pk>\d+)/users/?$', list_group_users, name='list_group_users'),
     url(r'^api/feed/job[s ]?/(?P<pk>\d+)$', GridAtomFeed.as_view(), name='feed_overall'),
+    #url(r'^api/feed2/job[s ]?/(?P<pk>\d+)$', GridAtomFeed.as_view(), name='feed_overall'),
+    url(r'^api/feed2/job[s ]?/(?P<pk>\d+).atom$', JobAtom.as_view(), name='atom-job'),
     url(r'^api/geo/usng/?$', usng, name='usng'),
     url(r'^api/geo/mgrs/?$', mgrs, name='mgrs'),
     url(r'^api/geo/ipaws/?$', ipaws, name='ipaws'),
