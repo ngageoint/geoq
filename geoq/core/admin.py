@@ -8,7 +8,7 @@ from django.shortcuts import render
 from django.contrib.gis import admin
 from django.http import HttpResponseRedirect
 from django import forms
-from models import Project, Job, AOI, Setting, Organization, AOITimer
+from models import Project, Job, AOI, Setting, Organization, AOITimer, Responder
 from guardian.admin import GuardedModelAdmin
 
 
@@ -75,3 +75,8 @@ class AOITimerAdmin(admin.ModelAdmin):
 
 
 admin.site.register(Organization)
+
+@admin.register(Responder)
+class ResponderAdmin(admin.ModelAdmin):
+    list_display = ('name', 'contact_instructions', 'in_field','last_seen', 'longitude', 'latitude')
+    fields = ('name', 'contact_instructions', 'in_field','last_seen', 'longitude', 'latitude')

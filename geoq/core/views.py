@@ -8,6 +8,7 @@ import requests
 import pytz
 import logging
 import os
+import decimal
 
 
 from django.core.cache import cache
@@ -18,6 +19,7 @@ from django.contrib.contenttypes.models import ContentType
 from django.core.urlresolvers import reverse, reverse_lazy
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.db.models import Q
+from django.views.decorators.csrf import csrf_exempt
 # from django.forms.util import ValidationError
 from django.http import Http404, HttpResponse, HttpResponseRedirect, HttpResponseForbidden
 from django.shortcuts import get_object_or_404, redirect, render
@@ -29,7 +31,7 @@ import distutils
 from datetime import datetime, timedelta
 from django.utils.dateparse import parse_datetime
 
-from models import Project, Job, AOI, Comment, AssigneeType, Organization, AOITimer
+from models import Project, Job, AOI, Comment, AssigneeType, Organization, AOITimer, Responder
 from geoq.maps.models import *
 from geoq.workflow.models import Transition
 from utils import send_assignment_email, increment_metric
@@ -1525,6 +1527,50 @@ class TeamDelete(DeleteView):
     def get_success_url(self):
         return reverse("team-list")
 
+@require_http_methods(["GET"])
+@csrf_exempt
+def responders_geojson(request, *args, **kwargs):
+        if request.GET.get("include_inactive", "False") == "True":
+            responders = Responder.objects.all()
+        else:
+            responders = Responder.objects.filter(in_field=True)
+
+        responder_features = [];
+        for responder in responders:
+            responder_features.append(responder.geoJSON(as_json=False))
+        geojson = OrderedDict()
+        geojson["type"] = "FeatureCollection"
+        geojson["features"] = responder_features
+
+        features_json = clean_dumps(geojson, indent=2)
+
+        return HttpResponse(features_json, content_type="application/json", status=200)
+
+@require_http_methods(["POST"])
+@csrf_exempt
+def update_responder(request, *args, **kwargs):
+
+    idstr = request.POST.get("id", None)
+    if idstr is None:
+        responder = Responder()
+    else:
+        rid = int(idstr)
+        responder = get_object_or_404(Responder, pk=rid)
+
+    fields = ["latitude", "longitude", "in_field","contact_instructions","last_seen" ]
+    for field in fields:
+        val = request.POST.get(field, None)
+        if val is None:
+            continue
+        else:
+            setattr(responder, field, val)
+    responder.save()
+    # lat = request.POST["latitude"]
+    # lon = request.POST["longitude"]
+    # in_field = request.POST["in_field"]
+    # contact_instructions = request.POST["contact_instructions"]
+    # last_seen = request.POST["last_seen"]
+    return HttpResponse(responder.geoJSON(as_json=True), content_type="application/json", status=200)
 
 
 

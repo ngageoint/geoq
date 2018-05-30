@@ -169,5 +169,10 @@ urlpatterns = [
             name='team-update'),
     url(r'^team/delete/(?P<pk>\d+)/?$',
         login_required(TeamDelete.as_view()),
-        name='team-delete')
+        name='team-delete'),
+
+    #RESPONDERS
+    url(r'^responders/geojson',responders_geojson, name="responders-list"),
+    url(r'^responder/update', update_responder, name='update-responder'),
+
 ]

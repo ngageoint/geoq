@@ -625,3 +625,33 @@ class AOITimer(models.Model):
             return False
 
         return self.completed_at - self.started_at > timedelta(minutes=1)
+
+class Responder(models.Model):
+    name = models.CharField(max_length=250)
+    contact_instructions = models.CharField(max_length=1024)
+    in_field = models.BooleanField()
+    last_seen = models.DateTimeField(null=True)
+    longitude = models.DecimalField(max_digits=10, decimal_places=7)
+    latitude = models.DecimalField(max_digits=10, decimal_places=7)
+
+    def __unicode__(self):
+        return self.name
+
+    def geoJSON(self, as_json=True):
+        """
+        Returns geoJSON of the feature.
+        """
+        geojson = OrderedDict()
+        geojson["type"] = "Feature"
+        geojson["geometry"] = { "type": "Point", "coordinates": [self.longitude, self.latitude]}
+        # geojson["geometry"] = {"type": "Point", "coordinates": [self.point.x, self.point.y]}
+        geojson["properties"] = {
+            "id": self.id,
+            "name": self.name,
+            "contact_instructions": self.contact_instructions,
+            "in_field":  self.in_field,
+            "last_seen": self.last_seen
+        }
+
+        return clean_dumps(geojson) if as_json else geojson
+
