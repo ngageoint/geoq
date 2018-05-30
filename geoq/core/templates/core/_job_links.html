@@ -8,12 +8,17 @@
 </td></tr>
 {% endif %}
 <tr>
-    <td colspan="1" style="padding-top:20px;">
+    <td colspan="1" style="padding-top:20px; white-space: nowrap;">
     <button type="button" class="btn btn-primary btn-med" data-toggle="modal" data-target="#network_links_modal">
         Share Your Work
     </button>
     </td>
-    <td colspan="1" style="padding-top: 20px;">
+    <td colspan="1" style="padding-top:20px; white-space: nowrap;">
+        <button type="button" class="btn btn-primary btn-med" onclick="ai_agent.onclick(this);">
+            Enable AI Agent
+        </button>
+    </td>
+    <td colspan="1" style="padding-top: 20px; width: 99%;">
     <a href="{% url 'job-statistics' object.id %}">
     <button type="button" class="btn btn-primary btn-med">
         View Job Statistics
