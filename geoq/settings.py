@@ -41,7 +41,7 @@ DATABASES = {
 
 # Hosts/domain names that are valid for this site; required if DEBUG is False
 # See https://docs.djangoproject.com/en/1.5/ref/settings/#allowed-hosts
-ALLOWED_HOSTS = ['192.168.5.132','localhost','centos7.mitre.org','web']
+ALLOWED_HOSTS = ['192.168.5.132','localhost','centos7.mitre.org','web', 'mm213097-pc.mitre.org']
 
 # Local time zone for this installation. Choices can be found here:
 # http://en.wikipedia.org/wiki/List_of_tz_zones_by_name
@@ -240,6 +240,7 @@ INSTALLED_APPS = [
     'debug_toolbar',
     'httpproxy',
     'bootstrap3',
+    #'feedgen',
 
     'geoq.feedback.apps.FeedbackConfig',
     'geoq.accounts.apps.AccountsConfig',

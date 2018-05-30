@@ -1238,6 +1238,15 @@ def list_group_users(request, group_pk):
     return HttpResponse(json.dumps(list(users)), content_type="application/json")
 
 
+def feed_overall(request):
+    pass
+    #group = get_object_or_404(Group, pk=group_pk)
+    #users = group.user_set.values('username', 'id', 'first_name', 'last_name').order_by('username')
+
+    #return HttpResponse(json.dumps(list(users)), content_type="application/json")
+
+
+
 @login_required
 def update_job_data(request, *args, **kwargs):
     aoi_pk = kwargs.get('pk')
@@ -1443,7 +1452,28 @@ class GridGeoJSON(ListView):
         geojson = job.grid_geoJSON()
 
         return HttpResponse(geojson, content_type="application/json", status=200)
-    
+
+
+class GridAtomFeed(ListView):
+    model = Job
+
+    def get(self, request, *args, **kwargs):
+        job = get_object_or_404(Job, pk=self.kwargs.get('pk'))
+        atom = job.grid_atom()
+
+        return HttpResponse(atom, content_type="application/atom+xml", status=200)
+
+
+class GridAtomFeed2(ListView):
+    model = Job
+
+    def get(self, request, *args, **kwargs):
+        job = get_object_or_404(Job, pk=self.kwargs.get('pk'))
+        atom = job.grid_atom()
+
+        return HttpResponse(atom, content_type="application/atom+xml", status=200)
+
+
 class TeamListView(ListView):
     model = Group
     def get_queryset(self):
