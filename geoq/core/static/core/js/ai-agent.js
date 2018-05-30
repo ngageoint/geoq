@@ -7,6 +7,7 @@ ai_agent.socket = null;
 ai_agent.map = null;
 ai_agent.enabled = false;
 ai_agent.point_layer = null;
+ai_agent.workcells = [];
 
 ai_agent.onclick = function(target) {
     if (ai_agent.enabled) {
@@ -16,6 +17,10 @@ ai_agent.onclick = function(target) {
     } else {
         // turn on
         ai_agent.start_ai_agent(target);
+        // get list of workcells if we can
+        if (aoi_extents) {
+            ai_agent.workcells = aoi_extents.toGeoJSON().features;
+        }
         target.innerText = 'Disable AI Agent';
     }
 
@@ -39,6 +44,15 @@ ai_agent.start_ai_agent = function(target) {
                 var c = L.circleMarker(p, {"radius":10, "color": "red"});
                 c.bindPopup("<b>Text:</b> " + point.text);
                 c.addTo(ai_agent.point_layer);
+
+                // see if point is contained in one of the workcells
+                var pt = turf.point(point);
+                ai_agent.workcells.forEach(function(cell) {
+                    var poly = turf.polygon(cell.geometry.coordinates);
+                    if (turf.booleanPointInPolygon(pt,poly)) {
+                        alert("got one");
+                    }
+                })
             })
         }
     };
