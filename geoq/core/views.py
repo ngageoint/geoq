@@ -875,7 +875,7 @@ class TransitionAOI(View):
     def get_context_data(self, **kwargs):
         pass
 
-    def put(self, request, **kwargs):
+    def get(self, request, **kwargs):
         aoi = get_object_or_404(AOI, pk=self.kwargs.get('pk'))
         transition = get_object_or_404(Transition, id=self.kwargs.get('id'))
 
@@ -883,7 +883,7 @@ class TransitionAOI(View):
         aoi.status = transition.to_state.name
         aoi.save()
 
-        return HttpResponse(json.dumps({aoi.id: aoi.status}, content_type="application/json"))
+        return HttpResponse(json.dumps({aoi.id: aoi.status}), content_type="application/json")
 
 
 class PrioritizeWorkcells(TemplateView):
