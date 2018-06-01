@@ -875,7 +875,7 @@ class TransitionAOI(View):
     def get_context_data(self, **kwargs):
         pass
 
-    def get(self, request, **kwargs):
+    def put(self, request, **kwargs):
         aoi = get_object_or_404(AOI, pk=self.kwargs.get('pk'))
         transition = get_object_or_404(Transition, id=self.kwargs.get('id'))
 

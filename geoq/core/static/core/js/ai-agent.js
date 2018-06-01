@@ -78,9 +78,8 @@ ai_agent.sendMessage = function() {
 
 ai_agent.changeStatus = function(id) {
     $.ajax({
-        type: "GET",
+        type: "PUT",
         url: ai_agent.base_url.replace('0',id),
-        contentType: "application/json",
         success: function (data) {
             // successfully transitioned workcell. look for the workcell layer and change the style
             lyr = _.filter(aoi_extents.getLayers(), function(l) { return l.feature.properties.id == id; }).pop();
