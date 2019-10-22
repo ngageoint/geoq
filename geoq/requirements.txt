@@ -1,4 +1,4 @@
-Django==1.5.4
+Django==1.11.23
 Django-Select2==4.2.1
 Paver==1.2.1
 South==0.8.2
