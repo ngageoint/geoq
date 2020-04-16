@@ -4,7 +4,7 @@
 
 from reversion.admin import VersionAdmin
 from django.contrib.gis import admin
-from models import Feedback,Topic
+from .models import Feedback,Topic
 
 @admin.register(Feedback)
 class FeedbackAdmin(VersionAdmin, admin.ModelAdmin):
@@ -19,4 +19,3 @@ class TopicAdmin(VersionAdmin, admin.ModelAdmin):
     list_display = ['name']
     save_as = True
     ordering = ['name']
-

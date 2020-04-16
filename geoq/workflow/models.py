@@ -209,11 +209,13 @@ class Workflow(models.Model):
             auto_now_add=True
             )
     created_by = models.ForeignKey(
-            User
+            User,
+            on_delete=models.PROTECT
             )
     cloned_from = models.ForeignKey(
             'self',
-            null=True
+            null=True,
+            on_delete=models.PROTECT
             )
 
     # To hold error messages created in the validate method
@@ -318,10 +320,10 @@ class Workflow(models.Model):
         """
         # Only workflows in definition state can be activated
         if not self.status == self.DEFINITION:
-            raise UnableToActivateWorkflow, __('Only workflows in the'\
+            raise UnableToActivateWorkflow('Only workflows in the'\
                     ' "definition" state may be activated')
         if not self.is_valid():
-            raise UnableToActivateWorkflow, __("Cannot activate as the"\
+            raise UnableToActivateWorkflow("Cannot activate as the"\
                     " workflow doesn't validate.")
         # Good to go...
         self.status = self.ACTIVE
@@ -393,7 +395,7 @@ class Workflow(models.Model):
                     clone_event.roles.add(r)
             return clone_workflow
         else:
-            raise UnableToCloneWorkflow, __('Only active or retired workflows'\
+            raise UnableToCloneWorkflow('Only active or retired workflows'\
                     ' may be cloned')
 
     def path(self):
@@ -468,7 +470,8 @@ class State(models.Model):
             )
     workflow = models.ForeignKey(
             Workflow,
-            related_name='states')
+            related_name='states',
+            on_delete=models.PROTECT)
     # The roles defined here define *who* has permission to view the item in
     # this state.
     roles = models.ManyToManyField(
@@ -549,15 +552,18 @@ class Transition(models.Model):
     # class's clone() method.
     workflow = models.ForeignKey(
             Workflow,
-            related_name = 'transitions'
+            related_name = 'transitions',
+            on_delete=models.PROTECT
             )
     from_state = models.ForeignKey(
             State,
-            related_name = 'transitions_from'
+            related_name = 'transitions_from',
+            on_delete=models.PROTECT
             )
     to_state = models.ForeignKey(
             State,
-            related_name = 'transitions_into'
+            related_name = 'transitions_into',
+            on_delete=models.PROTECT
             )
     # The roles referenced here define *who* has permission to use this
     # transition to move between states.
@@ -611,13 +617,15 @@ class Event(models.Model):
             Workflow,
             related_name='events',
             null=True,
-            blank=True
+            blank=True,
+            on_delete=models.PROTECT
             )
     state = models.ForeignKey(
             State,
             related_name='events',
             null=True,
-            blank=True
+            blank=True,
+            on_delete=models.PROTECT
             )
     # The roles referenced here indicate *who* is supposed to be a part of the
     # event
@@ -650,8 +658,8 @@ class WorkflowActivity(models.Model):
     The WorkflowActivity object also contains *all* the methods required to
     start, progress and stop a workflow.
     """
-    workflow = models.ForeignKey(Workflow)
-    created_by = models.ForeignKey(User)
+    workflow = models.ForeignKey(Workflow, on_delete=models.PROTECT)
+    created_by = models.ForeignKey(User, on_delete=models.PROTECT)
     created_on = models.DateTimeField(auto_now_add=True)
     completed_on = models.DateTimeField(
             null=True,
@@ -685,14 +693,14 @@ class WorkflowActivity(models.Model):
         # 1. The workflow activity isn't already started
         if self.current_state():
             if self.current_state().state:
-                raise UnableToStartWorkflow, __('Already started')
+                raise UnableToStartWorkflow('Already started')
         # 2. The workflow activity hasn't been force_stopped before being
         # started
         if self.completed_on:
-            raise UnableToStartWorkflow, __('Already completed')
+            raise UnableToStartWorkflow('Already completed')
         # 3. There is exactly one start state
         if not len(start_state_result) == 1:
-            raise UnableToStartWorkflow, __('Cannot find single start state')
+            raise UnableToStartWorkflow('Cannot find single start state')
         # Good to go...
         first_step = WorkflowHistory(
                 workflowactivity=self,
@@ -721,23 +729,23 @@ class WorkflowActivity(models.Model):
 
         # 1. Make sure the workflow activity is started
         if not current_state:
-            raise UnableToProgressWorkflow, __('Start the workflow before'\
+            raise UnableToProgressWorkflow('Start the workflow before'\
                     ' attempting to transition')
         # 2. Make sure it's parent is the current state
         if not transition.from_state == current_state.state:
-            raise UnableToProgressWorkflow, __('Transition not valid (wrong'\
+            raise UnableToProgressWorkflow('Transition not valid (wrong'\
                     ' parent)')
         # 3. Make sure all mandatory events for the current state are found in
         # the WorkflowHistory
         mandatory_events = current_state.state.events.filter(is_mandatory=True)
         for me in mandatory_events:
             if not me.history.filter(workflowactivity=self):
-                raise UnableToProgressWorkflow, __('Transition not valid'\
+                raise UnableToProgressWorkflow('Transition not valid'\
                     ' (mandatory event missing)')
         # 4. Make sure the user has the appropriate role to allow them to make
         # the transition
         if not transition.roles.filter(pk__in=[role.id for role in participant.roles.all()]):
-            raise UnableToProgressWorkflow, __('Participant has insufficient'\
+            raise UnableToProgressWorkflow('Participant has insufficient'\
                     ' authority to use the specified transition')
         # The "progress" request has been validated to store the transition into
         # the appropriate WorkflowHistory record and if it is an end state then
@@ -778,20 +786,20 @@ class WorkflowActivity(models.Model):
         if event.workflow:
             # Make sure we have an event for the right workflow
             if not event.workflow == self.workflow:
-                raise UnableToLogWorkflowEvent, __('The event is not associated'\
+                raise UnableToLogWorkflowEvent('The event is not associated'\
                         ' with the workflow for the WorkflowActivity')
             if event.state:
                 # If the event is mandatory then it must be completed whilst in
                 # the associated state
                 if event.is_mandatory:
                     if not event.state == current_state.state:
-                        raise UnableToLogWorkflowEvent, __('The mandatory'\
+                        raise UnableToLogWorkflowEvent('The mandatory'\
                                 ' event is not associated with the current'\
                                 ' state')
         if event.roles.all():
             # Make sure the participant is associated with the event
             if not event.roles.filter(pk__in=[p.id for p in participant.roles.all()]):
-                raise UnableToLogWorkflowEvent, __('The participant is not'\
+                raise UnableToLogWorkflowEvent('The participant is not'\
                         ' associated with the specified event')
         if not note:
             note=event.name
@@ -816,7 +824,7 @@ class WorkflowActivity(models.Model):
         something at a particular state in a WorkflowActivity.
         """
         if not note:
-            raise UnableToAddCommentToWorkflow, __('Cannot add an empty comment')
+            raise UnableToAddCommentToWorkflow('Cannot add an empty comment')
         p, created = Participant.objects.get_or_create(workflowactivity=self,
                 user=user)
         current_state = self.current_state().state if self.current_state() else None
@@ -932,7 +940,7 @@ class WorkflowActivity(models.Model):
         carried this out
         """
         if not note:
-            raise UnableToDisableParticipant, __('Must supply a reason for'\
+            raise UnableToDisableParticipant('Must supply a reason for'\
                     ' disabling a participant. None given.')
         try:
             p_as_user = Participant.objects.get(workflowactivity=self,
@@ -970,7 +978,7 @@ class WorkflowActivity(models.Model):
         carried this out
         """
         if not note:
-            raise UnableToEnableParticipant, __('Must supply a reason for'\
+            raise UnableToEnableParticipant('Must supply a reason for'\
                     ' enabling a disabled participant. None given.')
         try:
             p_as_user = Participant.objects.get(workflowactivity=self,
@@ -1040,7 +1048,7 @@ class Participant(models.Model):
     """
     Defines which users have what roles in a particular run of a workflow
     """
-    user = models.ForeignKey(User)
+    user = models.ForeignKey(User, on_delete=models.PROTECT)
     # can be nullable because a participant *might* not have a role assigned to
     # them (yet), and is many-to-many as they might have many different roles.
     roles = models.ManyToManyField(
@@ -1048,7 +1056,8 @@ class Participant(models.Model):
             blank=True)
     workflowactivity= models.ForeignKey(
             WorkflowActivity,
-            related_name='participants'
+            related_name='participants',
+            on_delete=models.PROTECT
             )
     disabled = models.BooleanField(default=False)
 
@@ -1090,7 +1099,8 @@ class WorkflowHistory(models.Model):
 
     workflowactivity= models.ForeignKey(
             WorkflowActivity,
-            related_name='history')
+            related_name='history',
+            on_delete=models.PROTECT)
     log_type = models.IntegerField(
             help_text=_('The sort of thing being logged'),
             choices=TYPE_CHOICE_LIST
@@ -1098,26 +1108,30 @@ class WorkflowHistory(models.Model):
     state = models.ForeignKey(
             State,
             help_text=_('The state at this point in the workflow history'),
-            null=True
+            null=True,
+            on_delete=models.PROTECT
             )
     transition = models.ForeignKey(
             Transition,
             null=True,
             related_name='history',
             help_text=_('The transition relating to this happening in the'\
-                ' workflow history')
+                ' workflow history'),
+            on_delete=models.PROTECT
             )
     event = models.ForeignKey(
             Event,
             null=True,
             related_name='history',
             help_text=_('The event relating to this happening in the workflow'\
-                    ' history')
+                    ' history'),
+            on_delete=models.PROTECT
             )
     participant = models.ForeignKey(
             Participant,
             help_text=_('The participant who triggered this happening in the'\
-                ' workflow history')
+                ' workflow history'),
+            on_delete=models.PROTECT
             )
     created_on = models.DateTimeField(auto_now_add=True)
     note = models.TextField(

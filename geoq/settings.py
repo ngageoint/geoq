@@ -3,7 +3,6 @@
 # is subject to the Rights in Technical Data-Noncommercial Items clause at DFARS 252.227-7013 (FEB 2012)
 
 import os
-import django
 
 SITE_ROOT = os.path.dirname(os.path.realpath(__file__))
 
@@ -21,6 +20,10 @@ SECRET_KEY = 'wp88fi$)5dbve^!(@-k2%5tqep+16uoz078h*sttghy2%uid7c'
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
+# Hosts/domain names that are valid for this site; required if DEBUG is False
+# See https://docs.djangoproject.com/en/1.5/ref/settings/#allowed-hosts
+ALLOWED_HOSTS = ['locahost']
+
 ADMINS = (
     ('Admin User', 'admin@domain.com'),
 )
@@ -34,14 +37,12 @@ DATABASES = {
         # The following settings are not used with sqlite3:
         'USER': 'geoq',
         'PASSWORD': 'geoq',
-        'HOST': 'db',  # Empty for localhost through domain sockets or '127.0.0.1' for localhost through TCP.
+        'HOST': '127.0.0.1',  # Empty for localhost through domain sockets or '127.0.0.1' for localhost through TCP.
         'PORT': '5432',  # Set to empty string for default.
     }
 }
 
-# Hosts/domain names that are valid for this site; required if DEBUG is False
-# See https://docs.djangoproject.com/en/1.5/ref/settings/#allowed-hosts
-ALLOWED_HOSTS = ['192.168.5.132','localhost','centos7.mitre.org','web', 'mm213097-pc.mitre.org']
+
 
 # Local time zone for this installation. Choices can be found here:
 # http://en.wikipedia.org/wiki/List_of_tz_zones_by_name
@@ -79,7 +80,7 @@ MEDIA_URL = '/images/'
 # in apps' "static/" subdirectories and in STATICFILES_DIRS.
 # Example: "/var/www/example.com/static/"
 STATIC_URL_FOLDER = ''  # Can be set to something like 'geoq-test/' if the app is not run at root level
-STATIC_ROOT = '{0}{1}'.format('/var/www/static/', STATIC_URL_FOLDER)
+STATIC_ROOT = '{0}{1}'.format('/Users/srjones/www/static/', STATIC_URL_FOLDER)
 
 # URL prefix for static files.
 # Example: "http://example.com/static/", "http://static.example.com/"
@@ -238,7 +239,7 @@ INSTALLED_APPS = [
     'crispy_forms',
     'django_extensions',
     'debug_toolbar',
-    'httpproxy',
+    #'httpproxy',
     'bootstrap3',
     #'feedgen',
 
@@ -281,7 +282,7 @@ AUTHENTICATION_BACKENDS = (
 
 SITE_ID = 1
 
-ANONYMOUS_USER_ID = -1
+ANONYMOUS_USER_NAME = -1
 AUTH_PROFILE_MODULE = 'accounts.UserProfile'
 
 
@@ -519,7 +520,7 @@ IMAGE_TRACKING = False
 KML_REPOSITORY_ROOT = 'kml/'
 
 # initialize apps
-django.setup()
+#django.setup()
 
 # Override production settings with local settings if they exist
 #try:

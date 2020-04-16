@@ -3,7 +3,7 @@
 
 from reversion.admin import VersionAdmin
 from django.contrib.gis import admin
-from models import *
+from .models import *
 
 
 class ObjectAdmin(VersionAdmin,):

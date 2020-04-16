@@ -9,12 +9,14 @@ from geoq.locations.models import Counties
 from django.contrib.auth.models import User
 from django.contrib.gis.db import models
 from django.core.exceptions import ValidationError
+from django.db.models import Manager as GeoManager
 # from django.utils.datastructures import SortedDict
 from collections import OrderedDict
-from django.core.urlresolvers import reverse
+from django.urls import reverse
 from jsonfield import JSONField
 from datetime import datetime
 from geoq.core.utils import clean_dumps
+from functools import reduce
 # from denorm import denormalized, depend_on_related
 
 import sys
@@ -122,7 +124,7 @@ class Layer(models.Model):
     token = models.CharField(max_length=400, null=True, blank=True, help_text='Authentication token, if required (usually only for secure layer servers).')
 
     ## Advanced layer options
-    objects = models.GeoManager()
+    objects = GeoManager()
     extent = models.PolygonField(null=True, blank=True, help_text='Extent of the layer.')
     layer_parsing_function = models.CharField(max_length=100, blank=True, null=True,  help_text='Advanced - The javascript function used to parse a data service (GeoJSON, GeoRSS, KML), needs to be an internally known parser. Contact an admin if you need data parsed in a new way.')
     enable_identify = models.BooleanField(default=False, help_text='Advanced - Allow user to click map to query layer for details. The map server must support queries for this layer.')
@@ -301,8 +303,8 @@ class MapLayer(models.Model):
     The MapLayer is the mechanism that joins a Layer to a Map and allows for custom look and feel.
     """
 
-    map = models.ForeignKey(Map, related_name='map_set')
-    layer = models.ForeignKey(Layer, related_name='map_layer_set')
+    map = models.ForeignKey(Map, related_name='map_set', on_delete=models.PROTECT)
+    layer = models.ForeignKey(Layer, related_name='map_layer_set', on_delete=models.PROTECT)
     shown = models.BooleanField(default=True)
     stack_order = models.IntegerField()
     opacity = models.FloatField(default=0.80)
@@ -320,8 +322,10 @@ class MapLayerUserRememberedParams(models.Model):
     Remembers the last options selected for a MapLayer with dynamic feed params.
     """
 
-    maplayer = models.ForeignKey(MapLayer, related_name="user_saved_params_set")
-    user = models.ForeignKey(User, related_name="map_layer_saved_params_set")
+    maplayer = models.ForeignKey(MapLayer, related_name="user_saved_params_set",
+                                    on_delete=models.PROTECT)
+    user = models.ForeignKey(User, related_name="map_layer_saved_params_set",
+                                    on_delete=models.PROTECT)
     values = JSONField(null=True, blank=True, help_text='URL Variables that may be modified by the analyst. ex: "date"')
 
 #    @denormalized(models.ForeignKey, to=Map)
@@ -352,11 +356,12 @@ class Feature(models.Model):
     STATUS_VALUES = ['Unassigned', 'In work', 'Awaiting review', 'In review', 'Completed'] #'Assigned'
     STATUS_CHOICES = [(choice, choice) for choice in STATUS_VALUES]
 
-    aoi = models.ForeignKey(AOI, related_name='features', editable=False)
+    aoi = models.ForeignKey(AOI, related_name='features', editable=False,
+                            on_delete=models.PROTECT)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
-    objects = models.GeoManager()
-    analyst = models.ForeignKey(User, editable=False)
+    objects = GeoManager()
+    analyst = models.ForeignKey(User, editable=False, on_delete=models.PROTECT)
     template = models.ForeignKey("FeatureType", on_delete=models.PROTECT)
     status = models.CharField(max_length=15, choices=STATUS_CHOICES, default='In work')
 
@@ -364,8 +369,8 @@ class Feature(models.Model):
     properties = JSONField(load_kwargs={}, blank=True, null=True)
 
     # These help the user identify features when data is exposed outside of the application (Geoserver).
-    job = models.ForeignKey(Job, editable=False)
-    project = models.ForeignKey(Project, editable=False)
+    job = models.ForeignKey(Job, editable=False, on_delete=models.PROTECT)
+    project = models.ForeignKey(Project, editable=False, on_delete=models.PROTECT)
 
     #Try this vs having individual models
     the_geom = models.GeometryField(blank=True, null=True)
@@ -485,7 +490,7 @@ class FeatureType(models.Model):
     style = JSONField(load_kwargs={}, blank=True, null=True, help_text='Any special CSS style that features of this types should have. e.g. {"opacity":0.7, "color":"red", "backgroundColor":"white", "mapTextStyle":"white_overlay", "iconUrl":"path/to/icon.png"}')
     icon = models.ImageField(upload_to="static/featuretypes/", blank=True, null=True, help_text="Upload an icon (now only in Admin menu) of the FeatureType here, will override style iconUrl if set")
     #property_names = models.TextField(blank=True, null=True)
-    
+
     def to_json(self):
         icon = ""
         if self.icon:

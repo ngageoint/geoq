@@ -4,7 +4,7 @@
 
 from django.conf import settings
 from django.core.mail import send_mail
-from django.core.urlresolvers import reverse
+from django.urls import reverse
 from django.core.exceptions import ValidationError
 from django.core.validators import validate_email
 from django.contrib.sites.models import Site

@@ -8,7 +8,7 @@ from django.shortcuts import render
 from django.contrib.gis import admin
 from django.http import HttpResponseRedirect
 from django import forms
-from models import Project, Job, AOI, Setting, Organization, AOITimer, Responder
+from .models import Project, Job, AOI, Setting, Organization, AOITimer, Responder
 from guardian.admin import GuardedModelAdmin
 
 

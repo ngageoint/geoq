@@ -18,7 +18,7 @@ class Counties(models.Model):
     name = models.CharField(max_length=80)
     state = models.IntegerField(blank=True, null=True)
     poly = models.MultiPolygonField(srid=4326)
-    objects = models.GeoManager()
+    # objects = models.GeoManager()
 
     def __str__(self):              # __unicode__ on Python 2
         return 'County: %s' % self.name

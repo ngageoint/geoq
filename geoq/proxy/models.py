@@ -7,7 +7,7 @@ from django.utils import timezone
 import datetime
 import requests
 import base64
-from StringIO import StringIO
+from io import StringIO
 from zipfile import ZipFile
 
 
@@ -45,14 +45,14 @@ class SourceDocument(models.Model):
         if force or self.cacheExpired():
             resp = requests.get(self.SourceURL)
             if resp.status_code == 200:
-                kmzdata = resp.content # DO NOT use resp.text as that will be Unicode which is the tool of the DEVIL 
+                kmzdata = resp.content # DO NOT use resp.text as that will be Unicode which is the tool of the DEVIL
                 # (Obligatory: my car gets 40 rods to the hogshead, and that's the ways I likes it.)
                 myzip = ZipFile(StringIO(kmzdata))
                 contents = myzip.namelist()
                 doc = [x for x in contents if x.endswith(".kml")]
                 other = [x for x in contents if not x.endswith(".kml")]
                 if len(doc) != 1: # per https://developers.google.com/kml/documentation/kmzarchives?csw=1, This main KML file can have any name, as long as it ends in .kml, and as long as there is only one .kml file.
-                    print "ERROR: invalid kmz detected... skipping refreshing ", self.SourceURL
+                    print("ERROR: invalid kmz detected... skipping refreshing ", self.SourceURL)
                     return
                 doc = doc[0]
                 self.OriginalDocument = base64.b64encode(kmzdata)
@@ -62,7 +62,7 @@ class SourceDocument(models.Model):
                 fixedimgs = fixedhrefs.replace("src=","src=/images/%s/"%slug)
                 self.TranslatedDocument = fixedimgs
                 oldChildren = [oc for oc in self.childdocument_set.all()]
-                # Go through all the 
+                # Go through all the
                 for f in other:
                     if f.endswith("/"): #skip directoreis
                         continue
@@ -84,7 +84,7 @@ class SourceDocument(models.Model):
                     od.delete()
                 self.save() # this will update LastUpdated
             else:
-                print "Not refreshing data, should possibly warn user"
+                print("Not refreshing data, should possibly warn user")
 
     def get_absolute_url(self):
         return reverse_lazy('proxy:getkmz', args=[self.slug])
@@ -98,7 +98,7 @@ class SourceDocument(models.Model):
 class ChildDocument(models.Model):
     Name = models.CharField(max_length=1024)
     Document = models.TextField()
-    Parent = models.ForeignKey(SourceDocument)
+    Parent = models.ForeignKey(SourceDocument, on_delete=models.PROTECT)
     slug = models.SlugField(max_length=200, null=True, blank=True)
     class Meta:
         unique_together = ("slug","Parent")

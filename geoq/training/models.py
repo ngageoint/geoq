@@ -9,7 +9,8 @@ from jsonfield import JSONField
 class Training(models.Model):
     name = models.CharField(max_length=250)
     category = models.CharField(max_length=120, help_text="Category of training, eg. FEMA", null=True, blank=True, default="Uncategorized")
-    primary_contact = models.ForeignKey(User, help_text="Contact for training.")
+    primary_contact = models.ForeignKey(User, help_text="Contact for training.",
+                                        on_delete=models.PROTECT)
     gamification_signals = models.CharField(max_length=250, help_text="After training which Signals should be sent to gamification server?", null=True, blank=True)
     content_link = models.CharField(max_length=500, help_text="Link to PDF/PPT/training or web page for training that will open in a new window", null=True, blank=True)
     quiz_data = JSONField(help_text="If user should be quized after, list of questions and answers and percent_complete if not 100%", null=True, blank=True)

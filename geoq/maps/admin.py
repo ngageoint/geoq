@@ -4,7 +4,7 @@
 
 from reversion.admin import VersionAdmin
 from django.contrib.gis import admin
-from models import Layer, Map, MapLayer, Feature, FeatureType, GeoeventsSource, EditableMapLayer
+from .models import Layer, Map, MapLayer, Feature, FeatureType, GeoeventsSource, EditableMapLayer
 
 
 class MapLayerInline(admin.TabularInline):
@@ -78,5 +78,3 @@ class FeatureTypeAdmin(VersionAdmin, admin.ModelAdmin):
 class GeoeventsSourceAdmin(admin.ModelAdmin):
     model = GeoeventsSource
     list_display = ['name', 'url']
-
-

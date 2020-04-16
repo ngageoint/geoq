@@ -13,9 +13,9 @@ from django.contrib.gis.db import models
 from django.contrib.gis.geos import MultiPolygon, Polygon
 from django.contrib.contenttypes.fields import GenericForeignKey
 from django.contrib.contenttypes.models import ContentType
-from django.core.urlresolvers import reverse
+from django.urls import reverse
 # from django.utils.datastructures import SortedDict
-from managers import AOIManager
+from .managers import AOIManager
 from jsonfield import JSONField
 from collections import defaultdict, OrderedDict
 from django.db.models import Q
@@ -47,7 +47,7 @@ class Assignment(models.Model):
     """
     A generic relation to either a user or group
     """
-    assignee_type = models.ForeignKey(ContentType, null=True)
+    assignee_type = models.ForeignKey(ContentType, null=True, on_delete=models.PROTECT)
     assignee_id = models.PositiveIntegerField(null=True)
     content_object = GenericForeignKey('assignee_type', 'assignee_id')
 
@@ -171,16 +171,18 @@ class Job(GeoQBase, Assignment):
     teams = models.ManyToManyField(Group, blank=True, related_name="teams")
     reviewers = models.ManyToManyField(User, blank=True, related_name="reviewers")
     progress = models.SmallIntegerField(blank=True, null=True)
-    project = models.ForeignKey(Project, related_name="project")
+    project = models.ForeignKey(Project, related_name="project", on_delete=models.PROTECT)
 
     grid = models.CharField(max_length=5, choices=GRID_SERVICE_CHOICES, default=GRID_SERVICE_VALUES[0],
                             help_text='Select usng for Jobs inside the US, otherwise use mgrs')
     tags = models.CharField(max_length=50, blank=True, null=True, help_text='Useful tags to search social media with')
     editor = models.CharField(max_length=20, help_text='Editor to be used for creating features', choices=EDITOR_CHOICES, default=EDITOR_CHOICES[0])
-    editable_layer = models.ForeignKey( 'maps.EditableMapLayer', blank=True, null=True)
+    editable_layer = models.ForeignKey( 'maps.EditableMapLayer', blank=True, null=True, on_delete=models.CASCADE)
 
-    map = models.ForeignKey('maps.Map', blank=True, null=True)
-    workflow = models.ForeignKey('workflow.Workflow', blank=True, null=True, help_text='Workflow to be used for job')
+    map = models.ForeignKey('maps.Map', blank=True, null=True, on_delete=models.CASCADE)
+    workflow = models.ForeignKey('workflow.Workflow', blank=True, null=True,
+                help_text='Workflow to be used for job',
+                on_delete=models.PROTECT)
     feature_types = models.ManyToManyField('maps.FeatureType', blank=True)
     required_courses = models.ManyToManyField(Training, blank=True, help_text="Courses that must be passed to open these cells")
 
@@ -471,8 +473,10 @@ class AOI(GeoQBase, Assignment):
 
     PRIORITIES = [(n, n) for n in range(1, 6)]
 
-    analyst = models.ForeignKey(User, blank=True, null=True, help_text="User assigned to work the workcell.")
-    job = models.ForeignKey(Job, related_name="aois")
+    analyst = models.ForeignKey(User, blank=True, null=True,
+            help_text="User assigned to work the workcell.",
+            on_delete=models.PROTECT)
+    job = models.ForeignKey(Job, related_name="aois", on_delete=models.PROTECT)
     reviewers = models.ManyToManyField(User, blank=True, related_name="aoi_reviewers",
                                        help_text='Users that actually reviewed this work.')
     objects = AOIManager()
@@ -653,8 +657,10 @@ class Comment(models.Model):
     """
     Track comments regarding work on a Workcell
     """
-    user = models.ForeignKey(User, blank=True, null=True, help_text="User who made comment")
-    aoi = models.ForeignKey(AOI, blank=False, null=False, help_text="Associated AOI for comment")
+    user = models.ForeignKey(User, blank=True, null=True,
+                help_text="User who made comment", on_delete=models.PROTECT)
+    aoi = models.ForeignKey(AOI, blank=False, null=False,
+                help_text="Associated AOI for comment", on_delete=models.PROTECT)
     text = models.CharField(max_length=200)
     created_at = models.DateTimeField(auto_now_add=True)
 
@@ -694,8 +700,10 @@ class AOITimer(models.Model):
     """
     Capture start/stop times for different phases of the workcell (AOI)
     """
-    user = models.ForeignKey(User, blank=False, help_text="User who worked on workcell")
-    aoi = models.ForeignKey(AOI, blank=False, help_text="Workcell that was changed")
+    user = models.ForeignKey(User, blank=False,
+                help_text="User who worked on workcell", on_delete=models.PROTECT)
+    aoi = models.ForeignKey(AOI, blank=False,
+                help_text="Workcell that was changed", on_delete=models.PROTECT)
     status = models.CharField(max_length=20, blank=False, default='Unassigned')
     started_at = models.DateTimeField(auto_now_add=False, blank=False)
     completed_at = models.DateTimeField(auto_now_add=False, blank=True, null=True)
@@ -755,4 +763,3 @@ class Responder(models.Model):
         }
 
         return clean_dumps(geojson) if as_json else geojson
-

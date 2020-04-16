@@ -4,7 +4,7 @@
 
 from django.contrib.gis import admin
 from reversion.admin import VersionAdmin
-from models import *
+from .models import *
 
 @admin.register(Counties)
 class CountiesAdmin(VersionAdmin, admin.ModelAdmin):

@@ -1,6 +1,6 @@
 # -*- coding: UTF-8 -*-
 from django.contrib import admin
-from models import Role, Workflow, State, Transition, EventType, Event
+from .models import Role, Workflow, State, Transition, EventType, Event
 
 class RoleAdmin(admin.ModelAdmin):
     """
