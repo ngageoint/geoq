@@ -574,9 +574,9 @@ class AOI(GeoQBase, Assignment):
             status=self.status,
             analyst=(self.analyst.username if self.analyst is not None else 'Unassigned'),
             priority=self.priority)
-        prop_json = dict(properties_built.items() + properties_main.items())
+        properties_built.update(properties_main)
 
-        return clean_dumps(prop_json)
+        return clean_dumps(properties_built)
 
     def summary_properties_json(self):
         """

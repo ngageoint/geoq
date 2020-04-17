@@ -435,9 +435,9 @@
                 <ul class="nav nav-tabs" style="float:left; width:100%;">
                     {% for status in statuses %}
                         {% with status=status|lower %}
-                    <li {% if status == active_status %}class="active"{% endif %}>
-                        <a id="tab_{{ status|slugify }}" href="{{ object.get_absolute_url }}{{ status }}">{{ status|title }}</a>
-                    </li>
+                        <li {% if status == active_status %}class="active"{% endif %}>
+                          <a id="tab_{{ status|slugify }}" href="{{ object.get_absolute_url }}{{ status }}">{{ status|title }}</a>
+                        </li>
                         {% endwith %}
                     {% endfor %}
                     <li>

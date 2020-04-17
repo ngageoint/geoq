@@ -41,6 +41,9 @@ urlpatterns = [
     path('jobs/<int:pk>/',
         JobDetailedListView.as_view(template_name='core/job_detail.html'),
         name='job-detail'),
+    path('jobs/<int:pk>/<str:status>/',
+        JobDetailedListView.as_view(template_name='core/job_detail.html'),
+        name='job-detail'),
     path('jobs/metrics/<int:pk>/',
         JobDetailedListView.as_view(metrics=True, template_name='core/job_metrics.html'),
         name='job-metrics'),
@@ -97,7 +100,7 @@ urlpatterns = [
         add_workcell_comment, name='add-workcell-comment'),
     path('aois/work/<int:pk>/log/',
         LogJSON.as_view(), name='workcell_log'),
-    re_path('aois/update-status/(?P<pk>\d+)/(?P<status>Unassigned|Assigned|InWork|AwaitingReview|InReview|Completed)/?$', login_required(
+    re_path('aois/update-status/(?P<pk>\d+)/(?P<status>Unassigned|Assigned|In work|Awaiting review|In review|Completed)/?$', login_required(
         ChangeAOIStatus.as_view()),
         name="aoi-update-status"),
     path('aois/<int:pk>/transition/<int:id>/', login_required(
