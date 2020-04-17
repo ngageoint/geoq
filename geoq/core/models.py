@@ -471,6 +471,10 @@ class AOI(GeoQBase, Assignment):
     Low-level organizational object. Now (6/1/14) referred to as a 'Workcell'
     """
 
+    # Not sure how we did this before... might have changed with implementation
+    # of custom workflows
+    STATUS_VALUES = STATUS_VALUES_LIST
+
     PRIORITIES = [(n, n) for n in range(1, 6)]
 
     analyst = models.ForeignKey(User, blank=True, null=True,

@@ -390,8 +390,8 @@ class JobDetailedListView(ListView):
         user_id = self.request.user.id
         job_set = AOI.objects.filter(job=self.kwargs.get('pk')).order_by('id')
 
-#        if status and (status in [value.lower() for value in AOI.STATUS_VALUES]):
-#            job_set = job_set.filter(status__iexact=status)
+        if status and (status in [value.lower() for value in AOI.STATUS_VALUES]):
+            job_set = job_set.filter(status__iexact=status)
 
         if self.request.user.has_perm('core.assign_workcells'):
             self.queryset = job_set.filter(Q(analyst_id=user_id) | Q(assignee_id=user_id))
