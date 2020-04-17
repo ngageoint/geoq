@@ -1,6 +1,6 @@
 {% extends "core/base.html" %}
 {% load compress %}
-{% load staticfiles %}
+{% load static %}
 {% load leaflet_tags %}
 {% load geoserver_job_link %}
 {% block title %}GeoQ Assign workcells: {{ object.name }}{% endblock %}
@@ -167,4 +167,3 @@
         </div>
     </div>
 {% endblock %}
-

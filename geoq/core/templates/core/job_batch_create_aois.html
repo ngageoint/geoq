@@ -3,7 +3,7 @@
 {% load leaflet_tags %}
 {% load dynurl %}
 {% load geoserver_job_link %}
-{% load staticfiles %}
+{% load static %}
 
 {% block title %}GeoQ: Draw Workcells for Job #{{ object.id }}{% endblock %}
 {% block static_libraries %}
@@ -112,7 +112,7 @@
     function mapInit(map) {
         //Auto-called after leaflet map is initialized
         create_aois.map_object = map;
-        
+
         aoi_extents = L.geoJson({{ object.geoJSON|default:'[]'|safe }}, {
             style: function(feature) {
                 var status = _.find(status_colors,function(stat){return stat.name==feature.properties.status});

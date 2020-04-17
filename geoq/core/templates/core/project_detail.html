@@ -1,7 +1,7 @@
 {% extends "core/base.html" %}
 {% load compress %}
 {% load leaflet_tags %}
-{% load staticfiles %}
+{% load static %}
 {% block title %}GeoQ Project: {{ object.name }}{% endblock %}
 
 {% block static_libraries %}
@@ -232,4 +232,3 @@
         </script>
     </div>
 {% endblock %}
-

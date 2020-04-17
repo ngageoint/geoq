@@ -1,4 +1,4 @@
-{% load staticfiles %}
+{% load static %}
         {% load settings_variables %}
 {% if object.required_courses.all %}
 <tr><td colspan="2" style="padding-top:20px;">
@@ -127,7 +127,7 @@
         <h4 class="modal-title">Export to New Job</h4>
     </div>
     <div class="export-job-modal-body">
-    
+
         <form class="exportJobForm">
           <fieldset class="form-group">
             <label for="newJobName">Job Name</label>
@@ -135,7 +135,7 @@
         </fieldset>
 
         <label> Select a Destination Project </label>
-        <select class="selectpicker" title="Select Project"> 
+        <select class="selectpicker" title="Select Project">
           <option>Project 1</option>
           <option>Project 2</option>
           <option>Project 3</option>
@@ -160,4 +160,4 @@
             <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
         </div>
     </div>
-</div>  
+</div>
