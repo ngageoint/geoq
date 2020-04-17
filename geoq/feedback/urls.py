@@ -3,16 +3,16 @@
 # is subject to the Rights in Technical Data-Noncommercial Items clause at DFARS 252.227-7013 (FEB 2012)
 
 from django.contrib.auth.decorators import login_required
-from django.conf.urls import url
+from django.urls import path
 from .views import feedbackcreate, thankyou, FeedbackListView
 from .models import Feedback
 
 urlpatterns = [
 
-    url(r'^create/?$', feedbackcreate, name='feedback-create'),
-    url(r'^view?$', FeedbackListView.as_view(template_name='feedback_list.html',
+    path('create/', feedbackcreate, name='feedback-create'),
+    path('view/', FeedbackListView.as_view(template_name='feedback_list.html',
            queryset=Feedback.objects.all()), name='feedback-list'),
 
-    url(r'^thankyou/?$', thankyou, name='thanks'),
+    path('thankyou/', thankyou, name='thanks'),
 
 ]

@@ -2,7 +2,7 @@
 # This technical data was produced for the U. S. Government under Contract No. W15P7T-13-C-F600, and
 # is subject to the Rights in Technical Data-Noncommercial Items clause at DFARS 252.227-7013 (FEB 2012)
 
-from django.core.urlresolvers import reverse_lazy
+from django.urls import reverse_lazy
 from collections import OrderedDict
 import re
 
@@ -39,7 +39,7 @@ def menu(active=None, request_path=None, request_user=None):
 
     if request_user.has_perm('accounts.view_profile'):
         users_dropdown['All Users'] = {'index':2, 'url': reverse_lazy('userena_profile_list'), 'active':False}
-        
+
     if request_user.has_perm('auth.change_group'):
         users_dropdown['Teams'] = {'index':4, 'url': reverse_lazy('team-list'), 'active':False}
 

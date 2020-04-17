@@ -11,7 +11,7 @@ from django.urls import include, path
 #admin.autodiscover()
 
 urlpatterns = [
-    path('/', Dashboard.as_view(), name='home'),
+    path('', Dashboard.as_view(), name='home'),
     path('admin/', admin.site.urls),
     path('geoq/', include('geoq.core.urls')),
     path('maps/', include('geoq.maps.urls')),

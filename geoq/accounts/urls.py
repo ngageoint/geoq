@@ -1,5 +1,5 @@
 
-from django.urls import include, path
+from django.urls import include, path, re_path
 from django.views.generic import RedirectView
 from django.conf import settings
 from geoq.accounts.views import OnlineUserView
@@ -24,11 +24,11 @@ urlpatterns = [
     #    name='userena_signup_complete'),
 
     # Signup, signin and signout
-    path('signup/$',
+    path('signup/',
         userena_views.signin,
         {'template_name': 'accounts/templates/accounts/signup_form.html'},
         name='userena_signup'),
-    path('signin/$',
+    path('signin/',
         userena_views.signin,
         {'template_name': 'accounts/templates/accounts/signin_form.html'},
         name='userena_signin'),
@@ -57,7 +57,7 @@ urlpatterns = [
     #     point_to_404, name='userena_activate_retry'),
     #
     # # Change email and confirm it
-    path('(?P<username>[\.\w-]+)/email/$',
+    path('<str:username>/email/',
         userena_views.email_change, {'template_name': 'accounts/email_form.html'},
                name='userena_email_change' ),
     # path('(?P<username>[\.\w-]+)/email/complete/$',
@@ -72,7 +72,7 @@ urlpatterns = [
     #    point_to_404, name='userena_disabled'),
     #
     # # Change password
-    path('(?P<username>[\.\w-]+)/password/$',
+    path('<str:username>/password/',
         userena_views.password_change, {'template_name': 'accounts/password_form.html'},
                name='userena_password_change' ),
     # path('(?P<username>[\.\w-]+)/password/complete/$',
@@ -81,11 +81,11 @@ urlpatterns = [
     # # Edit profile
     # path('(?P<username>[\.\w-]+)/edit/$',
     #    point_to_404, name='userena_profile_edit'),
-    path('(?P<username>[\.@\w-]+)/edit/$',
+    path('<str:username>/edit/',
        userena_views.profile_edit, {'template_name': 'accounts/profile_form.html'},
        name='userena_profile_edit' ),
     # View profiles
-    path('(?P<username>(?!signout|signup|signin)[\.@\w-]+)/$',
+    re_path('(?P<username>(?!signout|signup|signin)[\.@\w-]+)/$',
        userena_views.profile_detail, {'template_name': 'accounts/profile_detail.html'},
        name='userena_profile_detail'),
     #
@@ -100,12 +100,12 @@ urlpatterns = [
     # path('$',
     #    point_to_404, name='userena_profile_list'),
 
-    path('accept_terms_of_use/?$', accept_terms_of_use, name='accept_terms_link'),
-    path('(?P<username>[\.\w-]+)/expertise/$',
+    path('accept_terms_of_use/', accept_terms_of_use, name='accept_terms_link'),
+    path('<str:username>/expertise/',
         UserExpertiseView.as_view(),
         name='user_expertise'),
 
-    path('users/online/?$', login_required(OnlineUserView.as_view()),
+    path('users/online/', login_required(OnlineUserView.as_view()),
         name='Online-check'),
 
     # If nothing overrides the urls, then load the default with userena.

@@ -4,7 +4,7 @@ from .views import ProxyListView, ProxyRegisterView, ProxyGetView, ProxyAuxGetVi
 
 
 urlpatterns = [
-    path('$', ProxyListView.as_view(), name='list'),
+    path('', ProxyListView.as_view(), name='list'),
     path('register', login_required(ProxyRegisterView.as_view()),name="register"),
     path('kmz/(.+)/', ProxyGetView.as_view(),name="getkmz"),
     #path('kmz/(.+)/',ProxyGetView,name="getkmz"),
