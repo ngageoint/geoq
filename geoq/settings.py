@@ -459,13 +459,13 @@ BOOTSTRAP3 = {
     'base_url': STATIC_URL + 'bootstrap/',
 
     # The complete URL to the Bootstrap CSS file (None means derive it from base_url)
-    'css_url': None,
+    'css_url': STATIC_URL + 'bootstrap/css/bootstrap.css',
 
     # The complete URL to the Bootstrap CSS file (None means no theme)
-    'theme_url': None,
+    'theme_url': STATIC_URL + 'bootstrap/css/bootstrap-theme.css',
 
     # The complete URL to the Bootstrap JavaScript file (None means derive it from base_url)
-    'javascript_url': None,
+    'javascript_url': STATIC_URL + 'bootstrap/js/bootstrap.min.js',
 
     # Put JavaScript in the HEAD section of the HTML document (only relevant if you use bootstrap3.html)
     'javascript_in_head': False,

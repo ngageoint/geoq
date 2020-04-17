@@ -225,7 +225,7 @@ class Job(GeoQBase, Assignment):
             if cell.status in count:
                 count[cell.status] += 1
 
-        return str(', '.join("%s: <b>%r</b>" % (key, val) for (key, val) in count.iteritems()))
+        return str(', '.join("%s: <b>%r</b>" % (key, val) for (key, val) in count.items()))
 
     @property
     def user_count(self):

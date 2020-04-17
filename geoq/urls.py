@@ -19,7 +19,7 @@ urlpatterns = [
     path('feedback/', include('geoq.feedback.urls')),
     path('accounts/', include('geoq.accounts.urls')),
     path('proxy/', include('geoq.proxy.urls')),
-    path('training/', include('geoq.training.urls')),
+    path('training/', include('geoq.training.urls', namespace='training')),
     path('messages/', include('userena.contrib.umessages.urls'), name='userena_messages')
     ]
 

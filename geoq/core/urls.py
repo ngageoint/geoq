@@ -38,7 +38,7 @@ urlpatterns = [
 
     # JOBS
     path('jobs/', TabbedJobListView.as_view(), name='job-list'),
-    path('jobs/<int:pk>/<str:status>/',
+    path('jobs/<int:pk>/',
         JobDetailedListView.as_view(template_name='core/job_detail.html'),
         name='job-detail'),
     path('jobs/metrics/<int:pk>/',

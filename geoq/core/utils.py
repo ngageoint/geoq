@@ -81,5 +81,5 @@ def clean_dumps(obj, skipkeys=False, ensure_ascii=True, check_circular=True,
     if default is None:
         default=str
     return json.dumps(obj, indent=indent, skipkeys=skipkeys, ensure_ascii=ensure_ascii, check_circular=check_circular,
-                allow_nan=allow_nan, cls=cls, separators=separators, encoding=encoding, default=default,
+                allow_nan=allow_nan, cls=cls, separators=separators, default=default,
                 sort_keys=sort_keys).replace('<', '&lt').replace('>', '&gt;').replace("javascript:", "j_script-")

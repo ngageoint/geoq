@@ -1,5 +1,6 @@
 {% load static %}
-        {% load settings_variables %}
+{% load settings_variables %}
+
 {% if object.required_courses.all %}
 <tr><td colspan="2" style="padding-top:20px;">
     {% for course in object.required_courses.all %}
