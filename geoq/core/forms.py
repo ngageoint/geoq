@@ -9,7 +9,7 @@ from django.contrib.auth.models import User, Group
 from django.utils.html import escape, conditional_escape
 from django.db.models import Max
 from itertools import chain
-from models import AOI, Job, Project
+from .models import AOI, Job, Project
 from geoq.maps.models import Layer, MapLayer
 from django.contrib.admin.widgets import FilteredSelectMultiple
 
@@ -162,12 +162,7 @@ class ProjectForm(StyledModelForm):
 
 class TeamForm(StyledModelForm):
     users = forms.ModelMultipleChoiceField(
-        queryset=[],
-        required=False,
-        widget=FilteredSelectMultiple(
-            "Users",
-            is_stacked=False
-        )
+        queryset=User.objects.all()
     )
 
     class Media:

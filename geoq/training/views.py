@@ -11,7 +11,7 @@ from django.http import Http404, HttpResponse, HttpResponseRedirect, HttpRespons
 from django.template.response import TemplateResponse
 from django.core.exceptions import ValidationError, ObjectDoesNotExist
 from datetime import datetime
-from models import Training
+from .models import Training
 from django.views.generic import ListView, View
 import json
 import random

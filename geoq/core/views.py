@@ -16,7 +16,7 @@ from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User, Group, Permission
 from django.contrib.gis.geos import GEOSGeometry
 from django.contrib.contenttypes.models import ContentType
-from django.core.urlresolvers import reverse, reverse_lazy
+from django.urls import reverse, reverse_lazy
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.db.models import Q
 from django.views.decorators.csrf import csrf_exempt
@@ -31,10 +31,10 @@ import distutils
 from datetime import datetime, timedelta
 from django.utils.dateparse import parse_datetime
 
-from models import Project, Job, AOI, Comment, AssigneeType, Organization, AOITimer, Responder
+from .models import Project, Job, AOI, Comment, AssigneeType, Organization, AOITimer, Responder
 from geoq.maps.models import *
 from geoq.workflow.models import Transition
-from utils import send_assignment_email, increment_metric
+from .utils import send_assignment_email, increment_metric
 from geoq.training.models import Training
 
 from geoq.mgrs.utils import Grid, GridException, GeoConvertException
@@ -43,9 +43,9 @@ from geoq.core.middleware import Http403
 from geoq.mgrs.exceptions import ProgramException
 from guardian.decorators import permission_required
 
-from kml_view import *
-from shape_view import *
-from analytics import UserGroupStats
+from .kml_view import *
+from .shape_view import *
+from .analytics import UserGroupStats
 from pytz import utc
 
 from django.views.generic.detail import SingleObjectTemplateResponseMixin
@@ -787,7 +787,7 @@ class JobStatistics(ListView):
                     runningAverageInWork = ((runningAverageInWork * i) + analysts[x]['workcells'][i]['time']['timeInWork']) / (i + 1)
                     runningAverageInReview = ((runningAverageInReview * i) + analysts[x]['workcells'][i]['time']['timeInReview']) / (i + 1)
                     runningAverageWaitingForReview = ((runningAverageWaitingForReview * i) + analysts[x]['workcells'][i]['time']['waitingForReview']) / (i + 1)
-					
+
                 analysts[x]['averageCompletionTime'] = runningAverageCompletion
                 analysts[x]['averages']['averageInWorkTime'] = runningAverageInWork
                 analysts[x]['averages']['averageInReviewTime'] = runningAverageInReview
@@ -797,7 +797,7 @@ class JobStatistics(ListView):
         return cv
 
 
- 
+
 
 
 class ChangeAOIStatus(View):
@@ -805,7 +805,7 @@ class ChangeAOIStatus(View):
 
     def _get_aoi_and_update(self, pk):
         aoi = get_object_or_404(AOI, pk=pk)
-        
+
         status = self.kwargs.get('status')
         return status, aoi
 
@@ -1080,7 +1080,7 @@ def image_footprints(request):
 
             output = json.dumps(samples)
 
-        except Exception, e:
+        except Exception as e:
             import traceback
             output = json.dumps(dict(error=500, message='Generic Exception', details=traceback.format_exc(), exception=str(e), grid=str(bb)))
 
@@ -1133,13 +1133,13 @@ def mgrs(request):
         except GridException:
             error = dict(error=500, details="Can't create grids across longitudinal boundaries. Try creating a smaller bounding box",)
             return HttpResponse(json.dumps(error), status=error.get('error'), content_type="application/json")
-        except GeoConvertException, e:
+        except GeoConvertException as e:
             error = dict(error=500, details="GeoConvert doesn't recognize those cooridnates", exception=str(e))
             return HttpResponse(json.dumps(error), status=error.get('error'), content_type="application/json")
-        except ProgramException, e:
+        except ProgramException as e:
             error = dict(error=500, details="Error executing external GeoConvert application. Make sure it is installed on the server", exception=str(e))
             return HttpResponse(json.dumps(error), status=error.get('error'), content_type="application/json")
-        except Exception, e:
+        except Exception as e:
             import traceback
             output = json.dumps(dict(error=500, message='Generic Exception', details=traceback.format_exc(), exception=str(e), grid=str(bb)))
 
@@ -1148,7 +1148,7 @@ def mgrs(request):
 
 def ipaws(request):
     data = {}
-    
+
     #get Data
     data["develop"] = request.POST.get('develop')
     data["key"] = request.POST.get('key')
@@ -1171,10 +1171,10 @@ def ipaws(request):
         baseURL += date + '?pin=' + data['key']
         response = requests.get(baseURL)
         cache.set("file", response.content, 60 * 30)
-        print 'Not cached'
+        print ('Not cached')
         return HttpResponse(response.content, content_type="text/xml", status=200)
     else:
-        print 'Cached'
+        print ('Cached')
         return HttpResponse(content, content_type="text/xml", status=200)
 
 
@@ -1323,7 +1323,7 @@ def prioritize_cells(request, method, **kwargs):
                 aoi['properties']['priority'] = randrange(1, 5)
 
         output = aois
-    except Exception, ex:
+    except Exception as ex:
         import traceback
         errorCode = 'Program Error: ' + traceback.format_exc()
 
@@ -1479,7 +1479,7 @@ class TeamListView(ListView):
     def get_queryset(self):
         search = self.request.GET.get('search', None)
         return Group.objects.all().order_by('name') if search is None else Group.objects.filter(name__iregex=re.escape(search)).order_by('name')
-    
+
 class TeamDetailedListView(ListView):
     paginate_by = 15
     model = Group
@@ -1601,7 +1601,3 @@ def update_responder(request, *args, **kwargs):
     # contact_instructions = request.POST["contact_instructions"]
     # last_seen = request.POST["last_seen"]
     return HttpResponse(responder.geoJSON(as_json=True), content_type="application/json", status=200)
-
-
-
-

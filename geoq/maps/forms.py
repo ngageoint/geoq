@@ -5,7 +5,7 @@
 from django import forms
 from geoq.core.forms import StyledModelForm
 from django.forms.models import inlineformset_factory
-from models import Feature, FeatureType, Map, Layer, MapLayer
+from .models import Feature, FeatureType, Map, Layer, MapLayer
 
 from crispy_forms.helper import FormHelper
 from crispy_forms.layout import HTML, Layout, Fieldset, ButtonHolder, Submit

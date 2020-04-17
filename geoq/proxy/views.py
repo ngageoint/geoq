@@ -16,7 +16,7 @@ class ProxyRegisterForm(ModelForm):
     class Meta:
         model = SourceDocument
         fields = ('Name','Refresh','Expires','Type','SourceURL')
-    
+
 
 class ProxyRegisterView(CreateView):
     model = SourceDocument
@@ -38,6 +38,5 @@ class ProxyAuxGetView(View):
     def get(self, request, *args, **kwargs):
         parentobj = get_object_or_404(SourceDocument,slug=args[0])
         obj = get_object_or_404(ChildDocument,slug=args[1],Parent=parentobj)
-        print "Todo: need to somehow handle imgs etc. content"
+        print ("Todo: need to somehow handle imgs etc. content")
         return HttpResponse(content=obj.get_document())
-

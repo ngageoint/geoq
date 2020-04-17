@@ -8,20 +8,20 @@ from django.contrib.auth.decorators import login_required
 from django.contrib.gis.geos import GEOSGeometry
 from django.core import serializers
 from django.core.exceptions import ValidationError, ObjectDoesNotExist
-from django.core.urlresolvers import reverse
+from django.urls import reverse
 from django.http import HttpResponse, HttpResponseRedirect, Http404
 from django.shortcuts import render, get_object_or_404
 from django.template import RequestContext
 from django.views.generic import ListView, View, DeleteView
 from django.views.decorators.http import require_http_methods
 
-from forms import MapForm, MapInlineFormset, UploadKMZForm, UploadJSONForm
+from .forms import MapForm, MapInlineFormset, UploadKMZForm, UploadJSONForm
 
 from geoq.core.models import AOI
 from geoq.locations.models import Counties
 
-from models import Feature, FeatureType, Map, Layer, MapLayerUserRememberedParams, MapLayer, GeoeventsSource
-from kmz_handler import save_kmz_file
+from .models import Feature, FeatureType, Map, Layer, MapLayerUserRememberedParams, MapLayer, GeoeventsSource
+from .kmz_handler import save_kmz_file
 from json import load
 
 import logging

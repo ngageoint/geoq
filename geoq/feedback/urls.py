@@ -4,8 +4,8 @@
 
 from django.contrib.auth.decorators import login_required
 from django.conf.urls import url
-from views import feedbackcreate, thankyou, FeedbackListView
-from models import Feedback
+from .views import feedbackcreate, thankyou, FeedbackListView
+from .models import Feedback
 
 urlpatterns = [
 
