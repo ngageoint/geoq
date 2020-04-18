@@ -71,6 +71,9 @@ class GeoQBase(models.Model):
     def __unicode__(self):
         return self.name
 
+    def __str__(self):
+        return self.name
+
     class Meta:
         abstract = True
         ordering = ('active', '-created_at',)
@@ -261,14 +264,14 @@ class Job(GeoQBase, Assignment):
             output = "<table class='job_feature_list'>"
 
             header = "<th><i>Feature Counts</i></th>"
-            for (featuretype, status_obj) in counts.iteritems():
+            for (featuretype, status_obj) in counts.items():
                 header = header + "<th><b>" + cgi.escape(featuretype) + "</b></th>"
             output += "<tr>" + header + "</tr>"
 
             for status in STATE_VALUES:
                 status = str(status)
                 row = "<td><b>" + status + "</b></td>"
-                for (featuretype, status_obj) in counts.iteritems():
+                for (featuretype, status_obj) in counts.items():
                     if status in status_obj:
                         val = status_obj[status]
                     else:

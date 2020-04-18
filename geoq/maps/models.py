@@ -147,6 +147,9 @@ class Layer(models.Model):
     def __unicode__(self):
         return '{0}'.format(self.name)
 
+    def __str__(self):
+        return self.__unicode__()
+
     def get_layer_urls(self):
         """
         Returns a list of urls for the layer.
@@ -215,6 +218,9 @@ class Map(models.Model):
 
     def __unicode__(self):
         return '{0}'.format(self.title)
+
+    def __str__(self):
+        return self.__unicode__()
 
     @property
     def name(self):
@@ -347,6 +353,9 @@ class EditableMapLayer(models.Model):
 
     def __unicode__(self):
         return '{0} ({1})'.format(self.name, self.type)
+
+    def __str__(self):
+        return self.__unicode__()
 
 class Feature(models.Model):
     """
@@ -567,7 +576,10 @@ class FeatureType(models.Model):
         return reverse('feature-type-update', args=[self.id])
 
     def __unicode__(self):
-        return self.name
+        return '{0}'.format(self.name)
+
+    def __str__(self):
+        return self.__unicode__()
 
     class Meta:
         ordering = ['-category', 'order', 'name', 'id']

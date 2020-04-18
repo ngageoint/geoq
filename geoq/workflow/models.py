@@ -421,6 +421,9 @@ class Workflow(models.Model):
     def __unicode__(self):
         return self.name
 
+    def __str__(self):
+        return self.__unicode__()
+
     class Meta:
         ordering = ['status', 'name']
         verbose_name = _('Workflow')
@@ -532,6 +535,9 @@ class State(models.Model):
     def __unicode__(self):
         return self.name
 
+    def __str__(self):
+        return self.__unicode__()
+
     class Meta:
         ordering = ['-is_start_state','is_end_state']
         verbose_name = _('State')
@@ -575,6 +581,9 @@ class Transition(models.Model):
     def __unicode__(self):
         return self.name
 
+    def __str__(self):
+        return self.__unicode__()
+
     class Meta:
         verbose_name = _('Transition')
         verbose_name_plural = _('Transitions')
@@ -595,6 +604,9 @@ class EventType(models.Model):
 
     def __unicode__(self):
         return self.name
+
+    def __str__(self):
+        return self.__unicode__()
 
 class Event(models.Model):
     """
@@ -645,6 +657,9 @@ class Event(models.Model):
 
     def __unicode__(self):
         return self.name
+
+    def __str__(self):
+        return self.__unicode__()
 
     class Meta:
         verbose_name = _('Event')
@@ -1070,6 +1085,9 @@ class Participant(models.Model):
         disabled = _(' (disabled)') if self.disabled else ''
         return u"%s%s%s"%(name, roles, disabled)
 
+    def __str__(self):
+        return self.__unicode__()
+
     class Meta:
         ordering = ['-disabled', 'workflowactivity', 'user',]
         verbose_name = _('Participant')
@@ -1163,6 +1181,9 @@ class WorkflowHistory(models.Model):
 
     def __unicode__(self):
         return u"%s created by %s"%(self.note, self.participant.__unicode__())
+
+    def __str__(self):
+        return self.__unicode__()
 
     class Meta:
         ordering = ['-created_on']
