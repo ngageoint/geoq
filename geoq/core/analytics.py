@@ -41,14 +41,7 @@ class UserGroupStats(object):
         output['Group'] = str(self.name)
         output['state'] = self.stats
         output['Users'] = []
-        for key, value in self.users.iteritems():
+        for key, value in self.users.items():
             output['Users'].append(value)
 
         return output
-
-
-
-
-
-
-

@@ -1002,7 +1002,7 @@ class WorkSummaryView(TemplateView):
 
         cv['object'] = job
         cv['data'] = []
-        for key,value in job_team_data.iteritems():
+        for key,value in job_team_data.items():
             cv['data'].append(value.toJSON())
 
         return cv

@@ -260,7 +260,7 @@ class LayerImport(ListView):
             if not l:
                 # add the layer
                 new_layer = Layer()
-                for key, value in layer.iteritems():
+                for key, value in layer.items():
                     # if key == 'layer_params':
                     #     # TODO: need to pass json object here
                     #     pass
