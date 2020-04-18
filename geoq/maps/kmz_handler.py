@@ -9,7 +9,7 @@ import shutil
 
 def save_kmz_file(kmz_file):
     # figure out where the repository is, create folder, and extract kmz to there
-    KMZ_FILE_TYPE = unicode('application/vnd.google-earth.kmz')
+    KMZ_FILE_TYPE = str('application/vnd.google-earth.kmz')
 
     rootdir = getattr(settings, 'STATIC_ROOT')
     kmldir = getattr(settings, 'KML_REPOSITORY_ROOT', "kml/")

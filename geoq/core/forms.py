@@ -121,7 +121,7 @@ class JobForm(StyledModelForm):
             # must be a better way, but figure out the layers to display
             layers_selected = set(kwargs['data'].getlist('layers',None))
             layers_current_int = MapLayer.objects.filter(map=self.instance.map.id).values_list('layer_id', flat=True)
-            layers_current = set([unicode(i) for i in layers_current_int])
+            layers_current = set([str(i) for i in layers_current_int])
 
             if layers_selected != layers_current:
                 # resolve differences

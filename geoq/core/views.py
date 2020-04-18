@@ -1390,7 +1390,7 @@ class LayersJSON(ListView):
                     try:
                         flat_val = str(val)
                     except UnicodeEncodeError:
-                        flat_val = unicode(val).encode('unicode_escape')
+                        flat_val = str(val, encoding='utf-8', errors = 'ignore')
 
                     layer_json[field] = str(flat_val)
 
