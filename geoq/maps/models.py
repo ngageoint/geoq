@@ -399,7 +399,7 @@ class Feature(models.Model):
         properties_template = self.template.properties or {}
 
         # properties_template can return a list from it's backing model, make sure we get the Dict
-        if type(properties_template) == types.ListType:
+        if isinstance(properties_template,list):
             properties_template = properties_template[0]
 
         # srj: if using_style_template set, we're styling object from its feature id, else we'll
@@ -408,7 +408,8 @@ class Feature(models.Model):
         if using_style_template:
             properties_built['template'] = self.template.id if hasattr(self.template, "id") else None
 
-        properties = dict(properties_built.items() + properties_main.items() + properties_template.items())
+        #properties = dict(properties_built.items() + properties_main.items() + properties_template.items())
+        properties = {**properties_built, **properties_main, **properties_template}
 
         feature_type = FeatureType.objects.get(id=self.template.id)
 
@@ -426,7 +427,7 @@ class Feature(models.Model):
             return clean_dumps(geojson)
         else:
             for key in properties:
-                if isinstance(properties[key],str) or isinstance(properties[key], unicode):
+                if isinstance(properties[key],str):
                     properties[key] = properties[key].replace('<', '&ltl').replace('>', '&gt;').replace("javascript:", "j_script-")
             return geojson
 
@@ -516,17 +517,17 @@ class FeatureType(models.Model):
     def style_to_geojson(self):
         local_style = self.style
 
-        if local_style and local_style.has_key('color'):
+        if local_style and 'color' in local_style:
             local_style['stroke-color'] = local_style['color']
             local_style['fill-color'] = local_style['color']
             local_style.pop('color', None)
-        if local_style and local_style.has_key('weight'):
+        if local_style and 'weight' in local_style:
             local_style['stroke-width'] = local_style['weight']
             local_style.pop('weight', None)
-        if local_style and local_style.has_key('fill'):
+        if local_style and 'fill' in local_style:
             local_style['fill-opacity'] = local_style['fill']
             local_style.pop('fill', None)
-        if local_style and local_style.has_key('iconUrl'):
+        if local_style and 'iconUrl' in local_style:
             local_style['external-graphic'] = SERVER_URL + local_style['iconUrl']
             local_style.pop('iconUrl', None)
 
