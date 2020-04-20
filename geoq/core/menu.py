@@ -10,7 +10,7 @@ import re
 def menu(active=None, request_path=None, request_user=None):
 
     def order_dict(d, key):
-        return OrderedDict(sorted(d.items(), key=key))
+        return OrderedDict(sorted(list(d.items()), key=key))
 
     sort_key = lambda t: t[1].get('index', None)
 
@@ -65,7 +65,7 @@ def menu(active=None, request_path=None, request_user=None):
         menu_items.update(menu_help)
 
         if request_path:
-            for i in menu_items.keys():
+            for i in list(menu_items.keys()):
                 if menu_items[i].get('url', None):
                     if re.search(str(menu_items[i].get('url')), request_path):
                         menu_items[i]['active'] = True

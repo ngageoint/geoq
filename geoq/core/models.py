@@ -28,7 +28,7 @@ STATUS_VALUES_LIST = ['Unassigned', 'Assigned', 'In work', 'Awaiting review', 'I
 
 
 class AssigneeType:
-    USER, GROUP = range(1, 3)
+    USER, GROUP = list(range(1, 3))
 
 
 class Setting(models.Model):
@@ -228,7 +228,7 @@ class Job(GeoQBase, Assignment):
             if cell.status in count:
                 count[cell.status] += 1
 
-        return str(', '.join("%s: <b>%r</b>" % (key, val) for (key, val) in count.items()))
+        return str(', '.join("%s: <b>%r</b>" % (key, val) for (key, val) in list(count.items())))
 
     @property
     def user_count(self):
@@ -264,14 +264,14 @@ class Job(GeoQBase, Assignment):
             output = "<table class='job_feature_list'>"
 
             header = "<th><i>Feature Counts</i></th>"
-            for (featuretype, status_obj) in counts.items():
+            for (featuretype, status_obj) in list(counts.items()):
                 header = header + "<th><b>" + cgi.escape(featuretype) + "</b></th>"
             output += "<tr>" + header + "</tr>"
 
             for status in STATE_VALUES:
                 status = str(status)
                 row = "<td><b>" + status + "</b></td>"
-                for (featuretype, status_obj) in counts.items():
+                for (featuretype, status_obj) in list(counts.items()):
                     if status in status_obj:
                         val = status_obj[status]
                     else:
@@ -596,7 +596,7 @@ class AOI(GeoQBase, Assignment):
             analyst = (self.analyst.username if self.analyst is not None else 'Unassigned'),
             team = (self.assignee_name if self.assignee_id is not None else 'Unassigned'),
             priority = self.priority)
-        prop_json = dict(properties_built.items() + properties_main.items())
+        prop_json = dict(list(properties_built.items()) + list(properties_main.items()))
 
         # capture how much time was spent on each state for the AOI
         # We'll make this configurable later on, but just capture 'In work' for now

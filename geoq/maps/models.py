@@ -157,7 +157,7 @@ class Layer(models.Model):
         urls = []
 
         if getattr(self, 'additional_domains'):
-            map(urls.append, (domain for domain in self.additional_domains.split(";") if domain))
+            list(map(urls.append, (domain for domain in self.additional_domains.split(";") if domain)))
 
         return urls
 
@@ -435,7 +435,7 @@ class Feature(models.Model):
         properties_main = self.properties or {}
 
         #Pull the County data if it exists, otherwise find it and add it back to the object
-        if properties_main.has_key('county'):
+        if 'county' in properties_main:
             county = properties_main['county']
         else:
             county_list = Counties.objects.filter(poly__contains=self.the_geom.centroid.wkt)
@@ -465,7 +465,7 @@ class Feature(models.Model):
 
         properties_feature = dict(self.template.properties or {})
 
-        properties = dict(properties_main.items() + properties_built.items() + properties_feature.items())
+        properties = dict(list(properties_main.items()) + list(properties_built.items()) + list(properties_feature.items()))
         return properties
 
     def __unicode__(self):
@@ -542,18 +542,18 @@ class FeatureType(models.Model):
         style = self.style or {}
         if self.icon:
             src = str("/images/"+str(self.icon))
-        elif style.has_key('iconUrl'):
+        elif 'iconUrl' in style:
             src = str(style['iconUrl'])
 
-        if style.has_key('weight'):
+        if 'weight' in style:
             style_html = style_html + "border-width:"+str(style['weight'])+"px; "
-        if style.has_key('color'):
+        if 'color' in style:
             color = str(style['color'])
             style_html = style_html + "border-color:"+color+"; "
             bgColor = color
-        if style.has_key('fill'):
+        if 'fill' in style:
             bgColor = str(style['fill'])
-        if style.has_key('opacity'):
+        if 'opacity' in style:
             opacity = str(style['opacity'])
 
         if self.type == "Point":

@@ -44,13 +44,13 @@ class ItemSelectWidget(forms.SelectMultiple):
     def render_option(self, selected_choices, option_value, option_label, option_title=''):
         option_value = forms.util.force_text(option_value)
         if option_value in selected_choices:
-            selected_html = u' selected="selected"'
+            selected_html = ' selected="selected"'
             if not self.allow_multiple_selected:
                 selected_choices.remove(option_value)
         else:
             selected_html = ''
 
-        return u'<option title="%s" value="%s"%s>%s</option>' % ( \
+        return '<option title="%s" value="%s"%s>%s</option>' % ( \
             escape(option_title), escape(option_value), selected_html, conditional_escape(forms.util.force_text(option_label)))
 
     def render_options(self, choices, selected_choices):
@@ -68,13 +68,13 @@ class ItemSelectWidget(forms.SelectMultiple):
             output = []
             for option_value, option_label, option_title in chain(more_choices, choices):
                 if isinstance(option_label, (list, tuple)):
-                    output.append(u'<optgroup label="%s">' % escape(forms.util.force_text(option_value)))
+                    output.append('<optgroup label="%s">' % escape(forms.util.force_text(option_value)))
                     for option in option_label:
                         output.append(self.render_option(selected_choices, *option, **dict(option_title=option_title)))
-                    output.append(u'</optgroup>')
+                    output.append('</optgroup>')
                 else: # option_label is just a string
                     output.append(self.render_option(selected_choices, option_value, option_label, option_title))
-            return u'\n'.join(output)
+            return '\n'.join(output)
 
 class JobForm(StyledModelForm):
 
@@ -131,7 +131,7 @@ class JobForm(StyledModelForm):
                 # now add in new ones
                 layers = MapLayer.objects.filter(map=self.instance.map.id)
                 if layers.count() > 0:
-                    max_stack_order = layers.aggregate(Max('stack_order')).values()[0]
+                    max_stack_order = list(layers.aggregate(Max('stack_order')).values())[0]
                 else:
                     max_stack_order = 0
 

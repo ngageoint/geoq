@@ -665,7 +665,7 @@ class JobStatistics(ListView):
         allData = json.loads(job.geoJSON())
         analysts = []
         data = []
-        for x in xrange(0, job.aoi_count()):
+        for x in range(0, job.aoi_count()):
             temp = {}
             temp['aoi'] = allData["features"][x]["properties"]["id"]
             internalData = {}
@@ -677,7 +677,7 @@ class JobStatistics(ListView):
 
 
         def checkAnalysts(analyst):
-            for x in xrange(0, len(analysts)):
+            for x in range(0, len(analysts)):
                 if analysts[x]['analyst'] == analyst:
                     return x
             return -1
@@ -689,7 +689,7 @@ class JobStatistics(ListView):
                 diff = abs(startDate - finishDate)
                 return (diff.microseconds + (diff.seconds + diff.days * 24 * 3600) * 10**6) / 10**6
 
-        for i in xrange(0, len(data)):
+        for i in range(0, len(data)):
             isCompleted = False;
             totalTime = inReviewTime = inWorkTime = waitingForReviewTime = 0
 
@@ -776,13 +776,13 @@ class JobStatistics(ListView):
                     temp['workcells'] = workcells
                     analysts.append(temp)
 
-            for x in xrange(0, len(analysts)):
+            for x in range(0, len(analysts)):
                 runningAverageCompletion = 0
                 runningAverageInWork = 0
                 runningAverageInReview = 0
                 runningAverageWaitingForReview = 0
 
-                for i in xrange(0, len(analysts[x]['workcells'])):
+                for i in range(0, len(analysts[x]['workcells'])):
                     runningAverageCompletion = ((runningAverageCompletion * i) + analysts[x]['workcells'][i]['time']['completedIn']) / (i + 1)
                     runningAverageInWork = ((runningAverageInWork * i) + analysts[x]['workcells'][i]['time']['timeInWork']) / (i + 1)
                     runningAverageInReview = ((runningAverageInReview * i) + analysts[x]['workcells'][i]['time']['timeInReview']) / (i + 1)
@@ -1002,7 +1002,7 @@ class WorkSummaryView(TemplateView):
 
         cv['object'] = job
         cv['data'] = []
-        for key,value in job_team_data.items():
+        for key,value in list(job_team_data.items()):
             cv['data'].append(value.toJSON())
 
         return cv
@@ -1281,7 +1281,7 @@ def update_feature_data(request, *args, **kwargs):
         properties_main = feature.properties or {}
 
         if attribute == 'add_link':
-            if properties_main.has_key('linked_items'):
+            if 'linked_items' in properties_main:
                 properties_main_links = properties_main['linked_items']
             else:
                 properties_main_links = []

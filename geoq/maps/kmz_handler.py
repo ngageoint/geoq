@@ -20,7 +20,7 @@ def save_kmz_file(kmz_file):
     try:
         os.mkdir(path)
     except OSError as e:
-        print ("Error creating path {} due to {}".format(path,e))
+        print(("Error creating path {} due to {}".format(path,e)))
         shutil.rmtree(path)
         os.mkdir(path)
 

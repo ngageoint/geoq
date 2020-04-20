@@ -30,7 +30,7 @@ class ModelTestCase(TestCase):
             __unicode__()
             """
             w = Workflow.objects.get(id=1)
-            self.assertEquals(u'test workflow', w.__unicode__())
+            self.assertEqual('test workflow', w.__unicode__())
 
         def test_workflow_lifecycle(self):
             """
@@ -38,15 +38,15 @@ class ModelTestCase(TestCase):
             """
             # All new workflows start with status DEFINITION - from the fixtures
             w = Workflow.objects.get(id=1)
-            self.assertEquals(Workflow.DEFINITION, w.status)
+            self.assertEqual(Workflow.DEFINITION, w.status)
 
             # Activate the workflow
             w.activate()
-            self.assertEquals(Workflow.ACTIVE, w.status)
+            self.assertEqual(Workflow.ACTIVE, w.status)
 
             # Retire it.
             w.retire()
-            self.assertEquals(Workflow.RETIRED, w.status)
+            self.assertEqual(Workflow.RETIRED, w.status)
 
         def test_workflow_is_valid(self):
             """
@@ -54,7 +54,7 @@ class ModelTestCase(TestCase):
             """
             # from the fixtures
             w = Workflow.objects.get(id=1)
-            self.assertEquals(Workflow.DEFINITION, w.status)
+            self.assertEqual(Workflow.DEFINITION, w.status)
 
             # make sure the workflow contains exactly one start state
             # 0 start states
@@ -62,7 +62,7 @@ class ModelTestCase(TestCase):
             state1.is_start_state=False
             state1.save()
             self.assertEqual(False, w.is_valid())
-            self.assertEqual(True, u'There must be only one start state' in w.errors['workflow'])
+            self.assertEqual(True, 'There must be only one start state' in w.errors['workflow'])
             state1.is_start_state=True
             state1.save()
 
@@ -71,7 +71,7 @@ class ModelTestCase(TestCase):
             state2.is_start_state=True
             state2.save()
             self.assertEqual(False, w.is_valid())
-            self.assertEqual(True, u'There must be only one start state' in w.errors['workflow'])
+            self.assertEqual(True, 'There must be only one start state' in w.errors['workflow'])
             state2.is_start_state=False
             state2.save()
 
@@ -82,7 +82,7 @@ class ModelTestCase(TestCase):
                 state.is_end_state=False
                 state.save()
             self.assertEqual(False, w.is_valid())
-            self.assertEqual(True, u'There must be at least one end state' in w.errors['workflow'])
+            self.assertEqual(True, 'There must be at least one end state' in w.errors['workflow'])
             for state in end_states:
                 state.is_end_state=True
                 state.save()
@@ -92,7 +92,7 @@ class ModelTestCase(TestCase):
             orphan_state.save()
             self.assertEqual(False, w.is_valid())
             self.assertEqual(True, orphan_state.id in w.errors['states'])
-            msg = u'This state is orphaned. There is no way to get to it given'\
+            msg = 'This state is orphaned. There is no way to get to it given'\
                     ' the current workflow topology.'
             self.assertEqual(True, msg in w.errors['states'][orphan_state.id])
             orphan_state.delete()
@@ -104,7 +104,7 @@ class ModelTestCase(TestCase):
             cul_de_sac.save()
             self.assertEqual(False, w.is_valid())
             self.assertEqual(True, cul_de_sac.id in w.errors['states'])
-            msg = u'This state is a dead end. It is not marked as an end state'\
+            msg = 'This state is a dead end. It is not marked as an end state'\
                     ' and there is no way to exit from it.'
             self.assertEqual(True, msg in w.errors['states'][cul_de_sac.id])
             cul_de_sac.is_end_state = True
@@ -120,7 +120,7 @@ class ModelTestCase(TestCase):
             transition.roles.add(role)
             self.assertEqual(False, w.is_valid())
             self.assertEqual(True, transition.id in w.errors['transitions'])
-            msg = u'This transition is not navigable because none of the'\
+            msg = 'This transition is not navigable because none of the'\
                 ' roles associated with the parent state have permission to'\
                 ' use it.'
             self.assertEqual(True, msg in w.errors['transitions'][transition.id])
@@ -157,7 +157,7 @@ class ModelTestCase(TestCase):
             state1.is_start_state = False
             state1.save()
             w.is_valid()
-            msg = u'This state is orphaned. There is no way to get to it given'\
+            msg = 'This state is orphaned. There is no way to get to it given'\
                     ' the current workflow topology.'
             self.assertEqual([msg], w.has_errors(state1))
             
@@ -171,7 +171,7 @@ class ModelTestCase(TestCase):
             transition.roles.clear()
             transition.roles.add(role)
             w.is_valid()
-            msg = u'This transition is not navigable because none of the'\
+            msg = 'This transition is not navigable because none of the'\
                 ' roles associated with the parent state have permission to'\
                 ' use it.'
             self.assertEqual([msg], w.has_errors(transition))
@@ -204,15 +204,15 @@ class ModelTestCase(TestCase):
             """
             # from the fixtures
             w = Workflow.objects.get(id=1)
-            self.assertEquals(Workflow.DEFINITION, w.status)
+            self.assertEqual(Workflow.DEFINITION, w.status)
 
             # make sure only workflows in definition can be activated
             w.status=Workflow.ACTIVE
             w.save()
             try:
                 w.activate()
-            except Exception, instance:
-                self.assertEqual(u'Only workflows in the "definition" state may'\
+            except Exception as instance:
+                self.assertEqual('Only workflows in the "definition" state may'\
                         ' be activated', instance.args[0]) 
             else:
                 self.fail('Exception expected but not thrown')
@@ -226,8 +226,8 @@ class ModelTestCase(TestCase):
             state1.save()
             try:
                 w.activate()
-            except Exception, instance:
-                self.assertEqual(u"Cannot activate as the workflow doesn't"\
+            except Exception as instance:
+                self.assertEqual("Cannot activate as the workflow doesn't"\
                         " validate.", instance.args[0])
             else:
                 self.fail('Exception expected but not thrown')
@@ -259,8 +259,8 @@ class ModelTestCase(TestCase):
             w = Workflow.objects.get(id=1)
             try:
                 w.clone(u)
-            except Exception, instance:
-                self.assertEqual(u'Only active or retired workflows may be'\
+            except Exception as instance:
+                self.assertEqual('Only active or retired workflows may be'\
                         ' cloned', instance.args[0])
             else:
                 self.fail('Exception expected but not thrown')
@@ -291,12 +291,12 @@ class ModelTestCase(TestCase):
             s.save()
 
             # Lets make sure the default is correct
-            self.assertEquals(None, s.deadline())
+            self.assertEqual(None, s.deadline())
 
             # Changing the unit of time measurements mustn't change anything
             s.estimation_unit = s.HOUR
             s.save()
-            self.assertEquals(None, s.deadline())
+            self.assertEqual(None, s.deadline())
 
             # Only when we have a positive value in the estimation_value field
             # should a deadline be returned
@@ -308,35 +308,35 @@ class ModelTestCase(TestCase):
             s.save()
             expected = datetime.datetime(2000, 1, 1, 0, 0, 1)
             actual = s.deadline()
-            self.assertEquals(expected, actual)
+            self.assertEqual(expected, actual)
 
             # Minutes
             s.estimation_unit = s.MINUTE
             s.save()
             expected = datetime.datetime(2000, 1, 1, 0, 1, 0)
             actual = s.deadline()
-            self.assertEquals(expected, actual)
+            self.assertEqual(expected, actual)
 
             # Hours
             s.estimation_unit = s.HOUR
             s.save()
             expected = datetime.datetime(2000, 1, 1, 1, 0)
             actual = s.deadline()
-            self.assertEquals(expected, actual)
+            self.assertEqual(expected, actual)
 
             # Days
             s.estimation_unit = s.DAY
             s.save()
             expected = datetime.datetime(2000, 1, 2)
             actual = s.deadline()
-            self.assertEquals(expected, actual)
+            self.assertEqual(expected, actual)
             
             # Weeks 
             s.estimation_unit = s.WEEK
             s.save()
             expected = datetime.datetime(2000, 1, 8)
             actual = s.deadline()
-            self.assertEquals(expected, actual)
+            self.assertEqual(expected, actual)
 
         def test_state_unicode(self):
             """
@@ -349,7 +349,7 @@ class ModelTestCase(TestCase):
                     workflow=w
                     )
             s.save()
-            self.assertEqual(u'test', s.__unicode__())
+            self.assertEqual('test', s.__unicode__())
 
         def test_transition_unicode(self):
             """
@@ -357,7 +357,7 @@ class ModelTestCase(TestCase):
             the Transition model
             """
             tr = Transition.objects.get(id=1)
-            self.assertEqual(u'Proceed to state 2', tr.__unicode__())
+            self.assertEqual('Proceed to state 2', tr.__unicode__())
 
         def test_event_unicode(self):
             """
@@ -365,14 +365,14 @@ class ModelTestCase(TestCase):
             the Event model
             """
             e = Event.objects.get(id=1)
-            self.assertEqual(u'Important meeting', e.__unicode__())
+            self.assertEqual('Important meeting', e.__unicode__())
 
         def test_event_type_unicode(self):
             """
             Make sure we get the name of the event type
             """
             et = EventType.objects.get(id=1)
-            self.assertEquals(u'Meeting', et.__unicode__())
+            self.assertEqual('Meeting', et.__unicode__())
 
         def test_workflowactivity_current_state(self):
             """
@@ -425,8 +425,8 @@ class ModelTestCase(TestCase):
             wa.force_stop(p, 'foo')
             try:
                 wa.start(u)
-            except Exception, instance:
-                self.assertEqual(u'Already completed', instance.args[0])
+            except Exception as instance:
+                self.assertEqual('Already completed', instance.args[0])
             else:
                 self.fail('Exception expected but not thrown')
             wa = WorkflowActivity(workflow=w, created_by=u)
@@ -441,8 +441,8 @@ class ModelTestCase(TestCase):
             s2.save()
             try:
                 wa.start(u)
-            except Exception, instance:
-                self.assertEqual(u'Cannot find single start state', 
+            except Exception as instance:
+                self.assertEqual('Cannot find single start state', 
                         instance.args[0])
             else:
                 self.fail('Exception expected but not thrown')
@@ -461,8 +461,8 @@ class ModelTestCase(TestCase):
             # Lets make sure we can't "start" the workflowactivity again
             try:
                 wa.start(u)
-            except Exception, instance:
-                self.assertEqual(u'Already started', instance.args[0])
+            except Exception as instance:
+                self.assertEqual('Already started', instance.args[0])
             else:
                 self.fail('Exception expected but not thrown')
 
@@ -486,8 +486,8 @@ class ModelTestCase(TestCase):
             tr5 = Transition.objects.get(id=5)
             try:
                 wa.progress(tr5, u)
-            except Exception, instance:
-                self.assertEqual(u'Start the workflow before attempting to'\
+            except Exception as instance:
+                self.assertEqual('Start the workflow before attempting to'\
                         ' transition', instance.args[0])
             else:
                 self.fail('Exception expected but not thrown')
@@ -495,8 +495,8 @@ class ModelTestCase(TestCase):
             # 2. The transition's from_state *must* be the current state
             try:
                 wa.progress(tr5, u)
-            except Exception, instance:
-                self.assertEqual(u'Transition not valid (wrong parent)', 
+            except Exception as instance:
+                self.assertEqual('Transition not valid (wrong parent)', 
                         instance.args[0])
             else:
                 self.fail('Exception expected but not thrown')
@@ -511,8 +511,8 @@ class ModelTestCase(TestCase):
             tr2 = Transition.objects.get(id=2)
             try:
                 wa.progress(tr2, u)
-            except Exception, instance:
-                self.assertEqual(u'Transition not valid (mandatory event'\
+            except Exception as instance:
+                self.assertEqual('Transition not valid (mandatory event'\
                         ' missing)', instance.args[0])
             else:
                 self.fail('Exception expected but not thrown')
@@ -531,8 +531,8 @@ class ModelTestCase(TestCase):
             tr4 = Transition.objects.get(id=4) # won't work with r2
             try:
                 wa.progress(tr4, u)
-            except Exception, instance:
-                self.assertEqual(u'Participant has insufficient authority to'\
+            except Exception as instance:
+                self.assertEqual('Participant has insufficient authority to'\
                         ' use the specified transition', instance.args[0])
             else:
                 self.fail('Exception expected but not thrown')
@@ -599,8 +599,8 @@ class ModelTestCase(TestCase):
             dummy_event.save()
             try:
                 wa.log_event(dummy_event, u)
-            except Exception, instance:
-                self.assertEqual(u'The event is not associated with the'\
+            except Exception as instance:
+                self.assertEqual('The event is not associated with the'\
                         ' workflow for the WorkflowActivity', instance.args[0])
             else:
                 self.fail('Exception expected but not thrown')
@@ -613,8 +613,8 @@ class ModelTestCase(TestCase):
             p.roles.clear()
             try:
                 wa.log_event(e1, u)
-            except Exception, instance:
-                self.assertEqual(u'The participant is not associated with the'\
+            except Exception as instance:
+                self.assertEqual('The participant is not associated with the'\
                         ' specified event', instance.args[0])
             else:
                 self.fail('Exception expected but not thrown')
@@ -628,8 +628,8 @@ class ModelTestCase(TestCase):
             e2.save()
             try:
                 wa.log_event(e2, u)
-            except Exception, instance:
-                self.assertEqual(u'The mandatory event is not associated with'\
+            except Exception as instance:
+                self.assertEqual('The mandatory event is not associated with'\
                         ' the current state', instance.args[0])
             else:
                 self.fail('Exception expected but not thrown')
@@ -698,8 +698,8 @@ class ModelTestCase(TestCase):
             # Make sure we can't add an empty comment
             try:
                 wa.add_comment(u, '')
-            except Exception, instance:
-                self.assertEqual(u'Cannot add an empty comment', instance.args[0])
+            except Exception as instance:
+                self.assertEqual('Cannot add an empty comment', instance.args[0])
             else:
                 self.fail('Exception expected but not thrown')
 
@@ -866,8 +866,8 @@ class ModelTestCase(TestCase):
             # Lets make sure we must supply a note
             try:
                 wa.disable_participant(u, u2, '')
-            except Exception, instance:
-                self.assertEqual(u'Must supply a reason for disabling a'\
+            except Exception as instance:
+                self.assertEqual('Must supply a reason for disabling a'\
                         ' participant. None given.', instance.args[0])
             else:
                 self.fail('Exception expected but not thrown')
@@ -921,8 +921,8 @@ class ModelTestCase(TestCase):
             # Lets make sure we must supply a note
             try:
                 wa.enable_participant(u, u2, '')
-            except Exception, instance:
-                self.assertEqual(u'Must supply a reason for enabling a'\
+            except Exception as instance:
+                self.assertEqual('Must supply a reason for enabling a'\
                         ' disabled participant. None given.', instance.args[0])
             else:
                 self.fail('Exception expected but not thrown')
@@ -961,7 +961,7 @@ class ModelTestCase(TestCase):
             self.assertNotEqual(None, wa.completed_on)
             wh = wa.current_state()
             self.assertEqual(p, wh.participant)
-            self.assertEqual(u'Workflow forced to stop! Reason given: foo',
+            self.assertEqual('Workflow forced to stop! Reason given: foo',
                     wh.note)
             self.assertEqual(None, wh.deadline)
 
@@ -979,14 +979,14 @@ class ModelTestCase(TestCase):
             p = Participant(user=u, workflowactivity=wa)
             p.save()
             p.roles.add(r)
-            self.assertEquals(u'test_admin - Administrator', p.__unicode__())
+            self.assertEqual('test_admin - Administrator', p.__unicode__())
             p.roles.add(r2)
-            self.assertEquals(u'test_admin - Administrator, Manager', p.__unicode__())
+            self.assertEqual('test_admin - Administrator, Manager', p.__unicode__())
             p.disabled = True
             p.save()
-            self.assertEquals(u'test_admin - Administrator, Manager (disabled)', p.__unicode__())
+            self.assertEqual('test_admin - Administrator, Manager (disabled)', p.__unicode__())
             p.roles.clear()
-            self.assertEquals(u'test_admin (disabled)', p.__unicode__())
+            self.assertEqual('test_admin (disabled)', p.__unicode__())
 
         def test_workflow_history_unicode(self):
             """
@@ -1002,5 +1002,5 @@ class ModelTestCase(TestCase):
             p.save()
             p.roles.add(r)
             wh = wa.start(p)
-            self.assertEqual(u'Started workflow created by test_admin - Administrator', wh.__unicode__())
+            self.assertEqual('Started workflow created by test_admin - Administrator', wh.__unicode__())
 

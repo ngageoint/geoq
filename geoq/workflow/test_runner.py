@@ -79,10 +79,10 @@ def test_runner_with_coverage(test_labels, verbosity=1, interactive=True, extra_
         coverage.stop()
 
     # Print code metrics header
-    print ''
-    print '----------------------------------------------------------------------'
-    print ' Unit Test Code Coverage Results'
-    print '----------------------------------------------------------------------'
+    print('')
+    print('----------------------------------------------------------------------')
+    print(' Unit Test Code Coverage Results')
+    print('----------------------------------------------------------------------')
 
     # Report code coverage metrics
     if hasattr(settings, 'COVERAGE_MODULES'):
@@ -91,6 +91,6 @@ def test_runner_with_coverage(test_labels, verbosity=1, interactive=True, extra_
             coverage_modules.append(__import__(module, globals(), locals(), ['']))
         coverage.report(coverage_modules, show_missing=1)
         # Print code metrics footer
-        print '----------------------------------------------------------------------'
+        print('----------------------------------------------------------------------')
 
     return test_results

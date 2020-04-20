@@ -78,8 +78,8 @@ class ViewTestCase(TestCase):
             c = Client()
             try:
                 response = c.get('/test_workflow.png')
-            except Exception, instance:
-                self.assertEqual(u"GRAPHVIZ_DOT_COMMAND constant not set in"\
+            except Exception as instance:
+                self.assertEqual("GRAPHVIZ_DOT_COMMAND constant not set in"\
                         " settings.py (to specify the absolute path to"\
                         " graphviz's dot command)", instance.args[0])
             else:

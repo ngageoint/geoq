@@ -52,7 +52,7 @@ class SourceDocument(models.Model):
                 doc = [x for x in contents if x.endswith(".kml")]
                 other = [x for x in contents if not x.endswith(".kml")]
                 if len(doc) != 1: # per https://developers.google.com/kml/documentation/kmzarchives?csw=1, This main KML file can have any name, as long as it ends in .kml, and as long as there is only one .kml file.
-                    print("ERROR: invalid kmz detected... skipping refreshing ", self.SourceURL)
+                    print(("ERROR: invalid kmz detected... skipping refreshing ", self.SourceURL))
                     return
                 doc = doc[0]
                 self.OriginalDocument = base64.b64encode(kmzdata)

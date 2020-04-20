@@ -1079,11 +1079,11 @@ class Participant(models.Model):
     def __unicode__(self):
         name = self.user.get_full_name() if self.user.get_full_name() else self.user.username
         if self.roles.all():
-            roles = u' - ' + u', '.join([r.__unicode__() for r in self.roles.all()])
+            roles = ' - ' + ', '.join([r.__unicode__() for r in self.roles.all()])
         else:
             roles = ''
         disabled = _(' (disabled)') if self.disabled else ''
-        return u"%s%s%s"%(name, roles, disabled)
+        return "%s%s%s"%(name, roles, disabled)
 
     def __str__(self):
         return self.__unicode__()
@@ -1180,7 +1180,7 @@ class WorkflowHistory(models.Model):
                 workflow_ended.send(sender=self.workflowactivity)
 
     def __unicode__(self):
-        return u"%s created by %s"%(self.note, self.participant.__unicode__())
+        return "%s created by %s"%(self.note, self.participant.__unicode__())
 
     def __str__(self):
         return self.__unicode__()

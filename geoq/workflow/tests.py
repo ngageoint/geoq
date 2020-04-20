@@ -211,6 +211,6 @@ is a hook into the Django unit-test framework.
 Author: Nicholas H.Tollervey
 
 """
-from unit_tests.test_views import *
-from unit_tests.test_models import *
-from unit_tests.test_forms import *
+from .unit_tests.test_views import *
+from .unit_tests.test_models import *
+from .unit_tests.test_forms import *

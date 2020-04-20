@@ -4,7 +4,7 @@
 from django.contrib.auth.decorators import login_required
 from django.views.decorators.cache import patch_cache_control, cache_page
 from django.http import HttpResponse
-from IPy import IP
+from .IPy import IP
 import json
 import mimetypes
 from urllib.request import Request, urlopen
@@ -30,7 +30,7 @@ def proxy_to(request, path, target_url):
     errorCode = ''
     status = {}
 
-    if request.META.has_key('QUERY_STRING'):
+    if 'QUERY_STRING' in request.META:
         qs = request.META['QUERY_STRING']
         if len(qs) > 1:
             url = '%s?%s' % (url, qs)
