@@ -8,20 +8,20 @@ from django.contrib.auth.decorators import login_required
 from django.contrib.gis.geos import GEOSGeometry
 from django.core import serializers
 from django.core.exceptions import ValidationError, ObjectDoesNotExist
-from django.core.urlresolvers import reverse
+from django.urls import reverse
 from django.http import HttpResponse, HttpResponseRedirect, Http404
-from django.shortcuts import render_to_response, get_object_or_404
+from django.shortcuts import render, get_object_or_404
 from django.template import RequestContext
 from django.views.generic import ListView, View, DeleteView
 from django.views.decorators.http import require_http_methods
 
-from forms import MapForm, MapInlineFormset, UploadKMZForm, UploadJSONForm
+from .forms import MapForm, MapInlineFormset, UploadKMZForm, UploadJSONForm
 
 from geoq.core.models import AOI
 from geoq.locations.models import Counties
 
-from models import Feature, FeatureType, Map, Layer, MapLayerUserRememberedParams, MapLayer, GeoeventsSource
-from kmz_handler import save_kmz_file
+from .models import Feature, FeatureType, Map, Layer, MapLayerUserRememberedParams, MapLayer, GeoeventsSource
+from .kmz_handler import save_kmz_file
 from json import load
 
 import logging
@@ -78,7 +78,7 @@ class CreateFeatures(View):
 
             feature.save()
         except ValidationError as e:
-            response =  HttpResponse(content=json.dumps(dict(errors=e.messages)), mimetype="application/json", status=400)
+            response =  HttpResponse(content=json.dumps(dict(errors=e.messages)), content_type="application/json", status=400)
             response['Temp-Point-Id'] = tpi
             return response
         # This feels a bit ugly but it does get the GeoJSON into the response
@@ -86,7 +86,7 @@ class CreateFeatures(View):
         feature_list = json.loads(feature_json)
         feature_list[0]['geojson'] = feature.geoJSON(True)
 
-        response = HttpResponse(json.dumps(feature_list), mimetype="application/json")
+        response = HttpResponse(json.dumps(feature_list), content_type="application/json")
         response['Temp-Point-Id'] = tpi
         return response
 
@@ -122,9 +122,9 @@ class EditFeatures(View):
             feature.full_clean()
             feature.save()
         except ValidationError as e:
-            return HttpResponse(content=json.dumps(dict(errors=e.messages)), mimetype="application/json", status=400)
+            return HttpResponse(content=json.dumps(dict(errors=e.messages)), content_type="application/json", status=400)
 
-        return HttpResponse("{}", mimetype="application/json")
+        return HttpResponse("{}", content_type="application/json")
 
 @login_required
 @require_http_methods(["POST"])
@@ -134,7 +134,7 @@ def update_user_maplayer_param(request, *args, **kwargs):
     try:
         json_stuff = json.loads(request.body)
     except ValueError:
-        return HttpResponse("{\"status\":\"Bad Request\"}", mimetype="application/json", status=400)
+        return HttpResponse("{\"status\":\"Bad Request\"}", content_type="application/json", status=400)
 
     mlq = MapLayer.objects.filter(id=json_stuff['maplayer'])
 
@@ -152,7 +152,7 @@ def update_user_maplayer_param(request, *args, **kwargs):
 
         mlurp.save()
 
-    return HttpResponse(json.dumps(mlurp.values), mimetype="application/json", status=200)
+    return HttpResponse(json.dumps(mlurp.values), content_type="application/json", status=200)
 
 def feature_delete(request, pk):
     try:
@@ -183,14 +183,13 @@ def create_update_map(request, job_id, map_id):
         form = MapForm(prefix='map', instance=map_obj)
         maplayers_formset = MapInlineFormset(prefix='layers', instance=map_obj)
 
-    # form = [f for f in form if f.name not in ['zoom', 'projection', 'center_x', 'center_y']]
 
-    return render_to_response('core/generic_form.html', {
+    return render(request, 'core/generic_form.html', {
         'form': form,
         'layer_formset': maplayers_formset,
         'custom_form': 'core/map_create.html',
-        'object': map_obj,
-        }, context_instance=RequestContext(request))
+        'object': map_obj
+    })
 
 
 class MapListView(ListView):
@@ -261,7 +260,7 @@ class LayerImport(ListView):
             if not l:
                 # add the layer
                 new_layer = Layer()
-                for key, value in layer.iteritems():
+                for key, value in list(layer.items()):
                     # if key == 'layer_params':
                     #     # TODO: need to pass json object here
                     #     pass
@@ -339,7 +338,6 @@ class JSONLayerExport(ListView):
     model = Layer
 
     def get(self, request, *args, **kwargs):
-        name = self.kwargs.get('pk').replace("%20", " ");
-        layer = Layer.objects.get(name__iexact = name)
+        layer = get_object_or_404(Layer, id=self.kwargs.get('pk'))
         layerJson = json.dumps(layer.layer_json(), indent=2);
-        return HttpResponse(layerJson, mimetype="application/json", status=200)
+        return HttpResponse(layerJson, content_type="application/json", status=200)

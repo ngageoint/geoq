@@ -1,0 +1,68 @@
+{% extends "core/base.html" %}
+{% load compress %}
+{% block static_libraries %}
+
+{% compress css %}
+    <link href="{{ STATIC_URL }}core/less/geoq.less" media="all" rel="stylesheet" type="text/less" />
+{% endcompress %}
+    <script src="{{ STATIC_URL }}bootstrap/js/bootstrap-dialog.js"></script>
+    <style>
+        tbody {
+            overflow-y: scroll;
+            height: 400px;
+            width: 100%;
+        }
+
+        #table-div {
+            height: 500px;
+            width: 700px;
+            overflow-y: scroll;
+        }
+    </style>
+{% endblock %}
+
+{% block container %}
+
+    <div class="row-fluid container-narrow">
+        <div class="span6">
+            <h3>
+                <span class="title header">
+                    <a href="{%url 'job-detail' object.id %}">Summary Report</a>
+                                    <a class="icon-download pull-right" href="{% url 'json-job-grid' object.id %}"></a>
+                </span>
+
+            </h3>
+                <div id='table-div'>
+                <table class="table table-bordered table-striped header-fixed">
+                    <thead>
+                        <tr>
+                            <th>Workcell ID</th>
+                            <th>Assignee</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for cell in workcells %}
+                        <tr>
+                            <input type="hidden" name="id" value="{{ cell.id }}">
+                            <td value="{{ cell.id }}">
+                                <a href='{% url 'aoi-work' cell.id %}' target="_blank">{{ cell.id }}</a>
+                            </td>
+                            <td>
+                                {{ cell.assignee_id }}
+                            </td>
+                            <td>
+                                {{ cell.status }}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+                </div>
+
+        </div>
+
+
+        </div>
+{% endblock %}
+

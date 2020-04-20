@@ -1,7 +1,7 @@
 from django.http import HttpResponse, HttpResponseNotFound, HttpResponseBadRequest
 from PIL import Image
 from django.conf import settings
-from tancolor import tint_image
+from .tancolor import tint_image
 from django.views.decorators.http import last_modified
 import os, posixpath
 from datetime import datetime

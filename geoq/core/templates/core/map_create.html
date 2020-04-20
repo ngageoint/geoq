@@ -54,7 +54,7 @@
 
     {{ layer_formset.non_form_errors.as_ul }}
     {{ layer_formset.management_form.as_p }}
-    <table id="formset" class="form">
+    <table id="formset-layers" class="form">
     {% for form in layer_formset %}
       {% if forloop.first %}
       <thead><tr>
@@ -63,7 +63,7 @@
         {% endfor %}
       </tr></thead>
       {% endif %}
-      <tr class="{% cycle row1,row2 %}">
+      <tr class="{% cycle 'row1' 'row2' %}">
       {% for field in form.visible_fields %}
         <td style="text-align: center">
         {# Include the hidden fields in the form #}

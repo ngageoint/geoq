@@ -13,7 +13,8 @@ from userena.models import UserenaBaseProfile
 
 class Organization(models.Model):
     name = models.CharField(max_length=250)
-    primary_contact = models.ForeignKey(User, help_text="Contact for org.")
+    primary_contact = models.ForeignKey(User, help_text="Contact for org.",
+                                        on_delete=models.CASCADE)
 
     class Meta:
         unique_together = ('name', 'primary_contact')
@@ -37,7 +38,7 @@ class Organization(models.Model):
 
 class EmailDomain(models.Model):
     email_domain = models.CharField(max_length=50)
-    organization = models.ForeignKey(Organization)
+    organization = models.ForeignKey(Organization, on_delete=models.PROTECT)
 
     def __str__(self):
         return self.email_domain
@@ -46,16 +47,18 @@ class EmailDomain(models.Model):
 class UserProfile(UserenaBaseProfile):
     user = models.OneToOneField(User,
                                 unique=True,
-                                verbose_name=_('user'))
+                                verbose_name=_('user'),
+                                on_delete=models.CASCADE)
     email = models.CharField(max_length=250, null=True, blank=True)
     organization = models.ForeignKey(Organization, null=True, blank=True,
-        help_text="If '------', no Organization records share the email domain.")
+        help_text="If '------', no Organization records share the email domain.",
+        on_delete=models.PROTECT)
 
     # Badge scores
     defaultScore = 1
     score = models.IntegerField(default=defaultScore)
 
-    last_activity = models.DateTimeField(default = timezone.now())
+    last_activity = models.DateTimeField(auto_now_add=True)
 
     # OpenBadge id
     openbadge_id = models.CharField(max_length=250, null=True, blank=True)
@@ -110,13 +113,13 @@ class UserProfile(UserenaBaseProfile):
 
 
 class UserAuthorization(models.Model):
-    user = models.OneToOneField(User)
-    user_profile = models.OneToOneField(UserProfile)
+    user = models.OneToOneField(User, on_delete=models.CASCADE)
+    user_profile = models.OneToOneField(UserProfile, on_delete=models.CASCADE)
 
     authorized = models.BooleanField(help_text='Check this to approve member access.')
     permissions_granted_by = models.ForeignKey(User, null=True, blank=True,
-        related_name='permissions_granted_by')
-    permission_granted_on = models.DateTimeField(auto_now_add=True, default=datetime.now())
+        related_name='permissions_granted_by', on_delete=models.PROTECT)
+    permission_granted_on = models.DateTimeField(auto_now_add=True)
     user_accepted_terms_on = models.DateTimeField(null=True, blank=True)
 
     def __str__(self):
@@ -167,4 +170,3 @@ class UserAuthorization(models.Model):
         #     and self.authorized != user_presave.authorized:
 
         super(UserAuthorization, self).save()
-

@@ -8,26 +8,33 @@ import requests
 import pytz
 import logging
 import os
+import decimal
 
 
 from django.core.cache import cache
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User, Group, Permission
 from django.contrib.gis.geos import GEOSGeometry
-from django.core.urlresolvers import reverse, reverse_lazy
-from django.core.exceptions import ObjectDoesNotExist
+from django.contrib.contenttypes.models import ContentType
+from django.urls import reverse, reverse_lazy
+from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.db.models import Q
-from django.forms.util import ValidationError
+from django.views.decorators.csrf import csrf_exempt
+# from django.forms.util import ValidationError
 from django.http import Http404, HttpResponse, HttpResponseRedirect, HttpResponseForbidden
 from django.shortcuts import get_object_or_404, redirect, render
 from django.views.generic import DetailView, ListView, TemplateView, View, DeleteView, CreateView, UpdateView
+from django.views.decorators.http import require_POST, require_http_methods
+from django import utils
+import distutils
 
 from datetime import datetime, timedelta
 from django.utils.dateparse import parse_datetime
 
-from models import Project, Job, AOI, Comment, AssigneeType, Organization
+from .models import Project, Job, AOI, Comment, AssigneeType, Organization, AOITimer, Responder
 from geoq.maps.models import *
-from utils import send_assignment_email, increment_metric
+from geoq.workflow.models import Transition
+from .utils import send_assignment_email, increment_metric
 from geoq.training.models import Training
 
 from geoq.mgrs.utils import Grid, GridException, GeoConvertException
@@ -36,8 +43,10 @@ from geoq.core.middleware import Http403
 from geoq.mgrs.exceptions import ProgramException
 from guardian.decorators import permission_required
 
-from kml_view import *
-from shape_view import *
+from .kml_view import *
+from .shape_view import *
+from .analytics import UserGroupStats
+from pytz import utc
 
 from django.views.generic.detail import SingleObjectTemplateResponseMixin
 from django.views.generic.edit import ModelFormMixin, ProcessFormView
@@ -210,6 +219,17 @@ class CreateFeaturesView(UserAllowedMixin, DetailView):
     queryset = AOI.objects.all()
     user_check_failure_path = ''
 
+    def startTimer(self, user, aoi, status):
+        timer,created = AOITimer.objects.get_or_create(
+            user=self.request.user,
+            aoi=aoi,
+            status='In work',
+            started_at=datetime.now(utc),
+            completed_at=None)
+        if created:
+            timer.save()
+
+
     def check_user(self, user, kwargs):
         try:
             aoi = AOI.objects.get(id=kwargs.get('pk'))
@@ -239,16 +259,17 @@ class CreateFeaturesView(UserAllowedMixin, DetailView):
         if aoi.status == 'Unassigned':
             aoi.analyst = self.request.user
             aoi.status = 'In work'
-            aoi.cellStarted_at = datetime.now(tz=pytz.timezone('UTC'));
             aoi.save()
             return True
         elif aoi.status == 'In work':
             if is_admin:
+                self.startTimer(self.request.user, aoi, aoi.status)
                 return True
             elif aoi.analyst != self.request.user:
                 kwargs['error'] = "Another analyst is already working on this workcell. Please select another workcell"
                 return False
             else:
+                self.startTimer(self.request.user, aoi, aoi.status)
                 return True
         elif aoi.status == 'Assigned':
             if is_admin:
@@ -263,7 +284,6 @@ class CreateFeaturesView(UserAllowedMixin, DetailView):
         elif aoi.status == 'Awaiting review':
             if self.request.user in aoi.job.reviewers.all() or is_admin:
                 aoi.status = 'In review'
-                aoi.cellInReview_at = datetime.now(tz=pytz.timezone('UTC'))
                 aoi.reviewers.add(self.request.user)
                 aoi.save()
                 increment_metric('workcell_analyzed')
@@ -325,11 +345,15 @@ class CreateFeaturesView(UserAllowedMixin, DetailView):
 
 #TODO: Add Job specific layers, and add these here
 
-        cv['user_custom_params'] =\
-            json.dumps(dict((e['maplayer'], e['values']) for e in
-                            MapLayerUserRememberedParams.objects.filter(user=self.request.user, map=cv['map']).values('maplayer','values')))
+        # cv['user_custom_params'] =\
+        #    json.dumps(dict((e['maplayer'], e['values']) for e in
+        #                    MapLayerUserRememberedParams.objects.filter(user=self.request.user, map=cv['map']).values('maplayer','values')))
+        cv['user_custom_params'] = {}
         cv['layers_on_map'] = json.dumps(layers)
         cv['base_layer'] = json.dumps(self.object.job.base_layer_object())
+        cv['state'] = self.object.job.workflow.states.filter(name=kwargs['object'].status).first()
+        cv['transitions'] = [{'name':str(x['name']), 'url':str(reverse('aoi-transition', args=[self.object.id, x['id']]))}
+            for x in cv['state'].transitions_from.values('name','id')]
 
         Comment(user=cv['aoi'].analyst, aoi=cv['aoi'], text="Workcell opened").save()
         return cv
@@ -355,29 +379,31 @@ class JobDetailedListView(ListView):
 
     paginate_by = 15
     model = Job
-    default_status = 'in work'
+    default_status = 'all'
+    default_status_assigner = 'assigned'
+    default_status_analyst = 'in work'
     request = None
     metrics = False
 
     def get_queryset(self):
         status = getattr(self, 'status', None)
-        q_set = AOI.objects.filter(job=self.kwargs.get('pk'))
-
-        # # If there is a user logged in, we want to show their stuff
-        # # at the top of the list
-        if self.request.user.id is not None and status == 'in work':
-            user = self.request.user
-            clauses = 'WHEN analyst_id=%s THEN %s ELSE 1' % (user.id, 0)
-            ordering = 'CASE %s END' % clauses
-            self.queryset = q_set.extra(
-               select={'ordering': ordering}, order_by=('ordering',))
-        else:
-            self.queryset = q_set
+        user_id = self.request.user.id
+        job_set = AOI.objects.filter(job=self.kwargs.get('pk')).order_by('id')
 
         if status and (status in [value.lower() for value in AOI.STATUS_VALUES]):
-            return self.queryset.filter(status__iexact=status)
+            job_set = job_set.filter(status__iexact=status)
+
+        if self.request.user.has_perm('core.assign_workcells'):
+            self.queryset = job_set.filter(Q(analyst_id=user_id) | Q(assignee_id=user_id))
+            # this is a trick to populate the _result_cache
+            len(self.queryset)
+            non_user_set = job_set.exclude(Q(analyst_id=user_id) | Q(assignee_id=user_id))
+            for workcell in non_user_set:
+                self.queryset._result_cache.append(workcell)
         else:
-            return self.queryset
+            self.queryset = job_set.filter(Q(analyst_id=user_id) | Q(assignee_id=user_id))
+
+        return self.queryset
 
     def get(self, request, *args, **kwargs):
         self.status = self.kwargs.get('status')
@@ -394,8 +420,12 @@ class JobDetailedListView(ListView):
     def get_context_data(self, **kwargs):
         cv = super(JobDetailedListView, self).get_context_data(**kwargs)
         job_id = self.kwargs.get('pk')
+        job = Job.objects.get(id=job_id)
+
         cv['object'] = get_object_or_404(self.model, pk=job_id)
-        cv['statuses'] = AOI.STATUS_VALUES
+        cv['workpath'] = cv['object'].workflow.path()
+        STATE_VALUES = [i.name for i in cv['workpath']]
+        cv['statuses'] = STATE_VALUES if self.request.user.has_perm('core.assign_workcells') else STATE_VALUES[2:]
         cv['active_status'] = self.status
         cv['workcell_count'] = cv['object'].aoi_count()
         cv['metrics'] = self.metrics
@@ -406,7 +436,7 @@ class JobDetailedListView(ListView):
         for i in temp_id:
             key = User.objects.filter(id=i).values_list('username', flat=True)[0]
             cv['dict'][key] = cv['dict'].get(key, 0) + 1
-      
+
         #TODO: Add feature_count
 
         cv['completed'] = cv['object'].complete_percent()
@@ -478,6 +508,7 @@ class CreateProjectView(CreateView):
         self.object.save()
 
         return HttpResponseRedirect(self.get_success_url())
+
 
 class CreateJobView(CreateView):
     """
@@ -634,19 +665,19 @@ class JobStatistics(ListView):
         allData = json.loads(job.geoJSON())
         analysts = []
         data = []
-        for x in xrange(0, job.aoi_count()):
+        for x in range(0, job.aoi_count()):
             temp = {}
             temp['aoi'] = allData["features"][x]["properties"]["id"]
             internalData = {}
             internalData["analyst"] = allData["features"][x]["properties"]["analyst"]
-            internalData['time'] = allData["features"][x]["properties"]["time"]
+            # internalData['time'] = allData["features"][x]["properties"]["time"]
             internalData["priority"] = allData["features"][x]["properties"]["priority"]
             temp["data"] = internalData
             data.append(temp)
 
 
         def checkAnalysts(analyst):
-            for x in xrange(0, len(analysts)):
+            for x in range(0, len(analysts)):
                 if analysts[x]['analyst'] == analyst:
                     return x
             return -1
@@ -658,34 +689,34 @@ class JobStatistics(ListView):
                 diff = abs(startDate - finishDate)
                 return (diff.microseconds + (diff.seconds + diff.days * 24 * 3600) * 10**6) / 10**6
 
-        for i in xrange(0, len(data)):
+        for i in range(0, len(data)):
             isCompleted = False;
             totalTime = inReviewTime = inWorkTime = waitingForReviewTime = 0
 
         	#Total Time from InWork - Complete
-            if str(data[i]['data']['time']['in_work']) != "None" and str(data[i]['data']['time']['finished']) != "None":
-                isCompleted = True;
-                startedDate = parse_datetime(data[i]['data']['time']['in_work'])
-                finishedDate = parse_datetime(data[i]['data']['time']['finished'])
-                totalTime = getTotalTime(startedDate,finishedDate) / 3600
+            #if str(data[i]['data']['time']['in_work']) != "None" and str(data[i]['data']['time']['finished']) != "None":
+            #    isCompleted = True;
+            #    startedDate = parse_datetime(data[i]['data']['time']['in_work'])
+            #    finishedDate = parse_datetime(data[i]['data']['time']['finished'])
+            #    totalTime = getTotalTime(startedDate,finishedDate) / 3600
 
         	#Time In review
-            if str(data[i]['data']['time']['finished']) != "None" and str(data[i]['data']['time']['in_review']) != "None":
-                finishedDate = parse_datetime(data[i]['data']['time']['finished'])
-                inReviewDate = parse_datetime(data[i]['data']['time']['in_review'])
-                inReviewTime = getTotalTime(inReviewDate,finishedDate) / 3600
+            #if str(data[i]['data']['time']['finished']) != "None" and str(data[i]['data']['time']['in_review']) != "None":
+            #    finishedDate = parse_datetime(data[i]['data']['time']['finished'])
+            #    inReviewDate = parse_datetime(data[i]['data']['time']['in_review'])
+            #    inReviewTime = getTotalTime(inReviewDate,finishedDate) / 3600
 
             #Time waiting in work
-            if str(data[i]['data']['time']['in_work']) != "None" and str(data[i]['data']['time']['waiting_review']) != "None":
-                inWorkDate = parse_datetime(data[i]['data']['time']['in_work'])
-                waitingReviewDate = parse_datetime(data[i]['data']['time']['waiting_review'])
-                inWorkTime = getTotalTime(waitingReviewDate,inWorkDate) / 3600
+            #if str(data[i]['data']['time']['in_work']) != "None" and str(data[i]['data']['time']['waiting_review']) != "None":
+            #    inWorkDate = parse_datetime(data[i]['data']['time']['in_work'])
+            #    waitingReviewDate = parse_datetime(data[i]['data']['time']['waiting_review'])
+            #    inWorkTime = getTotalTime(waitingReviewDate,inWorkDate) / 3600
 
             #Time waiting for Review
-            if str(data[i]['data']['time']['in_review']) != "None" and str(data[i]['data']['time']['waiting_review']) != "None":
-                inReviewDate = parse_datetime(data[i]['data']['time']['in_review'])
-                waitingReviewDate = parse_datetime(data[i]['data']['time']['waiting_review'])
-                waitingForReviewTime = getTotalTime(inReviewDate,waitingReviewDate) / 3600
+            #if str(data[i]['data']['time']['in_review']) != "None" and str(data[i]['data']['time']['waiting_review']) != "None":
+            #    inReviewDate = parse_datetime(data[i]['data']['time']['in_review'])
+            #    waitingReviewDate = parse_datetime(data[i]['data']['time']['waiting_review'])
+            #    waitingForReviewTime = getTotalTime(inReviewDate,waitingReviewDate) / 3600
 
 
             if isCompleted:
@@ -745,18 +776,18 @@ class JobStatistics(ListView):
                     temp['workcells'] = workcells
                     analysts.append(temp)
 
-            for x in xrange(0, len(analysts)):
+            for x in range(0, len(analysts)):
                 runningAverageCompletion = 0
                 runningAverageInWork = 0
                 runningAverageInReview = 0
                 runningAverageWaitingForReview = 0
 
-                for i in xrange(0, len(analysts[x]['workcells'])):
+                for i in range(0, len(analysts[x]['workcells'])):
                     runningAverageCompletion = ((runningAverageCompletion * i) + analysts[x]['workcells'][i]['time']['completedIn']) / (i + 1)
                     runningAverageInWork = ((runningAverageInWork * i) + analysts[x]['workcells'][i]['time']['timeInWork']) / (i + 1)
                     runningAverageInReview = ((runningAverageInReview * i) + analysts[x]['workcells'][i]['time']['timeInReview']) / (i + 1)
                     runningAverageWaitingForReview = ((runningAverageWaitingForReview * i) + analysts[x]['workcells'][i]['time']['waitingForReview']) / (i + 1)
-					
+
                 analysts[x]['averageCompletionTime'] = runningAverageCompletion
                 analysts[x]['averages']['averageInWorkTime'] = runningAverageInWork
                 analysts[x]['averages']['averageInReviewTime'] = runningAverageInReview
@@ -766,7 +797,7 @@ class JobStatistics(ListView):
         return cv
 
 
- 
+
 
 
 class ChangeAOIStatus(View):
@@ -774,33 +805,32 @@ class ChangeAOIStatus(View):
 
     def _get_aoi_and_update(self, pk):
         aoi = get_object_or_404(AOI, pk=pk)
-        
+
         status = self.kwargs.get('status')
         return status, aoi
 
     def _update_aoi(self, request, aoi, status):
         aoi.analyst = request.user
         aoi.status = status
-        timestamp = datetime.now(tz=pytz.timezone('UTC'))
-        if status == "Assigned":
-        	aoi.cellAssigned_at = timestamp
-        elif status == "In work":
-        	aoi.cellStarted_at = timestamp
-        elif status == "Awaiting review":
-        	aoi.cellWaitingReview_at = timestamp
-        elif status == "In review":
-        	aoi.cellInReview_at = timestamp
-        elif status == "Completed":
-        	aoi.cellFinished_at = timestamp
-        else:
-        	print "Update AOI hit end of if statement BAD"
 
+        try:
+            timer = AOITimer.objects.filter(user=request.user, aoi=aoi, completed_at=None).order_by('-id')
+            if len(timer) > 0:
+                t = timer[0]
+                t.completed_at = datetime.now(utc)
+                if t.savable:
+                    t.save()
+                else:
+                    t.delete()
+        except AOITimer.DoesNotExist:
+            pass
 
         aoi.save()
         return aoi
 
     def get(self, request, **kwargs):
         # Used to unassign tasks on the job detail, 'in work' tab
+
         status, aoi = self._get_aoi_and_update(self.kwargs.get('pk'))
 
         if aoi.user_can_complete(request.user):
@@ -812,6 +842,7 @@ class ChangeAOIStatus(View):
     def post(self, request, **kwargs):
 
         status, aoi = self._get_aoi_and_update(self.kwargs.get('pk'))
+
         if aoi.user_can_complete(request.user):
             aoi = self._update_aoi(request, aoi, status)
             Comment(aoi=aoi,user=request.user,text='changed status to %s' % status).save()
@@ -830,11 +861,29 @@ class ChangeAOIStatus(View):
 
             # send aoi completion event for badging
             send_aoi_create_event(request.user, aoi.id, aoi.features.all().count())
-            return HttpResponse(json.dumps({aoi.id: aoi.status, 'features_updated': features_updated}), mimetype="application/json")
+            return HttpResponse(json.dumps({aoi.id: aoi.status, 'features_updated': features_updated}), content_type="application/json")
         else:
             error = dict(error=403,
                          details="User not allowed to modify the status of this AOI.",)
             return HttpResponse(json.dumps(error), status=error.get('error'))
+
+
+class TransitionAOI(View):
+    model = AOI
+    http_method_names = ['put','get']
+
+    def get_context_data(self, **kwargs):
+        pass
+
+    def put(self, request, **kwargs):
+        aoi = get_object_or_404(AOI, pk=self.kwargs.get('pk'))
+        transition = get_object_or_404(Transition, id=self.kwargs.get('id'))
+
+        # TODO: ensure user has permission to execute this transition
+        aoi.status = transition.to_state.name
+        aoi.save()
+
+        return HttpResponse(json.dumps({aoi.id: aoi.status}), content_type="application/json")
 
 
 class PrioritizeWorkcells(TemplateView):
@@ -885,13 +934,16 @@ class AssignWorkcellsView(TemplateView):
         job_id = self.kwargs.get('job_pk')
         job = get_object_or_404(self.model, pk=job_id)
         workcells = request.POST.getlist('workcells[]')
-        utype = request.POST['user_type']
-        id = request.POST['user_data']
-        send_email = request.POST['email'] in ["true","True"]
+        utype = request.POST['type']
+        id = request.POST['choice']
+        send_email = False
+        # send_email = request.POST['email'] in ["true","True"]
+        # group = Group.objects.get(pk=group_id)
+        # user = User.objects.get(pk=user_id) if int(user_id) > 0 else None
 
         if utype and id and workcells:
             Type = User if utype == 'user' else Group
-            keyfield = 'username' if utype == 'user' else 'name'
+            keyfield = 'id'
             q = Q(**{"%s__contains" % keyfield: id})
             user_or_group = Type.objects.filter(q)
             if user_or_group.count() > 0:
@@ -911,6 +963,128 @@ class AssignWorkcellsView(TemplateView):
         else:
             return HttpResponse('{"status":"required field missing"}', status=500)
 
+
+class SummaryView(TemplateView):
+    template_name = 'core/summary.html'
+    model = Job
+
+    def get_queryset(self):
+        status = getattr(self, 'status', None)
+        q_set = AOI.objects.filter(job=self.kwargs.get('job_pk'))
+
+    def get_context_data(self, **kwargs):
+        cv = super(SummaryView, self).get_context_data(**kwargs)
+        cv['object'] = get_object_or_404(Job, pk=self.kwargs.get('job_pk'))
+        cv['workcells'] = AOI.objects.filter(job_id=self.kwargs.get('job_pk')).order_by('id')
+        return cv
+
+class WorkSummaryView(TemplateView):
+    http_method_names = ['get']
+    template_name = 'core/reports/work_summary.html'
+    model = Job
+
+    # we'll use these ContentTypes for filtering
+#    ct_user = ContentType.objects.get(app_label="auth",model="user")
+#    ct_group = ContentType.objects.get(app_label="auth",model="group")
+
+    def get_context_data(self, **kwargs):
+        cv = super(WorkSummaryView, self).get_context_data(**kwargs)
+
+        # get users and groups assigned to the Job
+        job = get_object_or_404(Job, pk=self.kwargs.get('job_pk'))
+        job_team_data = dict([(g,UserGroupStats(g)) for g in job.teams.all()])
+
+#        for uorg in job_team_data:
+#            ct = self.ct_group
+#            their_aois = job.aois.filter(assignee_id=uorg.id, assignee_type = ct)
+#            for aoi in their_aois:
+#                job_team_data[uorg].increment(aoi.analyst, aoi.status)
+
+        cv['object'] = job
+        cv['data'] = []
+        for key,value in list(job_team_data.items()):
+            cv['data'].append(value.toJSON())
+
+        return cv
+
+#TODO fix
+class JobReportView(TemplateView):
+    http_method_names = ['get']
+    template_name = 'core/reports/aoi_summary.html'
+    model = Job
+
+    def get_context_data(self, **kwargs):
+        cv = super(JobReportView, self).get_context_data(**kwargs)
+        # get users and groups assigned to the Job
+        job = get_object_or_404(Job, pk=self.kwargs.get('job_pk'))
+
+        cv['object'] = job
+        cv['data'] = job.work_summary_json()
+
+        return cv
+
+def image_footprints(request):
+    """
+    Stub to return sample JSON of fake image footprints with sample data. Used to test workcell_images model and footprints tool
+    Take in bbox:  s, w, n, e
+    """
+    import random, time
+
+    bbox = request.GET.get('bbox')
+
+    if not bbox:
+        return HttpResponse()
+
+    bb = bbox.split(',')
+    output = ""
+
+    if not len(bb) == 4:
+        output = json.dumps(dict(error=500, message='Need 4 corners of a bounding box passed in using EPSG 4386 lat/long format', grid=str(bb)))
+    else:
+        try:
+            month = str(time.strftime('%m'))
+            day = int(time.strftime('%d'))
+            year = str(time.strftime('%Y'))
+
+            samples = dict()
+            samples['features'] = []
+
+
+            for x in range(0, 8):
+                feature = dict()
+                feature['attributes'] = dict()
+                feature['attributes']['id'] = random.randint(1,1000000000)
+                feature['attributes']['image_id'] = feature['attributes']['id']
+                feature['attributes']['layerId'] = random.choice(['overwatch','eyesight','birdofprey','jupiter','eagle'])
+                feature['attributes']['image_sensor'] = random.choice(['xray','visible','gamma ray','telepathy','bw'])
+                feature['attributes']['cloud_cover'] = random.randint(1,100)
+                feature['attributes']['date_image'] = year + month + str(random.randint(1,day))
+                feature['attributes']['value'] = 'NEF-' + str(random.randint(1,10000)) + '-ABC-' + str(random.randint(1,10000))
+
+                feature['geometry'] = dict()
+
+                s = random.uniform(float(bb[0]), float(bb[2]))
+                w = random.uniform(float(bb[1]), float(bb[3]))
+                n = random.uniform(float(s), float(bb[2]))
+                e = random.uniform(float(w), float(bb[3]))
+
+                rings = []
+                rings.append([n, w])
+                rings.append([n, e])
+                rings.append([s, e])
+                rings.append([s, w])
+                rings.append([n, w])
+                feature['geometry']['rings'] = [rings]
+
+                samples['features'].append(feature)
+
+            output = json.dumps(samples)
+
+        except Exception as e:
+            import traceback
+            output = json.dumps(dict(error=500, message='Generic Exception', details=traceback.format_exc(), exception=str(e), grid=str(bb)))
+
+    return HttpResponse(output, content_type="application/json")
 
 def usng(request):
     """
@@ -933,7 +1107,7 @@ def usng(request):
     params['outputFormat'] = 'json'
     params['srsName'] = 'EPSG:4326'
     resp = requests.get(base_url, params=params)
-    return HttpResponse(resp, mimetype="application/json")
+    return HttpResponse(resp, content_type="application/json")
 
 
 def mgrs(request):
@@ -958,23 +1132,23 @@ def mgrs(request):
             output = json.dumps(fc)
         except GridException:
             error = dict(error=500, details="Can't create grids across longitudinal boundaries. Try creating a smaller bounding box",)
-            return HttpResponse(json.dumps(error), status=error.get('error'), mimetype="application/json")
-        except GeoConvertException, e:
+            return HttpResponse(json.dumps(error), status=error.get('error'), content_type="application/json")
+        except GeoConvertException as e:
             error = dict(error=500, details="GeoConvert doesn't recognize those cooridnates", exception=str(e))
-            return HttpResponse(json.dumps(error), status=error.get('error'), mimetype="application/json")
-        except ProgramException, e:
+            return HttpResponse(json.dumps(error), status=error.get('error'), content_type="application/json")
+        except ProgramException as e:
             error = dict(error=500, details="Error executing external GeoConvert application. Make sure it is installed on the server", exception=str(e))
-            return HttpResponse(json.dumps(error), status=error.get('error'), mimetype="application/json")
-        except Exception, e:
+            return HttpResponse(json.dumps(error), status=error.get('error'), content_type="application/json")
+        except Exception as e:
             import traceback
             output = json.dumps(dict(error=500, message='Generic Exception', details=traceback.format_exc(), exception=str(e), grid=str(bb)))
 
-    return HttpResponse(output, mimetype="application/json")
+    return HttpResponse(output, content_type="application/json")
 
 
 def ipaws(request):
     data = {}
-    
+
     #get Data
     data["develop"] = request.POST.get('develop')
     data["key"] = request.POST.get('key')
@@ -997,11 +1171,11 @@ def ipaws(request):
         baseURL += date + '?pin=' + data['key']
         response = requests.get(baseURL)
         cache.set("file", response.content, 60 * 30)
-        print 'Not cached'
-        return HttpResponse(response.content, mimetype="text/xml", status=200)
+        print ('Not cached')
+        return HttpResponse(response.content, content_type="text/xml", status=200)
     else:
-        print 'Cached'
-        return HttpResponse(content, mimetype="text/xml", status=200)
+        print ('Cached')
+        return HttpResponse(content, content_type="text/xml", status=200)
 
 
 def geocode(request):
@@ -1042,12 +1216,9 @@ def display_help(request):
 @permission_required('core.assign_workcells', return_403=True)
 def list_users(request, job_pk):
     job = get_object_or_404(Job, pk=job_pk)
-    usernames = job.analysts.all().values('username').order_by('username')
-    users = []
-    for u in usernames:
-        users.append(u['username'])
+    users = job.analysts.all().values('username','id','first_name','last_name').order_by('username')
 
-    return HttpResponse(json.dumps(users), mimetype="application/json")
+    return HttpResponse(json.dumps(list(users)), content_type="application/json")
 
 @permission_required('core.assign_workcells', return_403=True)
 def list_groups(request, job_pk):
@@ -1057,7 +1228,23 @@ def list_groups(request, job_pk):
     for g in groupnames:
         groups.append(g['name'])
 
-    return HttpResponse(json.dumps(groups), mimetype="application/json")
+    return HttpResponse(json.dumps(groups), content_type="application/json")
+
+@permission_required('core.assign_workcells', return_403=True)
+def list_group_users(request, group_pk):
+    group = get_object_or_404(Group, pk=group_pk)
+    users = group.user_set.values('username','id','first_name','last_name').order_by('username')
+
+    return HttpResponse(json.dumps(list(users)), content_type="application/json")
+
+
+def feed_overall(request):
+    pass
+    #group = get_object_or_404(Group, pk=group_pk)
+    #users = group.user_set.values('username', 'id', 'first_name', 'last_name').order_by('username')
+
+    #return HttpResponse(json.dumps(list(users)), content_type="application/json")
+
 
 
 @login_required
@@ -1067,19 +1254,9 @@ def update_job_data(request, *args, **kwargs):
     value = request.POST.get('value')
     if attribute and value:
         aoi = get_object_or_404(AOI, pk=aoi_pk)
+
         if attribute == 'status':
             aoi.status = value
-            timestamp = datetime.now(tz=pytz.timezone('UTC'))
-            if value == "Assigned":
-            	aoi.cellAssigned_at = timestamp
-            elif value == "In Work":
-            	aoi.cellStarted_at = timestamp
-            elif value == "Awaiting review":
-            	aoi.cellWaitingReview_at = timestamp
-            elif value == "In review":
-            	aoi.cellInReview_at = timestamp
-            elif value == "Completed":
-            	aoi.cellFinished_at = timestamp
         elif attribute == 'priority':
             aoi.priority = int(value)
         else:
@@ -1088,9 +1265,9 @@ def update_job_data(request, *args, **kwargs):
             aoi.properties = properties_main
 
         aoi.save()
-        return HttpResponse(value, mimetype="application/json", status=200)
+        return HttpResponse(value, content_type="application/json", status=200)
     else:
-        return HttpResponse('{"status":"attribute and value not passed in"}', mimetype="application/json", status=400)
+        return HttpResponse('{"status":"attribute and value not passed in"}', content_type="application/json", status=400)
 
 
 @login_required
@@ -1104,7 +1281,7 @@ def update_feature_data(request, *args, **kwargs):
         properties_main = feature.properties or {}
 
         if attribute == 'add_link':
-            if properties_main.has_key('linked_items'):
+            if 'linked_items' in properties_main:
                 properties_main_links = properties_main['linked_items']
             else:
                 properties_main_links = []
@@ -1124,9 +1301,9 @@ def update_feature_data(request, *args, **kwargs):
         feature.properties = properties_main
 
         feature.save()
-        return HttpResponse(value, mimetype="application/json", status=200)
+        return HttpResponse(value, content_type="application/json", status=200)
     else:
-        return HttpResponse('{"status":"attribute and value not passed in"}', mimetype="application/json", status=400)
+        return HttpResponse('{"status":"attribute and value not passed in"}', content_type="application/json", status=400)
 
 
 @login_required
@@ -1146,14 +1323,14 @@ def prioritize_cells(request, method, **kwargs):
                 aoi['properties']['priority'] = randrange(1, 5)
 
         output = aois
-    except Exception, ex:
+    except Exception as ex:
         import traceback
         errorCode = 'Program Error: ' + traceback.format_exc()
 
         log = dict(error='Could not prioritize Work Cells', message=str(ex), details=errorCode, method=method)
-        return HttpResponse(json.dumps(log), mimetype="application/json", status=500)
+        return HttpResponse(json.dumps(log), content_type="application/json", status=500)
 
-    return HttpResponse(json.dumps(output), mimetype="application/json", status=200)
+    return HttpResponse(json.dumps(output), content_type="application/json", status=200)
 
 
 @login_required
@@ -1194,7 +1371,7 @@ class LogJSON(ListView):
         aoi = get_object_or_404(AOI, id=kwargs.get('pk'))
         log = aoi.logJSON()
 
-        return HttpResponse(json.dumps(log), mimetype="application/json", status=200)
+        return HttpResponse(json.dumps(log), content_type="application/json", status=200)
 
 
 class LayersJSON(ListView):
@@ -1213,7 +1390,7 @@ class LayersJSON(ListView):
                     try:
                         flat_val = str(val)
                     except UnicodeEncodeError:
-                        flat_val = unicode(val).encode('unicode_escape')
+                        flat_val = str(val, encoding='utf-8', errors = 'ignore')
 
                     layer_json[field] = str(flat_val)
 
@@ -1224,7 +1401,7 @@ class LayersJSON(ListView):
 
         out_json = dict(objects=objects)
 
-        return HttpResponse(json.dumps(out_json), mimetype="application/json", status=200)
+        return HttpResponse(json.dumps(out_json), content_type="application/json", status=200)
 
 
 class CellJSON(ListView):
@@ -1234,7 +1411,7 @@ class CellJSON(ListView):
         aoi = get_object_or_404(AOI, id=kwargs.get('pk'))
         cell = aoi.grid_geoJSON()
 
-        return HttpResponse(cell, mimetype="application/json", status=200)
+        return HttpResponse(cell, content_type="application/json", status=200)
 
 
 class JobGeoJSON(ListView):
@@ -1244,7 +1421,7 @@ class JobGeoJSON(ListView):
         job = get_object_or_404(Job, pk=self.kwargs.get('pk'))
         geojson = job.features_geoJSON()
 
-        return HttpResponse(geojson, mimetype="application/json", status=200)
+        return HttpResponse(geojson, content_type="application/json", status=200)
 
 class JobStyledGeoJSON(ListView):
     model = Job
@@ -1253,7 +1430,7 @@ class JobStyledGeoJSON(ListView):
         job = get_object_or_404(Job, pk=self.kwargs.get('pk'))
         geojson = job.features_geoJSON(using_style_template=False)
 
-        return HttpResponse(geojson, mimetype="application/json", status=200)
+        return HttpResponse(geojson, content_type="application/json", status=200)
 
 
 class JobFeaturesJSON(ListView):
@@ -1264,7 +1441,7 @@ class JobFeaturesJSON(ListView):
         job = get_object_or_404(Job, pk=self.kwargs.get('pk'))
         features_json = json.dumps([f.json_item(self.show_detailed_properties) for f in job.feature_set.all()], indent=2)
 
-        return HttpResponse(features_json, mimetype="application/json", status=200)
+        return HttpResponse(features_json, content_type="application/json", status=200)
 
 
 class GridGeoJSON(ListView):
@@ -1274,14 +1451,35 @@ class GridGeoJSON(ListView):
         job = get_object_or_404(Job, pk=self.kwargs.get('pk'))
         geojson = job.grid_geoJSON()
 
-        return HttpResponse(geojson, mimetype="application/json", status=200)
-    
+        return HttpResponse(geojson, content_type="application/json", status=200)
+
+
+class GridAtomFeed(ListView):
+    model = Job
+
+    def get(self, request, *args, **kwargs):
+        job = get_object_or_404(Job, pk=self.kwargs.get('pk'))
+        atom = job.grid_atom()
+
+        return HttpResponse(atom, content_type="application/atom+xml", status=200)
+
+
+class GridAtomFeed2(ListView):
+    model = Job
+
+    def get(self, request, *args, **kwargs):
+        job = get_object_or_404(Job, pk=self.kwargs.get('pk'))
+        atom = job.grid_atom()
+
+        return HttpResponse(atom, content_type="application/atom+xml", status=200)
+
+
 class TeamListView(ListView):
     model = Group
     def get_queryset(self):
         search = self.request.GET.get('search', None)
-        return Group.objects.all() if search is None else Group.objects.filter(name__iregex=re.escape(search))
-    
+        return Group.objects.all().order_by('name') if search is None else Group.objects.filter(name__iregex=re.escape(search)).order_by('name')
+
 class TeamDetailedListView(ListView):
     paginate_by = 15
     model = Group
@@ -1293,7 +1491,7 @@ class TeamDetailedListView(ListView):
         cv = super(TeamDetailedListView, self).get_context_data(**kwargs)
         cv['object'] = get_object_or_404(self.model, pk=self.kwargs.get('pk'))
         return cv
-    
+
 class CreateTeamView(CreateView):
     """
     Create Team
@@ -1303,12 +1501,12 @@ class CreateTeamView(CreateView):
         kwargs = super(CreateTeamView, self).get_form_kwargs()
         kwargs['team_id'] = 0
         return kwargs
-    
+
     def get_context_data(self, **kwargs):
         cv = super(CreateTeamView, self).get_context_data(**kwargs)
         cv['custom_form'] = "core/_generic_form_onecol.html"
         return cv
-    
+
     def form_valid(self, form):
         errors = []
         if not self.request.POST.get('name', ''):
@@ -1321,7 +1519,7 @@ class CreateTeamView(CreateView):
                 user.groups.add(Group.objects.get(id=self.object.id))
 
         return HttpResponseRedirect(reverse('team-list'), )
-        
+
 class UpdateTeamView(UpdateView):
     """
     Update Team
@@ -1331,35 +1529,75 @@ class UpdateTeamView(UpdateView):
         kwargs = super(UpdateTeamView, self).get_form_kwargs()
         kwargs['team_id'] = self.kwargs.get('pk')
         return kwargs
-    
+
     def get_context_data(self, **kwargs):
         cv = super(UpdateTeamView, self).get_context_data(**kwargs)
         cv['custom_form'] = "core/_generic_form_onecol.html"
         return cv
-    
+
     def form_valid(self, form):
         team_id = self.kwargs.get('pk')
         user_list = self.request.POST.getlist('users')
         team = Group.objects.get(id=team_id)
         team.user_set.clear()
-        
+
         users = User.objects.filter(id__in=user_list)
         count = users.count()
         if users.count() >0:
             for user in users:
                 team.user_set.add(user);
-                
+
         return HttpResponseRedirect(reverse('team-list'))
-    
-    
+
+
 class TeamDelete(DeleteView):
     model = Group
     template_name = "core/generic_confirm_delete.html"
-    
+
     def get_success_url(self):
         return reverse("team-list")
-    
 
-            
-            
-        
+@require_http_methods(["GET"])
+@csrf_exempt
+def responders_geojson(request, *args, **kwargs):
+        if request.GET.get("include_inactive", "False") == "True":
+            responders = Responder.objects.all()
+        else:
+            responders = Responder.objects.filter(in_field=True)
+
+        responder_features = [];
+        for responder in responders:
+            responder_features.append(responder.geoJSON(as_json=False))
+        geojson = OrderedDict()
+        geojson["type"] = "FeatureCollection"
+        geojson["features"] = responder_features
+
+        features_json = clean_dumps(geojson, indent=2)
+
+        return HttpResponse(features_json, content_type="application/json", status=200)
+
+@require_http_methods(["POST"])
+@csrf_exempt
+def update_responder(request, *args, **kwargs):
+
+    idstr = request.POST.get("id", None)
+    if idstr is None:
+        responder = Responder()
+    else:
+        rid = int(idstr)
+        responder = get_object_or_404(Responder, pk=rid)
+
+    fields = ["latitude", "longitude", "in_field","contact_instructions","last_seen" ]
+    for field in fields:
+        val = request.POST.get(field, None)
+        if val is None:
+            continue
+        else:
+            setattr(responder, field, val)
+    responder.save()
+    # lat = request.POST["latitude"]
+    # lon = request.POST["longitude"]
+    # in_field = request.POST["in_field"]
+    # contact_instructions = request.POST["contact_instructions"]
+    # last_seen = request.POST["last_seen"]
+    return HttpResponse(responder.geoJSON(as_json=True), content_type="application/json", status=200)

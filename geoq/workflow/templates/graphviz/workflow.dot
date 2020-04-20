@@ -1,0 +1,17 @@
+/*
+A definition for a diagram of the workflow: {{ workflow.name }}
+
+Description: 
+{% if workflow.description %}{{workflow.description}}{% else %}None{% endif %}
+
+Created for use with graphviz (http://www.graphviz.org) by the Django workflow
+application (http://github.com/ntoll/workflow/tree/master)
+*/
+digraph G {
+    {% for s in workflow.states.all %}
+    {% include "graphviz/state.dot" %}
+    {% endfor %}
+    {% for t in workflow.transitions.all %}
+    {% include "graphviz/transition.dot" %}
+    {% endfor %}
+}

@@ -1,9 +1,9 @@
 # This technical data was produced for the U. S. Government under Contract No. W15P7T-13-C-F600, and
 # is subject to the Rights in Technical Data-Noncommercial Items clause at DFARS 252.227-7013 (FEB 2012)
 
-import reversion
+from reversion.admin import VersionAdmin
 from django.contrib.gis import admin
-from models import EmailDomain, Organization, UserAuthorization, UserProfile
+from .models import EmailDomain, Organization, UserAuthorization, UserProfile
 
 from django import forms
 from django.utils.translation import ugettext_lazy as _
@@ -13,7 +13,7 @@ from django.contrib.admin import widgets
 from django.contrib.auth.models import User, Group, Permission
 
 
-class ObjectAdmin(reversion.VersionAdmin,):
+class ObjectAdmin(VersionAdmin,):
     pass
 
 
@@ -54,12 +54,12 @@ class UserAuthorizationAdmin(ObjectAdmin):
 
     def Email(self, obj):
         return '%s' % (obj.user.email)
-    
+
 ##
 class GroupAdminForm(forms.ModelForm):
-    
+
     permissions = forms.ModelMultipleChoiceField(
-        queryset=Permission.objects.all(), 
+        queryset=Permission.objects.all(),
         required=False,
         widget=widgets.FilteredSelectMultiple(
             verbose_name=_('Permissions'),
@@ -67,7 +67,7 @@ class GroupAdminForm(forms.ModelForm):
         )
     )
     users = forms.ModelMultipleChoiceField(
-        queryset=User.objects.all(), 
+        queryset=User.objects.all(),
         required=False,
         widget=widgets.FilteredSelectMultiple(
             verbose_name=_('Users'),
@@ -77,6 +77,7 @@ class GroupAdminForm(forms.ModelForm):
 
     class Meta:
         model = Group
+        fields = ['id','name']
 
     def __init__(self, *args, **kwargs):
         super(GroupAdminForm, self).__init__(*args, **kwargs)
@@ -84,7 +85,7 @@ class GroupAdminForm(forms.ModelForm):
         if self.instance and self.instance.pk:
             self.fields['permissions'].initial = self.instance.permissions.all()
             self.fields['users'].initial = self.instance.user_set.all()
-    
+
     def save(self, commit=True):
         group = super(GroupAdminForm, self).save(commit=commit)
 

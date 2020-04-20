@@ -1,10 +1,13 @@
 {% extends "core/base.html" %}
 {% load compress %}
 {% load leaflet_tags %}
+{% load static %}
 {% block title %}GeoQ Project: {{ object.name }}{% endblock %}
 
 {% block static_libraries %}
-    {% leaflet_js %}
+{% leaflet_js plugins="proj4js, draw, esri" %}
+        {% leaflet_js %}
+<script src="{% static 'leaflet/proj4js.js' %}"></script>
 
     <script type="text/javascript">
     function mapInit(map, bounds) {
@@ -66,11 +69,11 @@
 
     }
 </script>
-
+{% leaflet_css %}
     {% compress css %}
-    {% leaflet_css %}
-    <link href="{{ STATIC_URL }}core/less/geoq.less" media="all" rel="stylesheet" type="text/less" />
-{% endcompress %}
+
+    <link href="{% static 'core/less/geoq.less' %}" media="all" rel="stylesheet" type="text/less" />
+    {% endcompress %}
 {% endblock %}
 
 {% block container %}
@@ -91,26 +94,27 @@
                 {{ object.description }}
             </p>
 
-            <div class="row body" style="margin-top:25px">
-                {% if 'core.add_job' in request.base_perms %}
+            <div class="row body" style="margin-top:25px;margin-bottom: 10px;">
+                {% if 'core.add_job' in perms %}
                 <div class="btn-group pull-right">
-                    <a class="btn btn-mini" href="{{ object.get_update_url }}">
-                        <b> Edit Project </b>
-                    </a>
-                    <button class="btn btn-mini dropdown-toggle" data-toggle="dropdown">
-                        <span class="caret"></span>
+                    <button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown" aria-haspopup="true"
+                            aria-expanded="false" style="margin-top: 10px;">
+                        Project Tasks <span class="caret"></span>
                     </button>
                     <ul class="dropdown-menu">
-                        {% if 'core.add_job' in request.base_perms %}
-                        <li><a href="{% url 'job-create' %}?project={{ object.id }}">Add New Job</a></li>
+                        {% if request.user.is_authenticated %}
+                        {% if request.user.is_staff%}
+                        <li><a href="{{ object.get_update_url }}">Edit Project</a></li>
+                        <li><a href="{% url 'job-create' %}?project={{ object.id }}">Add Job</a></li>
                         {% endif %}
+                        {% endif%}
                     </ul>
                 </div>
                 {% endif %}
-                <div class="span6 thumbnail" id="map" style="height:260px; vertical-alignment:middle;">
-                {% leaflet_map "map" creatediv=False%}
+                <div class=col-sm-6 thumbnail" id="map" style="height:260px; vertical-alignment:middle;">
+                {% leaflet_map "map" creatediv=False callback="window.mapInit" %}
                 </div>
-                <div class="span5">
+                <div class="col-sm-5">
                     <table class="project_info_list">
                         <tr>
                             <th style="min-width: 100px"></th>
@@ -228,4 +232,3 @@
         </script>
     </div>
 {% endblock %}
-
