@@ -107,9 +107,9 @@ urlpatterns = [
         login_required(update_user_maplayer_param), name="update-user-maplayer-param"),
 
     # other urls
-    path('api/map-layers[s]?/create/create-kml-layer', KMZLayerImport.as_view(), name='create-kml-layer'),
+    path('api/map-layers/create/create-kml-layer', KMZLayerImport.as_view(), name='create-kml-layer'),
 
-    path('api/map-layers[s]?/create/create-json-layer', JSONLayerImport.as_view(), name='create-json-layer'),
+    path('api/map-layers/create/create-json-layer', JSONLayerImport.as_view(), name='create-json-layer'),
 
-    path('api/map-layers[s]?/<int:pk>.json', JSONLayerExport.as_view(), name='json-layer-export'),
+    path('api/map-layers/<int:pk>.json', JSONLayerExport.as_view(), name='json-layer-export'),
 ]
