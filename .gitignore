@@ -22,3 +22,10 @@ start_geoq.sh
 runGeo.sh
 
 start.sh
+
+bin/
+include/
+lib/
+share/
+env/
+.Python
