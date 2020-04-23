@@ -12,8 +12,8 @@ from django.views.generic import TemplateView, ListView
 from django.utils import timezone
 from django.conf import settings
 from datetime import datetime, timedelta
-from models import UserAuthorization
-from utils import get_openbadges_ids
+from .models import UserAuthorization
+from .utils import get_openbadges_ids
 from geoq.accounts.models import UserProfile
 
 @login_required

@@ -9,12 +9,15 @@ from geoq.locations.models import Counties
 from django.contrib.auth.models import User
 from django.contrib.gis.db import models
 from django.core.exceptions import ValidationError
-from django.utils.datastructures import SortedDict
-from django.core.urlresolvers import reverse
+from django.db.models import Manager as GeoManager
+# from django.utils.datastructures import SortedDict
+from collections import OrderedDict
+from django.urls import reverse
 from jsonfield import JSONField
 from datetime import datetime
 from geoq.core.utils import clean_dumps
-from denorm import denormalized, depend_on_related
+from functools import reduce
+# from denorm import denormalized, depend_on_related
 
 import sys
 
@@ -121,7 +124,7 @@ class Layer(models.Model):
     token = models.CharField(max_length=400, null=True, blank=True, help_text='Authentication token, if required (usually only for secure layer servers).')
 
     ## Advanced layer options
-    objects = models.GeoManager()
+    objects = GeoManager()
     extent = models.PolygonField(null=True, blank=True, help_text='Extent of the layer.')
     layer_parsing_function = models.CharField(max_length=100, blank=True, null=True,  help_text='Advanced - The javascript function used to parse a data service (GeoJSON, GeoRSS, KML), needs to be an internally known parser. Contact an admin if you need data parsed in a new way.')
     enable_identify = models.BooleanField(default=False, help_text='Advanced - Allow user to click map to query layer for details. The map server must support queries for this layer.')
@@ -144,6 +147,9 @@ class Layer(models.Model):
     def __unicode__(self):
         return '{0}'.format(self.name)
 
+    def __str__(self):
+        return self.__unicode__()
+
     def get_layer_urls(self):
         """
         Returns a list of urls for the layer.
@@ -151,7 +157,7 @@ class Layer(models.Model):
         urls = []
 
         if getattr(self, 'additional_domains'):
-            map(urls.append, (domain for domain in self.additional_domains.split(";") if domain))
+            list(map(urls.append, (domain for domain in self.additional_domains.split(";") if domain)))
 
         return urls
 
@@ -204,7 +210,7 @@ class Map(models.Model):
     title = models.CharField(max_length=75)
     description = models.TextField(max_length=800, blank=True, null=True)
     zoom = models.IntegerField(help_text='Sets the default zoom level of the map.', default=5, blank=True, null=True)
-    projection = models.CharField(max_length=32, blank=True, null=True, default="EPSG:4326", help_text='Set the default projection for layers added to this map. Note that the projection of the map is usually determined by that of the current baseLayer')
+    projection = models.CharField(max_length=32, blank=True, null=True, default="EPSG:3857", help_text='Set the default projection for layers added to this map. Note that the projection of the map is usually determined by that of the current baseLayer')
     center_x = models.FloatField(default=0.0, help_text='Sets the center x coordinate of the map.  Maps on event pages default to the location of the event.', blank=True, null=True)
     center_y = models.FloatField(default=0.0, help_text='Sets the center y coordinate of the map.  Maps on event pages default to the location of the event.', blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
@@ -212,6 +218,9 @@ class Map(models.Model):
 
     def __unicode__(self):
         return '{0}'.format(self.title)
+
+    def __str__(self):
+        return self.__unicode__()
 
     @property
     def name(self):
@@ -300,13 +309,13 @@ class MapLayer(models.Model):
     The MapLayer is the mechanism that joins a Layer to a Map and allows for custom look and feel.
     """
 
-    map = models.ForeignKey(Map, related_name='map_set')
-    layer = models.ForeignKey(Layer, related_name='map_layer_set')
+    map = models.ForeignKey(Map, related_name='map_set', on_delete=models.PROTECT)
+    layer = models.ForeignKey(Layer, related_name='map_layer_set', on_delete=models.PROTECT)
     shown = models.BooleanField(default=True)
     stack_order = models.IntegerField()
     opacity = models.FloatField(default=0.80)
-    is_base_layer = models.BooleanField(help_text="Only one Base Layer can be enabled at any given time.")
-    display_in_layer_switcher = models.BooleanField()
+    is_base_layer = models.BooleanField(default=False,help_text="Only one Base Layer can be enabled at any given time.")
+    display_in_layer_switcher = models.BooleanField(default=True)
 
     class Meta:
         ordering = ["stack_order"]
@@ -319,12 +328,14 @@ class MapLayerUserRememberedParams(models.Model):
     Remembers the last options selected for a MapLayer with dynamic feed params.
     """
 
-    maplayer = models.ForeignKey(MapLayer, related_name="user_saved_params_set")
-    user = models.ForeignKey(User, related_name="map_layer_saved_params_set")
+    maplayer = models.ForeignKey(MapLayer, related_name="user_saved_params_set",
+                                    on_delete=models.PROTECT)
+    user = models.ForeignKey(User, related_name="map_layer_saved_params_set",
+                                    on_delete=models.PROTECT)
     values = JSONField(null=True, blank=True, help_text='URL Variables that may be modified by the analyst. ex: "date"')
 
-    @denormalized(models.ForeignKey, to=Map)
-    @depend_on_related(MapLayer)
+#    @denormalized(models.ForeignKey, to=Map)
+#    @depend_on_related(MapLayer)
     def map(self):
         return self.maplayer.map.pk
 
@@ -343,6 +354,9 @@ class EditableMapLayer(models.Model):
     def __unicode__(self):
         return '{0} ({1})'.format(self.name, self.type)
 
+    def __str__(self):
+        return self.__unicode__()
+
 class Feature(models.Model):
     """
     Model to represent features created in the application.
@@ -351,11 +365,12 @@ class Feature(models.Model):
     STATUS_VALUES = ['Unassigned', 'In work', 'Awaiting review', 'In review', 'Completed'] #'Assigned'
     STATUS_CHOICES = [(choice, choice) for choice in STATUS_VALUES]
 
-    aoi = models.ForeignKey(AOI, related_name='features', editable=False)
+    aoi = models.ForeignKey(AOI, related_name='features', editable=False,
+                            on_delete=models.PROTECT)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
-    objects = models.GeoManager()
-    analyst = models.ForeignKey(User, editable=False)
+    objects = GeoManager()
+    analyst = models.ForeignKey(User, editable=False, on_delete=models.PROTECT)
     template = models.ForeignKey("FeatureType", on_delete=models.PROTECT)
     status = models.CharField(max_length=15, choices=STATUS_CHOICES, default='In work')
 
@@ -363,8 +378,8 @@ class Feature(models.Model):
     properties = JSONField(load_kwargs={}, blank=True, null=True)
 
     # These help the user identify features when data is exposed outside of the application (Geoserver).
-    job = models.ForeignKey(Job, editable=False)
-    project = models.ForeignKey(Project, editable=False)
+    job = models.ForeignKey(Job, editable=False, on_delete=models.PROTECT)
+    project = models.ForeignKey(Project, editable=False, on_delete=models.PROTECT)
 
     #Try this vs having individual models
     the_geom = models.GeometryField(blank=True, null=True)
@@ -384,7 +399,7 @@ class Feature(models.Model):
         properties_template = self.template.properties or {}
 
         # properties_template can return a list from it's backing model, make sure we get the Dict
-        if type(properties_template) == types.ListType:
+        if isinstance(properties_template,list):
             properties_template = properties_template[0]
 
         # srj: if using_style_template set, we're styling object from its feature id, else we'll
@@ -393,11 +408,12 @@ class Feature(models.Model):
         if using_style_template:
             properties_built['template'] = self.template.id if hasattr(self.template, "id") else None
 
-        properties = dict(properties_built.items() + properties_main.items() + properties_template.items())
+        #properties = dict(properties_built.items() + properties_main.items() + properties_template.items())
+        properties = {**properties_built, **properties_main, **properties_template}
 
         feature_type = FeatureType.objects.get(id=self.template.id)
 
-        geojson = SortedDict()
+        geojson = OrderedDict()
         geojson["type"] = "Feature"
         geojson["properties"] = properties
         geojson["geometry"] = json.loads(self.the_geom.json)
@@ -411,7 +427,7 @@ class Feature(models.Model):
             return clean_dumps(geojson)
         else:
             for key in properties:
-                if isinstance(properties[key],str) or isinstance(properties[key], unicode):
+                if isinstance(properties[key],str):
                     properties[key] = properties[key].replace('<', '&ltl').replace('>', '&gt;').replace("javascript:", "j_script-")
             return geojson
 
@@ -419,7 +435,7 @@ class Feature(models.Model):
         properties_main = self.properties or {}
 
         #Pull the County data if it exists, otherwise find it and add it back to the object
-        if properties_main.has_key('county'):
+        if 'county' in properties_main:
             county = properties_main['county']
         else:
             county_list = Counties.objects.filter(poly__contains=self.the_geom.centroid.wkt)
@@ -449,7 +465,7 @@ class Feature(models.Model):
 
         properties_feature = dict(self.template.properties or {})
 
-        properties = dict(properties_main.items() + properties_built.items() + properties_feature.items())
+        properties = dict(list(properties_main.items()) + list(properties_built.items()) + list(properties_feature.items()))
         return properties
 
     def __unicode__(self):
@@ -484,7 +500,7 @@ class FeatureType(models.Model):
     style = JSONField(load_kwargs={}, blank=True, null=True, help_text='Any special CSS style that features of this types should have. e.g. {"opacity":0.7, "color":"red", "backgroundColor":"white", "mapTextStyle":"white_overlay", "iconUrl":"path/to/icon.png"}')
     icon = models.ImageField(upload_to="static/featuretypes/", blank=True, null=True, help_text="Upload an icon (now only in Admin menu) of the FeatureType here, will override style iconUrl if set")
     #property_names = models.TextField(blank=True, null=True)
-    
+
     def to_json(self):
         icon = ""
         if self.icon:
@@ -501,17 +517,17 @@ class FeatureType(models.Model):
     def style_to_geojson(self):
         local_style = self.style
 
-        if local_style and local_style.has_key('color'):
+        if local_style and 'color' in local_style:
             local_style['stroke-color'] = local_style['color']
             local_style['fill-color'] = local_style['color']
             local_style.pop('color', None)
-        if local_style and local_style.has_key('weight'):
+        if local_style and 'weight' in local_style:
             local_style['stroke-width'] = local_style['weight']
             local_style.pop('weight', None)
-        if local_style and local_style.has_key('fill'):
+        if local_style and 'fill' in local_style:
             local_style['fill-opacity'] = local_style['fill']
             local_style.pop('fill', None)
-        if local_style and local_style.has_key('iconUrl'):
+        if local_style and 'iconUrl' in local_style:
             local_style['external-graphic'] = SERVER_URL + local_style['iconUrl']
             local_style.pop('iconUrl', None)
 
@@ -526,18 +542,18 @@ class FeatureType(models.Model):
         style = self.style or {}
         if self.icon:
             src = str("/images/"+str(self.icon))
-        elif style.has_key('iconUrl'):
+        elif 'iconUrl' in style:
             src = str(style['iconUrl'])
 
-        if style.has_key('weight'):
+        if 'weight' in style:
             style_html = style_html + "border-width:"+str(style['weight'])+"px; "
-        if style.has_key('color'):
+        if 'color' in style:
             color = str(style['color'])
             style_html = style_html + "border-color:"+color+"; "
             bgColor = color
-        if style.has_key('fill'):
+        if 'fill' in style:
             bgColor = str(style['fill'])
-        if style.has_key('opacity'):
+        if 'opacity' in style:
             opacity = str(style['opacity'])
 
         if self.type == "Point":
@@ -561,7 +577,10 @@ class FeatureType(models.Model):
         return reverse('feature-type-update', args=[self.id])
 
     def __unicode__(self):
-        return self.name
+        return '{0}'.format(self.name)
+
+    def __str__(self):
+        return self.__unicode__()
 
     class Meta:
         ordering = ['-category', 'order', 'name', 'id']

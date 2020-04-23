@@ -70,7 +70,7 @@ def get_observations(request, id):
     try:
         params = {'access_token': cache.get('mage.token') }
         if len(request.GET) > 0:
-            for key,val in request.GET.items():
+            for key,val in list(request.GET.items()):
                 params[key] = val;
 
         r = requests.get('%s/events/%s/observations' % (settings.MAGE_URL,id),params=params, verify=False)

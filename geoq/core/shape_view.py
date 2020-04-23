@@ -10,8 +10,8 @@ from django.utils.encoding import smart_str
 from django.views.generic import ListView
 
 from geoq.maps.models import AOI, Feature
-from models import Job
-from cStringIO import StringIO
+from .models import Job
+from io import StringIO
 
 from django.contrib.gis.gdal.libgdal import lgdal
 from django.contrib.gis.gdal import Driver, OGRGeometry, OGRGeomType, SpatialReference, check_err
@@ -39,7 +39,7 @@ if platform.architecture()[0] == '64bit':
 
 class JobAsShape(ListView):
     model = Job
-    
+
     #import pdb; pdb.set_trace()
 
     def get_queryset(self):
@@ -83,11 +83,11 @@ class JobAsShape(ListView):
             elif content_type == 'polygons':
                 shape_out = shape_response.polygons()
             elif content_type == 'lines':
-                shape_out = shape_response.lines() 
+                shape_out = shape_response.lines()
             else:
                 shape_out = shape_response.work_cells()
 
-        except Exception, e:
+        except Exception as e:
             import traceback
 
             output = json.dumps(dict(message='Generic Exception In JobAsShape.get()', details=traceback.format_exc(), exception=str(e),

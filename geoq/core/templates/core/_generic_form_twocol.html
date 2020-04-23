@@ -3,7 +3,7 @@
     {% csrf_token %}
     {% load object_class %}
 
-    <div class="span6" style="margin-left: 0;" id="first_column">
+    <div class="col-md-6" style="margin-left: 0;" id="first_column">
     {% for field in form %}
         <dl class="form">
             {%  if field.field.widget|object_class == "CheckboxInput" %}
@@ -55,7 +55,7 @@
     </div>
 
 
-    <div class="span6" style="margin-left: 0;" id="second_column">
+    <div class="col-md-6" style="margin-left: 0;" id="second_column">
     </div>
 
 

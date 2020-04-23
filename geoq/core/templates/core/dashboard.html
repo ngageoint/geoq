@@ -38,7 +38,7 @@
     <div id="background_map" class="map_underlay"></div>
     <div class="container">
     <div class="row-fluid">
-        <div class="span6 hero-header">
+        <div class="col-xs-6 hero-header">
             <h3>GeoQ: Geospatial Tasks & Questions</h3>
             <p class="description">
                 GeoQ is an <a href="https://github.com/ngageoint/geoq" target="_blank">open source tool</a> that crowd
@@ -59,7 +59,7 @@
             </p>
         </div>
 
-        <div class="span6 hero-header">
+        <div class="col-xs-6 hero-header">
             <h3>This <a href="https://github.com/ngageoint/geoq" target="_blank">GeoQ server</a> currently supports:</h3>
             <b>{{ count_projects_active|default:"0" }}</b> Active <a href="{% url 'project-list'%}">Project{{ count_projects_active|pluralize }}</a>
             (<b>{{ count_projects_archived|default:"0" }}</b> Archived,

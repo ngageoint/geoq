@@ -1,9 +1,10 @@
 
-from django.conf.urls import patterns, url
-from views import *
+from django.urls import path
+from .views import *
 
-urlpatterns = patterns('',
-    url(r'^/?$', login_required(TrainingListView.as_view()), name='course_list'),
-    url(r'^(?P<pk>\d+)/?$', login_required(TrainingView.as_view()), name='course_view_information'),
-    url(r'^(?P<pk>\d+)/quiz?$', login_required(TrainingQuizView.as_view()), name='course_quiz'),
-)
+app_name = 'training'
+urlpatterns = [
+    path('', login_required(TrainingListView.as_view()), name='course_list'),
+    path('<int:pk>/', login_required(TrainingView.as_view()), name='course_view_information'),
+    path('<int:pk>/quiz/', login_required(TrainingQuizView.as_view()), name='course_quiz'),
+]

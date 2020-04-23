@@ -162,7 +162,7 @@ create_aois.init = function () {
     });
 
     // only create geocompletion if we're able to load the appropriate javascript file
-    if (google && google.maps) {
+    if (typeof(google) != 'undefined' && google.maps) {
         $("#geocomplete").geocomplete()
             .bind("geocode:result", function (event, result) {
                 create_aois.update_info("Geocode Result: " + result.formatted_address);
@@ -638,23 +638,23 @@ create_aois.mapWasZoomed = function (e) {
     var $mgrs = $("#option_mgrs");
     var $poly = $("#option_polygon");
 
-    var isCONUS = true;
-    if (typeof maptools != "undefined") {
-        var ll = e.target.getCenter();
-        var pt = maptools.locationInfoString({lat: ll.lat, lng: ll.lng, separator: "<br/>", boldTitles: true});
-
-        isCONUS = (pt.country && pt.state && pt.country.abbr == "USA" && pt.state.name != "Hawaii" && pt.state.name != "Alaska");
-    }
+//    var isCONUS = true;
+//    if (typeof maptools != "undefined") {
+//        var ll = e.target.getCenter();
+//        var pt = maptools.locationInfoString({lat: ll.lat, lng: ll.lng, separator: "<br/>", boldTitles: true});
+//
+//        isCONUS = (pt.country && pt.state && pt.country.abbr == "USA" && pt.state.name != "Hawaii" && pt.state.name != "Alaska");
+//    }
 
     if (zoom > 8) {
         //Hide USNG Menu if it's outside CONUS
-        $usng.attr('disabled', !isCONUS).text('USNG Cells (US only)');
+//        $usng.attr('disabled', !isCONUS).text('USNG Cells (US only)');
         $mgrs.attr('disabled', false).text('MGRS Cells');
     } else {
         if ($usng.hasClass("active") || $mgrs.hasClass("active")) {
             $poly.click();
         }
-        $usng.attr('disabled', true).text('Zoom in to use USNG/MGRS');
+//        $usng.attr('disabled', true).text('Zoom in to use USNG/MGRS');
         $mgrs.attr('disabled', true).text('>');
     }
 };
@@ -721,7 +721,7 @@ create_aois.splitPolygonsIntoSections = function (layer, num, splitIntoSized) {
         []
     ]};
     var cs = layer.getLatLngs();
-    _.each(cs, function (c) {
+    _.each(cs[0], function (c) {
         layer_poly.coordinates[0].push([c.lng, c.lat]);
     });
 

@@ -1,0 +1,264 @@
+{% extends "core/base.html" %}
+{% load crispy_forms_tags %}
+{% load object_class %}
+{% block container %}
+
+    <div class="row-fluid container-narrow">
+
+        <h3> {% if object %}Edit {% else %}Create New {% endif %}{{ form.Meta.model|object_class|title }}</h3>
+        <div class="span12">
+             {% crispy form %}
+        </div>
+    </div>
+
+    <script>
+        var currentProperties = null,
+            currentStyle = null,
+            baseProperties = [
+                'type',
+                'severity',
+                'name'],
+            baseStyle = [
+                'color',
+                'opacity',
+                'weight',
+                'fill',
+                'icon url'];
+        
+        $(document).ready(function(){
+            $('select[multiple="multiple"]').parent().parent()
+                .css('height','200px');
+
+            /* GEOQ-14 Bug fix */
+            /* Expands additional options if error is detect */
+            if ( $('fieldset#more-options span[id*="error_1_id_"]').length ) {
+                $('p a[data-target="#more-options"]').click();
+            }
+            //Set properties of Featuretype 
+            if ($('#property-toggle')) {
+                var html = null;
+                currentProperties = $('#id_properties').val().toString();
+                if (currentProperties.length > 0) {
+                    currentProperties = (currentProperties.charAt(0) == "[" ? JSON.parse(currentProperties.substring(1, currentProperties.length-1)) : JSON.parse(currentProperties));
+                }
+                else {
+                    currentProperties = {};
+                }
+                
+                $.each(currentProperties, function(k, v) {
+                        if (k.toLowerCase()=="name") {
+                            $('#name').val(v);
+                        }
+                        else if (k.toLowerCase()=="severity") {
+                            $('#severity').val(v);
+                        }
+                        else if (k.toLowerCase()=="type") {
+                            $('#type').val(v);
+                        }
+                        else {
+                            html = '<tr><td class="key">' + k + '</td><td><input type="text" class="value" value="' + v + '"></td></tr>';
+                            $('#property-table').append(html);
+                        }               
+                });
+                
+                $('#property-ok').click(function(){
+                    var newProperties = {};
+                    var tableRows = $('#property-table tr');
+                    
+                    $.each(tableRows, function(r){
+                        var value = $('.value', this).val();
+                        if (value) {
+                            var key = $('.key', this).text().toLowerCase() || $('.key', this).val().toLowerCase();
+                            newProperties[key] = value;
+                        }
+                    })
+                    
+                    if ($.isEmptyObject(newProperties)) {
+                        $('#id_properties').val(""); 
+                    }
+                    else {
+                        $('#id_properties').val(JSON.stringify(newProperties).split(",").join(",\n"));
+                    }                   
+                });
+                
+                $('#property-cancel').click(function(){
+                    var html = null;
+
+                    if ($.isEmptyObject(currentProperties)) {
+                        $('#id_properties').val(""); 
+                    }
+                    else {
+                        $('#id_properties').val(JSON.stringify(currentProperties).split(",").join(",\n"));
+                    }
+                                       
+                    var tableRows = $('#property-table tr');
+                    
+                    $.each(tableRows, function(r){
+                        var key = $('.key', this).text() || $('.key', this).val();
+                        if (key) {
+                            if (baseProperties.indexOf(key.toLowerCase()) < 0 ) {
+                                $(this).remove();
+                            }
+                            else {
+                                $('.value', this).val('');
+                            }
+                        }
+                    });
+                    
+                   $.each(currentProperties, function(k, v) {
+
+                        if (k.toLowerCase()=="name") {
+                            $('#name').val(v);
+                        }
+                        else if (k.toLowerCase()=="severity") {
+                            $('#severity').val(v);
+                        }
+                        else if (k.toLowerCase()=="type") {
+                            $('#type').val(v);
+                        }
+                        else {
+                            html = '<tr><td class="key">' + k + '</td><td><input type="text" class="value" value="' + v + '"></td></tr>';
+                            $('#property-table').append(html);
+                        }
+                        
+                    });
+                });
+                
+                $('#property-add').click(function(){
+                    html = '<tr><td><input type="text" class="key"></td><td><input type="text" class="value"></td></tr>';
+                    $('#property-table').append(html);
+                 });
+                
+                $('#id_properties').attr('readonly', 'true');
+            }
+            
+            //Set style of Featuretype
+            if ($('#style-toggle')) {
+                currentStyle = $('#id_style').val().toString();
+                if (currentStyle.length > 0) {
+                    currentStyle = (currentStyle.charAt(0) == "[" ? JSON.parse(currentStyle.substring(1, currentStyle.length-1)) : JSON.parse(currentStyle));
+                }
+                else {
+                    currentStyle = {};
+                }
+                
+                $.each(currentStyle, function(k, v) {
+                    if (k.toLowerCase()=="color") {
+                        $('#color').val(v);
+                    }
+                    else if (k.toLowerCase()=="opacity") {
+                        $('#opacity').val(v);
+                    }
+                    else if (k.toLowerCase()=="weight") {
+                        $('#weight').val(v);
+                    }
+                    else if (k.toLowerCase()=="fill") {
+                        $('#fill').val(v);
+                    }
+                    else if (k.toLowerCase()=="icon url" || k.toLowerCase()=="iconurl") {
+                        $('#iconUrl').val(v);
+                    }
+                    else {
+                        html = '<tr><td class="key">' + k + '</td><td><input type="text" class="value" value="' + v + '"></td></tr>';
+                        $('#style-table').append(html);
+                    }               
+                });
+                
+                $('#style-ok').click(function(){
+                    var newStyle = {};
+                    var tableRows = $('#style-table tr');
+                          console.log ("opacity= " + $('#opacity').val());
+                        console.log ("weight= " + $('#weight').val());
+            
+                    if(!($('#opacity').val() == "")) {
+                        if ($('#opacity').val() < 0 || $('#opacity').val() > 1) {
+                            $('#opacity').val("");
+                            return;
+                        }
+                    }
+                    
+                    if(!($('#weight').val() == "")) {
+                        if ($('#weight').val() < 1 || $('#weight').val() > 6) {
+                            $('#weight').val("");
+                            return;
+                        }
+                    }
+
+                    $.each(tableRows, function(r){
+                        var value = $('.value', this).val();
+                        if (value) {
+                            var key = $('.key', this).text().toLowerCase() || $('.key', this).val().toLowerCase();
+                            if (key == "icon url") {
+                                key = "iconUrl";
+                            }
+                            newStyle[key] = value;
+                        }
+                    })
+                    
+                    if ($.isEmptyObject(newStyle)) {
+                        $('#id_style').val(""); 
+                    }
+                    else {
+                        $('#id_style').val(JSON.stringify(newStyle).split(",").join(",\n"));
+                    }     
+                });
+                
+                $('#style-cancel').click(function(){
+                    var html = null;
+
+                    if ($.isEmptyObject(currentStyle)) {
+                        $('#id_style').val(""); 
+                    }
+                    else {
+                        $('#id_style').val(JSON.stringify(currentStyle).split(",").join(",\n"));
+                    }
+                                       
+                    var tableRows = $('#style-table tr');
+                    
+                    $.each(tableRows, function(r){
+                        var key = $('.key', this).text() || $('.key', this).val();
+                        if (key) {
+                            if (baseStyle.indexOf(key.toLowerCase()) < 0 ) {
+                                $(this).remove();
+                            }
+                            else {
+                                $('.value', this).val('');
+                            }
+                        }
+                    });
+                    
+                    $.each(currentStyle, function(k, v) {
+                        if (k.toLowerCase()=="color") {
+                            $('#color').val(v);
+                        }
+                        else if (k.toLowerCase()=="opacity") {
+                            $('#opacity').val(v);
+                        }
+                        else if (k.toLowerCase()=="weight") {
+                            $('#weight').val(v);
+                        }
+                        else if (k.toLowerCase()=="fill") {
+                            $('#fill').val(v);
+                        }
+                        else if (k.toLowerCase()=="icon url" || k.toLowerCase()=="iconurl") {
+                            $('#iconUrl').val(v);
+                        }
+                        else {
+                            html = '<tr><td class="key">' + k + '</td><td><input type="text" class="value" value="' + v + '"></td></tr>';
+                            $('#style-table').append(html);
+                        }               
+                    });
+                });
+                
+                $('#style-add').click(function(){
+                    html = '<tr><td><input type="text" class="key"></td><td><input type="text" class="value"></td></tr>';
+                    $('#style-table').append(html);
+                });
+                
+                $('#id_style').attr('readonly', 'true'); 
+            }
+        });
+        
+        $('input, select, textarea').css('width','80%');
+    </script>
+{% endblock %}

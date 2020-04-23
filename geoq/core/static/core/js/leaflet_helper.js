@@ -73,7 +73,7 @@ leaflet_helper.layer_conversion = function (lyr, map) {
             else
                layerOptions.crs = L.CRS.EPSG4326;
 
-            outputLayer = new L.WFS(layerOptions);           
+            outputLayer = new L.WFS(layerOptions);
         }
         catch (e) {
             console.error('Unable to create WFS layer: ' + e.toString());
@@ -88,7 +88,7 @@ leaflet_helper.layer_conversion = function (lyr, map) {
             log.warn('Unable to create WMTS layer: ' + e.toString());
         }
     } else if (lyr.type == 'ESRI Tiled Map Service' && esriPluginInstalled) {
-        outputLayer = L.esri.tiledMapLayer(layerOptions);
+        outputLayer = L.esri.tiledMapLayer(lyr.url, layerOptions);
     } else if (lyr.type == 'ESRI Dynamic Map Layer' && esriPluginInstalled) {
         // SRJ - DynamicMapLayer looking for an array passed in
         try {
