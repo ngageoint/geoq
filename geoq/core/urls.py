@@ -38,6 +38,11 @@ urlpatterns = [
 
     # JOBS
     path('jobs/', TabbedJobListView.as_view(), name='job-list'),
+    path('jobs/<int:job_pk>/create-aois/',
+        login_required(BatchCreateAOIS.as_view()),
+        name='job-create-aois'),
+    path('jobs/<int:job_pk>/batch-create-aois/',
+        batch_create_aois, name='job-batch-create-aois'),        
     path('jobs/<int:pk>/',
         JobDetailedListView.as_view(template_name='core/job_detail.html'),
         name='job-detail'),
@@ -71,9 +76,6 @@ urlpatterns = [
     path('jobs/delete/<int:pk>/',
         login_required(JobDelete.as_view()),
         name='job-delete'),
-    path('jobs/<int:job_pk>/create-aois/',
-        login_required(BatchCreateAOIS.as_view()),
-        name='job-create-aois'),
     path('jobs/<int:job_pk>/prioritize-workcells/',
         login_required(PrioritizeWorkcells.as_view()),
         name='job-prioritize-workcells'),
@@ -84,8 +86,7 @@ urlpatterns = [
         login_required(SummaryView.as_view()),
         name='job-summary'),
 
-    path('jobs/<int:job_pk>/batch-create-aois/',
-        batch_create_aois, name='job-batch-create-aois'),
+
 
     path('jobs/statistics/<int:job_pk>/', JobStatistics.as_view(), name='job-statistics'),
 
