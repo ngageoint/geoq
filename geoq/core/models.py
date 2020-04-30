@@ -483,7 +483,7 @@ class AOI(GeoQBase, Assignment):
     analyst = models.ForeignKey(User, blank=True, null=True,
             help_text="User assigned to work the workcell.",
             on_delete=models.PROTECT)
-    job = models.ForeignKey(Job, related_name="aois", on_delete=models.PROTECT)
+    job = models.ForeignKey(Job, related_name="aois", on_delete=models.CASCADE)
     reviewers = models.ManyToManyField(User, blank=True, related_name="aoi_reviewers",
                                        help_text='Users that actually reviewed this work.')
     objects = AOIManager()
@@ -665,9 +665,9 @@ class Comment(models.Model):
     Track comments regarding work on a Workcell
     """
     user = models.ForeignKey(User, blank=True, null=True,
-                help_text="User who made comment", on_delete=models.PROTECT)
+                help_text="User who made comment", on_delete=models.CASCADE)
     aoi = models.ForeignKey(AOI, blank=False, null=False,
-                help_text="Associated AOI for comment", on_delete=models.PROTECT)
+                help_text="Associated AOI for comment", on_delete=models.CASCADE)
     text = models.CharField(max_length=200)
     created_at = models.DateTimeField(auto_now_add=True)
 
@@ -708,9 +708,9 @@ class AOITimer(models.Model):
     Capture start/stop times for different phases of the workcell (AOI)
     """
     user = models.ForeignKey(User, blank=False,
-                help_text="User who worked on workcell", on_delete=models.PROTECT)
+                help_text="User who worked on workcell", on_delete=models.CASCADE)
     aoi = models.ForeignKey(AOI, blank=False,
-                help_text="Workcell that was changed", on_delete=models.PROTECT)
+                help_text="Workcell that was changed", on_delete=models.CASCADE)
     status = models.CharField(max_length=20, blank=False, default='Unassigned')
     started_at = models.DateTimeField(auto_now_add=False, blank=False)
     completed_at = models.DateTimeField(auto_now_add=False, blank=True, null=True)

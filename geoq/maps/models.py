@@ -366,7 +366,7 @@ class Feature(models.Model):
     STATUS_CHOICES = [(choice, choice) for choice in STATUS_VALUES]
 
     aoi = models.ForeignKey(AOI, related_name='features', editable=False,
-                            on_delete=models.PROTECT)
+                            on_delete=models.CASCADE)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     objects = GeoManager()
@@ -378,8 +378,8 @@ class Feature(models.Model):
     properties = JSONField(load_kwargs={}, blank=True, null=True)
 
     # These help the user identify features when data is exposed outside of the application (Geoserver).
-    job = models.ForeignKey(Job, editable=False, on_delete=models.PROTECT)
-    project = models.ForeignKey(Project, editable=False, on_delete=models.PROTECT)
+    job = models.ForeignKey(Job, editable=False, on_delete=models.CASCADE)
+    project = models.ForeignKey(Project, editable=False, on_delete=models.CASCADE)
 
     #Try this vs having individual models
     the_geom = models.GeometryField(blank=True, null=True)
