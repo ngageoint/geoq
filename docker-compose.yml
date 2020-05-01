@@ -11,6 +11,8 @@ services:
   web:
     image: centos7
     build: .
+    environment:
+      ALLOWED_HOST: 'localhost'
     volumes:
       - /work/drms/git/geoq_local:/usr/src/geoq
     ports:
