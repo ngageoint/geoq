@@ -35,7 +35,7 @@
                 {% else %}
                     {{ object.name }}
                 {% endif %}
-                
+
                 {% if object_type == "aoi" %}{{ object.id }}{% endif %}
 
                 {% if object.status == 'In work' %}{% if request.user == object.analyst %}
@@ -59,8 +59,8 @@
             <b>Project:</b> <a href="{{ object.project.get_absolute_url|default:'#' }}">{{ object.project.name }}</a><br/>
         {% endif %}
         {% if object_type == "aoi" %}
-            <b>Workcell Description</b>: <span class="project-description">{{ object.description }}</span>
-        {% elif object_type == "group" or object_type == "user" %}     
+            <b>{{ lexicon.WORKCELL_NAME }} Description</b>: <span class="project-description">{{ object.description }}</span>
+        {% elif object_type == "group" or object_type == "user" %}
         {% else %}
             <b>{{ object_type|title }} Description</b>: <span class="project-description">{{ object.description }}</span>
         {% endif %}

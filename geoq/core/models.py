@@ -47,7 +47,7 @@ class Assignment(models.Model):
     """
     A generic relation to either a user or group
     """
-    assignee_type = models.ForeignKey(ContentType, null=True, on_delete=models.PROTECT)
+    assignee_type = models.ForeignKey(ContentType, null=True, on_delete=models.CASCADE)
     assignee_id = models.PositiveIntegerField(null=True)
     content_object = GenericForeignKey('assignee_type', 'assignee_id')
 

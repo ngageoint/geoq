@@ -31,7 +31,7 @@
         ];
 
         var aoi_extents;
-        function mapInit(map, bounds) {
+        function map_init_small(map, options) {
             map_object = map;
           	/*
           		The Map_object is not consistant with the css that is rendering the map on the intial loading and what the CSS looks like on refresh.
@@ -65,7 +65,7 @@
                 }
             }).addTo(map);
 
-            // Map doesn't update without this delay.
+            //Map doesn't update without this delay.
             setTimeout(function(){
                 $('#map').css({height:'290px', width: '400px'});
                 map_object.invalidateSize();
@@ -76,7 +76,7 @@
                     var test = aoi_extents.getBounds().getCenter();
                     map.fitBounds(aoi_extents.getBounds());
                 } catch(ex){
-                    log.error("aoi_extents not being passed in valid bounds");
+                    log.error("aoi_extents not being passed in valid job bounds");
                 }
             }, 1);
 
@@ -182,7 +182,7 @@
             console.log("id: " + id + " and value " + value);
             if (id && select.value) {
                 $.ajax({
-                    url: "{% url 'home' %}" + "aois/update-priority/" + id,
+                    url: "{% url 'home' %}" + "aois/update-priority/" + id + "/",
                     type: 'POST',
                     data: 'priority=' + value,
                     success: function(data) {
@@ -333,7 +333,7 @@
 
             <div class="row body" style="height:250px; margin-top:25px; margin-left:5px;">
                 <div class="col-sm-4 thumbnail" id="map" style="height:290px; margin-left: 0px; width: 400px;">
-                {% leaflet_map "map" creatediv=False%}
+                {% leaflet_map "map" creatediv=False callback="window.map_init_small"%}
                 </div>
                 <div class="col-sm-6" id="attribute-table">
                     <div class="btn-group pull-right">
@@ -346,13 +346,13 @@
                             <li><a href="{{ object.get_update_url }}">Edit Job</a></li>
                             {% endif %}
                             {% if 'core.add_aoi' in perms %}
-                            <li><a href="{% url 'job-create-aois' object.id%}">Create Workcells</a></li>
+                            <li><a href="{% url 'job-create-aois' object.id%}">Create {{ lexicon.WORKCELL_NAME }}s</a></li>
                             {% endif %}
                             {% if 'core.add_aoi' in perms %}
-                            <li><a href="{% url 'job-prioritize-workcells' object.id %}">Prioritize Workcells</a></li>
+                            <li><a href="{% url 'job-prioritize-workcells' object.id %}">Prioritize {{ lexicon.WORKCELL_NAME }}s</a></li>
                             {% endif %}
                             {% if 'core.assign_workcells' in perms %}
-                            <li><a href="{% url 'job-assign-workcells' object.id%}">Assign Workcells</a></li>
+                            <li><a href="{% url 'job-assign-workcells' object.id%}">Assign {{ lexicon.WORKCELL_NAME }}s</a></li>
                             {% endif %}
                             {% if 'core.delete_job' in perms %}
                             <li><a href="{% url 'job-delete' object.id %}">Delete Job</a></li>
@@ -450,9 +450,9 @@
         {% if not workcell_count %}
             <div class="row body" style="margin-left: 5px;">
             {% if 'accounts.add_job' in perms %}
-                <span><b>No workcells. Next step: </b> <a class="btn btn-large btn-success" href="{% url 'job-create-aois' job_pk=object.id %}">Create workcells</a></span>
+                <span><b>No {{ lexicon.WORKCELL_NAME|lower }}s. Next step: </b> <a class="btn btn-large btn-success" href="{% url 'job-create-aois' job_pk=object.id %}">Create {{ lexicon.WORKCELL_NAME|lower}}s</a></span>
             {% else %}
-                <span><b>This job doesn't have any workcells yet, please ask a supervisor to create some</b></span>
+                <span><b>This job doesn't have any {{ lexicon.WORKCELL_NAME|lower}}s yet, please ask a supervisor to create some</b></span>
             {% endif %}
             </div>
         {% endif %}

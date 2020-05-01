@@ -12,6 +12,7 @@ import decimal
 
 
 from django.core.cache import cache
+from django.conf import settings
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User, Group, Permission
 from django.contrib.gis.geos import GEOSGeometry
@@ -99,6 +100,8 @@ class BatchCreateAOIS(TemplateView):
     def get_context_data(self, **kwargs):
         cv = super(BatchCreateAOIS, self).get_context_data(**kwargs)
         cv['object'] = get_object_or_404(Job, pk=self.kwargs.get('job_pk'))
+        # import dictionary Settings
+        cv['lexicon'] = settings.GEOQ_LEXICON
         return cv
 
     def post(self, request, *args, **kwargs):
@@ -440,6 +443,9 @@ class JobDetailedListView(ListView):
         #TODO: Add feature_count
 
         cv['completed'] = cv['object'].complete_percent()
+
+        # import dictionary Settings
+        cv['lexicon'] = settings.GEOQ_LEXICON
 
         return cv
 

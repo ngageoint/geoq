@@ -368,6 +368,11 @@ GEOSERVER_WFS_JOB_LAYER = None
 # For Django Debug Toolbar - need to set this to resolve some errors
 DEBUG_TOOLBAR_PATCH_SETTINGS = False
 
+# Able to vary what we call workcells
+GEOQ_LEXICON = {
+    'WORKCELL_NAME': 'Target'
+}
+
 # Bootstrap variables to work with django-bootstrap-toolkit
 # Comment these out to use cdnjs.cloudflare.com versions of Bootstrap
 BOOTSTRAP_BASE_URL = STATIC_URL

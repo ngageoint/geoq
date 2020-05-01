@@ -5,7 +5,7 @@
 {% load geoserver_job_link %}
 {% load static %}
 
-{% block title %}GeoQ: Draw Workcells for Job #{{ object.id }}{% endblock %}
+{% block title %}GeoQ: Draw {{ lexicon.WORKCELL_NAME }}s for Job #{{ object.id }}{% endblock %}
 {% block static_libraries %}
     {% leaflet_js plugins="draw" %}
     <style>
@@ -109,7 +109,7 @@
 
     var aoi_extents;
 
-    function mapInit(map) {
+    function map_init_basic(map,options) {
         //Auto-called after leaflet map is initialized
         create_aois.map_object = map;
 
@@ -176,16 +176,16 @@
         create_aois.map_object.addLayer(create_aois.aois);
     }
 
-        // Map doesn't update without this delay.
-        setTimeout(function(){
-            try {
-                //AOI is sometimes getting no bounds data, which causes error
-                var test = aoi_extents.getBounds().getCenter();
-                map.fitBounds(aoi_extents.getBounds());
-            } catch(ex){
-                log.error("aoi_extents not being passed in valid bounds");
-            }
-        }, 1);
+        // // Map doesn't update without this delay.
+        // setTimeout(function(){
+        //     try {
+        //         //AOI is sometimes getting no bounds data, which causes error
+        //         var test = aoi_extents.getBounds().getCenter();
+        //         map.fitBounds(aoi_extents.getBounds());
+        //     } catch(ex){
+        //         log.error("aoi_extents not being passed in valid bounds");
+        //     }
+        // }, 1);
 
         //create_aois.drawnItems = new L.FeatureGroup();
         //map.addLayer(create_aois.drawnItems);
@@ -275,8 +275,8 @@
 
 {% block container %}
     <div class="row-fluid container" style="margin:0px 40px 0px 40px;">
-    <h2>Add workcells to Job #{{ object.id }}<span style="font-size: 18px"> ({{ object.name }})</span></h2>
-    <b>Name workcells: </b><input type="text" name="aoi-name" id="aoi-name" value="{{ object.name }}" style="width:300px;"/><br/>
+    <h2>Add {{ lexicon.WORKCELL_NAME }}s to Job #{{ object.id }}<span style="font-size: 18px"> ({{ object.name }})</span></h2>
+    <b>Name {{ lexicon.WORKCELL_NAME|lower }}s: </b><input type="text" name="aoi-name" id="aoi-name" value="{{ object.name }}" style="width:300px;"/><br/>
 
     <div class="btn-group" role="group" aria-label="...">
         <button class="btn btn-default" id="option_polygon">Draw cells</button>
@@ -307,12 +307,12 @@
         <button id="file_holder_edit_btn" class="btn btn-success" disabled="true">Update</button>
     </div>
 
-    <div id="map" class="thumbnail" style="height: 600px; width: 92%;">{% leaflet_map "map" callback="window.mapInit" %}</div>
+    <div id="map" class="thumbnail" style="height: 600px; width: 92%;">{% leaflet_map "map" callback="window.map_init_basic" %}</div>
 
     <br/>
     <div class="row">
         <div class="span6" style="display: inline-block">
-            <btn id="save-aois-button" class="btn btn-success" disabled="true">Add <span id="num_workcells">0</span> Workcells (you can add more later)</btn>
+            <btn id="save-aois-button" class="btn btn-success" disabled="true">Add <span id="num_workcells">0</span> {{ lexicon.WORKCELL_NAME }}s (you can add more later)</btn>
         </div>
         <div class="span4" style="display: inline-block; margin-left: 100px">
             <i>Zoom map to:</i><input type="text" id="geocomplete" style="vertical-align:baseline;"/>
