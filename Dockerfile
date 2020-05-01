@@ -5,6 +5,7 @@ ARG http_proxy
 ARG https_proxy
 ENV http_proxy $http_proxy
 ENV https_proxy $https_proxy
+ENV ALLOWED_HOST localhost
 
 RUN apt-get update && apt-get -y upgrade
 RUN apt-get -y install python-gdbm python-tk
@@ -23,6 +24,9 @@ RUN apt-get install -f
 
 RUN mkdir -p /var/www/static/kml
 RUN chmod 777 /var/www/static/kml
+
+RUN cat ./geoq/settings.py | sed "s/\'localhost\'/\'$ALLOWED_HOST\'/" > ./geoq/settings.py.new
+RUN mv ./geoq/settings.py.new ./geoq/settings.py
 
 EXPOSE 8000
 
