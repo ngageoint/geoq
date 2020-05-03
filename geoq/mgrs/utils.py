@@ -5,7 +5,7 @@
 import subprocess
 # from django.contrib.gis.geos import *
 from geojson import MultiPolygon, Feature, FeatureCollection
-from exceptions import ProgramException
+from .exceptions import ProgramException
 import json
 
 import logging
@@ -54,7 +54,7 @@ class Grid:
             try:
                 process = subprocess.check_output(shell_command, shell=True)
                 output = process.rstrip()
-            except subprocess.CalledProcessError, e:
+            except subprocess.CalledProcessError as e:
                 output = e.output
 
             return output
@@ -76,7 +76,7 @@ class Grid:
             try:
                 process = subprocess.check_output(shell_command, shell=True)
                 result = process.rstrip().split('\n')
-            except subprocess.CalledProcessError, e:
+            except subprocess.CalledProcessError as e:
                 result = e.output
 
         except Exception:
@@ -184,4 +184,3 @@ class GridException(Exception):
 
 class GeoConvertException(Exception):
     pass
-

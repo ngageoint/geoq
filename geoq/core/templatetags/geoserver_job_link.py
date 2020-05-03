@@ -7,7 +7,7 @@ from django.conf import settings
 register = template.Library()
 
 # settings value
-@register.assignment_tag
+@register.filter(name='geoserver_job_link')
 def geoserver_job_link(job, kind):
     if job is None or settings.GEOSERVER_WFS_JOB_LAYER is None or not settings.GEOSERVER_WFS_JOB_LAYER:
         return None

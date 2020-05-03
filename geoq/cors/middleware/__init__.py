@@ -1,1 +1,1 @@
-from corsMiddleware import corsMiddleware
+from .corsMiddleware import corsMiddleware

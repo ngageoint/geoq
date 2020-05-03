@@ -1,7 +1,7 @@
 from django.views.generic import ListView
 
 from django.http import HttpResponse
-from models import Job
+from .models import Job
 from geoq.maps.models import FeatureType
 from django.shortcuts import get_object_or_404
 from datetime import datetime
@@ -90,7 +90,7 @@ class JobKML(ListView):
                 output += '    </Style>\n'
                 continue
 
-            if feature.style.has_key('color'):
+            if 'color' in feature.style:
                 color = feature.style['color']
 
                 #convert to a kml-recognized color
@@ -109,14 +109,14 @@ class JobKML(ListView):
                 output += '        <outline>1</outline>\n'
                 output += '      </PolyStyle>\n'
 
-            if feature.style.has_key('weight'):
+            if 'weight' in feature.style:
                 output += '      <LineStyle>\n'
                 output += '        <width>'+str(feature.style['weight'])+'</width>\n'
-                if feature.style.has_key('color'):
+                if 'color' in feature.style:
                     output += '        <color>'+out_color+'</color>\n'
                 output += '      </LineStyle>\n'
 
-            if feature.style.has_key('iconUrl'):
+            if 'iconUrl' in feature.style:
                 icon_url = str(feature.style['iconUrl'])
                 if not icon_url.startswith("http"):
                     icon_url = request.build_absolute_uri(icon_url)
@@ -212,7 +212,7 @@ class JobKML(ListView):
         output += '  </Document>\n'
         output += '</kml>'
 
-        return HttpResponse(output, mimetype="application/vnd.google-earth.kml+xml", status=200)
+        return HttpResponse(output, content_type="application/vnd.google-earth.kml+xml", status=200)
 
 
 def get_cookie_trailer(request):
@@ -283,5 +283,4 @@ class JobKMLNetworkLink(ListView):
         output += '  </Folder>\n'
         output += '</kml>'
 
-        return HttpResponse(output, mimetype="application/vnd.google-earth.kml+xml", status=200)
-
+        return HttpResponse(output, content_type="application/vnd.google-earth.kml+xml", status=200)

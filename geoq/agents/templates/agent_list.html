@@ -1,0 +1,29 @@
+{% extends "core/base.html" %}
+{% block title %}Agents{% endblock %}
+
+{% block container %}
+
+    <div class="row-fluid container-narrow">
+
+        <div class="span12">
+            <div class="span8 list-view-header">Agents</div>
+            <div class="span4">
+            {% if 'core.add_project' in perms %}
+                <div class="btn-group pull-right">
+                    <button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown" aria-haspopup="true"
+                            aria-expanded="false" style="margin-bottom: 10px;">
+                         Tasks <span class="caret"></span>
+                    </button>
+                    <ul class="dropdown-menu">
+                        <li><a href="{% url 'project-create' %}">Create Agent</a></li>
+                    </ul>
+                </div>
+            {% endif %}
+            </div>
+
+            {% include "core/_status_tabbed_list.html" with list_title="Agents" %}
+
+        </div>
+
+    </div>
+{% endblock %}

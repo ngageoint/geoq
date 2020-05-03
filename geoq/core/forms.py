@@ -3,17 +3,17 @@
 # is subject to the Rights in Technical Data-Noncommercial Items clause at DFARS 252.227-7013 (FEB 2012)
 
 from django import forms
-from django.forms.widgets import (RadioInput, RadioSelect, CheckboxInput,
+from django.forms.widgets import (RadioSelect, CheckboxInput,
     CheckboxSelectMultiple)
 from django.contrib.auth.models import User, Group
 from django.utils.html import escape, conditional_escape
 from django.db.models import Max
 from itertools import chain
-from models import AOI, Job, Project
-from maps.models import Layer, MapLayer
+from .models import AOI, Job, Project
+from geoq.maps.models import Layer, MapLayer
 from django.contrib.admin.widgets import FilteredSelectMultiple
 
-no_style = [RadioInput, RadioSelect, CheckboxInput, CheckboxSelectMultiple]
+no_style = [RadioSelect, CheckboxInput, CheckboxSelectMultiple]
 
 class StyledModelForm(forms.ModelForm):
     """
@@ -44,13 +44,13 @@ class ItemSelectWidget(forms.SelectMultiple):
     def render_option(self, selected_choices, option_value, option_label, option_title=''):
         option_value = forms.util.force_text(option_value)
         if option_value in selected_choices:
-            selected_html = u' selected="selected"'
+            selected_html = ' selected="selected"'
             if not self.allow_multiple_selected:
                 selected_choices.remove(option_value)
         else:
             selected_html = ''
 
-        return u'<option title="%s" value="%s"%s>%s</option>' % ( \
+        return '<option title="%s" value="%s"%s>%s</option>' % ( \
             escape(option_title), escape(option_value), selected_html, conditional_escape(forms.util.force_text(option_label)))
 
     def render_options(self, choices, selected_choices):
@@ -68,30 +68,36 @@ class ItemSelectWidget(forms.SelectMultiple):
             output = []
             for option_value, option_label, option_title in chain(more_choices, choices):
                 if isinstance(option_label, (list, tuple)):
-                    output.append(u'<optgroup label="%s">' % escape(forms.util.force_text(option_value)))
+                    output.append('<optgroup label="%s">' % escape(forms.util.force_text(option_value)))
                     for option in option_label:
                         output.append(self.render_option(selected_choices, *option, **dict(option_title=option_title)))
-                    output.append(u'</optgroup>')
+                    output.append('</optgroup>')
                 else: # option_label is just a string
                     output.append(self.render_option(selected_choices, option_value, option_label, option_title))
-            return u'\n'.join(output)
+            return '\n'.join(output)
 
 class JobForm(StyledModelForm):
 
+#    analysts = forms.ModelMultipleChoiceField(
+#        queryset = User.objects.all(),
+#        widget = ItemSelectWidget(option_title_field='email')
+#    )
+#    layers = forms.ModelMultipleChoiceField(
+#        queryset = Layer.objects.all(),
+#        widget = ItemSelectWidget()
+#    )
     analysts = forms.ModelMultipleChoiceField(
-        queryset = User.objects.all(),
-
-    )
+        queryset = User.objects.all()
+        )
     layers = forms.ModelMultipleChoiceField(
-        queryset = Layer.objects.all(),
-        widget = ItemSelectWidget()
-    )
+        queryset = Layer.objects.all()
+        )
 
     class Meta:
 
         fields = ('name', 'description', 'project', 'analysts',
                   'teams', 'reviewers', 'feature_types', 'required_courses', 'tags', 'layers', 'editor',
-                  'editable_layer')
+                  'workflow', 'editable_layer')
         model = Job
 
     def __init__(self, project, *args, **kwargs):
@@ -115,7 +121,7 @@ class JobForm(StyledModelForm):
             # must be a better way, but figure out the layers to display
             layers_selected = set(kwargs['data'].getlist('layers',None))
             layers_current_int = MapLayer.objects.filter(map=self.instance.map.id).values_list('layer_id', flat=True)
-            layers_current = set([unicode(i) for i in layers_current_int])
+            layers_current = set([str(i) for i in layers_current_int])
 
             if layers_selected != layers_current:
                 # resolve differences
@@ -125,7 +131,7 @@ class JobForm(StyledModelForm):
                 # now add in new ones
                 layers = MapLayer.objects.filter(map=self.instance.map.id)
                 if layers.count() > 0:
-                    max_stack_order = layers.aggregate(Max('stack_order')).values()[0]
+                    max_stack_order = list(layers.aggregate(Max('stack_order')).values())[0]
                 else:
                     max_stack_order = 0
 
@@ -145,37 +151,32 @@ class JobForm(StyledModelForm):
 # #form extending original job form to export old job data into new job
 class ExportJobForm(JobForm):
     class Meta:
-      #  fields = ('workcells')
+        fields = ('map',)
         model = Job
 
 class ProjectForm(StyledModelForm):
     class Meta:
         fields = ('name', 'description', 'project_type', 'active', 'private')
         model = Project
-        
-        
+
+
 class TeamForm(StyledModelForm):
     users = forms.ModelMultipleChoiceField(
-        queryset=[],
-        required=False,
-        widget=FilteredSelectMultiple(
-            "Users",
-            is_stacked=False
-        )
+        queryset=User.objects.all()
     )
-    
+
     class Media:
         css = {
             'all':('/static/admin/css/widgets.css',),
         }
-        
+
         js = ('/admin/jsi18n',)
 
     class Meta:
 
         fields = ('name', 'users',)
         model = Group
-        
+
     def __init__(self, *args, **kwargs):
         self.team_id = kwargs.pop('team_id')
         super(TeamForm, self).__init__(*args, **kwargs)
@@ -183,16 +184,10 @@ class TeamForm(StyledModelForm):
         other_teams = Group.objects.exclude(id=self.team_id).values_list('name', flat=True)
         self.fields['users'].queryset = User.objects.exclude(groups__name__in=other_teams)
         self.fields['users'].initial = User.objects.filter(groups__id=self.team_id)
-            
+
         def remove_anonymous(field):
             """ Removes anonymous from choices in form. """
             field_var = self.fields[field].queryset.exclude(id=-1)
             self.fields[field].queryset = field_var
             return None
         remove_anonymous('users')
-
-          
-        
-    
-
-    

@@ -5,8 +5,8 @@
 from django import template
 register = template.Library()
 
-@register.filter('object_class')
-def field_class(ob):
+@register.filter
+def object_class(ob):
     """
     Returns the class of the object
     """

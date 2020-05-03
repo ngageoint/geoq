@@ -12,11 +12,11 @@ class SignupFormExtra(SignupForm):
     A form to demonstrate how to add extra fields to the signup form, in this
     case adding the first and last name.
     """
-    first_name = forms.CharField(label=_(u'First name'),
+    first_name = forms.CharField(label=_('First name'),
                                  max_length=30,
                                  required=False)
 
-    last_name = forms.CharField(label=_(u'Last name'),
+    last_name = forms.CharField(label=_('Last name'),
                                 max_length=30,
                                 required=False)
 

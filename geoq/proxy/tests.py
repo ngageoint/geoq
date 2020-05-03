@@ -128,5 +128,5 @@ class ConncurrentTests(TestCase):
     def setUp(self):
         pass
     def testDualUpdates(self):
-        print "Do concurrent tests once we figure out how to do so"
+        print("Do concurrent tests once we figure out how to do so")
         #self.assertEqual("do I know how to test this","yes")

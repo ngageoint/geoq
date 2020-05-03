@@ -18,10 +18,9 @@ class Feedback(models.Model):
     title = models.CharField(max_length=80, default='GeoQ Feedback')
     name = models.CharField(max_length=50)
     email = models.EmailField()
-    topic = models.ForeignKey(Topic)
+    topic = models.ForeignKey(Topic, on_delete=models.PROTECT)
     message = models.TextField()
 
 
     def __unicode__(self):
         return self.title
-

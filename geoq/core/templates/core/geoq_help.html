@@ -1,16 +1,14 @@
 <!DOCTYPE html>
-{% load bootstrap_toolkit %}
-{% load url from future %}
+{% load bootstrap3 %}
+{% load compress %}
+{% load menu %}
+{% load static %}
 
 <html>
 <head lang="en">
     <meta charset="UTF-8">
     <title>GeoQ: User Guide</title>
-    <script src="{{ STATIC_URL }}core/js/jquery.min.js"></script>
-
-    {% bootstrap_stylesheet_tag %}
-    {% bootstrap_stylesheet_tag "responsive" %}
-    {% bootstrap_javascript_tag %}
+    <script src="{% static 'core/js/jquery.min.js' %}"></script>
 
     <style type="text/css">
         /* CSS used here will be applied after bootstrap.css */
@@ -89,11 +87,9 @@
                         </p>
 
                         <p><b>This video gives an overview of making projects and jobs:</b></p>
-{#                        <img src="{{ STATIC_URL }}images/help/VideoThumbnail.png"#}
-{#                             style="cursor:pointer"#}
-{#                             onclick="window.open('{{ STATIC_URL }}help_video/UserHelpVideo.html');" />#}
+
                         <iframe class="tscplayer_inline" id="embeddedSmartPlayerInstance"
-                                src="{{ STATIC_URL }}help_video/UserHelpVideo_player.html?embedIFrameId=embeddedSmartPlayerInstance"
+                                src="{% static 'help_video/UserHelpVideo_player.html?embedIFrameId=embeddedSmartPlayerInstance' %}"
                                 scrolling="no" frameborder="0" webkitAllowFullScreen mozallowfullscreen allowFullScreen
                                 width="900" height="600"></iframe>
 
@@ -128,23 +124,23 @@
                             GeoQ home page (<b>Note: you will need to have a privileged account to have access to this function</b>):
                             <br/>
                         </p>
-                        <img src="{{ STATIC_URL }}images/help/Revised/CreateNewProject1.png">
+                        <img src="{% static 'images/help/Revised/CreateNewProject1.png' %}">
                         <p>
                             <br/>or the 'New' button from the Project list page: <br/><br/>
                         </p>
-                        <img src="{{ STATIC_URL }}images/help/Revised/CreateNewProject2.png">
+                        <img src="{% static 'images/help/Revised/CreateNewProject2.png' %}">
                         <p>
                             <br/>The Create Project page will allow you to enter the appropriate information
                             regarding your new project:<br/>
                         </p>
-                        <img src="{{ STATIC_URL }}images/help/Revised/CreateNewProject3.png">
+                        <img src="{% static 'images/help/Revised/CreateNewProject3.png' %}">
                         <p>
                             <br/>Once saved, you'll now be able to add Jobs to your Project.
                         </p>
                         <br/>You will find the following tools and information once you create/select your Project. On this page you can edit your Project, add a New Job
                         view information on the Project, and view the Jobs assigned to the Project:
                         <p>
-                            <img src="{{ STATIC_URL }}images/help/Revised/ProjectPage.png">
+                            <img src="{% static 'images/help/Revised/ProjectPage.png' %}">
                         </p>
                     </td>
                 </tr>
@@ -153,21 +149,21 @@
                         <a href="#create-new-jobs">Creating a Job</a>
                         <p></p>
                         <p>A Job is a task that Users will complete in each Work Cell (the area that the User wants evaluated)</p>
-                        <img src="{{ STATIC_URL }}images/help/Revised/CreateNewJob0.png"/>
+                        <img src="{% static 'images/help/Revised/CreateNewJob0.png' %}"/>
                         <p><br/>Once you select 'Add New Job', you will be able to set up your Job settings:</p>
-                        <img src="{{ STATIC_URL }}images/help/Revised/CreateNewJob1.png"/>
+                        <img src="{% static 'images/help/Revised/CreateNewJob1.png' %}"/>
                         <p><br/>After saving and creating your new Job, the Jobs page will appear. On this page you can create Work Cells within the Job, view the status of your Work Cells, view the Job on a map, edit the Map, etc.:</p>
-                        <img src="{{ STATIC_URL }}images/help/Revised/JobPage.png">
+                        <img src="{% static 'images/help/Revised/JobPage.png' %}">
 
                         <h3>Creating Work Cells</h3>
                         <p>Work Cells are specific areas where the Job will be completed. Once you select 'Create Workcells' you will be able to select the area where you want your job executed and prioritize each Work Cell: </p>
-                        <img src="{{ STATIC_URL }}images/help/Revised/DrawWorkCells.png"/>
+                        <img src="{% static 'images/help/Revised/DrawWorkCells.png' %}"/>
                         <p>You can Delete Work Cells on the Job page. You can also Save the Job with its Work Cells in KML, GeoJSON, or Shapefile format:
-                            <img src="{{ STATIC_URL }}images/help/Revised/JobPage1.png"/>
+                            <img src="{% static 'images/help/Revised/JobPage1.png' %}"/>
 
                         <h3>Working on the Job</h3>
                         <p>Once you select a Work Cell, you can begin evaluating the area based on the Job given:</p>
-                        <img src="{{ STATIC_URL }}images/help/Revised/WorkingOnTheJob.png"/>
+                        <img src="{% static 'images/help/Revised/WorkingOnTheJob.png' %}"/>
                     </td>
                 </tr>
                 </tbody></table>
@@ -187,24 +183,24 @@
                     <td>
                         <a href="#maps">Maps</a>
                         <p> To create a new map, layer, or feature, select it from the dropdown box on the maps tab and click ADD NEW</p>
-                        <img src="{{ STATIC_URL }}images/help/create new.png" />
+                        <img src="{% static 'images/help/create new.png' %}" />
                         <h3>Create New Map</h3>
                         <p>Maps may be created at the administrative level to organize the set of layers needed for a job as well as the initial view</p>
-                        <img src="{{ STATIC_URL }}images/help/create new map 2.png" />
+                        <img src="{% static 'images/help/create new map 2.png' %}" />
                     </td>
                 </tr>
                 <tr>
                     <td>
                         <a href="#layers">Layers</a>
                         <p>Different layers may be created to customize your map.Layers are map imagery that a user may overlay on the map while completing a job. Please note that all sections of the Create New Layer do not necessarily have to be filled out, but rather depend on the type of layer being created.
-                            <img src="{{ STATIC_URL }}images/help/create_new_layer 2.png" />
+                            <img src="{% static 'images/help/create_new_layer 2.png' %}" />
                     </td>
                 </tr>
                 <tr>
                     <td>
                         <a href="#features">Features</a>
                         <p>Feature types may be created to place on the map while completing a job.
-                            <img src="{{ STATIC_URL }}images/help/create_new_feature_type 2.png" />
+                            <img src="{% static 'images/help/create_new_feature_type 2.png' %}" />
                     </td>
                 </tr>
                 </tbody></table>

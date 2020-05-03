@@ -4,27 +4,31 @@
 
 import json
 import cgi
+import ast
+from datetime import datetime, timedelta
+from pytz import utc
 
 from django.contrib.auth.models import User, Group
 from django.contrib.gis.db import models
 from django.contrib.gis.geos import MultiPolygon, Polygon
-from django.contrib.contenttypes import generic
+from django.contrib.contenttypes.fields import GenericForeignKey
 from django.contrib.contenttypes.models import ContentType
-from django.core.urlresolvers import reverse
-from django.utils.datastructures import SortedDict
-from managers import AOIManager
+from django.urls import reverse
+# from django.utils.datastructures import SortedDict
+from .managers import AOIManager
 from jsonfield import JSONField
-from collections import defaultdict
+from collections import defaultdict, OrderedDict
 from django.db.models import Q
 from geoq.training.models import Training
 from geoq.core.utils import clean_dumps
+from feedgen.feed import FeedGenerator
 
 TRUE_FALSE = [(0, 'False'), (1, 'True')]
 STATUS_VALUES_LIST = ['Unassigned', 'Assigned', 'In work', 'Awaiting review', 'In review', 'Completed']
 
 
 class AssigneeType:
-    USER, GROUP = range(1, 3)
+    USER, GROUP = list(range(1, 3))
 
 
 class Setting(models.Model):
@@ -43,9 +47,9 @@ class Assignment(models.Model):
     """
     A generic relation to either a user or group
     """
-    assignee_type = models.ForeignKey(ContentType, null=True)
+    assignee_type = models.ForeignKey(ContentType, null=True, on_delete=models.CASCADE)
     assignee_id = models.PositiveIntegerField(null=True)
-    content_object = generic.GenericForeignKey('assignee_type', 'assignee_id')
+    content_object = GenericForeignKey('assignee_type', 'assignee_id')
 
     class Meta:
         abstract = True
@@ -65,6 +69,9 @@ class GeoQBase(models.Model):
                            help_text='JSON key/value pairs associated with this object, e.g. {"usng":"18 S TJ 87308 14549", "favorite":"true"}')
 
     def __unicode__(self):
+        return self.name
+
+    def __str__(self):
         return self.name
 
     class Meta:
@@ -95,10 +102,10 @@ class Project(GeoQBase):
     project_type = models.CharField(max_length=50, choices=PROJECT_TYPES)
     private = models.BooleanField(default=False, help_text="Check this to make this project 'Private' and available only to users assigned to it.")
     project_admins = models.ManyToManyField(
-        User, blank=True, null=True,
+        User, blank=True,
         related_name="project_admins", help_text='User that has admin rights to project.')
     contributors = models.ManyToManyField(
-        User, blank=True, null=True,
+        User, blank=True,
         related_name="contributors", help_text='User that will be able to take on jobs.')
 
     class Meta:
@@ -130,7 +137,7 @@ class Project(GeoQBase):
 
     @property
     def aois_envelope(self):
-        return MultiPolygon([n.aois_envelope() for n in self.jobs if n.aois.count()])
+        return MultiPolygon([n.aois_envelope().envelope for n in self.jobs if n.aois.count()])
 
     @property
     def aois_envelope_by_job(self):
@@ -163,21 +170,24 @@ class Job(GeoQBase, Assignment):
     EDITORS = ['geoq','osm']
     EDITOR_CHOICES = [(choice, choice) for choice in EDITORS]
 
-    analysts = models.ManyToManyField(User, blank=True, null=True, related_name="analysts")
-    teams = models.ManyToManyField(Group, blank=True, null=True, related_name="teams")
-    reviewers = models.ManyToManyField(User, blank=True, null=True, related_name="reviewers")
-    progress = models.SmallIntegerField(max_length=2, blank=True, null=True)
-    project = models.ForeignKey(Project, related_name="project")
+    analysts = models.ManyToManyField(User, blank=True, related_name="analysts")
+    teams = models.ManyToManyField(Group, blank=True, related_name="teams")
+    reviewers = models.ManyToManyField(User, blank=True, related_name="reviewers")
+    progress = models.SmallIntegerField(blank=True, null=True)
+    project = models.ForeignKey(Project, related_name="project", on_delete=models.PROTECT)
 
     grid = models.CharField(max_length=5, choices=GRID_SERVICE_CHOICES, default=GRID_SERVICE_VALUES[0],
                             help_text='Select usng for Jobs inside the US, otherwise use mgrs')
     tags = models.CharField(max_length=50, blank=True, null=True, help_text='Useful tags to search social media with')
     editor = models.CharField(max_length=20, help_text='Editor to be used for creating features', choices=EDITOR_CHOICES, default=EDITOR_CHOICES[0])
-    editable_layer = models.ForeignKey( 'maps.EditableMapLayer', blank=True, null=True)
+    editable_layer = models.ForeignKey( 'maps.EditableMapLayer', blank=True, null=True, on_delete=models.CASCADE)
 
-    map = models.ForeignKey('maps.Map', blank=True, null=True)
-    feature_types = models.ManyToManyField('maps.FeatureType', blank=True, null=True)
-    required_courses = models.ManyToManyField(Training, blank=True, null=True, help_text="Courses that must be passed to open these cells")
+    map = models.ForeignKey('maps.Map', blank=True, null=True, on_delete=models.CASCADE)
+    workflow = models.ForeignKey('workflow.Workflow', blank=True, null=True,
+                help_text='Workflow to be used for job',
+                on_delete=models.PROTECT)
+    feature_types = models.ManyToManyField('maps.FeatureType', blank=True)
+    required_courses = models.ManyToManyField(Training, blank=True, help_text="Courses that must be passed to open these cells")
 
     class Meta:
         permissions = (
@@ -201,21 +211,24 @@ class Job(GeoQBase, Assignment):
         """
         Returns the envelope of related AOIs geometry.
         """
-        return getattr(self.aois.all().collect(), 'envelope', None)
+        return self.aois.all().aggregate(envelope=models.Collect('polygon')).get('envelope')
 
     def aoi_count(self):
         return self.aois.count()
 
+    @property
     def aois(self):
         return self.aois.all()
 
     @property
     def aoi_counts_html(self):
-        count = defaultdict(int)
+        STATE_VALUES = [i.name for i in self.workflow.path()]
+        count = OrderedDict([(i,0) for i in STATE_VALUES])
         for cell in AOI.objects.filter(job__id=self.id):
-            count[cell.status] += 1
+            if cell.status in count:
+                count[cell.status] += 1
 
-        return str(', '.join("%s: <b>%r</b>" % (key, val) for (key, val) in count.iteritems()))
+        return str(', '.join("%s: <b>%r</b>" % (key, val) for (key, val) in list(count.items())))
 
     @property
     def user_count(self):
@@ -235,6 +248,7 @@ class Job(GeoQBase, Assignment):
 
     def features_table_html(self):
         counts = {}
+        STATE_VALUES = [i.name for i in self.workflow.path()]
 
         for feature_item in self.feature_set.all():
             status = str(feature_item.status)
@@ -250,14 +264,14 @@ class Job(GeoQBase, Assignment):
             output = "<table class='job_feature_list'>"
 
             header = "<th><i>Feature Counts</i></th>"
-            for (featuretype, status_obj) in counts.iteritems():
+            for (featuretype, status_obj) in list(counts.items()):
                 header = header + "<th><b>" + cgi.escape(featuretype) + "</b></th>"
             output += "<tr>" + header + "</tr>"
 
-            for status in STATUS_VALUES_LIST:
+            for status in STATE_VALUES:
                 status = str(status)
                 row = "<td><b>" + status + "</b></td>"
-                for (featuretype, status_obj) in counts.iteritems():
+                for (featuretype, status_obj) in list(counts.items()):
                     if status in status_obj:
                         val = status_obj[status]
                     else:
@@ -301,7 +315,7 @@ class Job(GeoQBase, Assignment):
         Returns geoJSON of the feature.
         """
 
-        geojson = SortedDict()
+        geojson = OrderedDict()
         geojson["type"] = "FeatureCollection"
         geojson["features"] = [json.loads(aoi.geoJSON()) for aoi in self.aois.all()]
 
@@ -309,7 +323,7 @@ class Job(GeoQBase, Assignment):
 
     def features_geoJSON(self, as_json=True, using_style_template=True):
 
-        geojson = SortedDict()
+        geojson = OrderedDict()
         geojson["type"] = "FeatureCollection"
         geojson["properties"] = dict(id=self.id)
 
@@ -322,11 +336,111 @@ class Job(GeoQBase, Assignment):
         Return geoJSON of grid for export
         """
 
-        geojson = SortedDict()
+        geojson = OrderedDict()
         geojson["type"] = "FeatureCollection"
         geojson["features"] = [json.loads(aoi.grid_geoJSON()) for aoi in self.aois.all()]
 
         return clean_dumps(geojson) if as_json else geojson
+
+    def grid_atom(self, as_atom=True):
+        """
+        Return Atom feed of grid for export
+        """
+
+        geojson = OrderedDict()
+        geojson["type"] = "FeatureCollection"
+        geojson["features"] = [json.loads(aoi.grid_geoJSON()) for aoi in self.aois.all()]
+
+        #return clean_dumps(geojson) if as_atom else geojson
+
+        fg = FeedGenerator()
+        fg.id('http://www.mitre.org/drms/')
+        fg.title('DRMS Atom Feed')
+        fg.author({'name': 'DRMS', 'email': 'drms-do-not-reply@mitre.org'})
+        fg.link(href='http://www.mitre.org/', rel='alternate')
+        #fg.logo('http://ex.com/logo.jpg')
+        #fg.subtitle('This is a cool feed!')
+        #fg.link(href='http://larskiesow.de/test.atom', rel='self')
+        fg.language('en')
+
+        # all_aois = self.aois.all()
+        # all_aois_features = all_aois["features"]
+
+        all_aois_features = geojson["features"]
+
+        for i in all_aois_features:
+            fe = fg.add_entry()
+            fe.id('http://www.mitre.org/drms/')
+            ip = i["properties"]
+            title = "feature id {} -- status: {}, priority: {}".format(ip["id"], ip["status"], ip["priority"])
+            fe.title(title)
+            fe.link(href="http://www.mitre.org/drms/")
+
+        # temp2_data = ["feature id {} -- status: ${i.properties.status}, priority: ${i.properties.priority}".format(i.properties.id, i.properties.status, i.properties.priority) for i in temp1_data["features"]]
+        #
+        # fe = fg.add_entry()
+        # fe.id('http://www.mitre.org/drms/')
+        # fe.title('The First Feed Item')
+        # fe.link(href="http://www.mitre.org/drms/")
+
+        atom = fg.atom_str(pretty=True)  # Get the ATOM feed as string
+        #rssfeed = fg.rss_str(pretty=True)  # Get the RSS feed as string
+        #fg.atom_file('atom.xml')  # Write the ATOM feed to a file
+        #fg.rss_file('rss.xml')  # Write the RSS feed to a file
+
+
+
+        return atom
+
+    def grid_atom2(self, as_atom=True):
+        """
+        Return Atom feed of grid for export
+        """
+
+        geojson = OrderedDict()
+        geojson["type"] = "FeatureCollection"
+        geojson["features"] = [json.loads(aoi.grid_geoJSON()) for aoi in self.aois.all()]
+
+        # return clean_dumps(geojson) if as_atom else geojson
+
+        fg = FeedGenerator()
+        fg.id('http://www.mitre.org/drms/')
+        fg.title('DRMS Atom Feed')
+        fg.author({'name': 'DRMS', 'email': 'drms-do-not-reply@mitre.org'})
+        fg.link(href='http://www.mitre.org/', rel='alternate')
+        #fg.logo('http://ex.com/logo.jpg')
+        #fg.subtitle('This is a cool feed!')
+        #fg.link(href='http://larskiesow.de/test.atom', rel='self')
+        fg.language('en')
+
+        # all_aois = self.aois.all()
+        # all_aois_features = all_aois["features"]
+
+        all_aois_features = geojson["features"]
+
+        for i in all_aois_features:
+            fe = fg.add_entry()
+            fe.id('http://www.mitre.org/drms/')
+            ip = i["properties"]
+            title = "feature id {} -- status: {}, priority: {}".format(ip["id"], ip["status"], ip["priority"])
+            fe.title(title)
+            fe.link(href="http://www.mitre.org/drms/")
+
+        # temp2_data = ["feature id {} -- status: ${i.properties.status}, priority: ${i.properties.priority}".format(i.properties.id, i.properties.status, i.properties.priority) for i in temp1_data["features"]]
+        #
+        # fe = fg.add_entry()
+        # fe.id('http://www.mitre.org/drms/')
+        # fe.title('The First Feed Item')
+        # fe.link(href="http://www.mitre.org/drms/")
+
+        atom = fg.atom_str(pretty=True)  # Get the ATOM feed as string
+        #rssfeed = fg.rss_str(pretty=True)  # Get the RSS feed as string
+        #fg.atom_file('atom.xml')  # Write the ATOM feed to a file
+        #fg.rss_file('rss.xml')  # Write the RSS feed to a file
+
+
+
+        return atom
 
     def base_layer_object(self):
         """
@@ -334,42 +448,48 @@ class Job(GeoQBase, Assignment):
         """
 
         obj = {}
+        try:
+            proj = int(self.map.projection[-4:])
+        except ValueError:
+            proj = 3857
+
+        if (proj != 3857):
+            obj['srid'] = proj
+
         if len(self.base_layer) > 0:
             obj["layers"] = [self.base_layer]
 
         return obj
+
+    def work_summary_json(self):
+        summary = dict()
+        for a in self.aois.order_by('id').all():
+            summary[a.id] = a.summary_properties_json()
+
+        return clean_dumps(summary)
+
 
 class AOI(GeoQBase, Assignment):
     """
     Low-level organizational object. Now (6/1/14) referred to as a 'Workcell'
     """
 
+    # Not sure how we did this before... might have changed with implementation
+    # of custom workflows
     STATUS_VALUES = STATUS_VALUES_LIST
-    STATUS_CHOICES = [(choice, choice) for choice in STATUS_VALUES]
 
     PRIORITIES = [(n, n) for n in range(1, 6)]
 
-    analyst = models.ForeignKey(User, blank=True, null=True, help_text="User assigned to work the workcell.")
-    job = models.ForeignKey(Job, related_name="aois")
-    reviewers = models.ManyToManyField(User, blank=True, null=True, related_name="aoi_reviewers",
+    analyst = models.ForeignKey(User, blank=True, null=True,
+            help_text="User assigned to work the workcell.",
+            on_delete=models.PROTECT)
+    job = models.ForeignKey(Job, related_name="aois", on_delete=models.CASCADE)
+    reviewers = models.ManyToManyField(User, blank=True, related_name="aoi_reviewers",
                                        help_text='Users that actually reviewed this work.')
     objects = AOIManager()
     polygon = models.MultiPolygonField()
-    priority = models.SmallIntegerField(choices=PRIORITIES, max_length=1, default=5)
-    status = models.CharField(max_length=15, choices=STATUS_CHOICES, default='Unassigned')
-
-    #Signifies When the work cell is created
-    cellCreated_at = models.DateTimeField(blank=True,null=True)
-    #signifies when the work cell enters the assigned state
-    cellAssigned_at = models.DateTimeField(blank=True,null=True)
-    #signifies when the work cell enters the "In Work " state
-    cellStarted_at = models.DateTimeField(blank=True,null=True)	
-    #Cell enters the waiting for review state
-    cellWaitingReview_at = models.DateTimeField(blank=True,null=True)
-    #cell enters QA
-    cellInReview_at = models.DateTimeField(blank=True,null=True)
-    #cell enters completed state
-    cellFinished_at = models.DateTimeField(blank=True,null=True)	
+    priority = models.SmallIntegerField(choices=PRIORITIES, default=5)
+    status = models.CharField(max_length=15, default='Unassigned')
 
     class Meta:
         verbose_name = 'Area of Interest'
@@ -377,6 +497,7 @@ class AOI(GeoQBase, Assignment):
         permissions = (
             ('assign_workcells', 'Assign Workcells'), ('certify_workcells', 'Certify Workcells'),
         )
+        ordering = ['id']
 
     def __unicode__(self):
         aoi_obj = '%s - AOI %s' % (self.name, self.id)
@@ -415,22 +536,29 @@ class AOI(GeoQBase, Assignment):
         if self.id is None:
             self.id = 1
 
-        geojson = SortedDict()
+        user_label = 'None'
+        if self.analyst is not None:
+            if len(self.analyst.last_name) > 0:
+                user_label = "%s %s" % (self.analyst.first_name, self.analyst.last_name)
+            else:
+                user_label = self.analyst.username
+
+        # see if we have the size of the AOI
+        size = "unknown"
+        if 'MISQRD' in self.properties or 'KMSQRD' in self.properties:
+            size = "%s km2" % self.properties['KMSQRD'] if 'KMSQRD' in self.properties else "%s mi2" % self.properties['MISQRD']
+
+        geojson = OrderedDict()
         geojson["type"] = "Feature"
         geojson["properties"] = dict(
             id=self.id,
             status=self.status,
+            size = size,
             analyst=(self.analyst.username if self.analyst is not None else 'None'),
             assignee=self.assignee_name,
             priority=self.priority,
-            delete_url=reverse('aoi-deleter', args=[self.id]),
-            time=dict(
-                assigned=str(self.cellAssigned_at), 
-                in_work=str(self.cellStarted_at),
-                waiting_review=str(self.cellWaitingReview_at),
-                in_review=str(self.cellInReview_at),
-                finished=str(self.cellFinished_at)
-                ))
+            name=self.properties['GEO_ID'] if 'GEO_ID' in self.properties else '000000',
+            delete_url=reverse('aoi-deleter', args=[self.id]))
         geojson["geometry"] = json.loads(self.polygon.json)
 
         geojson["properties"]["absolute_url"] = self.get_absolute_url()
@@ -453,9 +581,52 @@ class AOI(GeoQBase, Assignment):
             status=self.status,
             analyst=(self.analyst.username if self.analyst is not None else 'Unassigned'),
             priority=self.priority)
-        prop_json = dict(properties_built.items() + properties_main.items())
+        properties_built.update(properties_main)
 
-        return clean_dumps(prop_json)
+        return clean_dumps(properties_built)
+
+    def summary_properties_json(self):
+        """
+        Return json with additional properties
+        """
+
+        properties_main = self.properties or {}
+        properties_built = dict(
+            status = self.status,
+            analyst = (self.analyst.username if self.analyst is not None else 'Unassigned'),
+            team = (self.assignee_name if self.assignee_id is not None else 'Unassigned'),
+            priority = self.priority)
+        prop_json = dict(list(properties_built.items()) + list(properties_main.items()))
+
+        # capture how much time was spent on each state for the AOI
+        # We'll make this configurable later on, but just capture 'In work' for now
+        capture_states =  ['In work']
+        capture_metrics = dict()
+        for c in capture_states:
+            #TODO: really not querying for state (c)
+            tdelta = AOITimer.objects.extra(select={'elapsed': 'SELECT SUM(completed_at - started_at) FROM core_aoitimer WHERE aoi_id=%s' % self.id}).values('elapsed')
+            capture_metrics[c] = tdelta[0]['elapsed'].seconds if tdelta[0]['elapsed'] is not None else 0
+
+        prop_json['timer'] = capture_metrics
+
+        # see if there's a completion date
+        if AOITimer.objects.filter(aoi=self,status='In work').count() > 0:
+            fin_date = AOITimer.objects.filter(aoi=self,status='In work').latest('id').completed_at
+            prop_json['completion_date'] = fin_date.strftime("%m/%d/%Y") if fin_date is not None else 'Not finished'
+
+        # And see if we've completed any analysis
+        images = WorkcellImage.objects.filter(workcell=self,status='Accepted')
+        if images.count() == 0:
+            prop_json['analyzed'] = "0/0 0%"
+        else:
+            total = images.count()
+            analyzed = images.filter(exam_date__isnull=False).count()
+            prop_json['analyzed'] = "%d/%d %d%%" % (analyzed,total,int(analyzed/float(total)*100))
+
+        # And objects found
+        prop_json['features'] = self.features.count()
+
+        return prop_json
 
 
     def map_detail(self):
@@ -473,7 +644,7 @@ class AOI(GeoQBase, Assignment):
         if self.id is None:
             self.id = 1
 
-        geojson = SortedDict()
+        geojson = OrderedDict()
         geojson["type"] = "Feature"
         geojson["properties"] = dict(
             id=self.id,
@@ -493,8 +664,10 @@ class Comment(models.Model):
     """
     Track comments regarding work on a Workcell
     """
-    user = models.ForeignKey(User, blank=True, null=True, help_text="User who made comment")
-    aoi = models.ForeignKey(AOI, blank=False, null=False, help_text="Associated AOI for comment")
+    user = models.ForeignKey(User, blank=True, null=True,
+                help_text="User who made comment", on_delete=models.CASCADE)
+    aoi = models.ForeignKey(AOI, blank=False, null=False,
+                help_text="Associated AOI for comment", on_delete=models.CASCADE)
     text = models.CharField(max_length=200)
     created_at = models.DateTimeField(auto_now_add=True)
 
@@ -528,3 +701,72 @@ class Organization(models.Model):
     class Meta:
         verbose_name_plural = 'Organizations'
         ordering = ['order', 'name']
+
+
+class AOITimer(models.Model):
+    """
+    Capture start/stop times for different phases of the workcell (AOI)
+    """
+    user = models.ForeignKey(User, blank=False,
+                help_text="User who worked on workcell", on_delete=models.CASCADE)
+    aoi = models.ForeignKey(AOI, blank=False,
+                help_text="Workcell that was changed", on_delete=models.CASCADE)
+    status = models.CharField(max_length=20, blank=False, default='Unassigned')
+    started_at = models.DateTimeField(auto_now_add=False, blank=False)
+    completed_at = models.DateTimeField(auto_now_add=False, blank=True, null=True)
+
+    def __unicode__(self):
+        return "%s activity on %s" % (self.user.username, self.aoi.id)
+
+    class Meta:
+        permissions = (
+
+        )
+        ordering = ('user','aoi',)
+
+    @property
+    def running(self):
+        return self.completed_at is None
+
+    @property
+    def timeLapse(self):
+        if self.completed_at is None:
+            return datetime.datetime.now(utc) - self.started_at
+        else:
+            return self.competed_at - self.started_at
+
+    @property
+    def savable(self):
+        if self.completed_at is None:
+            return False
+
+        return self.completed_at - self.started_at > timedelta(minutes=1)
+
+class Responder(models.Model):
+    name = models.CharField(max_length=250)
+    contact_instructions = models.CharField(max_length=1024)
+    in_field = models.BooleanField()
+    last_seen = models.DateTimeField(null=True)
+    longitude = models.DecimalField(max_digits=10, decimal_places=7)
+    latitude = models.DecimalField(max_digits=10, decimal_places=7)
+
+    def __unicode__(self):
+        return self.name
+
+    def geoJSON(self, as_json=True):
+        """
+        Returns geoJSON of the feature.
+        """
+        geojson = OrderedDict()
+        geojson["type"] = "Feature"
+        geojson["geometry"] = { "type": "Point", "coordinates": [self.longitude, self.latitude]}
+        # geojson["geometry"] = {"type": "Point", "coordinates": [self.point.x, self.point.y]}
+        geojson["properties"] = {
+            "id": self.id,
+            "name": self.name,
+            "contact_instructions": self.contact_instructions,
+            "in_field":  self.in_field,
+            "last_seen": self.last_seen
+        }
+
+        return clean_dumps(geojson) if as_json else geojson

@@ -3,7 +3,7 @@
         "pk": 1,
         "model": "maps.map",
         "fields": {
-            "projection": "EPSG:4326",
+            "projection": "EPSG:3857",
             "title": "Base Map",
             "created_at": "2013-07-17T20:38:09.823Z",
             "zoom": 0,
@@ -17,7 +17,7 @@
         "pk": 2,
         "model": "maps.map",
         "fields": {
-            "projection": "EPSG:4326",
+            "projection": "EPSG:3857",
             "title": "Test Map",
             "created_at": "2013-10-16T14:34:36.893Z",
             "zoom": 5,

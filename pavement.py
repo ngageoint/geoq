@@ -49,15 +49,14 @@ def install_dev_fixtures():
         'geoq/fixtures/initial_data.json',  # user permissions
         'geoq/accounts/fixtures/initial_data.json',  # dummy users and groups
         'geoq/maps/fixtures/initial_data_types.json',  # Maps
+        'geoq/maps/fixtures/initial_data.json',
+        'geoq/workflow/fixtures/initial_data.json',
         'geoq/core/fixtures/initial_data.json',
-        #'geoq/badges/fixtures/initial_data.json', # Removing badges for now, b/c not working
+        'geoq/feedback/fixtures/initial_data.json', # feedback
         ]
 
     for fixture in fixtures:
         sh("python manage.py loaddata {fixture}".format(fixture=fixture))
-
-    sh("python manage.py migrate --all")
-    _perms_check()
 
 
 @task
@@ -115,11 +114,11 @@ def start():
 
 
 @task
-def createdb(options):
+def createdb():
     """ Creates the database in postgres. """
     from geoq import settings
     database = settings.DATABASES.get('default').get('NAME')
-    sh('createdb {database}'.format(database=database))
+    sh('/usr/lib/postgresql/9.4/bin/createdb {database}'.format(database=database))
     sh('echo "CREATE EXTENSION postgis;CREATE EXTENSION postgis_topology" | psql -d  {database}'.format(database=database))
 
 
@@ -131,9 +130,25 @@ def create_db_user():
     user = settings.DATABASES.get('default').get('USER')
     password = settings.DATABASES.get('default').get('PASSWORD')
 
-    sh('psql -d {database} -c {sql}'.format(
+    sh('/usr/lib/postgresql/9.4/bin/psql -d {database} -c {sql}'.format(
         database=database,
         sql='"CREATE USER {user} WITH PASSWORD \'{password}\';"'.format(user=user, password=password)))
+
+@task
+def create_admin():
+    """ Create an admin user with default password """
+    from geoq import settings
+    from django.contrib.auth.models import User
+
+    a = User.objects.filter(username='admin')
+    if not a:
+        u = User(username='admin')
+        u.set_password('adminadmin')
+        u.is_superuser = True
+        u.is_staff = True
+        u.save()
+
+
 # Order matters for the list of apps, otherwise migrations reset may fail.
 _APPS = ['maps', 'accounts', 'badges', 'core']
 

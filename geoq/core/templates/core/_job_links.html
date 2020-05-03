@@ -1,4 +1,6 @@
-{% load staticfiles %}
+{% load static %}
+{% load settings_variables %}
+
 {% if object.required_courses.all %}
 <tr><td colspan="2" style="padding-top:20px;">
     {% for course in object.required_courses.all %}
@@ -6,91 +8,119 @@
     {% endfor %}
 </td></tr>
 {% endif %}
-<tr><td colspan="1" style="padding-top:20px;">
-    <button type="button" class="btn btn-primary btn-lg" data-toggle="modal" data-target="#save_changes_modal">
+<tr>
+    <td colspan="1" style="padding-top:20px; white-space: nowrap;">
+    <button type="button" class="btn btn-primary btn-med" data-toggle="modal" data-target="#network_links_modal">
         Share Your Work
     </button>
-</td>
-<td colspan="2" style="padding-top:20px;">
+    </td>
+    <!-- td colspan="1" style="padding-top:20px; white-space: nowrap;">
+        <button type="button" class="btn btn-primary btn-med" onclick="ai_agent.onclick(this);">
+            Enable AI Agent
+        </button>
+    </td -->
+    <td colspan="1" style="padding-top: 20px; width: 99%;">
     <a href="{% url 'job-statistics' object.id %}">
-    <button type="button" class="btn btn-primary btn-lg">
+    <button type="button" class="btn btn-primary btn-med">
         View Job Statistics
     </button> </a>
-    <a href="{{ object.get_export_url }}" <button type="button" class="btn btn-default btn-lg" > Export Job </button> </a>
-</td></tr>
+    </td>
+    {% settings_value "IMAGE_TRACKING" as image_tracking %}
+    {% if image_tracking %}
+    <td colspan="1" style="padding-top: 20px;">
+        <a href="{% url 'job-report' object.id %}" class="btn btn-primary btn-med">
+            Reports
+        </a>
+    </td>
+    {% endif %}
+</tr>
 
 <!-- Added by Jared -->
-<div id="save_changes_modal" class="modal hide fade">
-    <div class="modal-header">
-        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-            <span aria-hidden="true">&times;</span>
-        </button>
-        <h4 class="modal-title">Save Your Work:</h4>
+<div id="network_links_modal" class="modal fade">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+                <h4 class="modal-title">Save Your Work:</h4>
+            </div>
+            <div class="modal-body job_link_body">
+                <div class="job_link_item">
+                    <a href="{% url 'kml-networked-job' object.id %}"
+                       title="Refereshes every 2 min when viewed in Google Earth" target="_new">
+                        <img src="{% static 'images/icons/kml_networked.png'%}"/>
+                        <span><b>Continuous KML</b></span></a>
+                </div>
+
+                <div class="job_link_item">
+                    <a href="{% url 'kml-job' object.id %}"
+                       title="Best for use in other programs such as the Event Pages" target="_new">
+                        <img src="/static/images/icons/kml_globe.png"/>
+                        <span>Direct KML Link</span></a>
+                </div>
+                <br>
+
+                <div class="job_link_item">
+                    <a href="{% url 'shape-job' object.id %}" title="Workcells in a Shape File format" target="_new">
+                        <img src="/static/images/icons/shape_file.png"/>
+                        <span>Shape Workcells</span></a>
+                </div>
+
+                <div class="job_link_item">
+                    <a href="{% url 'shape-job-type' object.id 'points' %}"
+                       title="Point Features in a Shape File format" target="_new">
+                        <img src="/static/images/icons/shape_file.png"/>
+                        <span>Shape Points</span></a>
+                </div>
+
+                <div class="job_link_item">
+                    <a href="{% url 'shape-job-type' object.id 'lines' %}" title="Line Features in a Shape File format"
+                       target="_new">
+                        <img src="/static/images/icons/shape_file.png"/>
+                        <span>Shape Lines</span></a>
+                </div>
+
+                <div class="job_link_item">
+                    <a href="{% url 'shape-job-type' object.id 'polygons' %}"
+                       title="Polygon Features in a Shape File format" target="_new">
+                        <img src="/static/images/icons/shape_file.png"/>
+                        <span>Shape Polygons</span></a>
+                </div>
+                <br>
+
+                <div class="job_link_item">
+                    <a href="{% url 'json-job' object.id %}" title="Data describing this job" target="_new">
+                        <img src="/static/images/icons/geo_json.png"/>
+                        <span>Job and Features</span></a>
+                </div>
+
+                <div class="job_link_item">
+                    <a href="{% url 'json-job-grid' object.id %}" title="Polygons and Data of all job workcells"
+                       target="_new">
+                        <img src="/static/images/icons/geo_json.png"/>
+                        <span>Workcell Grid</span></a>
+                </div>
+
+                <div class="job_link_item">
+                    <a href="{% url 'json-job-features-links' object.id %}" title="All features from this job"
+                       target="_new">
+                        <img src="/static/images/icons/api_json.png"/>
+                        <span>Detailed Features</span></a>
+                </div>
+
+                <div class="job_link_item">
+                    <a href="{% url 'json-job-features' object.id %}" title="All features from this job without links"
+                       target="_new">
+                        <img src="/static/images/icons/api_json.png"/>
+                        <span>Simple Features</span></a>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+            </div>
+        </div>
     </div>
-    <div class="modal-body job_link_body">
-        <div class="job_link_item">
-            <a href="{% url 'kml-networked-job' object.id %}" title="Refereshes every 2 min when viewed in Google Earth" target="_new">
-            <img src="{% static 'images/icons/kml_networked.png'%}"/>
-            <span><b>Continuous KML</b></span></a>
-        </div>
-
-        <div class="job_link_item">
-            <a href="{% url 'kml-job' object.id %}" title="Best for use in other programs such as the Event Pages" target="_new">
-            <img src="/static/images/icons/kml_globe.png"/>
-            <span>Direct KML Link</span></a>
-        </div>
-        <br>
-        <div class="job_link_item">
-            <a href="{% url 'shape-job' object.id %}" title="Workcells in a Shape File format" target="_new">
-            <img src="/static/images/icons/shape_file.png"/>
-            <span>Shape Workcells</span></a>
-        </div>
-
-        <div class="job_link_item">
-            <a href="{% url 'shape-job-type' object.id 'points' %}" title="Point Features in a Shape File format" target="_new">
-            <img src="/static/images/icons/shape_file.png"/>
-            <span>Shape Points</span></a>
-        </div>
-
-        <div class="job_link_item">
-            <a href="{% url 'shape-job-type' object.id 'lines' %}" title="Line Features in a Shape File format" target="_new">
-            <img src="/static/images/icons/shape_file.png"/>
-            <span>Shape Lines</span></a>
-        </div>
-
-        <div class="job_link_item">
-            <a href="{% url 'shape-job-type' object.id 'polygons' %}" title="Polygon Features in a Shape File format" target="_new">
-            <img src="/static/images/icons/shape_file.png"/>
-            <span>Shape Polygons</span></a>
-        </div>
-        <br>
-        <div class="job_link_item">
-            <a href="{% url 'json-job' object.id %}" title="Data describing this job" target="_new">
-            <img src="/static/images/icons/geo_json.png"/>
-            <span>Job and Features</span></a>
-        </div>
-
-        <div class="job_link_item">
-            <a href="{% url 'json-job-grid' object.id %}" title="Polygons and Data of all job workcells" target="_new">
-            <img src="/static/images/icons/geo_json.png"/>
-            <span>Workcell Grid</span></a>
-        </div>
-
-        <div class="job_link_item">
-            <a href="{% url 'json-job-features-links' object.id %}" title="All features from this job" target="_new">
-            <img src="/static/images/icons/api_json.png"/>
-            <span>Detailed Features</span></a>
-        </div>
-
-        <div class="job_link_item">
-            <a href="{% url 'json-job-features' object.id %}" title="All features from this job without links" target="_new">
-            <img src="/static/images/icons/api_json.png"/>
-            <span>Simple Features</span></a>
-        </div>
-    </div>
-    <div class="modal-footer">
-        <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
-  </div>
 </div> <!-- ./modal -->
 
 <div id="export_job_modal" class="modal hide fade">
@@ -98,7 +128,7 @@
         <h4 class="modal-title">Export to New Job</h4>
     </div>
     <div class="export-job-modal-body">
-    
+
         <form class="exportJobForm">
           <fieldset class="form-group">
             <label for="newJobName">Job Name</label>
@@ -106,7 +136,7 @@
         </fieldset>
 
         <label> Select a Destination Project </label>
-        <select class="selectpicker" title="Select Project"> 
+        <select class="selectpicker" title="Select Project">
           <option>Project 1</option>
           <option>Project 2</option>
           <option>Project 3</option>
@@ -131,4 +161,4 @@
             <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
         </div>
     </div>
-</div>  
+</div>
