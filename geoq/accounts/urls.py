@@ -9,7 +9,7 @@ from django.contrib.auth.decorators import login_required
 from userena import views as userena_views
 from .views import accept_terms_of_use, UserExpertiseView
 
-logout_page = getattr(settings, 'LOGOUT_URL', '/geoq')
+logout_page = settings.LOGOUT_URL
 
 
 urlpatterns = [
@@ -33,10 +33,9 @@ urlpatterns = [
         {'template_name': 'accounts/templates/accounts/signin_form.html'},
         name='userena_signin'),
     # TODO: see if we need signout
-    #path('signout/$',
-    #    userena_views.signout,
-    #    {'next_page': logout_page},
-    #    name='userena_signout'),
+    path('signout/',
+        userena_views.SignoutView.as_view(next_page=logout_page),
+        name='userena_signout'),
     #
     #
     # # Reset password
