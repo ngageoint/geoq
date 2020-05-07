@@ -37,7 +37,7 @@ DATABASES = {
         # The following settings are not used with sqlite3:
         'USER': 'geoq',
         'PASSWORD': 'geoq',
-        'HOST': '127.0.0.1',  # Empty for localhost through domain sockets or '127.0.0.1' for localhost through TCP.
+        'HOST': 'db',  # Empty for localhost through domain sockets or '127.0.0.1' for localhost through TCP.
         'PORT': '5432',  # Set to empty string for default.
     }
 }
@@ -80,7 +80,7 @@ MEDIA_URL = '/images/'
 # in apps' "static/" subdirectories and in STATICFILES_DIRS.
 # Example: "/var/www/example.com/static/"
 STATIC_URL_FOLDER = ''  # Can be set to something like 'geoq-test/' if the app is not run at root level
-STATIC_ROOT = '{0}{1}'.format('/Users/srjones/www/static/', STATIC_URL_FOLDER)
+STATIC_ROOT = '{0}{1}'.format('/var/www/static/', STATIC_URL_FOLDER)
 
 # URL prefix for static files.
 # Example: "http://example.com/static/", "http://static.example.com/"
