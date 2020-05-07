@@ -25,9 +25,6 @@ RUN apt-get install -f
 RUN mkdir -p /var/www/static/kml
 RUN chmod 777 /var/www/static/kml
 
-RUN cat ./geoq/settings.py | sed "s/\'localhost\'/\'$ALLOWED_HOST\'/" > ./geoq/settings.py.new
-RUN mv ./geoq/settings.py.new ./geoq/settings.py
-
 EXPOSE 8000
 
 COPY ./docker-entrypoint.sh /
