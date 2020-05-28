@@ -91,6 +91,7 @@ create_aois.init = function () {
         create_aois.get_grids_url = '/geoq/api/geo/usng';
         $('#poly_split_holder').css('display', 'inline-block');
         $('#file_uploader_holder').hide();
+        $('#wfs_server_holder').hide();
         $('a.leaflet-draw-draw-polygon').show();
         $('a.leaflet-draw-draw-rectangle').show();
         create_aois.disableToolbars();
@@ -103,6 +104,20 @@ create_aois.init = function () {
         $('a.leaflet-draw-draw-polygon').hide();
         $('a.leaflet-draw-draw-rectangle').hide();
         $('#poly_split_holder').hide();
+        $('#wfs_server_holder').hide();
+        create_aois.disableToolbars();
+    });
+
+    // added for Feature Server
+    $('#option_wfs').click(function() {
+        create_aois.draw_method = 'polygon';
+        create_aois.get_grids_url = '/geoq/api/geo/usng';
+        $('a.leaflet-draw-draw-polygon').hide();
+        $('a.leaflet-draw-draw-rectangle').hide();
+        $('#poly_split_holder').hide();
+        $('#file_uploader_holder').hide();
+        $('#wfs_server_holder').css('display', 'inline-block');
+
         create_aois.disableToolbars();
     });
 
@@ -1013,7 +1028,7 @@ create_aois.createWorkCellsFromService = function (data, zoomAfter, skipFeatureS
             return create_aois.styleFromPriority(feature);
         },
         onEachFeature: function (feature, layer) {
-            
+
             var popupContent = "";
             if (!feature.properties) {
                 feature.properties = {};
@@ -1447,3 +1462,36 @@ create_aois.initializeFileUploads = function () {
         return false;
     };
 };
+
+create_aois.importWFS = function() {
+    var $wfslayer = $('#wfs_url :selected');
+    var url = $wfslayer[0].getAttribute('url');
+    var opts = $wfslayer[0].getAttribute('options').replace('False','false');
+    var options = JSON5.parse(opts);
+
+    var items = new L.WFS({
+      url: url,
+      typeNS: options.typeNS,
+      typeName: options.typeName,
+      geometryField: options.geometryField,
+      crs: L.CRS.EPSG4326,
+      style: {
+        fill: true,
+        weight: 2,
+      }
+    }).addTo(create_aois.map_object)
+    .on('load', function() {
+      if (items.getBounds && items.getBounds().isValid()) {
+        create_aois.map_object.fitBounds(items.getBounds());
+      }
+    });
+
+    var popup = L.popup();
+    items.on('click', function(event) {
+      popup
+        .setLatLng(event.latlng)
+        .setContent(event.layer.feature.id)
+        .openOn(create_aois.map_object);
+    });
+
+}

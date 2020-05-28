@@ -102,6 +102,7 @@ class BatchCreateAOIS(TemplateView):
         cv['object'] = get_object_or_404(Job, pk=self.kwargs.get('job_pk'))
         # import dictionary Settings
         cv['lexicon'] = settings.GEOQ_LEXICON
+        cv['wfs_layers'] = Layer.objects.filter(type='WFS')
         return cv
 
     def post(self, request, *args, **kwargs):
