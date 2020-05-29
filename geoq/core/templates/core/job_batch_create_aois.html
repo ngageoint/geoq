@@ -85,6 +85,7 @@
     <script src="{% static 'core/js/maths.js' %}"></script>
     <script src="{% static 'core/js/leafletcontrols/leaflet.simple_button.js' %}"></script>
     <script src="{% static 'leaflet/L.Control.Button.js' %}"></script>
+    <script src="{% static 'leaflet/Leaflet-WFST.min.js' %}"></script>
 
     <!-- script src="https://maps.googleapis.com/maps/api/js?sensor=false&libraries=places"></script  -->
     <script src="{% static 'jquery/jquery.geocomplete.min.js' %}" type="text/javascript"></script>
@@ -96,6 +97,7 @@
 	<script src="{% static 'core/js/polygon.js' %}"></script>
     <script src="{% static 'core/js/leafletcontrols/leaflet.simple_button.js' %}" type="text/javascript"></script>
     <script src="{% static 'core/js/leaflet-shapefile/shp.js' %}" type="text/javascript"></script>
+    <script src="{% static 'js/json5.min.js' %}"></script>
 
     <script type="text/javascript">
     var status_colors = [
@@ -163,6 +165,7 @@
                     }
                 }
                 layer.popupContent = popupContent;
+                layer.exists = true;
 
                 layer.on({
                     mouseover: highlightFeature,
@@ -174,6 +177,7 @@
     if (aoi_extents) {
         create_aois.aois.addLayer(aoi_extents);
         create_aois.map_object.addLayer(create_aois.aois);
+        create_aois.wfsItems.addTo(create_aois.map_object);
     }
 
         // // Map doesn't update without this delay.
@@ -281,6 +285,7 @@
     <div class="btn-group" role="group" aria-label="...">
         <button class="btn btn-default" id="option_polygon">Draw cells</button>
         <button class="btn btn-default" id="option_shapefile">Drag in Shape or GeoJSON File</button>
+        <button class="btn btn-default" id="option_wfs">Import from Feature Server</button>
         <!-- button class="btn" id="option_usng">USNG Cells (US only)</button -->
         <button class="btn btn-default" id="option_mgrs">MGRS Cells</button>
     </div>
@@ -305,6 +310,15 @@
         <span id="holder_smooth_polys"> every <input type="text" id="holder_smooth_num" value="500"/>m </span>
         <span id="holder_points_polys" style="display: none;"><input type="text" id="holder_points_polys_num" value="100"/>-sq-m cells</span>
         <button id="file_holder_edit_btn" class="btn btn-success" disabled="true">Update</button>
+    </div>
+    <div style="display:none" id="wfs_server_holder">
+        <select id="wfs_url" style="width: inherit; margin-bottom: 0px;">
+          {% for layer in wfs_layers %}
+          <option value="{{ layer.id }}" url="{{ layer.url }}"
+            options="{{ layer.layer_params | safe }}">{{ layer.name }}</option>
+          {% endfor %}
+        </select>
+        <button id="wfs_import_button" class="btn btn-success" onclick="create_aois.importWFS()">Retrieve</button>
     </div>
 
     <div id="map" class="thumbnail" style="height: 600px; width: 92%;">{% leaflet_map "map" callback="window.map_init_basic" %}</div>
