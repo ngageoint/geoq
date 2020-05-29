@@ -36,7 +36,7 @@
                     {{ object.name }}
                 {% endif %}
 
-                {% if object_type == "aoi" %}{{ object.id }}{% endif %}
+                {% if object_type == "aoi" %}{% if object.job.name == object.name %}{{ object.id }}{% endif %}{% endif %}
 
                 {% if object.status == 'In work' %}{% if request.user == object.analyst %}
                 </a>

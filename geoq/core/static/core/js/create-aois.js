@@ -17,6 +17,7 @@ create_aois.deleteControl = null;
 create_aois.removeControl = null;
 create_aois.prioritizeControl = [];
 create_aois.drawnItems = null;
+create_aois.wfsItems = new L.LayerGroup();
 create_aois.removeOrSplit = false;
 
 create_aois.last_shapes = null;
@@ -25,40 +26,14 @@ create_aois.data_fields_obj = {};
 create_aois.data_fields = [];
 create_aois.highlightMode = 'delete';
 
-
-function mapInit(map) {
-    //Auto-called after leaflet map is initialized
-    create_aois.map_object = map;
-    setTimeout(function () {
-        var startingBounds = site_settings.map_starting_bounds || [
-            [52.429222277955134, -51.50390625],
-            [21.043491216803556, -136.58203125]
-        ];
-        map.fitBounds(startingBounds);
-    }, 1);
-
-    create_aois.drawnItems = new L.FeatureGroup();
-    map.addLayer(create_aois.drawnItems);
-
-    map.on('zoomend', create_aois.mapWasZoomed);
-    map.on('draw:created', create_aois.somethingWasDrawn);
-
-    create_aois.addDrawingControls(map);
-    create_aois.addLocatorControl(map);
-    create_aois.addPrioritizeControls(map);
-    create_aois.addDeleteControls(map);
-//    create_aois.buildPriorityBoxes(map);
-    create_aois.setupStatusControls(map);
-    $('div.leaflet-left div.leaflet-draw.leaflet-control').find('a').popover({trigger: "hover", placement: "right"});
-    $('div.leaflet-right div.leaflet-draw.leaflet-control').find('a').popover({trigger: "hover", placement: "left"});
-
-    create_aois.map_updates();
-}
+// set this variable if we want to use the cell's name from properties
+create_aois.use_properties_name = false;
 
 create_aois.init = function () {
     var $usng = $('#option_usng').click(function () {
         create_aois.draw_method = 'usng';
         create_aois.get_grids_url = '/geoq/api/geo/usng';
+        create_aois.use_properties_name = false;
         $('#poly_split_holder').hide();
         $('#file_uploader_holder').hide();
         $('a.leaflet-draw-draw-polygon').hide();
@@ -74,6 +49,7 @@ create_aois.init = function () {
     var $mgrs = $('#option_mgrs').click(function () {
         create_aois.draw_method = 'mgrs';
         create_aois.get_grids_url = '/geoq/api/geo/mgrs';
+        create_aois.use_properties_name = false;
         $('#poly_split_holder').hide();
         $('#file_uploader_holder').hide();
         $('a.leaflet-draw-draw-polygon').hide();
@@ -89,6 +65,7 @@ create_aois.init = function () {
     $('#option_polygon').click(function () {
         create_aois.draw_method = 'polygon';
         create_aois.get_grids_url = '/geoq/api/geo/usng';
+        create_aois.use_properties_name = false;
         $('#poly_split_holder').css('display', 'inline-block');
         $('#file_uploader_holder').hide();
         $('#wfs_server_holder').hide();
@@ -100,6 +77,7 @@ create_aois.init = function () {
     $('#option_shapefile').click(function () {
         create_aois.draw_method = 'polygon';
         create_aois.get_grids_url = '/geoq/api/geo/usng';
+        create_aois.use_properties_name = false;
         $('#file_uploader_holder').css('display', 'inline-block');
         $('a.leaflet-draw-draw-polygon').hide();
         $('a.leaflet-draw-draw-rectangle').hide();
@@ -112,6 +90,7 @@ create_aois.init = function () {
     $('#option_wfs').click(function() {
         create_aois.draw_method = 'polygon';
         create_aois.get_grids_url = '/geoq/api/geo/usng';
+        create_aois.use_properties_name = true;
         $('a.leaflet-draw-draw-polygon').hide();
         $('a.leaflet-draw-draw-rectangle').hide();
         $('#poly_split_holder').hide();
@@ -204,6 +183,11 @@ create_aois.init = function () {
         var boundaries = create_aois.getBoundaries();
 
         if (boundaries) {
+            // make sure any of the boundaries in here aren't already workcells
+            // remove any that have a status
+            boundaries = boundaries.filter(function(o) {
+              return !_.has(o.properties, "status");
+            });
             create_aois.update_info("Saving work cells to server");
             $("#save-aois-button")
                 .attr('disabled', true)
@@ -1170,10 +1154,11 @@ create_aois.updateCellCount = function () {
 
     _.each(create_aois.aois._layers, function (layergroup) {
         if (layergroup && layergroup._layers) {
-            aoi_count += _.toArray(layergroup._layers).length;
+            aoi_count = 0;
 
             _.each(layergroup._layers, function (layer) {
-                if (layer.feature && layer.feature.properties && layer.feature.properties.priority) {
+                if (layer.feature && layer.feature.properties && layer.feature.properties.priority && !layer.exists) {
+                    aoi_count += 1;
                     var pri = layer.feature.properties.priority;
                     if (_.isNumber(pri) && pri > 0 && pri < 6) counts[pri]++;
                 }
@@ -1243,7 +1228,12 @@ create_aois.getBoundaries = function (useCellsInstead) {
     if (m && (m._container.id == 'map') && (m.hasLayer(create_aois.aois))) {
         _.each(create_aois.aois.getLayers(), function (l) {
             _.each(l.getLayers(), function (f) {
-                f.feature.name = featureName;
+                if (create_aois.use_properties_name && f.feature.properties.name) {
+                  f.feature.name = f.feature.properties.name;
+                } else {
+                  f.feature.name = featureName;
+                }
+
                 if (useCellsInstead) {
                     boundaries.push(f);
                 } else {
@@ -1463,6 +1453,24 @@ create_aois.initializeFileUploads = function () {
     };
 };
 
+create_aois.addLayer = function(layer_id) {
+  // find the layer
+  const layer = create_aois.map_object._layers[layer_id];
+
+  // remove from wfs list and put in aois
+  create_aois.wfsItems.removeLayer(layer);
+
+  var geoJSON = create_aois.turnPolygonsIntoMultis(layer);
+  create_aois.last_polygon_drawn = layer;
+
+  var data = {"type": "FeatureCollection", "features": geoJSON};
+  create_aois.last_polygon_workcells = create_aois.createWorkCellsFromService(data, false, false);
+
+  // close popup
+  create_aois.map_object.closePopup();
+
+}
+
 create_aois.importWFS = function() {
     var $wfslayer = $('#wfs_url :selected');
     var url = $wfslayer[0].getAttribute('url');
@@ -1479,7 +1487,7 @@ create_aois.importWFS = function() {
         fill: true,
         weight: 2,
       }
-    }).addTo(create_aois.map_object)
+    }).addTo(create_aois.wfsItems)
     .on('load', function() {
       if (items.getBounds && items.getBounds().isValid()) {
         create_aois.map_object.fitBounds(items.getBounds());
@@ -1487,10 +1495,21 @@ create_aois.importWFS = function() {
     });
 
     var popup = L.popup();
+    var popupContentTemplate = _.template(
+      '<div class="create-aoi-popup">' +
+        '<h5>' +
+          'Name: {{ layer.feature.properties.name }}' +
+        '</h5>' +
+        '<div>' +
+          '<btn class="btn btn-success" onclick="create_aois.addLayer({{ layer._leaflet_id }})">Add Target</btn>' +
+        '</div>' +
+      '</div>'
+    );
+
     items.on('click', function(event) {
       popup
         .setLatLng(event.latlng)
-        .setContent(event.layer.feature.id)
+        .setContent(popupContentTemplate(event))
         .openOn(create_aois.map_object);
     });
 

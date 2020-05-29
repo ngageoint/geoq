@@ -165,6 +165,7 @@
                     }
                 }
                 layer.popupContent = popupContent;
+                layer.exists = true;
 
                 layer.on({
                     mouseover: highlightFeature,
@@ -176,6 +177,7 @@
     if (aoi_extents) {
         create_aois.aois.addLayer(aoi_extents);
         create_aois.map_object.addLayer(create_aois.aois);
+        create_aois.wfsItems.addTo(create_aois.map_object);
     }
 
         // // Map doesn't update without this delay.
