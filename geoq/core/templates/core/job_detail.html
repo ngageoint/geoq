@@ -48,6 +48,10 @@
                 },
                 onEachFeature: function(feature, layer) {
                     job_properties = feature.properties;
+                    job_properties.job_name = "{{ object.name }}";
+                    if (job_properties.job_name === job_properties.name) {
+                      job_properties.name = job_properties.name + " " + job_properties.id;
+                    }
                     {% if 'core.delete_aoi' in perms %}
                         job_properties.can_delete = true;
                     {% endif %}

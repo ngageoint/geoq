@@ -533,6 +533,9 @@ class AOI(GeoQBase, Assignment):
         Returns geoJSON of the feature.
         """
 
+        # determine name. if it's the same as the job, make it the id
+        name = self.name if self.name != self.job.name else self.id
+
         if self.id is None:
             self.id = 1
 
@@ -557,7 +560,7 @@ class AOI(GeoQBase, Assignment):
             analyst=(self.analyst.username if self.analyst is not None else 'None'),
             assignee=self.assignee_name,
             priority=self.priority,
-            name=self.properties['GEO_ID'] if 'GEO_ID' in self.properties else '000000',
+            name=self.properties['GEO_ID'] if 'GEO_ID' in self.properties else self.name,
             delete_url=reverse('aoi-deleter', args=[self.id]))
         geojson["geometry"] = json.loads(self.polygon.json)
 
