@@ -17,8 +17,8 @@ logger = logging.getLogger(__name__)
 
 @login_required
 @cache_page(60 * 5)
-def proxy_to(request, path, target_url):
-    url = '%s%s' % (target_url, path)
+def proxy_to(request, target_url):
+    url = target_url
 
     url = url.replace('http:/', 'http://', 1)
     url = url.replace('http:///', 'http://')
