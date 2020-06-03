@@ -1,6 +1,8 @@
 # This technical data was produced for the U. S. Government under Contract No. W15P7T-13-C-F600, and
 # is subject to the Rights in Technical Data-Noncommercial Items clause at DFARS 252.227-7013 (FEB 2012)
 
+# parts borrowed from https://github.com/mjumbewu/django-proxy, Copyright © Mjumbe Wawatu Ukweli.
+
 from django.contrib.auth.decorators import login_required
 from django.views.decorators.cache import patch_cache_control, cache_page
 from django.http import HttpResponse, QueryDict
