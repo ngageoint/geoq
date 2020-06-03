@@ -10,7 +10,7 @@ from django.views.i18n import JavaScriptCatalog
 from .forms import AOIForm, JobForm, ProjectForm, TeamForm, ExportJobForm
 from geoq.core.atom2_view import JobAtom
 from .models import AOI, Project, Job
-from .proxies import proxy_to
+from .proxies import proxy_to, proxy_request_to
 from .views import *
 from geoq.maps.views import feature_delete
 from geoq.core.views import batch_create_aois, usng, mgrs, ipaws, prioritize_cells
@@ -144,8 +144,8 @@ urlpatterns = [
     path('api/geo/usng/', usng, name='usng'),
     path('api/geo/mgrs/', mgrs, name='mgrs'),
     path('api/geo/ipaws/', ipaws, name='ipaws'),
-    re_path(r'proxy/(?P<target_url>.*)/$', proxy_to),
-    path('proxy/', proxy_to, name='proxy'),
+    re_path(r'proxy/(?P<target_url>.*)/$', proxy_request_to),
+    path('proxy/', proxy_request_to, name='proxy'),
     path('api/job[s]?/<int:pk>.geojson', JobGeoJSON.as_view(), name='json-job'),
     path('api/job[s]?/<int:pk>.kml', JobKML.as_view(), name='kml-job'),
     path('api/job[s]?/<int:pk>.networked.kml', JobKMLNetworkLink.as_view(), name='kml-networked-job'),
