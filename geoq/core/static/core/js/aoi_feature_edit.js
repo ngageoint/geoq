@@ -37,8 +37,8 @@ aoi_feature_edit.init = function () {
     aoi_feature_edit.featureLayers = [];
     aoi_feature_edit.icons = {};
     aoi_feature_edit.icon_style = {};
-    aoi_feature_edit.featureLayersSelected = [];    
-    aoi_feature_edit.deleteBoundLayers = [];    
+    aoi_feature_edit.featureLayersSelected = [];
+    aoi_feature_edit.deleteBoundLayers = [];
     aoi_feature_edit.ctlKeyPressed = false;
     aoi_feature_edit.hidden_tools = site_settings.hidden_tools ? site_settings.hidden_tools[aoi_feature_edit.status] : [];
 
@@ -91,16 +91,16 @@ aoi_feature_edit.init = function () {
                 return aoi_feature_edit.featureLayer_pointToLayer(feature, latlng, featureLayer, ftype);
             }
         });
-        
+
         featureLayer.on('click', function(e){
             if (typeof leaflet_layer_control!="undefined"){
                 var options = {};
-                leaflet_layer_control.show_feature_info(e.layer.feature);      
+                leaflet_layer_control.show_feature_info(e.layer.feature);
                 if (e.originalEvent.ctrlKey || e.originalEvent.shiftKey) {
                     e.layer.closePopup();
                     if (e.layer.feature.geometry.type == "Point") {
                         var icon = e.layer._icon;
-                        L.DomUtil.addClass(icon, 'leaflet-edit-marker-selected');                    
+                        L.DomUtil.addClass(icon, 'leaflet-edit-marker-selected');
                     } else {
                         e.layer.options.previousOptions = e.layer.options;
                         options = { color: '#fe57a1',
@@ -109,10 +109,10 @@ aoi_feature_edit.init = function () {
                                     fill: true,
                                     fillColor: '#fe57a1',
                                     fillOpacity: 0.1};
-                        e.layer.setStyle(options);    
+                        e.layer.setStyle(options);
                     }
                     aoi_feature_edit.featureLayersSelected.push(e.layer);
-                } 
+                }
             }
         });
 
@@ -737,9 +737,8 @@ aoi_feature_edit.map_init = function (map, bounds) {
     };
     (new L.Control.ResetView(locateBounds)).addTo(aoi_feature_edit.map);
 
-    //Zoom to the bounds of the Workcell, then one more level
+    //Zoom to the bounds of the Workcell
     aoi_feature_edit.map.fitBounds(aoi_extents.getBounds());
-    aoi_feature_edit.map.setZoom(aoi_feature_edit.map.getZoom()+1);
 
     var layers_to_show = store.get('leaflet_layer_control.layers');
     layers_to_show = layers_to_show ? layers_to_show.split(",") : undefined;
@@ -902,7 +901,7 @@ aoi_feature_edit.map_init = function (map, bounds) {
 //        spiderfyDistanceMultiplier: 2,
 //        spiderLegPolylineOptions: { weight: 2, color: '#000', opacity: 1.0},
 //    }).addTo(map);
-    
+
 
     function help_onclick() {
         window.open(aoi_feature_edit.help_url);
@@ -964,9 +963,9 @@ aoi_feature_edit.map_init = function (map, bounds) {
         log.error("Error while adding feature: " + errorThrown);
     }
 
-   aoi_extents.on('click', function (e) {      
+   aoi_extents.on('click', function (e) {
         _.each(aoi_feature_edit.deleteBoundLayers, function(layer){
-            aoi_feature_edit.map.removeLayer(layer);    
+            aoi_feature_edit.map.removeLayer(layer);
         });
         _.each(aoi_feature_edit.featureLayersSelected, function(layer){
             if (layer.feature.geometry.type == "Point") {
@@ -975,16 +974,16 @@ aoi_feature_edit.map_init = function (map, bounds) {
             }
             else {
                 layer.setStyle(layer.options.previousOptions);
-                delete layer.options.previousOptions;             
+                delete layer.options.previousOptions;
             }
         });
         aoi_feature_edit.featureLayersSelected = [];
-        aoi_feature_edit.deleteBoundLayers = [];     
+        aoi_feature_edit.deleteBoundLayers = [];
     });
-    
-    map.on('click', function (e) {      
+
+    map.on('click', function (e) {
         _.each(aoi_feature_edit.deleteBoundLayers, function(layer){
-            aoi_feature_edit.map.removeLayer(layer);    
+            aoi_feature_edit.map.removeLayer(layer);
         });
         _.each(aoi_feature_edit.featureLayersSelected, function(layer){
             if (layer.feature.geometry.type == "Point") {
@@ -993,11 +992,11 @@ aoi_feature_edit.map_init = function (map, bounds) {
             }
             else {
                 layer.setStyle(layer.options.previousOptions);
-                delete layer.options.previousOptions;             
+                delete layer.options.previousOptions;
             }
         });
         aoi_feature_edit.featureLayersSelected = [];
-        aoi_feature_edit.deleteBoundLayers = [];     
+        aoi_feature_edit.deleteBoundLayers = [];
     });
 
     map.on('draw:created', function (e) {
@@ -1026,8 +1025,8 @@ aoi_feature_edit.map_init = function (map, bounds) {
 
             aoi_feature_edit._pendingPoints[tmpId] = layer;
             aoi_feature_edit.map.addLayer(layer);
-        } 
-        
+        }
+
         if (type == "rectangle") {
             aoi_feature_edit.map.addLayer(layer);
             aoi_feature_edit.deleteBoundLayers.push(layer);
@@ -1042,12 +1041,12 @@ aoi_feature_edit.map_init = function (map, bounds) {
                                     aoi_feature_edit.featureLayersSelected.push(featureLayer);
                                     var icon = featureLayer._icon;
                                     L.DomUtil.addClass(icon, 'leaflet-edit-marker-selected');
-                                } 
+                                }
                 } else {
                     var selected = true;
                     if (featureLayer.toGeoJSON().geometry.type == "Polygon") {
                         featureCoordinates = featureLayer.toGeoJSON().geometry.coordinates[0];
-                       
+
                         _.each(featureCoordinates, function(point){
                             if (!(point[0] >= bound[0][0] && point[0] <= bound[2][0] && point[1] >= bound[0][1] && point[1] <= bound[2][1])) {
                                 selected = false;
@@ -1061,8 +1060,8 @@ aoi_feature_edit.map_init = function (map, bounds) {
                             }
                         });
                     }
-                
-                                
+
+
                     if (selected) {
                         aoi_feature_edit.featureLayersSelected.push(featureLayer);
                         featureLayer.options.previousOptions = featureLayer.options;
@@ -1073,10 +1072,10 @@ aoi_feature_edit.map_init = function (map, bounds) {
                         fillColor: '#fe57a1',
                         fillOpacity: 0.1};
                         featureLayer.setStyle(options);
-                    }                      
+                    }
                 }
             });
-            
+
         } else {
             geojson = JSON.stringify(geojson);
             var data = { aoi: aoi_feature_edit.aoi_id, geometry: geojson }
@@ -1089,9 +1088,9 @@ aoi_feature_edit.map_init = function (map, bounds) {
                 dataType: "json",
                 headers: headers
             });
-        
+
         }
-            
+
     });
 
     map.on('draw:drawstart', function (e) {
@@ -1361,7 +1360,7 @@ aoi_feature_edit.buildDrawingControl = function (drawnItems) {
     //Create the drawing objects control
     aoi_feature_edit.map.addControl(drawControl);
     aoi_feature_edit.drawcontrol = drawControl;
-    
+
 
     //Change the color of the icons or add an Image of the icon if there is one
     var icons = $('div.leaflet-draw.leaflet-control').find('a');
@@ -1798,7 +1797,7 @@ aoi_feature_edit.addSelectControl = function (map) {
 
     //Create the selecting objects control
     map.addControl(selectControl);
-    
+
     var icons = $('div.leaflet-draw.leaflet-control').find('a');
      _.each (icons,function(icon_obj){
             var $icon_obj = $(icon_obj);
@@ -1810,23 +1809,23 @@ aoi_feature_edit.addSelectControl = function (map) {
 };
 
 aoi_feature_edit.addDeleteControl = function (map) {
-    function deleteMultipleFeatures(){      
+    function deleteMultipleFeatures(){
         var confirmText = 'Delete feature(s) selected?';
         var confirmFunction = function(result){
-            if (result) {     
+            if (result) {
                 if (aoi_feature_edit.deleteBoundLayers.length>0) {
-                     
+
                     _.each(aoi_feature_edit.deleteBoundLayers, function(boundLayer){
                         aoi_feature_edit.map.removeLayer(boundLayer);
                     });
                 }
-                
-                _.each(aoi_feature_edit.featureLayersSelected,function(layer){              
+
+                _.each(aoi_feature_edit.featureLayersSelected,function(layer){
                     var id = layer.feature.properties.id;
                     var deleteURL = leaflet_helper.home_url + 'features/delete/' + id ;
                     aoi_feature_edit.deleteFeatureWithoutConfirm(id , deleteURL);
                 });
-                
+
                 aoi_feature_edit.featureLayersSelected = [];
                 aoi_feature_edit.deleteBoundLayers = [];
             }
@@ -1834,11 +1833,11 @@ aoi_feature_edit.addDeleteControl = function (map) {
         if (aoi_feature_edit.featureLayersSelected.length >0) {
             BootstrapDialog.confirm(confirmText, confirmFunction);
         } else {
-            BootstrapDialog.alert("No feature is selected");    
+            BootstrapDialog.alert("No feature is selected");
         }
-        
-    }   
-    
+
+    }
+
     var delete_control = new L.Control.Button({
         'iconUrl': aoi_feature_edit.static_root + 'images/trash_can.png',
         'onClick': deleteMultipleFeatures,
@@ -1847,6 +1846,6 @@ aoi_feature_edit.addDeleteControl = function (map) {
         'doToggle': false,
         'toggleStatus': false
     });
-    
-    delete_control.addTo(map); 
+
+    delete_control.addTo(map);
 };
