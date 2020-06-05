@@ -56,12 +56,12 @@ L.NonTiledLayer.WCS = L.NonTiledLayer.extend({
         wcsParams.width = width;
         wcsParams.height = height;
 
-        var nw = this._crs.project(world1);
-        var se = this._crs.project(world2);
+        var sw = this._crs.project(world1);
+        var ne = this._crs.project(world2);
 
         var url = this._wcsUrl;
 
-        var bbox = [nw.x, se.y, se.x, nw.y].join(',');
+        var bbox = [sw.y, sw.x, ne.y, ne.x].join(',');
 
         return url +
             L.Util.getParamString(this.wcsParams, url, this.options.uppercase) +
@@ -230,7 +230,7 @@ L.NonTiledLayer.WCS = L.NonTiledLayer.extend({
         i.key = this.key;
 
         //Request coverage from the WCS server
-        var url = this.getImageUrl(bounds.getNorthWest(), bounds.getSouthEast(), width, height);
+        var url = this.getImageUrl(bounds.getSouthWest(), bounds.getNorthEast(), width, height);
         this._getData(url);
 
         if (this._useCanvas) {
