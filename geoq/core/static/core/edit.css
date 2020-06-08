@@ -112,7 +112,7 @@ ul.fancytree-container {
 #drawer_tray_top {
 }
 .status_block {
-    width: 130px;
+    width: 200px;
     display: inline-block;
 }
 #drawer_tray_bottom {
@@ -123,6 +123,8 @@ ul.fancytree-container {
 }
 .editable {
     color: blue;
+    margin-top: 15px;
+    margin-bottom: 10px;
 }
 
 .tight {
@@ -389,4 +391,9 @@ table.focus-highlight td:before {
 
 .focus-highlight td:focus::after, .focus-highlight th:focus::after {
     background-color: lightblue;
+}
+
+.classification_block {
+    margin-top: 20px;
+    margin-bottom: 40px;
 }

@@ -38,10 +38,10 @@
 	<script src="{% static 'leaflet/leaflet-plugins/layer/tile/Google.js' %}"></script>
     <script src="{% static 'leaflet/leaflet-plugins/layer/tile/leaflet-tilelayer-wmts.js' %}"></script>
     <script src="{% static 'leaflet/Leaflet-WFST.min.js' %}"></script>
-    <script src="{% static 'core/js/plugins/geoq.footprintsearch.js' %}"></script>
+    <script src="{% static 'core/js/plugins/geoq.imagequeue.js' %}"></script>
     <script src="{% static 'core/js/plugins/geoq.imageviewer.js' %}"></script>
     <script src="{% static 'core/js/plugins/layer_builder.js' %}"></script>
-    <script src="{% static 'core/js/plugins/ogc.csw.js' %}"></script>
+    <script src="{% static 'core/js/plugins/ogc.wfs.js' %}"></script>
     <script src="{% static 'xmlwriter/XMLWriter-1.0.0-min.js' %}"></script>
     <script src="{% static 'core/js/daterangepicker.js' %}"></script>
 
@@ -54,6 +54,13 @@
     <script src="{% static 'jquery/jquery.tablesorter.pager.js' %}"></script>
     <script src="{% static 'query-builder/query-builder.min.js' %}" type="text/javascript"></script>
 
+    <!-- Maybe this is worth it -->
+    <script src="{% static 'core/js/plugins/sparkle-querybuilder/dependencies/typeahead.bundle.js' %}"></script>
+    <script src="{% static 'core/js/plugins/sparkle-querybuilder/dependencies/bootstrap-tagsinput.js' %}"></script>
+    <link rel="stylesheet" href="{% static 'core/js/plugins/sparkle-querybuilder/dependencies/bootstrap-tagsinput.css' %}" />
+    <link rel="stylesheet" href="{% static 'core/js/plugins/sparkle-querybuilder/dependencies/typeahead.css' %}" />
+    <script src="{% static 'core/js/plugins/sparkle-querybuilder/sparkle.querybuilder.js' %}"></script>
+
     {% for layer in object.job.map.layers %}{% if layer.layer.type == 'Google Maps' %}
     <script src="{{ layer.layer.url }}maps/api/js?v=3&sensor=false"></script>
     {%  endif %}{% endfor %}
@@ -63,6 +70,12 @@
     <script defer src="//cdn.rawgit.com/chrisveness/geodesy/v1.1.2/latlon-spherical.js"></script>
     <script defer src="//cdn.rawgit.com/chrisveness/geodesy/v1.1.2/dms.js"></script>
     <script src="{% static 'core/js/responders.js' %}"></script>
+
+    <!-- try WCS -->
+    <script src="{% static 'leaflet/NonTiledLayer.js' %}"></script>
+    <script src="{% static 'js/geotiff.js' %}"></script>
+    <script src="{% static 'js/plotty.js' %}"></script>
+    <script src="{% static 'leaflet/NonTiledLayer.WCS.js' %}"></script>
 
     <script type="text/javascript">
 

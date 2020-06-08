@@ -48,6 +48,7 @@ IMAGE_FORMATS = (
                 ('image/geotiff', 'image/geotiff'),
                 ('image/geotiff8', 'image/geotiff8'),
                 ('image/svg', 'image/svg'),
+                ('image/vnd.jpeg-png', 'image/vnd.jpeg-png'),
                 ('rss', 'rss'),
                 ('kml', 'kml'),
                 ('kmz', 'kmz'),
@@ -68,6 +69,7 @@ IMAGE_FORMATS = (
 SERVICE_TYPES = (
                 ('WMS', 'WMS'),
                 ('WFS', 'WFS'),
+                ('WCS', 'WCS'),
                 ('KML', 'KML'),
                 ('GeoRSS', 'GeoRSS'),
                 ('ESRI Identifiable MapServer', 'ESRI Identifiable MapServer'),
