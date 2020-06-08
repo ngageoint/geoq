@@ -43,10 +43,10 @@ sparkle_builder.buildAccordionPanel = function () {
     var nouns = ['Chinese', 'Airplane', 'Wingspan', 'Fighter', 'Jet', 'Air Battery', 'Shenyang J-11', 'Width', "Height"]
     var verbs = ['Has', 'With']
     var descriptor = ['greater than', 'less than', 'equal to']
-    
-    var query_shenyang = [{"friendly_name" : "Airplane", "type" : "Shenyang J-11", "description" : "Lorem Ipsum Dolor Set Amet", "lat" : 42.503596, "lng" : -71.223613}]
-    var query_chinese_wingspan = [{"friendly_name" : "Airplane", "type" : "Shenyang J-11", "description" : "Lorem Ipsum Dolor Set Amet", "lat" : 42.503596, "lng" : -71.223613}, {"friendly_name" : "Fighter Jet", "type" : "Shijiazhuang Y-5", "description" : "Lorem Ipsum Dolor Set Amet", "lat" : 42.506057, "lng" : -71.223527}]
-    var query_chinese_air_battery = [{"friendly_name" : "Air Battery Wildwood", "type" : "Air Battery", "description" : "Lorem Ipsum Dolor Set Amet", "lat" : 42.504477, "lng" : -71.221819}, {"friendly_name" : "Air Battery Wildwood 2", "type" : "Air Battery", "description" : "Lorem Ipsum Dolor Set Amet", "lat" : 42.505235, "lng" : -71.221648}]
+
+    var query_shenyang = [{"friendly_name" : "Airplane", "type" : "Shenyang J-11", "description" : "Lorem Ipsum Dolor Set Amet", "lat" : 9.558687, "lng" : 112.900143}]
+    var query_chinese_wingspan = [{"friendly_name" : "Airplane", "type" : "Shenyang J-11", "description" : "Lorem Ipsum Dolor Set Amet", "lat" : 9.558687, "lng" : 112.895594}, {"friendly_name" : "Fighter Jet", "type" : "Shijiazhuang Y-5", "description" : "Lorem Ipsum Dolor Set Amet", "lat" : 9.543282, "lng" : 112.879715}]
+    var query_chinese_air_battery = [{"friendly_name" : "Air Battery Wildwood", "type" : "Air Battery", "description" : "Lorem Ipsum Dolor Set Amet", "lat" : 9.556486, "lng" : 112.905550}, {"friendly_name" : "Air Battery Wildwood 2", "type" : "Air Battery", "description" : "Lorem Ipsum Dolor Set Amet", "lat" : 9.538965, "lng" : 112.877398}]
 
     var lastTerm = "noun"
 
@@ -60,7 +60,7 @@ sparkle_builder.buildAccordionPanel = function () {
 
     //Build Content Holder
     sparkle_builder.$content = $(
-        '<h3><small>Create Query Below</small></h3>' + 
+        '<h3><small>Create Query Below</small></h3>' +
         '<div> \
             <div class="input-group"> \
                 <span class="input-group-addon" id="basic-addon1"><i class="icon-search"></i></span> \
@@ -94,7 +94,7 @@ sparkle_builder.buildAccordionPanel = function () {
     combined.slice(0, suggestion_size).map(i => {
         $('#suggestion-list-verb').append('<button type="button" class="list-group-item list-group-item-action suggestion-btn">' + i +'</button>')
     })
-    
+
     var input = $('input[data-role="tagsinput"]')
     input.tagsinput({
         typeaheadjs: {
@@ -109,11 +109,11 @@ sparkle_builder.buildAccordionPanel = function () {
     $(".tt-input").blur(function() {
         $(".tt-input")[0].value = ""
     })
-    
+
     $("#sb_btn").click( () => {
         alert(input.val())
     })
-    
+
     $(".suggestion-btn").click(function (self) {
         input.tagsinput('add', self.target.innerHTML);
     })
@@ -132,7 +132,7 @@ sparkle_builder.buildAccordionPanel = function () {
         }
     });*/
 
-    
+
     $('#sb_btn_clear').click(() => {
         input.tagsinput('removeAll');
     });
