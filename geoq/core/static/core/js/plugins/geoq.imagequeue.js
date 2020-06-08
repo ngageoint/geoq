@@ -1449,9 +1449,17 @@ imagequeue.addResultTable = function ($holder) {
 
     var $row = $grid.find("tr");
 
-    // first column is the accept/reject buttons
-    $row.append("<th>FP</th>");
+    var $fph = $('<th>').text('FP')
+        .append($('<input>')
+            .attr({'id': 'select-all-footprints', 'type':'checkbox','checked':true})
+            );
+
+    $row.append($fph);
     $row.append("<th>IM</th>");
+
+    // first column is the accept/reject buttons
+    //$row.append("<th>FP</th>");
+    //$row.append("<th>IM</th>");
     //$row.append("<th>Data</th>");
 
     _.each( imagequeue.schema, function(item) {
@@ -1533,6 +1541,15 @@ imagequeue.addResultTable = function ($holder) {
     $("#imagelayer-list").trigger('update');
     //Have to call this function
     $('#imagelayer-list').trigger('pageAndSize');
+
+    // select/deselect all footprints
+    $('#select-all-footprints').bind('click',function() {
+        var checked = $(this).is(':checked');
+
+        $('#imagelayer-list tr td:first-child input').each(function(index) {
+            $(this).click();
+        });
+    });
 
     imagequeue.$grid = $grid;
 };
