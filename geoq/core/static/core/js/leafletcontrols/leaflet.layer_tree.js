@@ -87,6 +87,8 @@ leaflet_layer_control.addFeatureInfo = function($accordion){
         .addClass("classification_block")
         .html("Click a feature on the map to see an information associated with it")
         .appendTo($content);
+
+
 };
 
 leaflet_layer_control.pan = function(dir, amt) {
@@ -686,10 +688,35 @@ leaflet_layer_control.show_feature_info = function (feature) {
     var feature_note_original = "Click here to add additional notes";
     var feature_note = feature_note_original;
 
+    console.log(feature)
     // add an ontology classification Area
     var $classification = $('<div>')
-        .html('<b>Classification</b>: ')
-        .appendTo($content);
+    if ("classification" in feature.properties && feature.properties.classification == "UC") {
+        $classification.html('<b>Classification</b>: <a id="classification-link" data-toggle="modal" href="#ontModal" class="button">Lookup Classification</a> <i class="icon-search"></i> \
+        <div class="modal fade" id="ontModal" tabindex="-1" role="dialog" aria-labelledby="ontModalLabel" aria-hidden="true"> \
+            <div class="modal-dialog" role="document"> \
+                <div class="modal-content">\
+                    <div class="modal-header">\
+                        <h5 class="modal-title" id="ontModalLabel">Lookup Classification</h5>\
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">\
+                        <span aria-hidden="true">&times;</span>\
+                        </button>\
+                    </div>\
+                    <div class="modal-body">\
+                        <div id="classification-tree"></div> \
+                    </div>\
+                    <div class="modal-footer">\
+                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>\
+                        <button id="modal-submit-btn" type="button" class="btn btn-primary">Save changes</button>\
+                    </div>\
+                </div>\
+            </div>\
+        </div>')
+    
+    } 
+    $classification.appendTo($content);
+    //Very VERY VERY gross JS to fix a JS loading/scoping issue. 
+    $('<script> $( "#ontModal" ).on("shown.bs.modal", function() {leaflet_layer_control.render_ontology_fancy_tree();})</' + 'script>').appendTo(document.body)
 
     $.each(feature.properties, function(index, value) {
 
@@ -846,6 +873,39 @@ leaflet_layer_control.show_feature_info = function (feature) {
 
 
 };
+
+
+leaflet_layer_control.render_ontology_fancy_tree = function() {
+    let selectedNode = "out of scope";
+    $("#classification-tree").fancytree({
+        checkbox: "radio",
+        selectMode: 1,
+        // tooltip: true,
+        // tooltip: function(event, data) { return data.node.title + "!"},
+        source: china_data,
+        init: function(event, data) {
+            // Set key from first part of title (just for this demo output)
+            data.tree.visit(function(n) {
+                n.key = n.title.split(" ")[0];
+            });
+        },
+        activate: function(event, data) {
+            $("#echoActive1").text(data.node.title);
+        },
+        select: function(event, data) {
+            // Display list of selected nodes
+            var s = data.tree.getSelectedNodes().join(", ");
+            selectedNode = data.tree.getSelectedNodes()[0].key
+            $("#echoSelection1").text(s);
+        }
+    })
+
+    $("#modal-submit-btn").click(function () {
+        $("#classification-link").text(selectedNode) 
+        $("#ontModal").modal('hide')
+    })
+}
+
 leaflet_layer_control.featureSchemaSelect = function (feature, index) {
     var settings = {};
 
