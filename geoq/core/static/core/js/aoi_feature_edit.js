@@ -1278,6 +1278,10 @@ aoi_feature_edit.map_init = function (map, bounds) {
         });
     }
 
+    if (aoi_feature_edit.showPanel(sparkle_builder.plugin_title)) {
+        sparkle_builder.init()
+    }
+
 
     //Resize the map
     aoi_feature_edit.mapResize();
