@@ -17,9 +17,10 @@ ogc_wfs.current_layer_list = [];
 
 ogc_wfs.schema = {
     'featureId': { key: 'DigitalGlobe:featureId', default: 'unknown'},
-    'date': { key: 'DigitalGlobe:formattedDate', default: moment().format('YYYY-MM-DD')},
+    'ObservationDate': { key: 'DigitalGlobe:formattedDate', default: moment().format('YYYY-MM-DD')},
     'cloudCover': { key: 'DigitalGlobe:cloudCover', default: 1},
     'source': { key: 'DigitalGlobe:source', default: 'Unknown'},
+    'type': { key: 'DigitalGlobe:productType', default: 'Unknown'},
     'offNadirAngle': {key: 'DigitalGlobe:offNadirAngle', default: 'Unknown'},
     'niirs': {key: 'DigitalGlobe:niirs', default: 0}
 };

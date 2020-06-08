@@ -22,7 +22,7 @@ leaflet_layer_control.init = function(){
     leaflet_layer_control.hidden_panels = site_settings.hidden_panels ? site_settings.hidden_panels[aoi_feature_edit.status] : null;
     if (!leaflet_layer_control.hidden_panels) {
         leaflet_layer_control.hidden_panels = {
-            "Awaiting Imagery" : ["Feature Details", "Geo Overview", "Layer Comparison", "Rotation Helper", "Geo Layers for Map"],
+            "Awaiting Imagery" : ["Feature Identification", "Geo Overview", "Layer Comparison", "Rotation Helper", "Geo Layers for Map"],
             "In work" : [ "Imagery Query"]
         };
     }
@@ -64,7 +64,7 @@ leaflet_layer_control.initDrawer = function(){
 
 
 leaflet_layer_control.addPreferenceListener = function($accordion){
-    
+
     var lastOpened = store.get('leaflet_layer_control.layer_accordion');
     if (lastOpened && $('#'+lastOpened).is(":visible")) {
         $('#'+lastOpened).collapse('toggle');
@@ -82,8 +82,9 @@ leaflet_layer_control.addPreferenceListener = function($accordion){
 };
 
 leaflet_layer_control.addFeatureInfo = function($accordion){
-    var $content = leaflet_layer_control.buildAccordionPanel($accordion,"Feature Details");
+    var $content = leaflet_layer_control.buildAccordionPanel($accordion,"Feature Identification");
     leaflet_layer_control.$feature_info = $("<div>")
+        .addClass("classification_block")
         .html("Click a feature on the map to see an information associated with it")
         .appendTo($content);
 };
@@ -148,7 +149,7 @@ leaflet_layer_control.addYouTube = function ($accordion) {
 	var yt = leaflet_layer_control.buildAccordionPanel($accordion, "YouTube");
     //The youtube image is to preload the logo, without this it will not show up right away when you first click the popup.
 	var ytHTML = '<div>' +
-            '<img id="youTube" src="/static/images/YouTube.png" alt="Play Video" style="display:none"><iframe id="youTubeIframe" width="230px" height="200" style="display:none" src="" allowfullscreen></iframe>' + 
+            '<img id="youTube" src="/static/images/YouTube.png" alt="Play Video" style="display:none"><iframe id="youTubeIframe" width="230px" height="200" style="display:none" src="" allowfullscreen></iframe>' +
             '<form id="search" action="javascript:void(0)">' +
 			'Keywords: <input id="keyword" type="text" name="keyword" value="" placeholder="eg: Flood, Crash..."><br>' +
 			'Start Date: <input id="startDate" type="text" name="startDate" value="" placeholder="mm-dd-yyyy" style="margin-right:20px"><br>' +
@@ -214,7 +215,7 @@ leaflet_layer_control.addYouTube = function ($accordion) {
                     if (cleanVideoResults(videoResults[i])) {
                         cleanResults.push(videoResults[i]);
                     }
-                } 
+                }
             } else {
                 cleanResults = videoResults;
             }
@@ -257,7 +258,7 @@ leaflet_layer_control.addYouTube = function ($accordion) {
         }
         return true;
     }
-    
+
     function cleanArray(inputArray) {
       	var tempArray = [];
       	var found;
@@ -265,16 +266,16 @@ leaflet_layer_control.addYouTube = function ($accordion) {
       		found = false;
       		for (var j = 0; j < tempArray.length; j++) {
       			if (tempArray[j].x == inputArray[i].x && tempArray[j].y == inputArray[i].y) {
-      				found = true;	
+      				found = true;
       			}
       		}
-      
+
       		if (found == false) {
       			tempArray.push(inputArray[i]);
       		}
-      
+
       	}
-      
+
       	return tempArray;
       }
 }
@@ -682,8 +683,14 @@ leaflet_layer_control.show_feature_info = function (feature) {
 
     var editableUrl = leaflet_helper.home_url+'api/feature/update/'+feature.properties.id;
 
-    var feature_note_original = "Click here to add a note to this feature";
+    var feature_note_original = "Click here to add additional notes";
     var feature_note = feature_note_original;
+
+    // add an ontology classification Area
+    var $classification = $('<div>')
+        .html('<b>Classification</b>: ')
+        .appendTo($content);
+
     $.each(feature.properties, function(index, value) {
 
         var skipIt = false;
@@ -715,12 +722,12 @@ leaflet_layer_control.show_feature_info = function (feature) {
             skipIt = true;
             var $status = $('<div>')
                 .addClass('status_block')
-                .html('<b>Status</b>: ')
+                .html('<b>Observation Status</b>: ')
                 .appendTo($content);
             $('<span class="editable" id="status" style="display: inline">'+_.str.capitalize(value)+'</span>')
                 .appendTo($status)
                 .editable(editableUrl, {
-                data   : " {'Unassigned':'Unassigned','In work':'In work', 'In review':'In review', 'Completed':'Completed'}",
+                data   : " {'In work':'In work', 'In review':'In review', 'Completed':'Completed'}",
                     type   : 'select',
                     submit : 'OK',
                     style  : 'inherit',
@@ -825,8 +832,18 @@ leaflet_layer_control.show_feature_info = function (feature) {
         .appendTo($content)
         .editable(editableUrl, {
             select : true,
-            tooltip: 'Set a note on this feature'
+            tooltip: 'Analyst comments'
         });
+
+    // Lookup similar features
+    $lookup_button = $('<button>')
+                      .addClass('btn btn-primary btn-small')
+                      .attr('type','button')
+                      .text('Display similar entities')
+    $('<div>')
+        .append($lookup_button)
+        .appendTo($content);
+
 
 };
 leaflet_layer_control.featureSchemaSelect = function (feature, index) {
@@ -1696,10 +1713,10 @@ leaflet_layer_control.drawEachLayer=function(data,map,doNotMoveToTop){
                 _.each(layer_obj.children, function(layer_obj_item){
                     if (!layer_obj_item.selected) {
                         layer_obj_item.setSelected(false);
-                    }                   
+                    }
                 });
             }
-            
+
         }
     });
 
@@ -1975,7 +1992,7 @@ leaflet_layer_control.resetHighlight = function (e) {
             }
             layer.popupContent = popupContent;
 
-            //Creates a popup for each marker    
+            //Creates a popup for each marker
             layer.bindPopup(layer.popupContent).openPopup();
 
            //These change the marker when hovered on
@@ -2037,7 +2054,7 @@ leaflet_layer_control.initializeFileUploads = function () {
             shp(reader.result).then(function (geojson) {
                 var features = L.geoJson(geojson, {
                     onEachFeature: onEachFeature
-                    
+
                 })
                 //adds to the map
                 features.addTo(aoi_feature_edit.map);

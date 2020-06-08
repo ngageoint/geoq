@@ -39,6 +39,8 @@ imagequeue.next_index = 1;
 imagequeue.current_index = 1;
 imagequeue.record_count = 0;
 
+imagequeue.WCS_URL = "/geoq/proxy/https://evwhs.digitalglobe.com/deliveryservice/wcsaccess";
+
 imagequeue.selectStyle = function(status) {
     switch(status) {
         case 'Accepted':
@@ -81,15 +83,15 @@ imagequeue.ops = ['equal', 'not_equal', 'less', 'less_or_equal', 'greater', 'gre
                     'contains'];
 
 imagequeue.schema = [
-    {name: 'featureId', title: 'Id', id: true, type: 'string'},
-    {name: 'layerName', title: 'Name', show: 'small-table',
-        query_filter: {id: 'name', field: 'dc:title', label: 'Name', type: 'string', operators: imagequeue.ops} },
-    {name: 'format', title: 'Format', show: 'small-table',
-        query_filter: {id: 'format', field: 'dc:format', label: 'Format', type: 'string', size: 30, operators: imagequeue.ops} },
-    {name: 'platformCode', title: 'Source', filter: 'options', show: 'small-table' },
+    {name: 'featureId', title: 'Id', id: true, type: 'string', show: 'small-table'},
+    {name: 'source', title: 'Source', filter: 'options', show: 'small-table' },
+    {name: 'productType',
+        title: 'Type', filter: 'options',
+        query_filter: {id: 'productType', field: 'DigitalGlobe:productType',
+          label: 'Type', type: 'string', operators: imagequeue.ops }},
     //TODO: Show image name as mouseover or small text field?
     {
-        name: 'maxCloudCoverPercentageRate',
+        name: 'cloudCover',
         cswid: '',
         title: 'Cloud%',
         type: 'integer',
@@ -97,7 +99,10 @@ imagequeue.schema = [
         min: 0,
         max: 100,
         start: 10,
-        sizeMarker: true
+        sizeMarker: true,
+        query_filter: {id: 'cloudCover', field: 'DigitalGlobe:cloudCover',
+                        label: 'Cloud%', type: 'integer',
+                        operators: imagequeue.ops}
     },
     {name: 'status', title: 'Status', filter: 'options'},
     {name: 'url', title: "Url"},
@@ -113,7 +118,7 @@ imagequeue.schema = [
         initialDateRange: 365,
         colorMarker: true
     },
-    {name: 'keyword', title: 'keyword', query_filter: {id: 'keyword', field: 'dc:subject', label: 'Keyword', type: 'string', size: 50, operators: imagequeue.ops} }
+    {name: 'niirs', title: 'niirs', query_filter: {id: 'niirs', field: 'DigitalGlobe:niirs', label: 'NIIRS', type: 'double', operators: imagequeue.ops} }
 ];
 
 imagequeue.url_template = 'https://evwhs.digitalglobe.com/catalogservice/wfsaccess?connectid=eb33ba21-1782-4ffc-8a5c-4854e21effb9&service=wfs&version=1.1.0&request=GetFeature&typeName=FinishedFeature&BBOX={{bounds}}';
@@ -184,7 +189,7 @@ imagequeue.init = function (options) {
         imagequeue.outline_layer_group.addTo(imagequeue.map);
         imagequeue.rejected_layer_group = L.layerGroup();
         imagequeue.accepted_layer_group = L.layerGroup();
-        imagequeue.image_layer_group = L.layerGroup();
+        imagequeue.image_layer_group = L.featureGroup();
         imagequeue.image_layer_group.addTo(imagequeue.map);
     }
 
@@ -273,8 +278,8 @@ imagequeue.addInitialImages = function () {
         //Convert the json output from saved images into the format the list is expecting
         var data = {
             options:{
-                id: data_row.image_id,
-                image_id: data_row.image_id,
+                id: data_row.featureId,
+                featureId: data_row.featureId,
                 platformCode: data_row.platform,
                 image_sensor: data_row.sensor,
                 format: data_row.format,
@@ -681,6 +686,7 @@ imagequeue.newWFSFeaturesArrived = function (items) {
     // }).name || "id";
 
     var count_added = 0;
+    var mapped_features = [];
     if (items.length > 0) {
         _.each(items, function(layer) {
             var found = false;
@@ -699,32 +705,41 @@ imagequeue.newWFSFeaturesArrived = function (items) {
             if (!found) {
 
                 var outline = {};
-                if (record.coords) {
-                    // this is a BoundingBox
-                    outline = L.polygon(record.coords, {
-                      color: 'blue',
-                      fill: false,
-                      weight: 2 });
-                } else {
-                    console.error("No coordinates found. Skipping this layer");
-                    return;
+                try {
+                    if (record.coords) {
+                        // this is a BoundingBox
+                        outline = L.polygon(record.coords, {
+                          color: 'blue',
+                          fill: false,
+                          weight: 2 });
+                    } else {
+                        console.error("No coordinates found. Skipping this layer");
+                        return;
+                    }
+                    // wms.bindPopup(ogc_wfs.createLayerPopup(record.options));
+
+                    // add geometry of layer to record
+                    // var latlngs = wms.getLatLngs();
+                    outline.options.geometry = {};
+                    outline.options.geometry.rings = record.coords.map(function(arr) {
+                      return arr.slice();
+                    });
+
+                    outline.options = L.extend(outline.options, record.options);
+
+                    imagequeue.outline_layer_group.addLayer(outline);
+
+                    // zoom map to outline_layer_group
+                    imagequeue.map.fitBounds(imagequeue.outline_layer_group.getBounds());
+
+                    // imagequeue.features.push(wms.options);
+                    mapped_features.push(record);
+                    count_added++;
+                } catch (e) {
+                    // error probably parsing coordinates. Let them know if we can
+                    console.log("error on id " + record.featureId );
                 }
-                // wms.bindPopup(ogc_wfs.createLayerPopup(record.options));
 
-                // add geometry of layer to record
-                // var latlngs = wms.getLatLngs();
-                // wms.options.geometry = {};
-                // wms.options.geometry.rings = [];
-                // wms.options.geometry.rings.push(latlngs.map(function(ll) {return [ll.lng, ll.lat]}));
-                // wms.options.geometry.rings[0].push(wms.options.geometry.rings[0][0]);
-
-                imagequeue.outline_layer_group.addLayer(outline);
-
-                // zoom map to outline_layer_group
-                imagequeue.map.fitBounds(imagequeue.outline_layer_group.getBounds());
-
-                // imagequeue.features.push(wms.options);
-                count_added++;
             }
 
         });
@@ -738,14 +753,15 @@ imagequeue.newWFSFeaturesArrived = function (items) {
                 if (schema_item.update) schema_item.update();
             });
             imagequeue.showFilterBoxes();
-            imagequeue.updateFootprintFilteredResults();
+            //imagequeue.updateFootprintFilteredResults();
+            imagequeue.addToResultTable(mapped_features);
         }
         imagequeue.userMessage(count_added + ' new ' + imagequeue.title + 's added', 'yellow');
     }
 };
 imagequeue.removeCSWOutline = function (identifier,status) {
     _.each(imagequeue.getLayerGroup(status).getLayers(), function(layer) {
-        if (layer.options.image_id === identifier) {
+        if (layer.options.featureId === identifier) {
             // see if there's an image layer as well. If so, remove it
             if (layer.image_layer) {
                 // imagequeue.image_layer_group.removeLayer(layer.image_layer);
@@ -774,7 +790,7 @@ imagequeue.removeCSWOutline = function (identifier,status) {
 
 imagequeue.showFootprint = function(box) {
     var id = $(box).val();
-    var layer = _.find(imagequeue.outline_layer_group.getLayers(), function(o) { return o.options.image_id == id;});
+    var layer = _.find(imagequeue.outline_layer_group.getLayers(), function(o) { return o.options.featureId == id;});
     if ($(box).is(':checked')) {
         // show the layer
         if (layer) {
@@ -796,25 +812,24 @@ imagequeue.hideFootprint = function (layer) {
 imagequeue.unhideFootprint = function (layer) {
     layer.setStyle(imagequeue.defaultFootprintStyle);
     layer.bringToFront();
-    var title = layer.options['layerName'] || layer.options['image_id'];
+    var title = layer.options['layerName'] || layer.options['featureId'];
     layer.bindPopup("<p>Name: " + title + "</p>");
 };
 
 imagequeue.showLayer = function(box) {
     var id = $(box).val();
     var details = JSON.parse($('#details-' + id).text()) || {};
-    var layer = _.find(imagequeue.image_layer_group.getLayers(), function(o) { return o.options.image_id == id;});
+    var layer = _.find(imagequeue.image_layer_group.getLayers(), function(o) { return o.options.featureId == id;});
     if ($(box).is(':checked')) {
         if (layer && layer.setOpacity) {
             // layer was already loaded. Just display
             layer.setOpacity(1.0);
         } else {
-            if (details.url) {
-                var layer = layerBuilder.buildLayer(details.format, details );
-                if (layer) {
-                    layer.options.image_id = id;
-                    imagequeue.image_layer_group.addLayer(layer);
-                }
+            var layer = L.nonTiledLayer.wcs(imagequeue.WCS_URL,
+                {wcsOptions: {identifier: id}, crs: L.CRS.EPSG4326});
+            if (layer) {
+                layer.options.featureId = id;
+                imagequeue.image_layer_group.addLayer(layer);
             }
         }
     } else {
@@ -1071,101 +1086,104 @@ imagequeue.isFeatureInPolygon = function (feature, workcellGeojson) {
 };
 imagequeue.updateFootprintFilteredResults = function (options) {
     var matched_list = [];
-    var total = imagequeue.features.length;
+    var total = 0;
+    if (imagequeue.outline_layer_group) {
+        total = imagequeue.outline_layer_group.getLayers().length;
+    }
 
     if (total == 0) return [];
 
-    var workcellGeojson = imagequeue.workcellGeojson;
+    //var workcellGeojson = imagequeue.workcellGeojson;
 
     // check whether to show already accepted outlines or not
-    if (imagequeue.filters.previously_accepted && !imagequeue.map.hasLayer(imagequeue.accepted_layer_group)) {
-        imagequeue.map.addLayer(imagequeue.accepted_layer_group);
-    } else if (!imagequeue.filters.previously_accepted && imagequeue.map.hasLayer(imagequeue.accepted_layer_group)) {
-        imagequeue.map.removeLayer(imagequeue.accepted_layer_group);
-    }
-    // check whether to show rejected outlines or not
-    if (imagequeue.filters.previously_rejected && !imagequeue.map.hasLayer(imagequeue.rejected_layer_group)) {
-        imagequeue.map.addLayer(imagequeue.rejected_layer_group);
-    } else if (!imagequeue.filters.previously_rejected && imagequeue.map.hasLayer(imagequeue.rejected_layer_group)) {
-        imagequeue.map.removeLayer(imagequeue.rejected_layer_group);
-    }
+    // if (imagequeue.filters.previously_accepted && !imagequeue.map.hasLayer(imagequeue.accepted_layer_group)) {
+    //     imagequeue.map.addLayer(imagequeue.accepted_layer_group);
+    // } else if (!imagequeue.filters.previously_accepted && imagequeue.map.hasLayer(imagequeue.accepted_layer_group)) {
+    //     imagequeue.map.removeLayer(imagequeue.accepted_layer_group);
+    // }
+    // // check whether to show rejected outlines or not
+    // if (imagequeue.filters.previously_rejected && !imagequeue.map.hasLayer(imagequeue.rejected_layer_group)) {
+    //     imagequeue.map.addLayer(imagequeue.rejected_layer_group);
+    // } else if (!imagequeue.filters.previously_rejected && imagequeue.map.hasLayer(imagequeue.rejected_layer_group)) {
+    //     imagequeue.map.removeLayer(imagequeue.rejected_layer_group);
+    // }
 
-    //Check every feature against filters, then exclude features that don't match
-    for (var i = 0; i < imagequeue.features.length; i++) {
-        var matched = true;
-        var feature = imagequeue.features[i];
-        //Check first if geometry is in bounds (if that's being checked for)
-        if (feature.geometry && imagequeue.filters.in_bounds) {
-            if (!imagequeue.isFeatureInPolygon(feature, workcellGeojson)) {
-                matched = false;
-            }
-        }
+    // //Check every feature against filters, then exclude features that don't match
+    // for (var i = 0; i < imagequeue.features.length; i++) {
+    //     var matched = true;
+    //     var feature = imagequeue.features[i];
+    //     //Check first if geometry is in bounds (if that's being checked for)
+    //     if (feature.geometry && imagequeue.filters.in_bounds) {
+    //         if (!imagequeue.isFeatureInPolygon(feature, workcellGeojson)) {
+    //             matched = false;
+    //         }
+    //     }
 
-        // Check if item has been accepted and whether it should be shown
-        if (feature.status && feature.status == "Accepted" && !imagequeue.filters.previously_accepted) {
-            matched = false;
-        }
-        //Check if item has been rejected and rejects shouldn't be shown
-        if (feature.status && feature.status == "RejectedQuality" && !imagequeue.filters.previously_rejected) {
-            matched = false;
-        }
+        // // Check if item has been accepted and whether it should be shown
+        // if (feature.status && feature.status == "Accepted" && !imagequeue.filters.previously_accepted) {
+        //     matched = false;
+        // }
+        // //Check if item has been rejected and rejects shouldn't be shown
+        // if (feature.status && feature.status == "RejectedQuality" && !imagequeue.filters.previously_rejected) {
+        //     matched = false;
+        // }
         //TODO: Make sure previous data is returned from AOIs
 
         //Check through each filter to see if it's excluded
-        if (matched) _.each(imagequeue.schema, function (schema_item) {
-            if (schema_item.filter && matched) {
-                var fieldToCheck = schema_item.name;
-                var filterSetting = imagequeue.filters[fieldToCheck];
-                var val = feature[fieldToCheck];
-
-                if (val) {
-                    //Check all possible options and see if the feature has that setting
-                    if (schema_item.filter == 'options') {
-                        var option_found = false;
-                        for (var key in filterSetting) {
-                            if (filterSetting[key] && (val == key)) {
-                                option_found = true;
-                                break;
-                            }
-                        }
-                        if (!option_found) {
-                            matched = false;
-                        }
-                    } else if (schema_item.filter == 'slider-max') {
-                        if (parseFloat(val) > parseFloat(filterSetting)) {
-                            matched = false;
-                        }
-                    } else if (schema_item.filter == 'date-range') {
-                        var val_date = val;
-                        var date_format = 'YYYY-MM-DD';
-                        if (schema_item.transform == 'day' && val.indexOf('-') < 0) {
-                            val_date = val.substr(0, 4) + '-' + val.substr(4, 2) + '-' + val.substr(6, 2);
-                        } else if (schema_item.transform == 'thousands') {
-                            //No problem if there are miliseconds in the field, moment should interpret it correctly
-                        }
-                        var feature_date = moment(val_date, date_format);
-                        if (feature_date < filterSetting.startdate_moment ||
-                            feature_date > filterSetting.enddate_moment) {
-                            matched = false;
-                        }
-                    } else if (schema_item.filter == 'textbox') {
-                        if (filterSetting && filterSetting.length && filterSetting.length > 3) {
-                            if (val.toLowerCase().indexOf(filterSetting.toLowerCase()) == -1) {
-                                matched = false;
-                            }
-                        }
-                    }
-                }
-            }
-        });
-
-        var opacity = 0;
-        if (matched) {
-            matched_list.push(feature);
-            opacity = 0.6;
-        }
-        imagequeue.setOpacity(feature._marker, opacity);
-    }
+    //     if (matched) _.each(imagequeue.schema, function (schema_item) {
+    //         if (schema_item.filter && matched) {
+    //             var fieldToCheck = schema_item.name;
+    //             var filterSetting = imagequeue.filters[fieldToCheck];
+    //             var val = feature[fieldToCheck];
+    //
+    //             if (val) {
+    //                 //Check all possible options and see if the feature has that setting
+    //                 if (schema_item.filter == 'options') {
+    //                     var option_found = false;
+    //                     for (var key in filterSetting) {
+    //                         if (filterSetting[key] && (val == key)) {
+    //                             option_found = true;
+    //                             break;
+    //                         }
+    //                     }
+    //                     if (!option_found) {
+    //                         matched = false;
+    //                     }
+    //                 } else if (schema_item.filter == 'slider-max') {
+    //                     if (parseFloat(val) > parseFloat(filterSetting)) {
+    //                         matched = false;
+    //                     }
+    //                 } else if (schema_item.filter == 'date-range') {
+    //                     var val_date = val;
+    //                     var date_format = 'YYYY-MM-DD';
+    //                     if (schema_item.transform == 'day' && val.indexOf('-') < 0) {
+    //                         val_date = val.substr(0, 4) + '-' + val.substr(4, 2) + '-' + val.substr(6, 2);
+    //                     } else if (schema_item.transform == 'thousands') {
+    //                         //No problem if there are miliseconds in the field, moment should interpret it correctly
+    //                     }
+    //                     var feature_date = moment(val_date, date_format);
+    //                     if (feature_date < filterSetting.startdate_moment ||
+    //                         feature_date > filterSetting.enddate_moment) {
+    //                         matched = false;
+    //                     }
+    //                 } else if (schema_item.filter == 'textbox') {
+    //                     if (filterSetting && filterSetting.length && filterSetting.length > 3) {
+    //                         if (val.toLowerCase().indexOf(filterSetting.toLowerCase()) == -1) {
+    //                             matched = false;
+    //                         }
+    //                     }
+    //                 }
+    //             }
+    //         }
+    //     });
+    //
+    //     var opacity = 0;
+    //     if (matched) {
+    //         matched_list.push(feature);
+    //         opacity = 0.6;
+    //     }
+    //     imagequeue.setOpacity(feature._marker, opacity);
+    // }
 
     //Flatten matched_list to show in data table
     var flattened_list = [];
@@ -1252,10 +1270,10 @@ imagequeue.addToResultTable = function (flattenedList) {
 
     $('#imagelayer-list tbody').html("");
     for (var i = 0; i < length; i++) {
-        //Add accept toggle
-        var c1 = (flattenedList[i].status && flattenedList[i].status == 'Accepted') ? 'checked' : '';
-        var c2 = (!flattenedList[i].status || (flattenedList[i].status && flattenedList[i].status == 'NotEvaluated')) ? 'checked' : '';
-        var c3 = (flattenedList[i].status && flattenedList[i].status == 'RejectedQuality') ? 'checked' : '';
+        // //Add accept toggle
+        // var c1 = (flattenedList[i].status && flattenedList[i].status == 'Accepted') ? 'checked' : '';
+        // var c2 = (!flattenedList[i].status || (flattenedList[i].status && flattenedList[i].status == 'NotEvaluated')) ? 'checked' : '';
+        // var c3 = (flattenedList[i].status && flattenedList[i].status == 'RejectedQuality') ? 'checked' : '';
 
         var $tr = $('<tr>').on('click', function() {
             imagequeue.rowClicked(this);
@@ -1267,22 +1285,26 @@ imagequeue.addToResultTable = function (flattenedList) {
             headers.push($(this).find('div')[0].textContent);
         });
 
-        $('<td><input type="checkbox" onclick="imagequeue.showFootprint(this);" value="' + flattenedList[i]['image_id'] +
+        $('<td><input type="checkbox" onclick="imagequeue.showFootprint(this);" value="' + flattenedList[i].options['featureId'] +
             '" checked="checked"></td>').appendTo($tr);
-        $('<td><input type="checkbox" onclick="imagequeue.showLayer(this);" value="' + flattenedList[i]['image_id'] +
+        $('<td><input type="checkbox" onclick="imagequeue.showLayer(this);" value="' + flattenedList[i].options['featureId'] +
             '"></td>').appendTo($tr);
 
         _.each(headers, function(hdr) {
             var schemaItem = _.findWhere( imagequeue.schema, { title: hdr});
             if (schemaItem) {
+                var value = flattenedList[i].options[schemaItem.name] || "";
+                if (value.length > 16) {
+                    value = value.substr(0,12)+"...";
+                }
                 $('<td>')
-                    .html(flattenedList[i][schemaItem.name])
+                    .html(value)
                     .css("border", "0px solid black")
                     .appendTo($tr);
             }
         });
         $('<td style="display:none;">' + JSON.stringify(flattenedList[i]) + '</td>')
-            .attr('id', 'details-' + flattenedList[i]['image_id'])
+            .attr('id', 'details-' + flattenedList[i].options['featureId'])
             .appendTo($tr);
 
 
@@ -1305,16 +1327,16 @@ imagequeue.updateValueFromRadio = function(id, value) {
     }
 
     for (var i = 0; i < imagequeue.dataInTable.length; i++) {
-        if (id == imagequeue.dataInTable[i].image_id) {
+        if (id == imagequeue.dataInTable[i].featureId) {
             data_row = imagequeue.dataInTable[i];
             break;
         }
     }
 
-    var image_id = data_row.image_id;
+    var featureId = data_row.featureId;
 
     var inputs = {
-        id: encodeURIComponent(image_id),
+        id: encodeURIComponent(featureId),
         evaluation: val
     };
 
@@ -1334,7 +1356,7 @@ imagequeue.updateValueFromRadio = function(id, value) {
     });
 
     var data = {
-        image_id: data_row.image_id,
+        featureId: data_row.featureId,
         nef_name: data_row.layerName,
         sensor: data_row.image_sensor,
         platform: data_row.platformCode,
@@ -1349,7 +1371,7 @@ imagequeue.updateValueFromRadio = function(id, value) {
 
     // find that layer in imagequeue.features and update
     for (var i = 0; i < imagequeue.features.length; i++) {
-        if (data_row.image_id == imagequeue.features[i].image_id) {
+        if (data_row.featureId == imagequeue.features[i].featureId) {
             imagequeue.features[i].status = val;
             break;
         }
@@ -1368,15 +1390,15 @@ imagequeue.updateValueFromRadio = function(id, value) {
 
 imagequeue.rowClicked = function (row) {
     var index = row.rowIndex -1;
-    var imageid = imagequeue.dataInTable[index].image_id;
+    var imageid = imagequeue.dataInTable[index].featureId;
     var image_status = imagequeue.dataInTable[index].status;
 
     // change back previous selection if necessary
     if ( imagequeue.outline_layer_group.lastHighlight.id ) {
         var pastlayers = imagequeue.getLayerGroup(imagequeue.outline_layer_group.lastHighlight.status).getLayers();
-        var player = pastlayers.filter(function(e) {return e.options.image_id == imagequeue.outline_layer_group.lastHighlight.id})[0];
+        var player = pastlayers.filter(function(e) {return e.options.featureId == imagequeue.outline_layer_group.lastHighlight.id})[0];
         if (player) {
-            if ($(':input[value=' + player.options.image_id + ']').first().is(':checked')) {
+            if ($(':input[value=' + player.options.featureId + ']').first().is(':checked')) {
                 player.setStyle(imagequeue.defaultFootprintStyle);
                 imagequeue.unhideFootprint(player);
             } else {
@@ -1387,7 +1409,7 @@ imagequeue.rowClicked = function (row) {
 
     // change the color of the selected image
     var newlayers = imagequeue.getLayerGroup(image_status).getLayers();
-    var layer = newlayers.filter(function(e) { return e.options.image_id == imageid; })[0];
+    var layer = newlayers.filter(function(e) { return e.options.featureId == imageid; })[0];
     if (layer) {
         layer.setStyle(imagequeue.selectStyle('Selected'));
         layer.bringToFront();
@@ -1427,9 +1449,9 @@ imagequeue.addResultTable = function ($holder) {
 
     var $row = $grid.find("tr");
 
-    // first row is the accept/reject buttons
-    //$row.append("<th>Accept</th>");
-    //$row.append("<th>FP</th>");
+    // first column is the accept/reject buttons
+    $row.append("<th>FP</th>");
+    $row.append("<th>IM</th>");
     //$row.append("<th>Data</th>");
 
     _.each( imagequeue.schema, function(item) {

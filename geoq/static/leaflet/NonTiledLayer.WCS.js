@@ -7,9 +7,11 @@ L.NonTiledLayer.WCS = L.NonTiledLayer.extend({
     defaultWcsParams: {
         service: 'WCS',
         request: 'GetCoverage',
-        version: '1.0.0',
-        coverage: '1',
-        format: 'GEOTIFF',
+        version: '1.1.0',
+        format: 'IMAGE/GEOTIFF',
+        gridoffsets: '.000045,.000045',
+        gridbasecrs: 'EPSG:4326',
+        connectid: 'eb33ba21-1782-4ffc-8a5c-4854e21effb9'
     },
 
     options: {
@@ -65,7 +67,7 @@ L.NonTiledLayer.WCS = L.NonTiledLayer.extend({
 
         return url +
             L.Util.getParamString(this.wcsParams, url, this.options.uppercase) +
-            (this.options.uppercase ? '&BOUNDINGBOX=' : '&boundingBox=') + bbox;
+            (this.options.uppercase ? '&BOUNDINGBOX=' : '&boundingBox=') + "9.5337,112.8701,9.6115,112.6496";
     },
 
     setParams: function (params, noRedraw) {
@@ -105,8 +107,9 @@ L.NonTiledLayer.WCS = L.NonTiledLayer.extend({
         request.onload = function(i) {
             if (this.status >= 200 && this.status < 400) {
                 self._parseTIFF(this.response);
-
-            } //TODO else handle error
+            } else {
+                console.log("Got an error retrieving image");
+            }//TODO else handle error
         };
         request.open("GET", url, true);
         request.setRequestHeader("Authorization", "Basic "+btoa(this.options.username + ":" + this.options.password));
