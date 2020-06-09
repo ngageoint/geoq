@@ -709,7 +709,8 @@ leaflet_layer_control.show_feature_info = function (feature) {
                     <div class="modal-body">\
                         <div id="classification-tree"></div> \
                     </div>\
-                    <div class="modal-footer">\
+                    <div class="modal-footer justify-content-between">\
+                        <button type="button" class="btn btn-primary pull-left">Propose New Entity</button> \
                         <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>\
                         <button id="modal-submit-btn" type="button" class="btn btn-primary">Save changes</button>\
                     </div>\
