@@ -689,6 +689,10 @@ leaflet_layer_control.show_feature_info = function (feature) {
     var feature_note = feature_note_original;
 
     console.log(feature)
+    // SRJ: we need something like this?
+    if (!feature.properties.classification) {
+        feature.properties.classification = "UC";
+    }
     // add an ontology classification Area
     var $classification = $('<div>')
     if ("classification" in feature.properties && feature.properties.classification == "UC") {

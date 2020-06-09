@@ -4,7 +4,7 @@
 
 var sparkle_builder = {};
 sparkle_builder.title = "Sparkle Query Builder";
-sparkle_builder.plugin_title = "Query Builder";
+sparkle_builder.plugin_title = "Feature Search";
 sparkle_builder.accordion_id = "#layer-control-accordion";
 
 sparkle_builder.$content = null;
