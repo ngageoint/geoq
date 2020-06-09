@@ -712,10 +712,10 @@ leaflet_layer_control.show_feature_info = function (feature) {
                 </div>\
             </div>\
         </div>')
-    
-    } 
+
+    }
     $classification.appendTo($content);
-    //Very VERY VERY gross JS to fix a JS loading/scoping issue. 
+    //Very VERY VERY gross JS to fix a JS loading/scoping issue.
     $('<script> $( "#ontModal" ).on("shown.bs.modal", function() {leaflet_layer_control.render_ontology_fancy_tree();})</' + 'script>').appendTo(document.body)
 
     $.each(feature.properties, function(index, value) {
@@ -901,7 +901,7 @@ leaflet_layer_control.render_ontology_fancy_tree = function() {
     })
 
     $("#modal-submit-btn").click(function () {
-        $("#classification-link").text(selectedNode) 
+        $("#classification-link").text(selectedNode)
         $("#ontModal").modal('hide')
     })
 }
@@ -1747,6 +1747,9 @@ leaflet_layer_control.addLayerControl = function (map, options, $accordion) {
         }
     }
 
+    // SRJ: set this back after demo
+    var df = _.findWhere(leaflet_layer_control.lastSelectedNodes, {title: "Data Feeds"});
+    if (df) { df.setSelected(false); }
 
     //If it was open last time, open it again
     if (store.get('leaflet_layer_control.drawer')) {

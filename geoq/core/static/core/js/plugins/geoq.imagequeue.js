@@ -825,12 +825,14 @@ imagequeue.showLayer = function(box) {
             // layer was already loaded. Just display
             layer.setOpacity(1.0);
         } else {
-            var layer = L.nonTiledLayer.wcs(imagequeue.WCS_URL,
-                {wcsOptions: {identifier: id}, crs: L.CRS.EPSG4326});
-            if (layer) {
-                layer.options.featureId = id;
-                imagequeue.image_layer_group.addLayer(layer);
-            }
+            var layer = ogc_wfs.createWMSLayerFromRecord(details);
+            imagequeue.image_layer_group.add(layer);
+            // var layer = L.nonTiledLayer.wcs(imagequeue.WCS_URL,
+            //     {wcsOptions: {identifier: id}, crs: L.CRS.EPSG4326});
+            // if (layer) {
+            //     layer.options.featureId = id;
+            //     imagequeue.image_layer_group.addLayer(layer);
+            // }
         }
     } else {
         if (layer && layer.setOpacity) {
