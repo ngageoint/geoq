@@ -826,7 +826,7 @@ imagequeue.showLayer = function(box) {
             layer.setOpacity(1.0);
         } else {
             var layer = ogc_wfs.createWMSLayerFromRecord(details);
-            imagequeue.image_layer_group.add(layer);
+            imagequeue.image_layer_group.addLayer(layer);
             // var layer = L.nonTiledLayer.wcs(imagequeue.WCS_URL,
             //     {wcsOptions: {identifier: id}, crs: L.CRS.EPSG4326});
             // if (layer) {

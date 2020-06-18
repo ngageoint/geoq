@@ -40,13 +40,14 @@ sparkle_builder.init = function (options) {
 sparkle_builder.buildAccordionPanel = function () {
     sparkle_builder.$title = leaflet_layer_control.buildAccordionPanel(sparkle_builder.$accordion, sparkle_builder.plugin_title);
 
-    var nouns = ['Chinese', 'Airplane', 'Wingspan', 'Fighter', 'Jet', 'Air Battery', 'Shenyang J-11', 'Width', "Height"]
+    var nouns = ['Chinese', 'Airplane', 'Freighter', 'Fighter', 'Length', 'Air Battery', 'Shenyang J-11', 'Width', "Jet"]
     var verbs = ['Has', 'With']
     var descriptor = ['greater than', 'less than', 'equal to']
 
-    var query_shenyang = [{"friendly_name" : "Airplane", "type" : "Shenyang J-11", "description" : "Lorem Ipsum Dolor Set Amet", "lat" : 9.558687, "lng" : 112.900143}]
-    var query_chinese_wingspan = [{"friendly_name" : "Airplane", "type" : "Shenyang J-11", "description" : "Lorem Ipsum Dolor Set Amet", "lat" : 9.558687, "lng" : 112.895594}, {"friendly_name" : "Fighter Jet", "type" : "Shijiazhuang Y-5", "description" : "Lorem Ipsum Dolor Set Amet", "lat" : 9.543282, "lng" : 112.879715}]
-    var query_chinese_air_battery = [{"friendly_name" : "Air Battery Wildwood", "type" : "Air Battery", "description" : "Lorem Ipsum Dolor Set Amet", "lat" : 9.556486, "lng" : 112.905550}, {"friendly_name" : "Air Battery Wildwood 2", "type" : "Air Battery", "description" : "Lorem Ipsum Dolor Set Amet", "lat" : 9.538965, "lng" : 112.877398}]
+    var query_shenyang = [{"friendly_name" : "Airplane", "type" : "Shenyang J-11", "description" : "Lorem Ipsum Dolor Set Amet", "lat" : 9.558687, "lng" : 112.900143, "date" : "04/21/20"}]
+    var query_chinese_wingspan = [{"friendly_name" : "Airplane", "type" : "Shenyang J-11", "description" : "Lorem Ipsum Dolor Set Amet", "lat" : 9.558687, "lng" : 112.895594, "date":"08/01/19"}, {"friendly_name" : "Fighter Jet", "type" : "Shijiazhuang Y-5", "description" : "Lorem Ipsum Dolor Set Amet", "lat" : 9.543282, "lng" : 112.879715, "date":"02/15/20"}]
+    var query_chinese_air_battery = [{"friendly_name" : "Air Battery Wildwood", "type" : "Air Battery", "description" : "Lorem Ipsum Dolor Set Amet", "lat" : 9.556486, "lng" : 112.905550}, {"friendly_name" : "Air Battery Wildwood 2", "type" : "Air Battery", "description" : "Lorem Ipsum Dolor Set Amet", "lat" : 9.538965, "lng" : 112.877398, "date":"05/29/19"}]
+    var query_chinese_freighter = [{"friendly_name" : "Danyao I AF", "type" : "StoresShip", "description" : "Island Supply Ship", "lat" : 9.551821, "lng" : 112.895551, "date":"10/22/19"}]
 
     var lastTerm = "noun"
 
@@ -146,6 +147,8 @@ sparkle_builder.buildAccordionPanel = function () {
         console.log(input.val())
         if ((input.val()).toLowerCase() == "chinese,airplane,with,wingspan,greater than,20,ft") {
             results = query_chinese_wingspan
+        } else if ((input.val()).toLowerCase() == "chinese,freighter,length,greater than,450,ft") {
+            results = query_chinese_freighter
         } else if ((input.val()).toLowerCase() == "chinese,air battery") {
             results = query_chinese_air_battery
         } else if  ((input.val()).toLowerCase() == "shenyang j-11") {
@@ -156,7 +159,7 @@ sparkle_builder.buildAccordionPanel = function () {
 
         results.forEach(function (item, index) {
             console.log(item)
-            sparkle_builder.results_layer_group.addLayer(new L.Marker([item.lat, item.lng]).bindPopup('<h4>Name: ' + item.friendly_name + '</h4><h3>Type: ' + item.type + '</h3><p>Marker Test</p>'));
+            sparkle_builder.results_layer_group.addLayer(new L.Marker([item.lat, item.lng]).bindPopup('<h4>Name: ' + item.friendly_name + '</h4><h3>Type: ' + item.type + '</h3><p>Observed Date</p>' + item.date ));
         })
 
     });

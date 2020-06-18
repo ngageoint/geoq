@@ -328,16 +328,20 @@ ogc_wfs.createNamedConstraint = function(xdoc, element) {
 ogc_wfs.createWMSLayerFromRecord = function(record) {
     var newlayer = {};
     try {
-        var parser = document.createElement('a');
-        parser.href = ogc_wfs.getRecordValue(record, 'wms');
-        var search = parser.search.substring(1);
-        var parts = JSON.parse('{"' + decodeURI(search).replace(/"/g, '\\"').replace(/&amp;/g, '","').replace(/=/g,'":"') + '"}');
+        //var parser = document.createElement('a');
+        //parser.href = ogc_wfs.getRecordValue(record, 'wms');
+        //var search = parser.search.substring(1);
+        //var parts = JSON.parse('{"' + decodeURI(search).replace(/"/g, '\\"').replace(/&amp;/g, '","').replace(/=/g,'":"') + '"}');
+        var parts = {service:'WMS'};
         if (parts.service === 'WMS') {
-            newlayer = L.tileLayer.wms(parser.protocol + "//" + parser.host + parser.pathname, {
-                layers: parts.layers,
+            newlayer = L.tileLayer.wms("https://evwhs.digitalglobe.com/mapservice/wmsaccess?connectid=eb33ba21-1782-4ffc-8a5c-4854e21effb9", {
+                layers: "DigitalGlobe:Imagery",
                 format: 'image/png',
                 transparent: true,
-                attribution: $(record).find('creator').text()
+                attribution: "DigitalGlobe",
+                styles: "",
+                FeatureProfile: "Default_Profile",
+                COVERAGE_CQL_FILTER: "featureId='bf6272b2d37696cd0a8d6c34d753421f'"
             });
 
             var html = "<p>Image</p>";

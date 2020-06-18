@@ -1260,6 +1260,18 @@ aoi_feature_edit.map_init = function (map, bounds) {
 
     $('div.leaflet-draw.leaflet-control').find('a').popover({trigger:"hover",placement:"right"});
 
+
+    if (aoi_feature_edit.showPanel(imageviewer.plugin_title)) {
+        imageviewer.init({
+            finishImageUrl: '/geoq/api/workcell-image/{{id}}/examined'
+        });
+    }
+
+    if (aoi_feature_edit.showPanel(sparkle_builder.plugin_title)) {
+        sparkle_builder.init()
+    }
+
+
     if (aoi_feature_edit.showPanel(imagequeue.plugin_title)) {
         imagequeue.init({
             url_template: '/geoq/api/test/image_footprints/?bbox={{bounds}}',
@@ -1270,16 +1282,6 @@ aoi_feature_edit.map_init = function (map, bounds) {
             showRejectOption: true,
             featureSelectUrl: '/geoq/api/workcell-image/{{id}}'
         });
-    }
-
-    if (aoi_feature_edit.showPanel(imageviewer.plugin_title)) {
-        imageviewer.init({
-            finishImageUrl: '/geoq/api/workcell-image/{{id}}/examined'
-        });
-    }
-
-    if (aoi_feature_edit.showPanel(sparkle_builder.plugin_title)) {
-        sparkle_builder.init()
     }
 
 

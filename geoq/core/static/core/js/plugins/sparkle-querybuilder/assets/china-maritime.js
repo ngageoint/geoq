@@ -1,7 +1,7 @@
 var china_data = [
 
-{title: "maritime", unselectable: true, hideCheckbox: true, children: [
-    {title: "china maritime", unselectable: true, hideCheckbox: true, children :[
+{title: "Observation Entities", unselectable: true, hideCheckbox: true, children: [
+    {title: "China Maritime", unselectable: true, hideCheckbox: true, children :[
         {title: 'Military', unselectable: true, hideCheckbox: true, children: [
           {title: 'GuidedMissileDestroyer',  unselectable: true, hideCheckbox: true, children : [
               {title: 'Luhai DDG'},
@@ -1117,26 +1117,13 @@ var china_data = [
         {title: 'Infrastructure', unselectable: true, hideCheckbox: true, children: [
 
         ]},
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+    ]},
+    {title: "FMI", unselectable: true, hideCheckbox: true, children :[
+      {title: "aircraft", unselectable: true, hideCheckbox: true, children: []},
+      {title: "maritime", unselectable: true, hideCheckbox: true, children: []}
+    ]},
+    {title: "Russian Aircraft", unselectable: true, hideCheckbox: true, children :[
+      {title: "Military aircraft", unselectable: true, hideCheckbox: true, children: []},
+      {title: "Civilian aircraft", unselectable: true, hideCheckbox: true, children: []}
     ]}
 ]}]
