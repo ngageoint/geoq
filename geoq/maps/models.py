@@ -495,6 +495,7 @@ class FeatureType(models.Model):
     )
 
     name = models.CharField(max_length=200)
+    ontology_reference = models.URLField(max_length=200, default="")
     type = models.CharField(choices=FEATURE_TYPES, max_length=25)
     category = models.CharField(max_length=25, default="", blank=True, null=True, help_text="An optional group to make finding this feature type easier. e.g. 'FEMA'")
     order = models.IntegerField(default=0, null=True, blank=True, help_text='Optionally specify the order features should appear on the edit menu. Lower numbers appear sooner.')
@@ -512,6 +513,7 @@ class FeatureType(models.Model):
                                category=self.category,
                                order=self.order,
                                name=self.name,
+                               ontology_reference=self.ontology_reference,
                                type=self.type,
                                style=self.style,
                                icon=icon))
