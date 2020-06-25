@@ -7,6 +7,7 @@ class Vocabulary(models.Model):
     Model for ontology vocabulary.
     """
     name = models.CharField(max_length=200, help_text="Name of Vocabulary")
+    terms = models.ManyToManyField(Term)
 
     def __unicode__(self):
         return self.name
