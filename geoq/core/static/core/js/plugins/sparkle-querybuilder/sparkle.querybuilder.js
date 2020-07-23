@@ -1,7 +1,7 @@
 /*
  Sparkle Query Builder plugin for geoq
  */
-
+console.log("hellp")
 var sparkle_builder = {};
 sparkle_builder.title = "Sparkle Query Builder";
 sparkle_builder.plugin_title = "Feature Search";

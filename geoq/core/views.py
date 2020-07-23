@@ -325,6 +325,8 @@ class CreateFeaturesView(UserAllowedMixin, DetailView):
                 new_default_map.save()
                 cv['map'] = new_default_map
 
+        cv['vocabulary'] = self.object.job.vocabulary
+
         cv['feature_types'] = self.object.job.feature_types.all() #.order_by('name').order_by('order').order_by('-category')
         cv['feature_types_all'] = FeatureType.objects.all()
         layers = cv['map'].to_object()

@@ -37,7 +37,7 @@ DATABASES = {
         # The following settings are not used with sqlite3:
         'USER': 'geoq',
         'PASSWORD': 'geoq',
-        'HOST': 'db',  # Empty for local through domain sockets or '127.0.0.1' for local through TCP.
+        'HOST': '127.0.0.1',  # Empty for local through domain sockets or '127.0.0.1' for local through TCP.
         'PORT': '5432',  # Set to empty string for default.
     }
 }
@@ -80,7 +80,7 @@ MEDIA_URL = '/images/'
 # in apps' "static/" subdirectories and in STATICFILES_DIRS.
 # Example: "/var/www/example.com/static/"
 STATIC_URL_FOLDER = ''  # Can be set to something like 'geoq-test/' if the app is not run at root level
-STATIC_ROOT = '{0}{1}'.format('/var/www/static/', STATIC_URL_FOLDER)
+STATIC_ROOT = '{0}{1}'.format('/home/omorrissey/www/static/', STATIC_URL_FOLDER)
 
 # URL prefix for static files.
 # Example: "http://example.com/static/", "http://static.example.com/"
@@ -252,7 +252,8 @@ INSTALLED_APPS = [
     'geoq.training.apps.TrainingConfig',
     'geoq.core.apps.CoreConfig',
     'geoq.maps.apps.MapsConfig',
-    'geoq.workflow.apps.WorkflowConfig'
+    'geoq.workflow.apps.WorkflowConfig',
+    'geoq.ontology.apps.OntologyConfig'
 ]
 
 MIDDLEWARE = [
