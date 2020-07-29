@@ -707,7 +707,12 @@ leaflet_layer_control.show_feature_info = function (feature) {
                         </button>\
                     </div>\
                     <div class="modal-body">\
-                        <div id="classification-tree"></div> \
+                        <div class="container-fluid"> \
+                            <div class="row"> \
+                                <div class="col" id="classification-tree"></div> \
+                                <div class="col" id="classification-details"></div> \
+                            </div> \
+                        </div> \
                     </div>\
                     <div class="modal-footer justify-content-between">\
                         <button type="button" class="btn btn-primary pull-left">Propose New Entity</button> \
@@ -879,34 +884,51 @@ leaflet_layer_control.show_feature_info = function (feature) {
 
 };
 
-
+leaflet_layer_control.render_ontology_format_class = function(cls){
+    var container = $("<span>");
+    container.append($("<h2>").html("Class Details:"))
+    container.append($("<p>").html("<b>prefLabel:</b> " + cls.prefLabel));
+    container.append($("<p>").html("<b>id:</b> " + cls["@id"]));
+    container.append($("<p>").html("<b>synonyms:</b> " + cls.synonym.join(", ")));
+    container.append($("<p>").html("<b>definitions:</b> " + cls.definition.join(", ")));
+    return container.html();
+}
 leaflet_layer_control.render_ontology_fancy_tree = function() {
-    let selectedNode = "out of scope";
-    $("#classification-tree").fancytree({
-        checkbox: "radio",
-        selectMode: 1,
-        // tooltip: true,
-        // tooltip: function(event, data) { return data.node.title + "!"},
-        source: china_data,
-        init: function(event, data) {
-            // Set key from first part of title (just for this demo output)
-            data.tree.visit(function(n) {
-                n.key = n.title.split(" ")[0];
-            });
-        },
-        activate: function(event, data) {
-            $("#echoActive1").text(data.node.title);
-        },
-        select: function(event, data) {
-            // Display list of selected nodes
-            var s = data.tree.getSelectedNodes().join(", ");
-            selectedNode = data.tree.getSelectedNodes()[0].key
-            $("#echoSelection1").text(s);
+    let node = "out of scope";
+    let api_key = "" // ADD API KEY HERE
+    let custom_ontology = "FMIE" // CHANGE THIS TO CHANGE ONTOLOGY
+    let api_url = "http://ec2-3-236-58-248.compute-1.amazonaws.com:8080"
+    var widget_tree = $("#classification-tree ").NCBOTree({
+        apikey: api_key,
+        ontology: custom_ontology,
+        ncboUIURL: "http://ec2-3-236-58-248.compute-1.amazonaws.com",
+        ncboAPIURL: api_url,
+        afterSelect: function(event, classId, prefLabel, selectedNode){
+            console.log("ClassID: " + classId);
+            console.log("Event: " + event);
+            console.log("prefLabel: ");
+            
+            console.log(prefLabel)
+            console.log("data-id: " + $(prefLabel).attr("data-id"))
+            var test = $(prefLabel).attr("data-id")
+            console.log("selectedNode: " + selectedNode)
+            node = classId
+            
+            $.ajax({
+                url: api_url + "/ontologies/" + custom_ontology + "/classes/" + test,
+                dataType: "json",
+                data: {apikey: api_key},
+                crossDomain: true,
+                success: function (classDetails) {
+                  $("#classification-details").html(leaflet_layer_control.render_ontology_format_class(classDetails));
+                }
+              });
+              
         }
-    })
-
+        
+      });
     $("#modal-submit-btn").click(function () {
-        $("#classification-link").text(selectedNode)
+        $("#classification-link").text(node)
         $("#ontModal").modal('hide')
     })
 }
