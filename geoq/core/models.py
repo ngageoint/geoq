@@ -3,7 +3,7 @@
 # is subject to the Rights in Technical Data-Noncommercial Items clause at DFARS 252.227-7013 (FEB 2012)
 
 import json
-import cgi
+import html
 import ast
 from datetime import datetime, timedelta
 from pytz import utc
@@ -265,7 +265,7 @@ class Job(GeoQBase, Assignment):
 
             header = "<th><i>Feature Counts</i></th>"
             for (featuretype, status_obj) in list(counts.items()):
-                header = header + "<th><b>" + cgi.escape(featuretype) + "</b></th>"
+                header = header + "<th><b>" + html.escape(featuretype) + "</b></th>"
             output += "<tr>" + header + "</tr>"
 
             for status in STATE_VALUES:
@@ -276,7 +276,7 @@ class Job(GeoQBase, Assignment):
                         val = status_obj[status]
                     else:
                         val = 0
-                    row += "<td>" + cgi.escape(str(val)) + "</td>"
+                    row += "<td>" + html.escape(str(val)) + "</td>"
                 output += "<tr>" + row + "</tr>"
             output += "</table>"
         else:
