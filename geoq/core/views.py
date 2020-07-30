@@ -51,6 +51,8 @@ from pytz import utc
 
 from django.views.generic.detail import SingleObjectTemplateResponseMixin
 from django.views.generic.edit import ModelFormMixin, ProcessFormView
+from django.core import serializers
+
 
 class Dashboard(TemplateView):
 
@@ -325,7 +327,7 @@ class CreateFeaturesView(UserAllowedMixin, DetailView):
                 new_default_map.save()
                 cv['map'] = new_default_map
 
-        cv['vocabulary'] = self.object.job.vocabulary
+        cv['vocabulary'] = serializers.serialize("json", self.object.job.vocabulary.terms.all())
 
         cv['feature_types'] = self.object.job.feature_types.all() #.order_by('name').order_by('order').order_by('-category')
         cv['feature_types_all'] = FeatureType.objects.all()

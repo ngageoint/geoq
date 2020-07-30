@@ -8,9 +8,11 @@ class Term(models.Model):
     Ontological Term
     """
     word = models.CharField(max_length=100, help_text="Value of term")
-    identifier = models.URLField(max_length=200, help_text="Term Identifier")
+    identifier = models.CharField(max_length=200, help_text="IRI Identifier")
 
     def __unicode__(self):
+        return self.word
+    def __str__(self):
         return self.word
 
 class Vocabulary(models.Model):
@@ -22,6 +24,8 @@ class Vocabulary(models.Model):
 
     def __unicode__(self):
         return self.name
+    def __str__(self):
+        return self.name
 
 class Ontology(models.Model):
     """
@@ -29,7 +33,9 @@ class Ontology(models.Model):
     """
 
     name = models.CharField(max_length=200, help_text="Ontology Name")
-    url = models.URLField(max_length=200, help_text="Location of ontology")
+    url = models.CharField(max_length=200, help_text="Location of ontology")
 
     def __unicode__(self):
+        return self.name
+    def __str__(self):
         return self.name

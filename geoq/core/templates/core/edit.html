@@ -60,7 +60,8 @@
     <script src="{% static 'core/js/plugins/sparkle-querybuilder/assets/china-maritime.js' %}"></script>
     <link rel="stylesheet" href="{% static 'core/js/plugins/sparkle-querybuilder/dependencies/bootstrap-tagsinput.css' %}" />
     <link rel="stylesheet" href="{% static 'core/js/plugins/sparkle-querybuilder/dependencies/typeahead.css' %}" />
-    <script src="{% static 'core/js/plugins/sparkle-querybuilder/sparkle.querybuilder.js' %}"></script>
+    <script src="{% static 'core/js/plugins/sparkle-querybuilder/sparkle.querybuilder.js' %}" vocabulary="{{ vocabulary }}"></script>
+
 
     {% for layer in object.job.map.layers %}{% if layer.layer.type == 'Google Maps' %}
     <script src="{{ layer.layer.url }}maps/api/js?v=3&sensor=false"></script>
