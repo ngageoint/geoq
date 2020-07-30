@@ -95,7 +95,7 @@ ogc_wfs.getRecordsGet = function(params,input,callback) {
     //params['constraint_language_version'] = "1.1.0";
     params['BBOX'] = "9.48597427929077,112.76950836181642,9.739850531834515,113.16707611083986";
     var username = "1040272700";
-    var password = "CqNDMStktTW8fzi!";
+    var password = "";
 
     var url = ogc_wfs.protocol + "://" + ogc_wfs.server + ":" + ogc_wfs.port + ogc_wfs.path + "?" + $.param(params);
 

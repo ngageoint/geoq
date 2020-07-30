@@ -18,7 +18,7 @@ L.NonTiledLayer.WCS = L.NonTiledLayer.extend({
         crs: null,
         uppercase: true,
         username: "1040272700",
-        password: "CqNDMStktTW8fzi!"
+        password: ""
     },
 
     initialize: function (url, options) { // (String, Object)
