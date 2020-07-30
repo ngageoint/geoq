@@ -25,6 +25,7 @@ from .kmz_handler import save_kmz_file
 from json import load
 
 import logging
+from urllib.parse import unquote
 
 logger = logging.getLogger(__name__)
 
@@ -125,6 +126,39 @@ class EditFeatures(View):
             return HttpResponse(content=json.dumps(dict(errors=e.messages)), content_type="application/json", status=400)
 
         return HttpResponse("{}", content_type="application/json")
+
+class ClassifyFeatures(View):
+    """
+    Sets a Classified FeatureType for this Feature
+    """
+
+    http_method_names = ['post']
+
+    def post(self, request, *args, **kwargs):
+
+        data = json.loads(request.body)
+        try:
+            feature = Feature.objects.get(pk=data['id'])
+        except ObjectDoesNotExist:
+            raise Http404
+
+        # see if a FeatureType with the submitted uri exists. If not, create it
+        uri = unquote(data['uri'])
+        try:
+            type = FeatureType.objects.get(ontology_reference=uri)
+        except FeatureType.DoesNotExist:
+            type = FeatureType(name=data['name'],
+                                ontology_reference=uri,
+                                type=FeatureType.FEATURE_TYPES[2][1],
+                                style=FeatureType.DEFAULT_STYLE)
+            type.save()
+
+        # now set the Feature to that type
+        feature.template = type
+        feature.save()
+
+        return HttpResponse("{}", content_type="application/json")
+
 
 @login_required
 @require_http_methods(["POST"])

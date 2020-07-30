@@ -120,6 +120,7 @@
         aoi_feature_edit.api_url_aoi_georss = "{% url 'json-workcell' object.id %}";
         aoi_feature_edit.api_url_log = "{% url 'workcell_log' object.id %}";
         aoi_feature_edit.api_url_user_param = "{% url 'update-user-maplayer-param' %}";
+        aoi_feature_edit.api_url_save_classification = "{% url 'classify-feature' %}";
 
         aoi_feature_edit.csrf = '{{ csrf_token }}';
 

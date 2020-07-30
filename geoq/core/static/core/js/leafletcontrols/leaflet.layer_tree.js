@@ -683,7 +683,8 @@ leaflet_layer_control.show_feature_info = function (feature) {
     }
     $content.empty();
 
-    var editableUrl = leaflet_helper.home_url+'api/feature/update/'+feature.properties.id;
+    var id = feature.properties.id;
+    var editableUrl = leaflet_helper.home_url+'api/feature/update/'+id;
 
     var feature_note_original = "Click here to add additional notes";
     var feature_note = feature_note_original;
@@ -696,7 +697,7 @@ leaflet_layer_control.show_feature_info = function (feature) {
     // add an ontology classification Area
     var $classification = $('<div>')
     if ("classification" in feature.properties && feature.properties.classification == "UC") {
-        $classification.html('<b>Classification</b>: <a id="classification-link" data-toggle="modal" href="#ontModal" class="button">Lookup Classification</a> <i class="icon-search"></i> \
+        $classification.html('<b>Classification</b>: <a id="classification-link" data-toggle="modal" href="#ontModal" class="button">Lookup Classification</a> <i id="save-classification" class="icon-save" style="display:none"></i> \
         <div class="modal fade" id="ontModal" tabindex="-1" role="dialog" aria-labelledby="ontModalLabel" aria-hidden="true"> \
             <div class="modal-dialog" role="document"> \
                 <div class="modal-content">\
@@ -717,7 +718,7 @@ leaflet_layer_control.show_feature_info = function (feature) {
                     <div class="modal-footer justify-content-between">\
                         <button type="button" class="btn btn-primary pull-left">Propose New Entity</button> \
                         <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>\
-                        <button id="modal-submit-btn" type="button" class="btn btn-primary">Save changes</button>\
+                        <button id="modal-submit-btn" type="button" class="btn btn-primary">Set classification</button>\
                     </div>\
                 </div>\
             </div>\
@@ -827,6 +828,7 @@ leaflet_layer_control.show_feature_info = function (feature) {
             }
         } else {
             value = leaflet_layer_control.removePythonDateTime(value);
+            if (index == 'classification') skipIt = true;
 
             var schemaSettings = leaflet_layer_control.featureSchemaSelect(feature, index);
             if (schemaSettings && schemaSettings.type) {
@@ -881,6 +883,26 @@ leaflet_layer_control.show_feature_info = function (feature) {
         .append($lookup_button)
         .appendTo($content);
 
+    // for saving a classification
+    $('#save-classification').click(function() {
+        console.log("Got the click");
+        $.ajax({
+            url: aoi_feature_edit.api_url_save_classification,
+            dataType:"json",
+            method:'POST',
+            contentType: "application/json; charset=utf-8",
+            data: JSON.stringify({
+                id: id,
+                name: $('#classification-link').text(),
+                uri: $('#classification-link').prop('uri')
+            })
+        }).done(function(x) {
+            $('#save-classification').hide();
+        }).fail(function(x, status, err) {
+            if (console) console.log(status);
+        });
+    });
+
 
 };
 
@@ -895,9 +917,10 @@ leaflet_layer_control.render_ontology_format_class = function(cls){
 }
 leaflet_layer_control.render_ontology_fancy_tree = function() {
     let node = "out of scope";
-    let api_key = "" // ADD API KEY HERE
-    let custom_ontology = "FMIE" // CHANGE THIS TO CHANGE ONTOLOGY
-    let api_url = "http://ec2-3-236-58-248.compute-1.amazonaws.com:8080"
+    let uri = "unknown";
+    let api_key = ""; // ADD API KEY HERE
+    let custom_ontology = "CMO"; // CHANGE THIS TO CHANGE ONTOLOGY
+    let api_url = "http://ec2-3-236-58-248.compute-1.amazonaws.com:8080";
     var widget_tree = $("#classification-tree ").NCBOTree({
         apikey: api_key,
         ontology: custom_ontology,
@@ -907,15 +930,15 @@ leaflet_layer_control.render_ontology_fancy_tree = function() {
             console.log("ClassID: " + classId);
             console.log("Event: " + event);
             console.log("prefLabel: ");
-            
+
             console.log(prefLabel)
             console.log("data-id: " + $(prefLabel).attr("data-id"))
-            var test = $(prefLabel).attr("data-id")
+            uri = $(prefLabel).attr("data-id");
             console.log("selectedNode: " + selectedNode)
             node = classId
-            
+
             $.ajax({
-                url: api_url + "/ontologies/" + custom_ontology + "/classes/" + test,
+                url: api_url + "/ontologies/" + custom_ontology + "/classes/" + uri,
                 dataType: "json",
                 data: {apikey: api_key},
                 crossDomain: true,
@@ -923,13 +946,15 @@ leaflet_layer_control.render_ontology_fancy_tree = function() {
                   $("#classification-details").html(leaflet_layer_control.render_ontology_format_class(classDetails));
                 }
               });
-              
+
         }
-        
+
       });
     $("#modal-submit-btn").click(function () {
-        $("#classification-link").text(node)
-        $("#ontModal").modal('hide')
+        $("#classification-link").text(node);
+        $("#classification-link").prop('uri',uri);
+        $("#save-classification").show();
+        $("#ontModal").modal('hide');
     })
 }
 

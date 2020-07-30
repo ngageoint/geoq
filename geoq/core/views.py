@@ -325,9 +325,16 @@ class CreateFeaturesView(UserAllowedMixin, DetailView):
                 new_default_map.save()
                 cv['map'] = new_default_map
 
-        cv['feature_types'] = self.object.job.feature_types.all() #.order_by('name').order_by('order').order_by('-category')
+        # grab dynamic FeatureTypes
+        l = list(Feature.objects.filter(aoi_id=self.object.id))
+        ftypes = FeatureType.objects.filter(feature__in=l)
+        jtypes = self.object.job.feature_types.all()
+        alltypes = (jtypes | ftypes).distinct()
+        cv['feature_types'] = alltypes
+        #cv['feature_types'] = self.object.job.feature_types.all() #.order_by('name').order_by('order').order_by('-category')
         cv['feature_types_all'] = FeatureType.objects.all()
         layers = cv['map'].to_object()
+
 
         for job in self.object.job.project.jobs:
             if not job.id == self.object.job.id:
