@@ -6,7 +6,7 @@
 {% block title %}GeoQ: Workcell {{ object.id }}{% endblock %}
 {% block static_libraries %}
 
-    {% leaflet_js plugins="proj4js,draw,esri,esriCluster,MakiMarkers" %}
+    {% leaflet_js plugins="proj4js,draw,esri,esriCluster,MakiMarkers,WMSHeader" %}
     <!-- script src="{% static 'jquery/jquery-migrate-3.0.0.min.js' %}"></script -->
     <script src="{% static 'core/js/leaflet_helper.js' %}"></script>
     <script src="{% static 'core/js/leaflet_helper.parsers.js' %}"></script>
