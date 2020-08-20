@@ -94,8 +94,8 @@ ogc_wfs.getRecordsGet = function(params,input,callback) {
     //params['constraintLanguage'] = "CQL_TEXT";
     //params['constraint_language_version'] = "1.1.0";
     params['BBOX'] = "9.48597427929077,112.76950836181642,9.739850531834515,113.16707611083986";
-    var username = "1040272700";
-    var password = "";
+    var username = "";
+    var password = "!";
 
     var url = ogc_wfs.protocol + "://" + ogc_wfs.server + ":" + ogc_wfs.port + ogc_wfs.path + "?" + $.param(params);
 
@@ -330,19 +330,27 @@ ogc_wfs.createWMSLayerFromRecord = function(record) {
     try {
         //var parser = document.createElement('a');
         //parser.href = ogc_wfs.getRecordValue(record, 'wms');
+        var u = "";
+        var p = "!";
         //var search = parser.search.substring(1);
         //var parts = JSON.parse('{"' + decodeURI(search).replace(/"/g, '\\"').replace(/&amp;/g, '","').replace(/=/g,'":"') + '"}');
         var parts = {service:'WMS'};
         if (parts.service === 'WMS') {
-            newlayer = L.tileLayer.wms("https://evwhs.digitalglobe.com/mapservice/wmsaccess?connectid=eb33ba21-1782-4ffc-8a5c-4854e21effb9", {
+            newlayer = L.TileLayer.wmsHeader("/geoq/proxy/https://evwhs.digitalglobe.com/mapservice/wmsaccess?connectid=", {
                 layers: "DigitalGlobe:Imagery",
                 format: 'image/png',
                 transparent: true,
                 attribution: "DigitalGlobe",
                 styles: "",
                 FeatureProfile: "Default_Profile",
-                COVERAGE_CQL_FILTER: "featureId='bf6272b2d37696cd0a8d6c34d753421f'"
-            });
+                featureId: record.options.featureId,
+                COVERAGE_CQL_FILTER: "featureId='" + record.options.featureId + "'"
+            },
+            [
+              { header: 'Authorization', value: 'Basic ' + btoa(u+':'+p)}
+            ],
+              null
+            );
 
             var html = "<p>Image</p>";
             newlayer.bindPopup(html);
