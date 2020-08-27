@@ -494,6 +494,8 @@ class FeatureType(models.Model):
         # ('Overlay', 'Overlay'),  #TODO: Support overlay images. Should these be features?
     )
 
+    DEFAULT_STYLE = {"color": "blue", "opacity": "1", "weight": "2", "fill": False }
+
     name = models.CharField(max_length=200)
     ontology_reference = models.URLField(max_length=200, default="")
     type = models.CharField(choices=FEATURE_TYPES, max_length=25)

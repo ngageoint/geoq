@@ -50,7 +50,7 @@ sparkle_builder.buildAccordionPanel = function () {
     var query_shenyang = [{"friendly_name" : "Airplane", "type" : "Shenyang J-11", "description" : "Lorem Ipsum Dolor Set Amet", "lat" : 9.558687, "lng" : 112.900143, "date" : "04/21/20"}]
     var query_chinese_wingspan = [{"friendly_name" : "Airplane", "type" : "Shenyang J-11", "description" : "Lorem Ipsum Dolor Set Amet", "lat" : 9.558687, "lng" : 112.895594, "date":"08/01/19"}, {"friendly_name" : "Fighter Jet", "type" : "Shijiazhuang Y-5", "description" : "Lorem Ipsum Dolor Set Amet", "lat" : 9.543282, "lng" : 112.879715, "date":"02/15/20"}]
     var query_chinese_air_battery = [{"friendly_name" : "Air Battery Wildwood", "type" : "Air Battery", "description" : "Lorem Ipsum Dolor Set Amet", "lat" : 9.556486, "lng" : 112.905550}, {"friendly_name" : "Air Battery Wildwood 2", "type" : "Air Battery", "description" : "Lorem Ipsum Dolor Set Amet", "lat" : 9.538965, "lng" : 112.877398, "date":"05/29/19"}]
-    var query_chinese_freighter = [{"friendly_name" : "Danyao I AF", "type" : "StoresShip", "description" : "Island Supply Ship", "lat" : 9.551821, "lng" : 112.895551, "date":"10/22/19"}]
+    var query_chinese_freighter = [{"friendly_name" : "Danyao I AF", "type" : "StoresShip", "description" : "Island Supply Ship", "lat" : 9.551821, "lng" : 112.895551, "date":"10/22/19"},{"friendly_name" : "Danyao I AF", "type" : "StoresShip", "description" : "Island Supply Ship", "lat" : 9.554444, "lng" : 112.893909, "date":"07/01/20"}]
 
     var lastTerm = "noun"
 

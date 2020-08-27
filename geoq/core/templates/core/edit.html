@@ -6,7 +6,7 @@
 {% block title %}GeoQ: Workcell {{ object.id }}{% endblock %}
 {% block static_libraries %}
 
-    {% leaflet_js plugins="proj4js,draw,esri,esriCluster,MakiMarkers" %}
+    {% leaflet_js plugins="proj4js,draw,esri,esriCluster,MakiMarkers,WMSHeader" %}
     <!-- script src="{% static 'jquery/jquery-migrate-3.0.0.min.js' %}"></script -->
     <script src="{% static 'core/js/leaflet_helper.js' %}"></script>
     <script src="{% static 'core/js/leaflet_helper.parsers.js' %}"></script>
@@ -55,10 +55,12 @@
     <script src="{% static 'query-builder/query-builder.min.js' %}" type="text/javascript"></script>
 
     <!-- Maybe this is worth it -->
+    <script src="{% static 'core/js/plugins/sparkle-querybuilder/dependencies/jquery.ncbo.tree-2.0.2.js' %}"></script>
     <script src="{% static 'core/js/plugins/sparkle-querybuilder/dependencies/typeahead.bundle.js' %}"></script>
     <script src="{% static 'core/js/plugins/sparkle-querybuilder/dependencies/bootstrap-tagsinput.js' %}"></script>
     <script src="{% static 'core/js/plugins/sparkle-querybuilder/assets/china-maritime.js' %}"></script>
     <link rel="stylesheet" href="{% static 'core/js/plugins/sparkle-querybuilder/dependencies/bootstrap-tagsinput.css' %}" />
+    <link rel="stylesheet" href="{% static 'core/js/plugins/sparkle-querybuilder/dependencies/jquery.ncbo.tree.css' %}" />
     <link rel="stylesheet" href="{% static 'core/js/plugins/sparkle-querybuilder/dependencies/typeahead.css' %}" />
     <script src="{% static 'core/js/plugins/sparkle-querybuilder/sparkle.querybuilder.js' %}" vocabulary="{{ vocabulary }}"></script>
 
@@ -119,6 +121,7 @@
         aoi_feature_edit.api_url_aoi_georss = "{% url 'json-workcell' object.id %}";
         aoi_feature_edit.api_url_log = "{% url 'workcell_log' object.id %}";
         aoi_feature_edit.api_url_user_param = "{% url 'update-user-maplayer-param' %}";
+        aoi_feature_edit.api_url_save_classification = "{% url 'classify-feature' %}";
 
         aoi_feature_edit.csrf = '{{ csrf_token }}';
 
