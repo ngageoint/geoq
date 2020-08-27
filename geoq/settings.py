@@ -262,7 +262,8 @@ INSTALLED_APPS = [
     'geoq.training.apps.TrainingConfig',
     'geoq.core.apps.CoreConfig',
     'geoq.maps.apps.MapsConfig',
-    'geoq.workflow.apps.WorkflowConfig'
+    'geoq.workflow.apps.WorkflowConfig',
+    'geoq.ontology.apps.OntologyConfig'
 ]
 
 MIDDLEWARE = [

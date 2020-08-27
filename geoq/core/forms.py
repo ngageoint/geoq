@@ -97,7 +97,7 @@ class JobForm(StyledModelForm):
 
         fields = ('name', 'description', 'project', 'analysts',
                   'teams', 'reviewers', 'feature_types', 'required_courses', 'tags', 'layers', 'editor',
-                  'workflow', 'editable_layer')
+                  'workflow', 'editable_layer', 'vocabulary')
         model = Job
 
     def __init__(self, project, *args, **kwargs):

@@ -1,7 +1,7 @@
 /*
  Sparkle Query Builder plugin for geoq
  */
-
+var vocabulary = JSON.parse(document.currentScript.getAttribute("vocabulary"))
 var sparkle_builder = {};
 sparkle_builder.title = "Sparkle Query Builder";
 sparkle_builder.plugin_title = "Feature Search";
@@ -41,6 +41,9 @@ sparkle_builder.buildAccordionPanel = function () {
     sparkle_builder.$title = leaflet_layer_control.buildAccordionPanel(sparkle_builder.$accordion, sparkle_builder.plugin_title);
 
     var nouns = ['Chinese', 'Airplane', 'Freighter', 'Fighter', 'Length', 'Air Battery', 'Shenyang J-11', 'Width', "Jet"]
+    if (vocabulary.length > 0) {
+        nouns = vocabulary.map((term_obj) => term_obj.fields.word)
+    }
     var verbs = ['Has', 'With']
     var descriptor = ['greater than', 'less than', 'equal to']
 
