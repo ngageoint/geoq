@@ -20,6 +20,7 @@ from jsonfield import JSONField
 from collections import defaultdict, OrderedDict
 from django.db.models import Q
 from geoq.training.models import Training
+from geoq.ontology.models import Vocabulary
 from geoq.core.utils import clean_dumps
 from feedgen.feed import FeedGenerator
 
@@ -188,6 +189,7 @@ class Job(GeoQBase, Assignment):
                 on_delete=models.PROTECT)
     feature_types = models.ManyToManyField('maps.FeatureType', blank=True)
     required_courses = models.ManyToManyField(Training, blank=True, help_text="Courses that must be passed to open these cells")
+    vocabulary = models.ForeignKey(Vocabulary, blank=True, on_delete=models.PROTECT, null=True, help_text="Favorite words")
 
     class Meta:
         permissions = (
