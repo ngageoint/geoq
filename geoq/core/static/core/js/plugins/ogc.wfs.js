@@ -94,8 +94,8 @@ ogc_wfs.getRecordsGet = function(params,input,callback) {
     //params['constraintLanguage'] = "CQL_TEXT";
     //params['constraint_language_version'] = "1.1.0";
     params['BBOX'] = "9.48597427929077,112.76950836181642,9.739850531834515,113.16707611083986";
-    var username = "";
-    var password = "!";
+    var username = "1040272700";
+    var password = "438qzbVJUwwi9r7!";
 
     var url = ogc_wfs.protocol + "://" + ogc_wfs.server + ":" + ogc_wfs.port + ogc_wfs.path + "?" + $.param(params);
 
@@ -330,13 +330,13 @@ ogc_wfs.createWMSLayerFromRecord = function(record) {
     try {
         //var parser = document.createElement('a');
         //parser.href = ogc_wfs.getRecordValue(record, 'wms');
-        var u = "";
-        var p = "!";
+        var u = "1040272700";
+        var p = "438qzbVJUwwi9r7!";
         //var search = parser.search.substring(1);
         //var parts = JSON.parse('{"' + decodeURI(search).replace(/"/g, '\\"').replace(/&amp;/g, '","').replace(/=/g,'":"') + '"}');
         var parts = {service:'WMS'};
         if (parts.service === 'WMS') {
-            newlayer = L.TileLayer.wmsHeader("/geoq/proxy/https://evwhs.digitalglobe.com/mapservice/wmsaccess?connectid=", {
+            newlayer = L.TileLayer.wmsHeader("/geoq/proxy/https://evwhs.digitalglobe.com/mapservice/wmsaccess?connectid=5f4b5f3d-47e0-402a-996a-ed37f05a871b", {
                 layers: "DigitalGlobe:Imagery",
                 format: 'image/png',
                 transparent: true,
