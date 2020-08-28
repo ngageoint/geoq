@@ -1,14 +1,16 @@
 from django.db import models
 from django.urls import reverse_lazy
-
+from django.contrib.gis import admin
 
 
 class Term(models.Model):
     """
     Ontological Term
     """
+    TERM_TYPES = [("Object", "Object"), ("Relationship","Relationship")]
     word = models.CharField(max_length=100, help_text="Value of term")
     identifier = models.CharField(max_length=200, help_text="IRI Identifier")
+    type = models.CharField(max_length=30, choices=TERM_TYPES, default=TERM_TYPES[0])
 
     def __unicode__(self):
         return self.word
@@ -20,12 +22,13 @@ class Vocabulary(models.Model):
     Model for ontology vocabulary.
     """
     name = models.CharField(max_length=200, help_text="Name of Vocabulary")
-    terms = models.ManyToManyField(Term)
+    terms = models.ManyToManyField(Term, related_name="entries")
 
     def __unicode__(self):
         return self.name
     def __str__(self):
         return self.name
+
 
 class Ontology(models.Model):
     """

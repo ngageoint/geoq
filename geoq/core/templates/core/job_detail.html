@@ -352,6 +352,7 @@
                             {% if 'core.add_aoi' in perms %}
                             <li><a href="{% url 'job-create-aois' object.id%}">Create {{ lexicon.WORKCELL_NAME }}s</a></li>
                             {% endif %}
+                            <li><a href="{% url 'job-create-vocabulary' object.id %}">Edit Vocabulary</a></li>
                             {% if 'core.add_aoi' in perms %}
                             <li><a href="{% url 'job-prioritize-workcells' object.id %}">Prioritize {{ lexicon.WORKCELL_NAME }}s</a></li>
                             {% endif %}

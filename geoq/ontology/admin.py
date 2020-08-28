@@ -1,22 +1,23 @@
-# from django.contrib  import admin
-# from .models import *
-# from datetime import datetime
-# #TODO: are we going to use Role model?
+from reversion.admin import VersionAdmin
+from django.contrib.gis import admin
+from .models import Term, Vocabulary
 
 
-# class ChildDocInline(admin.StackedInline):
-#     model = ChildDocument
-#     verbose_name = "Child Document"
+class Entry_inline(admin.TabularInline):
+    model = Vocabulary.terms.through
+    extra = 2
+
+@admin.register(Term)
+class TermAdmin(admin.ModelAdmin):
+    model = Term
+    list_display = ['__unicode__', 'word', 'identifier', 'type']
+    fields = ['word','identifier','type']
+    inlines = (Entry_inline,)
 
 
-# class KMZAdmin(admin.ModelAdmin):
-#     inlines = [ChildDocInline]
-#     actions = ['refresh']
-#     def refresh(self, request, queryset):
-#         for kmz in queryset:
-#             kmz.refresh()
-#     refresh.short_description = "Force refresh of selected files"
-
-
-
-# admin.site.register(SourceDocument,KMZAdmin)
+@admin.register(Vocabulary)
+class VocabularyAdmin(admin.ModelAdmin):
+    model = Vocabulary
+    list_display = ['name']
+    fields = ['name']
+    inlines = (Entry_inline,)
