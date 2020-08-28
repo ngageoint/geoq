@@ -335,7 +335,7 @@ class CreateFeaturesView(UserAllowedMixin, DetailView):
         cv['feature_types'] = alltypes
         #cv['feature_types'] = self.object.job.feature_types.all() #.order_by('name').order_by('order').order_by('-category')
 
-        cv['vocabulary'] = serializers.serialize("json", self.object.job.vocabulary.terms.all())
+        cv['vocabulary'] = self.object.job.vocabulary
         cv['feature_types_all'] = FeatureType.objects.all()
         layers = cv['map'].to_object()
 

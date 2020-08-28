@@ -42,7 +42,7 @@ sparkle_builder.buildAccordionPanel = function () {
 
     var nouns = ['Chinese', 'Airplane', 'Freighter', 'Fighter', 'Length', 'Air Battery', 'Shenyang J-11', 'Width', "Jet"]
     if (vocabulary.length > 0) {
-        nouns = vocabulary.map((term_obj) => term_obj.fields.word)
+        nouns = vocabulary.map((term_obj) => term_obj.name)
     }
     var verbs = ['Has', 'With']
     var descriptor = ['greater than', 'less than', 'equal to']

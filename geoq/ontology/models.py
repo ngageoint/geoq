@@ -1,6 +1,7 @@
 from django.db import models
 from django.urls import reverse_lazy
 from django.contrib.gis import admin
+import json
 
 
 class Term(models.Model):
@@ -14,8 +15,13 @@ class Term(models.Model):
 
     def __unicode__(self):
         return self.word
+
     def __str__(self):
-        return self.word
+        return self.__unicode__()
+
+    @property
+    def serialize(self):
+        return {"name": self.word, "identifier": self.identifier, "type": self.type}
 
 class Vocabulary(models.Model):
     """
@@ -26,8 +32,13 @@ class Vocabulary(models.Model):
 
     def __unicode__(self):
         return self.name
+
     def __str__(self):
         return self.name
+
+    @property
+    def toJson(self):
+        return json.dumps([t.serialize for t in self.terms.all()])
 
 
 class Ontology(models.Model):
