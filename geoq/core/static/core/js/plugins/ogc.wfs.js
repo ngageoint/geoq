@@ -330,13 +330,13 @@ ogc_wfs.createWMSLayerFromRecord = function(record) {
     try {
         //var parser = document.createElement('a');
         //parser.href = ogc_wfs.getRecordValue(record, 'wms');
-        var u = "1040272700";
-        var p = "438qzbVJUwwi9r7!";
+        var u = "";
+        var p = "!";
         //var search = parser.search.substring(1);
         //var parts = JSON.parse('{"' + decodeURI(search).replace(/"/g, '\\"').replace(/&amp;/g, '","').replace(/=/g,'":"') + '"}');
         var parts = {service:'WMS'};
         if (parts.service === 'WMS') {
-            newlayer = L.TileLayer.wmsHeader("/geoq/proxy/https://evwhs.digitalglobe.com/mapservice/wmsaccess?connectid=5f4b5f3d-47e0-402a-996a-ed37f05a871b", {
+            newlayer = L.TileLayer.wmsHeader("/geoq/proxy/https://evwhs.digitalglobe.com/mapservice/wmsaccess?connectid=<connectid>", {
                 layers: "DigitalGlobe:Imagery",
                 format: 'image/png',
                 transparent: true,
