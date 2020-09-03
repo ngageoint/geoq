@@ -8,7 +8,7 @@ class Term(models.Model):
     """
     Ontological Term
     """
-    TERM_TYPES = [("Object", "Object"), ("Relationship","Relationship")]
+    TERM_TYPES = [("Object", "Object"), ("Property", "Property"), ("Relationship","Relationship")]
     word = models.CharField(max_length=100, help_text="Value of term")
     identifier = models.CharField(max_length=200, help_text="IRI Identifier")
     type = models.CharField(max_length=30, choices=TERM_TYPES, default=TERM_TYPES[0])

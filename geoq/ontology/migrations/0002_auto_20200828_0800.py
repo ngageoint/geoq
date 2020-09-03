@@ -13,7 +13,7 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='term',
             name='type',
-            field=models.CharField(choices=[('Object', 'Object'), ('Relationship', 'Relationship')], default=('Object', 'Object'), max_length=30),
+            field=models.CharField(choices=[('Object', 'Object'), ('Property', 'Property'), ('Relationship', 'Relationship')], default=('Object', 'Object'), max_length=30),
         ),
         migrations.AlterField(
             model_name='ontology',
