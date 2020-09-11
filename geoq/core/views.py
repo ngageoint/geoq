@@ -333,6 +333,8 @@ class CreateFeaturesView(UserAllowedMixin, DetailView):
         jtypes = self.object.job.feature_types.all()
         alltypes = (jtypes | ftypes).distinct()
         cv['feature_types'] = alltypes
+        cv['menu_types'] = jtypes
+
         #cv['feature_types'] = self.object.job.feature_types.all() #.order_by('name').order_by('order').order_by('-category')
 
         cv['vocabulary'] = self.object.job.vocabulary

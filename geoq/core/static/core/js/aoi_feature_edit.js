@@ -812,7 +812,11 @@ aoi_feature_edit.map_init = function (map, bounds) {
     _.each(_.sortBy(aoi_feature_edit.feature_types,'order'), function (ftype) {
 
         if (ftype.type == 'Polygon') {
-            aoi_feature_edit.all_polygons.push(aoi_feature_edit.createPolygonOptions(ftype));
+            // find a better way to do this... only add generic types
+            if (aoi_feature_edit.menu_types[ftype.id]) {
+              aoi_feature_edit.all_polygons.push(aoi_feature_edit.createPolygonOptions(ftype));
+            }
+
         } else if (ftype.type == 'Point') {
             var point = aoi_feature_edit.createPointOptions(ftype);
             if (point) {

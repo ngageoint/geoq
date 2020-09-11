@@ -73,7 +73,6 @@
     <script src="//cdnjs.cloudflare.com/ajax/libs/leaflet-realtime/2.1.1/leaflet-realtime.min.js"></script>
     <script defer src="//cdn.rawgit.com/chrisveness/geodesy/v1.1.2/latlon-spherical.js"></script>
     <script defer src="//cdn.rawgit.com/chrisveness/geodesy/v1.1.2/dms.js"></script>
-    <script src="{% static 'core/js/responders.js' %}"></script>
 
     <!-- try WCS -->
     <script src="{% static 'leaflet/NonTiledLayer.js' %}"></script>
@@ -94,6 +93,11 @@
         aoi_feature_edit.feature_types_all = [];
         {% for feature_type in feature_types_all %}
             aoi_feature_edit.feature_types_all[{{ feature_type.id }}] = {{ feature_type.to_json|safe }};
+        {% endfor %}
+
+        aoi_feature_edit.menu_types = [];
+        {% for t in menu_types %}
+            aoi_feature_edit.menu_types[{{ t.id }}] = {{ t.to_json|safe }};
         {% endfor %}
 
         var inreview_status_url = "{% url 'aoi-update-status' object.id 'In review' %}";
