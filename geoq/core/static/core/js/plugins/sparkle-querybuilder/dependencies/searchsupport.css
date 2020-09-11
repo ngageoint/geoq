@@ -1,0 +1,9 @@
+.tt-open {
+
+    opacity: 1 !important;
+    background-color: white;
+    border-style: solid;
+    border-color: black;
+    border-radius: 1px;
+    width: 100%;
+}

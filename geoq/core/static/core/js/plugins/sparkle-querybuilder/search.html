@@ -1,44 +1,117 @@
-/*
- Sparkle Query Builder plugin for geoq
- */
-var vocabulary = JSON.parse(document.currentScript.getAttribute("vocabulary"))
-var sparkle_builder = {};
-sparkle_builder.title = "Sparkle Query Builder";
-sparkle_builder.plugin_title = "Feature Search";
-sparkle_builder.accordion_id = "#layer-control-accordion";
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 
-sparkle_builder.$content = null;
-sparkle_builder.$accordion = null;
-sparkle_builder.map = aoi_feature_edit.map;
-sparkle_builder.results_layer_group = null;
-sparkle_builder.workcellGeojson = aoi_feature_edit.aoi_extents_geojson;
+    <!-- Bootstrap CSS -->
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css" integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh" crossorigin="anonymous">
+    <link rel="stylesheet" href="searchsupport.css">
 
-sparkle_builder.init = function (options) {
+    <title>POGO Search</title>
+    <style>
+      .fieldLabel {
+        /*        font-weight: bold;*/
+      }
+      .scroller {
+        overflow:scroll;
+      }
+      .sized {
+        height:30em;
+      }
+      .shaded {
+        background: antiquewhite;
+      }
+      .pointer {
+        cursor: pointer;
+      }
 
-    //Add a shim in to fill a jquery version gap
-    if (typeof $.curCSS == "undefined") {
-        $.curCSS = function (element, attrib, val) {
-            $(element).css(attrib, val);
-        }
-    }
-    if (options) sparkle_builder = $.extend(sparkle_builder, options);
-    sparkle_builder.$accordion = $(sparkle_builder.accordion_id);
-    sparkle_builder.buildAccordionPanel();
-    
-    if (!sparkle_builder.map && aoi_feature_edit && aoi_feature_edit.map) {
-        sparkle_builder.map = aoi_feature_edit.map;
-    }
 
-    //Prepare Layer Group
-    if (sparkle_builder.map) {
-        sparkle_builder.results_layer_group = L.layerGroup()
-        sparkle_builder.results_layer_group.addTo(sparkle_builder.map)
-    }
+      .dont-break-out {
+        /* https://css-tricks.com/snippets/css/prevent-long-urls-from-breaking-out-of-container/ */
 
-};
+        /* These are technically the same, but use both */
+        overflow-wrap: break-word;
+        word-wrap: break-word;
 
-sparkle_builder.loadOntoSearch = function() {
-    let substringMatcher = function (strs) {
+        -ms-word-break: break-all;
+        /* This is the dangerous one in WebKit, as it breaks things wherever */
+        word-break: break-all;
+        /* Instead use this non-standard one: */
+        word-break: break-word;
+
+        /* Adds a hyphen where the word breaks, if supported (No Blink) */
+        -ms-hyphens: auto;
+        -moz-hyphens: auto;
+        -webkit-hyphens: auto;
+        hyphens: auto;
+
+      }      
+    </style>
+  </head>
+
+  <body>
+    <div class="container-fluid" id="firstContainer">
+      <div class="row">
+        <div class="col text-center">POGO Search</div>
+      </div>
+      <div class="row">
+        <div class="col-4">
+          <div class="card"  style="height:100%">
+            <div class="card-body">
+              <h5 class="card-title">Search</h5>
+              <div class="row">
+                <div class="col-4"><select id="searchType">
+                    <option value="byLabel">By Name</option>
+                    <option value="byLabelAndAnnos">Full </option>
+                  </select></div>
+                <div class="col-8">
+                  <input type="text" class="form-control form-control-sm typeahead" id="search"/>
+                </div>
+              </div>
+              <div class="row">
+              <h5>Results</h5>
+              <div class="col-12">
+                <div id="resultHolder">
+                </div>
+              </div>
+              </div>
+              <div class="row">
+                <h5>Details</h5>
+                <div class="col-12">
+                  <div>
+                    <span class="fieldLabel">Label: </span><span id="dLabel"></span>
+                  </div>
+                Annotations: 
+                <div id="dAnnotations">
+                </div>
+                Children: 
+                <div id="dKids">
+
+                </div>
+                Parents:
+                <div id="dParents"></div>
+              </div>
+            </div>
+            </div>
+
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- jQuery first, then Popper.js, then Bootstrap JS -->
+    <script src="https://code.jquery.com/jquery-3.4.1.slim.min.js" integrity="sha384-J6qa4849blE2+poT4WnyKhv5vZF5SrPo0iEjwBvKU7imGFAV0wwj1yYfoRSJoZ+n" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js" integrity="sha384-Q6E9RHvbIyZFJoft+2mJbHaEWldlvI9IOYy5n3zV9zzTtmI3UksdQRVvoxMfooAo" crossorigin="anonymous"></script>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/js/bootstrap.min.js" integrity="sha384-wfSDF2E50Y2D1uUdj0O3uMBJnjuUD4Ih7YwaYd1iqfktj0Uod8GCExl3Og8ifwB6" crossorigin="anonymous"></script>
+    <script type="text/javascript" src="typeahead.js/typeahead.bundle.js"></script>
+    <!--    <script type="text/javascript" src="searchsupport.js"></script>-->
+    <script type="text/javascript" src="vowl/vontology.js"></script>
+    <script type="text/javascript" src="vowl/vowlHelper.js"></script>
+    <script type="text/javascript">
+
+      let substringMatcher = function (strs) {
         return function findMatches(q, cb) {
           var matches, substringRegex;
           matches = [];
@@ -54,7 +127,7 @@ sparkle_builder.loadOntoSearch = function() {
 
       var terms = vowlHelper.getLabels();
 
-      $('#onto_search').typeahead({
+      $('#search').typeahead({
         hint: true,
         highlight: true,
         minLength: 1
@@ -66,20 +139,13 @@ sparkle_builder.loadOntoSearch = function() {
       );
 
 
-      $('#onto_search').keyup(function (e) {
-          console.log("in search")
-        if (e.keyCode == 13 && $("#onto_search").val() != "") {
+      $('#search').keyup(function (e) {
+        if (e.keyCode == 13 && $("#search").val() != "") {
           console.log("Starting Search")
-          results = vowlHelper.byLabel($("#onto_search").val());
-          //All Data requrired should be in results
-        
-          
+          results = vowlHelper.byLabel($("#search").val());
+          console.log("Results from Search: " + results)
           $('.typeahead').typeahead('close');
-          allResults = listSearchResults(results);
-          console.log(results)
-          for(var i = 0; i < allResults.length; i++) {
-              console.log(allResults[i]["iri"])
-          }
+          listSearchResults(results);
           showTermDetails(null);
         }
       });
@@ -104,6 +170,8 @@ sparkle_builder.loadOntoSearch = function() {
           }
           $("#resultHolder").html(html);
 
+          
+
           $('.searchResult').each(function(i, obj) {
             localResults = showTermDetailsById($(obj).attr("data-id"))
             totalResults.push(...localResults)
@@ -116,7 +184,8 @@ sparkle_builder.loadOntoSearch = function() {
           });
         }
 
-        return totalResults
+        console.log("Total Results: ")
+        console.log(totalResults)
       }
 
       function sortByName(a, b) {
@@ -220,58 +289,7 @@ sparkle_builder.loadOntoSearch = function() {
         let term = vowlHelper.getTermById(id);
         return showTermDetails(term);
       }
+    </script>
 
-}
-sparkle_builder.buildAccordionPanel = function () {
-    sparkle_builder.$title = leaflet_layer_control.buildAccordionPanel(sparkle_builder.$accordion, sparkle_builder.plugin_title);
-
-    var nouns = ['Chinese', 'Airplane', 'Freighter', 'Fighter', 'Length', 'Air Battery', 'Shenyang J-11', 'Width', "Jet"]
-    if (vocabulary.length > 0) {
-        nouns = vocabulary.map((term_obj) => term_obj.name)
-    }
-
-
-    //Build Content Holder
-    sparkle_builder.$content = $('<div class="container" >' +
-        '<h5 class="card-title">Search</h5> \
-          <div class="row"> \
-            <div class ="col-xs-1">\
-            <select id="searchType"> \
-                <option value="byLabel">By Name</option> \
-                <option value="byLabelAndAnnos">Full </option> \
-              </select></div> \
-              <div class="col-xs-2"> \
-              <input type="text" class="form-control form-control-sm typeahead" id="onto_search"/> \
-              </div> \
-          </div> \
-          <div class="row"> \
-          <h5>Results</h5> \
-          <div class="col"> \
-            <div id="resultHolder"> \
-            </div> \
-          </div> \
-          </div> \
-          <div class="row"> \
-            <h5>Details</h5> \
-            <div class="col-12"> \
-                <div> \
-                    <span class="fieldLabel">Label: </span><span id="dLabel"></span> \
-                </div> \
-                Annotations: \
-                <div id="dAnnotations"> \
-                </div> \
-                Children: \
-                <div id="dKids"> \
-                </div> \
-                Parents: \
-                <div id="dParents"></div> \
-            </div> \
-        </div> \
-    </div>').appendTo(sparkle_builder.$title);
-
-    //Pray
-    sparkle_builder.loadOntoSearch()
-
-};
-
-geoq.sparkle_builder = sparkle_builder;
+  </body>
+</html>
