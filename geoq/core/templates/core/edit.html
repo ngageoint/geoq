@@ -68,7 +68,6 @@
 
 
     <script src="{% static 'core/js/plugins/sparkle-querybuilder/sparkle.querybuilder.js' %}" vocabulary='{"test" : "test"}'></script>
-    <!--<script src="{% static 'core/js/plugins/sparkle-querybuilder/dependencies/searchsupport.js' %}"></script>-->
 
     {% for layer in object.job.map.layers %}{% if layer.layer.type == 'Google Maps' %}
     <script src="{{ layer.layer.url }}maps/api/js?v=3&sensor=false"></script>
