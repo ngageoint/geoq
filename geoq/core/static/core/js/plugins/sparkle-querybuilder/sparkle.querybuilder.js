@@ -77,10 +77,35 @@ sparkle_builder.loadOntoSearch = function() {
           $('.typeahead').typeahead('close');
           allResults = listSearchResults(results);
           console.log(results)
+          var postData = {
+            "references" : []
+          };
+          var iriList = []
           for(var i = 0; i < allResults.length; i++) {
-              console.log(allResults[i]["iri"])
+            iriList.push( allResults[i]["iri"])
           }
+          postData["references"] = iriList
           showTermDetails(null);
+          console.log(postData)
+          $.ajax({
+            type: "POST",
+            url: leaflet_helper.home_url + "features/list/" + aoi_feature_edit.aoi_id + "/",
+            data: JSON.stringify(postData),
+            success: (data) => {
+              for (var i = 0; i < data.length; i ++) {
+                if (data[i].geometry.type == "Point") {
+                  var f =  L.marker([data[i].geometry.coordinates[1], data[i].geometry.coordinates[0]], {"style" : data[i].type.style});
+                  console.log(f)
+                } else {
+                  var f = L.polygon(data[i].geometry.coordinates, {"style" : data[i].type.style})
+                  console.log(f)
+                }
+                feature_manager.addFeatureToLayer(sparkle_builder.results_layer_group, f)
+              }
+              console.log(data)
+            },
+            dataType: "json"
+          });
         }
       });
 
