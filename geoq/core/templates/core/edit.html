@@ -63,7 +63,7 @@
     <script src="{% static 'core/js/plugins/sparkle-querybuilder/dependencies/bloodhound.min.js' %}"></script>
     <script src="{% static 'core/js/plugins/sparkle-querybuilder/dependencies/typeahead.bundle.min.js' %}"></script>
     <script src="{% static 'core/js/plugins/sparkle-querybuilder/dependencies/typeahead.jquery.min.js' %}"></script>
-    
+
     <link rel="stylesheet" href="{% static 'core/js/plugins/sparkle-querybuilder/dependencies/searchsupport.css' %}" />
 
 
@@ -133,7 +133,7 @@
 
         aoi_feature_edit.csrf = '{{ csrf_token }}';
 
-        aoi_feature_edit.job_features_geojson = {{ object.job.features_geoJSON|safe }};
+        aoi_feature_edit.job_features_geojson = {{ object.job.oneweek_features_geoJSON|safe }};
         aoi_feature_edit.create_feature_url = "{% url 'feature-create' %}";
         aoi_feature_edit.edit_feature_url = "{% url 'feature-edit' %}";
         aoi_feature_edit.next_aoi_url = "{% url 'job-next-aoi' object.job.id %}";
