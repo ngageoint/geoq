@@ -480,6 +480,20 @@ class Feature(models.Model):
             error_text = "Feature type {0} does not match the template's feature type {1}."
             raise ValidationError(error_text.format(obj_geom_type, template_geom_type))
 
+    def details(self):
+        """
+        Returns information to display on map
+        """
+        properties = dict(id=self.id,
+                  analyst=self.analyst.username,
+                  created_at=datetime.strftime(self.created_at, '%Y-%m-%dT%H:%M:%S%Z'),
+                  )
+
+        properties["type"] = self.template.details()
+        properties["geometry"] = json.loads(self.the_geom.json)
+
+        return properties
+
     class Meta:
         ordering = ('-updated_at', 'aoi',)
 
@@ -578,6 +592,13 @@ class FeatureType(models.Model):
 
     def featuretypes(self):
         return FeatureType.objects.all()
+
+    def details(self):
+        return  dict(
+                     name=self.name,
+                     reference=self.ontology_reference,
+                     style=self.style,
+                    )
 
     def get_absolute_url(self):
         return reverse('feature-type-update', args=[self.id])
