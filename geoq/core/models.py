@@ -3,7 +3,7 @@
 # is subject to the Rights in Technical Data-Noncommercial Items clause at DFARS 252.227-7013 (FEB 2012)
 
 import json
-import cgi
+import html
 import ast
 from datetime import datetime, timedelta
 from pytz import utc
@@ -13,6 +13,7 @@ from django.contrib.gis.db import models
 from django.contrib.gis.geos import MultiPolygon, Polygon
 from django.contrib.contenttypes.fields import GenericForeignKey
 from django.contrib.contenttypes.models import ContentType
+from django.utils.timezone import make_aware
 from django.urls import reverse
 # from django.utils.datastructures import SortedDict
 from .managers import AOIManager
@@ -20,6 +21,7 @@ from jsonfield import JSONField
 from collections import defaultdict, OrderedDict
 from django.db.models import Q
 from geoq.training.models import Training
+from geoq.ontology.models import Vocabulary
 from geoq.core.utils import clean_dumps
 from feedgen.feed import FeedGenerator
 
@@ -188,6 +190,7 @@ class Job(GeoQBase, Assignment):
                 on_delete=models.PROTECT)
     feature_types = models.ManyToManyField('maps.FeatureType', blank=True)
     required_courses = models.ManyToManyField(Training, blank=True, help_text="Courses that must be passed to open these cells")
+    vocabulary = models.ForeignKey(Vocabulary, blank=True, on_delete=models.PROTECT, null=True, help_text="Favorite words")
 
     class Meta:
         permissions = (
@@ -265,7 +268,7 @@ class Job(GeoQBase, Assignment):
 
             header = "<th><i>Feature Counts</i></th>"
             for (featuretype, status_obj) in list(counts.items()):
-                header = header + "<th><b>" + cgi.escape(featuretype) + "</b></th>"
+                header = header + "<th><b>" + html.escape(featuretype) + "</b></th>"
             output += "<tr>" + header + "</tr>"
 
             for status in STATE_VALUES:
@@ -276,7 +279,7 @@ class Job(GeoQBase, Assignment):
                         val = status_obj[status]
                     else:
                         val = 0
-                    row += "<td>" + cgi.escape(str(val)) + "</td>"
+                    row += "<td>" + html.escape(str(val)) + "</td>"
                 output += "<tr>" + row + "</tr>"
             output += "</table>"
         else:
@@ -321,15 +324,27 @@ class Job(GeoQBase, Assignment):
 
         return clean_dumps(geojson) if as_json else geojson
 
-    def features_geoJSON(self, as_json=True, using_style_template=True):
+    def features_geoJSON(self, as_json=True, using_style_template=True, from_date=None):
 
         geojson = OrderedDict()
         geojson["type"] = "FeatureCollection"
         geojson["properties"] = dict(id=self.id)
 
-        geojson["features"] = [n.geoJSON(as_json=False, using_style_template=using_style_template) for n in self.feature_set.all()]
+        if from_date is None:
+            features = self.feature_set.all()
+        else:
+            features = self.feature_set.filter(**{"created_at__gt": from_date }).all()
+
+        geojson["features"] = [n.geoJSON(as_json=False, using_style_template=using_style_template) for n in features]
 
         return clean_dumps(geojson, indent=2) if as_json else geojson
+
+    def oneweek_features_geoJSON(self):
+        today = datetime.now()
+        delta = timedelta(days=7)
+        timefilter = make_aware(today - delta)
+
+        return self.features_geoJSON(from_date=timefilter)
 
     def grid_geoJSON(self, as_json=True):
         """
@@ -533,6 +548,9 @@ class AOI(GeoQBase, Assignment):
         Returns geoJSON of the feature.
         """
 
+        # determine name. if it's the same as the job, make it the id
+        name = self.name if self.name != self.job.name else self.id
+
         if self.id is None:
             self.id = 1
 
@@ -557,7 +575,7 @@ class AOI(GeoQBase, Assignment):
             analyst=(self.analyst.username if self.analyst is not None else 'None'),
             assignee=self.assignee_name,
             priority=self.priority,
-            name=self.properties['GEO_ID'] if 'GEO_ID' in self.properties else '000000',
+            name=self.properties['GEO_ID'] if 'GEO_ID' in self.properties else self.name,
             delete_url=reverse('aoi-deleter', args=[self.id]))
         geojson["geometry"] = json.loads(self.polygon.json)
 

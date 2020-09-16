@@ -22,7 +22,7 @@ leaflet_layer_control.init = function(){
     leaflet_layer_control.hidden_panels = site_settings.hidden_panels ? site_settings.hidden_panels[aoi_feature_edit.status] : null;
     if (!leaflet_layer_control.hidden_panels) {
         leaflet_layer_control.hidden_panels = {
-            "Awaiting Imagery" : ["Feature Details", "Geo Overview", "Layer Comparison", "Rotation Helper", "Geo Layers for Map"],
+            "Awaiting Imagery" : ["Feature Identification", "Geo Overview", "Layer Comparison", "Rotation Helper", "Geo Layers for Map"],
             "In work" : [ "Imagery Query"]
         };
     }
@@ -64,7 +64,7 @@ leaflet_layer_control.initDrawer = function(){
 
 
 leaflet_layer_control.addPreferenceListener = function($accordion){
-    
+
     var lastOpened = store.get('leaflet_layer_control.layer_accordion');
     if (lastOpened && $('#'+lastOpened).is(":visible")) {
         $('#'+lastOpened).collapse('toggle');
@@ -82,10 +82,13 @@ leaflet_layer_control.addPreferenceListener = function($accordion){
 };
 
 leaflet_layer_control.addFeatureInfo = function($accordion){
-    var $content = leaflet_layer_control.buildAccordionPanel($accordion,"Feature Details");
+    var $content = leaflet_layer_control.buildAccordionPanel($accordion,"Feature Identification");
     leaflet_layer_control.$feature_info = $("<div>")
+        .addClass("classification_block")
         .html("Click a feature on the map to see an information associated with it")
         .appendTo($content);
+
+
 };
 
 leaflet_layer_control.pan = function(dir, amt) {
@@ -148,7 +151,7 @@ leaflet_layer_control.addYouTube = function ($accordion) {
 	var yt = leaflet_layer_control.buildAccordionPanel($accordion, "YouTube");
     //The youtube image is to preload the logo, without this it will not show up right away when you first click the popup.
 	var ytHTML = '<div>' +
-            '<img id="youTube" src="/static/images/YouTube.png" alt="Play Video" style="display:none"><iframe id="youTubeIframe" width="230px" height="200" style="display:none" src="" allowfullscreen></iframe>' + 
+            '<img id="youTube" src="/static/images/YouTube.png" alt="Play Video" style="display:none"><iframe id="youTubeIframe" width="230px" height="200" style="display:none" src="" allowfullscreen></iframe>' +
             '<form id="search" action="javascript:void(0)">' +
 			'Keywords: <input id="keyword" type="text" name="keyword" value="" placeholder="eg: Flood, Crash..."><br>' +
 			'Start Date: <input id="startDate" type="text" name="startDate" value="" placeholder="mm-dd-yyyy" style="margin-right:20px"><br>' +
@@ -214,7 +217,7 @@ leaflet_layer_control.addYouTube = function ($accordion) {
                     if (cleanVideoResults(videoResults[i])) {
                         cleanResults.push(videoResults[i]);
                     }
-                } 
+                }
             } else {
                 cleanResults = videoResults;
             }
@@ -257,7 +260,7 @@ leaflet_layer_control.addYouTube = function ($accordion) {
         }
         return true;
     }
-    
+
     function cleanArray(inputArray) {
       	var tempArray = [];
       	var found;
@@ -265,16 +268,16 @@ leaflet_layer_control.addYouTube = function ($accordion) {
       		found = false;
       		for (var j = 0; j < tempArray.length; j++) {
       			if (tempArray[j].x == inputArray[i].x && tempArray[j].y == inputArray[i].y) {
-      				found = true;	
+      				found = true;
       			}
       		}
-      
+
       		if (found == false) {
       			tempArray.push(inputArray[i]);
       		}
-      
+
       	}
-      
+
       	return tempArray;
       }
 }
@@ -680,10 +683,52 @@ leaflet_layer_control.show_feature_info = function (feature) {
     }
     $content.empty();
 
-    var editableUrl = leaflet_helper.home_url+'api/feature/update/'+feature.properties.id;
+    var id = feature.properties.id;
+    var editableUrl = leaflet_helper.home_url+'api/feature/update/'+id;
 
-    var feature_note_original = "Click here to add a note to this feature";
+    var feature_note_original = "Click here to add additional notes";
     var feature_note = feature_note_original;
+
+    console.log(feature)
+    // SRJ: we need something like this?
+    if (!feature.properties.classification) {
+        feature.properties.classification = "UC";
+    }
+    // add an ontology classification Area
+    var $classification = $('<div>')
+    if ("classification" in feature.properties && feature.properties.classification == "UC") {
+        $classification.html('<b>Classification</b>: <a id="classification-link" data-toggle="modal" href="#ontModal" class="button">Lookup Classification</a> <i id="save-classification" class="icon-save" style="display:none"></i> \
+        <div class="modal fade" id="ontModal" tabindex="-1" role="dialog" aria-labelledby="ontModalLabel" aria-hidden="true"> \
+            <div class="modal-dialog" role="document"> \
+                <div class="modal-content">\
+                    <div class="modal-header">\
+                        <h5 class="modal-title" id="ontModalLabel">Lookup Classification</h5>\
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">\
+                        <span aria-hidden="true">&times;</span>\
+                        </button>\
+                    </div>\
+                    <div class="modal-body">\
+                        <div class="container-fluid"> \
+                            <div class="row"> \
+                                <div class="col" id="classification-tree"></div> \
+                                <div class="col" id="classification-details"></div> \
+                            </div> \
+                        </div> \
+                    </div>\
+                    <div class="modal-footer justify-content-between">\
+                        <button type="button" class="btn btn-primary pull-left">Propose New Entity</button> \
+                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>\
+                        <button id="modal-submit-btn" type="button" class="btn btn-primary">Set classification</button>\
+                    </div>\
+                </div>\
+            </div>\
+        </div>')
+
+    }
+    $classification.appendTo($content);
+    //Very VERY VERY gross JS to fix a JS loading/scoping issue.
+    $('<script> $( "#ontModal" ).on("shown.bs.modal", function() {leaflet_layer_control.render_ontology_fancy_tree();})</' + 'script>').appendTo(document.body)
+
     $.each(feature.properties, function(index, value) {
 
         var skipIt = false;
@@ -715,12 +760,12 @@ leaflet_layer_control.show_feature_info = function (feature) {
             skipIt = true;
             var $status = $('<div>')
                 .addClass('status_block')
-                .html('<b>Status</b>: ')
+                .html('<b>Observation Status</b>: ')
                 .appendTo($content);
             $('<span class="editable" id="status" style="display: inline">'+_.str.capitalize(value)+'</span>')
                 .appendTo($status)
                 .editable(editableUrl, {
-                data   : " {'Unassigned':'Unassigned','In work':'In work', 'In review':'In review', 'Completed':'Completed'}",
+                data   : " {'In work':'In work', 'In review':'In review', 'Completed':'Completed'}",
                     type   : 'select',
                     submit : 'OK',
                     style  : 'inherit',
@@ -783,6 +828,7 @@ leaflet_layer_control.show_feature_info = function (feature) {
             }
         } else {
             value = leaflet_layer_control.removePythonDateTime(value);
+            if (index == 'classification') skipIt = true;
 
             var schemaSettings = leaflet_layer_control.featureSchemaSelect(feature, index);
             if (schemaSettings && schemaSettings.type) {
@@ -825,10 +871,93 @@ leaflet_layer_control.show_feature_info = function (feature) {
         .appendTo($content)
         .editable(editableUrl, {
             select : true,
-            tooltip: 'Set a note on this feature'
+            tooltip: 'Analyst comments'
         });
 
+    // Lookup similar features
+    $lookup_button = $('<button>')
+                      .addClass('btn btn-primary btn-small')
+                      .attr('type','button')
+                      .text('Display similar entities')
+    $('<div>')
+        .append($lookup_button)
+        .appendTo($content);
+
+    // for saving a classification
+    $('#save-classification').click(function() {
+        console.log("Got the click");
+        $.ajax({
+            url: aoi_feature_edit.api_url_save_classification,
+            dataType:"json",
+            method:'POST',
+            contentType: "application/json; charset=utf-8",
+            data: JSON.stringify({
+                id: id,
+                name: $('#classification-link').text(),
+                uri: $('#classification-link').prop('uri')
+            })
+        }).done(function(x) {
+            $('#save-classification').hide();
+        }).fail(function(x, status, err) {
+            if (console) console.log(status);
+        });
+    });
+
+
 };
+
+leaflet_layer_control.render_ontology_format_class = function(cls){
+    var container = $("<span>");
+    container.append($("<h2>").html("Class Details:"))
+    container.append($("<p>").html("<b>prefLabel:</b> " + cls.prefLabel));
+    container.append($("<p>").html("<b>id:</b> " + cls["@id"]));
+    container.append($("<p>").html("<b>synonyms:</b> " + cls.synonym.join(", ")));
+    container.append($("<p>").html("<b>definitions:</b> " + cls.definition.join(", ")));
+    return container.html();
+}
+leaflet_layer_control.render_ontology_fancy_tree = function() {
+    let node = "out of scope";
+    let uri = "unknown";
+    let api_key = "eb729a94-d554-49cc-adb9-16cd601c2084"; // ADD API KEY HERE
+    let custom_ontology = "CMO"; // CHANGE THIS TO CHANGE ONTOLOGY
+    let api_url = "http://ec2-3-236-58-248.compute-1.amazonaws.com:8080";
+    var widget_tree = $("#classification-tree ").NCBOTree({
+        apikey: api_key,
+        ontology: custom_ontology,
+        ncboUIURL: "http://ec2-3-236-58-248.compute-1.amazonaws.com",
+        ncboAPIURL: api_url,
+        afterSelect: function(event, classId, prefLabel, selectedNode){
+            console.log("ClassID: " + classId);
+            console.log("Event: " + event);
+            console.log("prefLabel: ");
+
+            console.log(prefLabel)
+            console.log("data-id: " + $(prefLabel).attr("data-id"))
+            uri = $(prefLabel).attr("data-id");
+            console.log("selectedNode: " + selectedNode)
+            node = classId
+
+            $.ajax({
+                url: api_url + "/ontologies/" + custom_ontology + "/classes/" + uri,
+                dataType: "json",
+                data: {apikey: api_key},
+                crossDomain: true,
+                success: function (classDetails) {
+                  $("#classification-details").html(leaflet_layer_control.render_ontology_format_class(classDetails));
+                }
+              });
+
+        }
+
+      });
+    $("#modal-submit-btn").click(function () {
+        $("#classification-link").text(node);
+        $("#classification-link").prop('uri',uri);
+        $("#save-classification").show();
+        $("#ontModal").modal('hide');
+    })
+}
+
 leaflet_layer_control.featureSchemaSelect = function (feature, index) {
     var settings = {};
 
@@ -1670,6 +1799,9 @@ leaflet_layer_control.addLayerControl = function (map, options, $accordion) {
         }
     }
 
+    // SRJ: set this back after demo
+    var df = _.findWhere(leaflet_layer_control.lastSelectedNodes, {title: "Data Feeds"});
+    if (df) { df.setSelected(false); }
 
     //If it was open last time, open it again
     if (store.get('leaflet_layer_control.drawer')) {
@@ -1696,10 +1828,10 @@ leaflet_layer_control.drawEachLayer=function(data,map,doNotMoveToTop){
                 _.each(layer_obj.children, function(layer_obj_item){
                     if (!layer_obj_item.selected) {
                         layer_obj_item.setSelected(false);
-                    }                   
+                    }
                 });
             }
-            
+
         }
     });
 
@@ -1975,7 +2107,7 @@ leaflet_layer_control.resetHighlight = function (e) {
             }
             layer.popupContent = popupContent;
 
-            //Creates a popup for each marker    
+            //Creates a popup for each marker
             layer.bindPopup(layer.popupContent).openPopup();
 
            //These change the marker when hovered on
@@ -2037,7 +2169,7 @@ leaflet_layer_control.initializeFileUploads = function () {
             shp(reader.result).then(function (geojson) {
                 var features = L.geoJson(geojson, {
                     onEachFeature: onEachFeature
-                    
+
                 })
                 //adds to the map
                 features.addTo(aoi_feature_edit.map);

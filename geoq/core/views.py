@@ -51,6 +51,8 @@ from pytz import utc
 
 from django.views.generic.detail import SingleObjectTemplateResponseMixin
 from django.views.generic.edit import ModelFormMixin, ProcessFormView
+from django.core import serializers
+
 
 class Dashboard(TemplateView):
 
@@ -102,6 +104,7 @@ class BatchCreateAOIS(TemplateView):
         cv['object'] = get_object_or_404(Job, pk=self.kwargs.get('job_pk'))
         # import dictionary Settings
         cv['lexicon'] = settings.GEOQ_LEXICON
+        cv['wfs_layers'] = Layer.objects.filter(type='WFS')
         return cv
 
     def post(self, request, *args, **kwargs):
@@ -324,9 +327,20 @@ class CreateFeaturesView(UserAllowedMixin, DetailView):
                 new_default_map.save()
                 cv['map'] = new_default_map
 
-        cv['feature_types'] = self.object.job.feature_types.all() #.order_by('name').order_by('order').order_by('-category')
+        # grab dynamic FeatureTypes
+        l = list(Feature.objects.filter(aoi_id=self.object.id))
+        ftypes = FeatureType.objects.filter(feature__in=l)
+        jtypes = self.object.job.feature_types.all()
+        alltypes = (jtypes | ftypes).distinct()
+        cv['feature_types'] = alltypes
+        cv['menu_types'] = jtypes
+
+        #cv['feature_types'] = self.object.job.feature_types.all() #.order_by('name').order_by('order').order_by('-category')
+
+        cv['vocabulary'] = self.object.job.vocabulary
         cv['feature_types_all'] = FeatureType.objects.all()
         layers = cv['map'].to_object()
+
 
         for job in self.object.job.project.jobs:
             if not job.id == self.object.job.id:
@@ -983,6 +997,15 @@ class SummaryView(TemplateView):
         cv['object'] = get_object_or_404(Job, pk=self.kwargs.get('job_pk'))
         cv['workcells'] = AOI.objects.filter(job_id=self.kwargs.get('job_pk')).order_by('id')
         return cv
+
+class VocabularyView(TemplateView):
+    template_name = 'core/vocabulary.html'
+    model = Job
+
+    def get_context_data(self, **kwargs):
+        cv = super(VocabularyView, self).get_context_data(**kwargs)
+        return cv
+
 
 class WorkSummaryView(TemplateView):
     http_method_names = ['get']

@@ -37,7 +37,7 @@ DATABASES = {
         # The following settings are not used with sqlite3:
         'USER': 'geoq',
         'PASSWORD': 'geoq',
-        'HOST': '127.0.0.1',  # Empty for localhost through domain sockets or '127.0.0.1' for localhost through TCP.
+        'HOST': 'localhost',  # Empty for local through domain sockets or '127.0.0.1' for local through TCP.
         'PORT': '5432',  # Set to empty string for default.
     }
 }
@@ -164,6 +164,16 @@ LEAFLET_CONFIG = {
             'css': [],
             'js': [STATIC_URL + 'leaflet/Leaflet.SOS.min.js'],
             'repo': 'https://github.com/opensensorhub/osh-js'
+        },
+        'WCS': {
+            'css': [],
+            'js': [STATIC_URL + 'leaflet/NonTiledLayer.WCS.js'],
+            'repo': 'https://github.com/stuartmatthews/Leaflet.NonTiledLayer.WCS'
+        },
+        'WMSHeader': {
+            'css': [],
+            'js': [STATIC_URL + 'leaflet/leaflet-plugins/layer/tile/leaflet-wms-header.js'],
+            'repo': 'https://https://github.com/ticinum-aerospace/leaflet-wms-header'
         }
     }
 }
@@ -252,7 +262,8 @@ INSTALLED_APPS = [
     'geoq.training.apps.TrainingConfig',
     'geoq.core.apps.CoreConfig',
     'geoq.maps.apps.MapsConfig',
-    'geoq.workflow.apps.WorkflowConfig'
+    'geoq.workflow.apps.WorkflowConfig',
+    'geoq.ontology.apps.OntologyConfig'
 ]
 
 MIDDLEWARE = [

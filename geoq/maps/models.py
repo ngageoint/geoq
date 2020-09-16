@@ -48,6 +48,7 @@ IMAGE_FORMATS = (
                 ('image/geotiff', 'image/geotiff'),
                 ('image/geotiff8', 'image/geotiff8'),
                 ('image/svg', 'image/svg'),
+                ('image/vnd.jpeg-png', 'image/vnd.jpeg-png'),
                 ('rss', 'rss'),
                 ('kml', 'kml'),
                 ('kmz', 'kmz'),
@@ -68,6 +69,7 @@ IMAGE_FORMATS = (
 SERVICE_TYPES = (
                 ('WMS', 'WMS'),
                 ('WFS', 'WFS'),
+                ('WCS', 'WCS'),
                 ('KML', 'KML'),
                 ('GeoRSS', 'GeoRSS'),
                 ('ESRI Identifiable MapServer', 'ESRI Identifiable MapServer'),
@@ -478,6 +480,21 @@ class Feature(models.Model):
             error_text = "Feature type {0} does not match the template's feature type {1}."
             raise ValidationError(error_text.format(obj_geom_type, template_geom_type))
 
+    def details(self):
+        """
+        Returns information to display on map
+        """
+        properties = dict()
+
+        properties["type"] = "Feature"
+        properties["properties"] = self.template.details()
+        properties["properties"]["id"] = self.id
+        properties["properties"]["analyst"] = self.analyst.username
+        properties["properties"]["created_at"] = datetime.strftime(self.created_at, '%Y-%m-%dT%H:%M:%S%Z')
+        properties["geometry"] = json.loads(self.the_geom.json)
+
+        return properties
+
     class Meta:
         ordering = ('-updated_at', 'aoi',)
 
@@ -492,7 +509,10 @@ class FeatureType(models.Model):
         # ('Overlay', 'Overlay'),  #TODO: Support overlay images. Should these be features?
     )
 
+    DEFAULT_STYLE = {"color": "blue", "opacity": "1", "weight": "2", "fill": False }
+
     name = models.CharField(max_length=200)
+    ontology_reference = models.URLField(max_length=200, default="")
     type = models.CharField(choices=FEATURE_TYPES, max_length=25)
     category = models.CharField(max_length=25, default="", blank=True, null=True, help_text="An optional group to make finding this feature type easier. e.g. 'FEMA'")
     order = models.IntegerField(default=0, null=True, blank=True, help_text='Optionally specify the order features should appear on the edit menu. Lower numbers appear sooner.')
@@ -510,6 +530,7 @@ class FeatureType(models.Model):
                                category=self.category,
                                order=self.order,
                                name=self.name,
+                               ontology_reference=self.ontology_reference,
                                type=self.type,
                                style=self.style,
                                icon=icon))
@@ -572,6 +593,13 @@ class FeatureType(models.Model):
 
     def featuretypes(self):
         return FeatureType.objects.all()
+
+    def details(self):
+        return  dict(
+                     name=self.name,
+                     reference=self.ontology_reference,
+                     style=self.style,
+                    )
 
     def get_absolute_url(self):
         return reverse('feature-type-update', args=[self.id])

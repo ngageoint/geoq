@@ -6,7 +6,7 @@
 {% block title %}GeoQ: Workcell {{ object.id }}{% endblock %}
 {% block static_libraries %}
 
-    {% leaflet_js plugins="proj4js,draw,esri,esriCluster,MakiMarkers" %}
+    {% leaflet_js plugins="proj4js,draw,esri,esriCluster,MakiMarkers,WMSHeader" %}
     <!-- script src="{% static 'jquery/jquery-migrate-3.0.0.min.js' %}"></script -->
     <script src="{% static 'core/js/leaflet_helper.js' %}"></script>
     <script src="{% static 'core/js/leaflet_helper.parsers.js' %}"></script>
@@ -38,10 +38,10 @@
 	<script src="{% static 'leaflet/leaflet-plugins/layer/tile/Google.js' %}"></script>
     <script src="{% static 'leaflet/leaflet-plugins/layer/tile/leaflet-tilelayer-wmts.js' %}"></script>
     <script src="{% static 'leaflet/Leaflet-WFST.min.js' %}"></script>
-    <script src="{% static 'core/js/plugins/geoq.footprintsearch.js' %}"></script>
+    <script src="{% static 'core/js/plugins/geoq.imagequeue.js' %}"></script>
     <script src="{% static 'core/js/plugins/geoq.imageviewer.js' %}"></script>
     <script src="{% static 'core/js/plugins/layer_builder.js' %}"></script>
-    <script src="{% static 'core/js/plugins/ogc.csw.js' %}"></script>
+    <script src="{% static 'core/js/plugins/ogc.wfs.js' %}"></script>
     <script src="{% static 'xmlwriter/XMLWriter-1.0.0-min.js' %}"></script>
     <script src="{% static 'core/js/daterangepicker.js' %}"></script>
 
@@ -54,6 +54,21 @@
     <script src="{% static 'jquery/jquery.tablesorter.pager.js' %}"></script>
     <script src="{% static 'query-builder/query-builder.min.js' %}" type="text/javascript"></script>
 
+    <!-- Maybe this is worth it -->
+    <script src="{% static 'core/js/plugins/sparkle-querybuilder/dependencies/jquery.ncbo.tree-2.0.2.js' %}"></script>
+    <link rel="stylesheet" href="{% static 'core/js/plugins/sparkle-querybuilder/dependencies/jquery.ncbo.tree.css' %}" />
+
+    <script src="{% static 'core/js/plugins/sparkle-querybuilder/assets/vontology.js' %}"></script>
+    <script src="{% static 'core/js/plugins/sparkle-querybuilder/assets/vowlHelper.js' %}"></script>
+    <script src="{% static 'core/js/plugins/sparkle-querybuilder/dependencies/bloodhound.min.js' %}"></script>
+    <script src="{% static 'core/js/plugins/sparkle-querybuilder/dependencies/typeahead.bundle.min.js' %}"></script>
+    <script src="{% static 'core/js/plugins/sparkle-querybuilder/dependencies/typeahead.jquery.min.js' %}"></script>
+
+    <link rel="stylesheet" href="{% static 'core/js/plugins/sparkle-querybuilder/dependencies/searchsupport.css' %}" />
+
+
+    <script src="{% static 'core/js/plugins/sparkle-querybuilder/sparkle.querybuilder.js' %}" vocabulary='{"test" : "test"}'></script>
+
     {% for layer in object.job.map.layers %}{% if layer.layer.type == 'Google Maps' %}
     <script src="{{ layer.layer.url }}maps/api/js?v=3&sensor=false"></script>
     {%  endif %}{% endfor %}
@@ -62,7 +77,12 @@
     <script src="//cdnjs.cloudflare.com/ajax/libs/leaflet-realtime/2.1.1/leaflet-realtime.min.js"></script>
     <script defer src="//cdn.rawgit.com/chrisveness/geodesy/v1.1.2/latlon-spherical.js"></script>
     <script defer src="//cdn.rawgit.com/chrisveness/geodesy/v1.1.2/dms.js"></script>
-    <script src="{% static 'core/js/responders.js' %}"></script>
+
+    <!-- try WCS -->
+    <script src="{% static 'leaflet/NonTiledLayer.js' %}"></script>
+    <script src="{% static 'js/geotiff.js' %}"></script>
+    <script src="{% static 'js/plotty.js' %}"></script>
+    <script src="{% static 'leaflet/NonTiledLayer.WCS.js' %}"></script>
 
     <script type="text/javascript">
 
@@ -77,6 +97,11 @@
         aoi_feature_edit.feature_types_all = [];
         {% for feature_type in feature_types_all %}
             aoi_feature_edit.feature_types_all[{{ feature_type.id }}] = {{ feature_type.to_json|safe }};
+        {% endfor %}
+
+        aoi_feature_edit.menu_types = [];
+        {% for t in menu_types %}
+            aoi_feature_edit.menu_types[{{ t.id }}] = {{ t.to_json|safe }};
         {% endfor %}
 
         var inreview_status_url = "{% url 'aoi-update-status' object.id 'In review' %}";
@@ -104,10 +129,11 @@
         aoi_feature_edit.api_url_aoi_georss = "{% url 'json-workcell' object.id %}";
         aoi_feature_edit.api_url_log = "{% url 'workcell_log' object.id %}";
         aoi_feature_edit.api_url_user_param = "{% url 'update-user-maplayer-param' %}";
+        aoi_feature_edit.api_url_save_classification = "{% url 'classify-feature' %}";
 
         aoi_feature_edit.csrf = '{{ csrf_token }}';
 
-        aoi_feature_edit.job_features_geojson = {{ object.job.features_geoJSON|safe }};
+        aoi_feature_edit.job_features_geojson = {{ object.job.oneweek_features_geoJSON|safe }};
         aoi_feature_edit.create_feature_url = "{% url 'feature-create' %}";
         aoi_feature_edit.edit_feature_url = "{% url 'feature-edit' %}";
         aoi_feature_edit.next_aoi_url = "{% url 'job-next-aoi' object.job.id %}";

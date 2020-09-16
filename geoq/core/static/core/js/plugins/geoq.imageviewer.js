@@ -22,6 +22,7 @@ imageviewer.$matching_count = null;
 imageviewer.$matching_total = null;
 imageviewer.$error_div = null;
 imageviewer.displayed_layers = {};
+imageviewer.csw_max_records = 50;
 
 imageviewer.defaultFootprintStyle = {color: 'blue', weight: 1, opacity: 0.8, fillOpacity: 0.5};
 imageviewer.hiddenFootprintStyle = {color: 'blue', weight: 1, opacity: 0, fillOpacity: 0};
@@ -416,7 +417,7 @@ imageviewer.addResultTable = function ($holder) {
         page: 0,
 
         // Number of visible rows
-        size: footprints.csw_max_records,
+        size: imageviewer.csw_max_records,
 
         // This is important due to the
         fixedHeight: false,

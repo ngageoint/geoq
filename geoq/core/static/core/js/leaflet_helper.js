@@ -50,7 +50,7 @@ leaflet_helper.layer_conversion = function (lyr, map) {
 
     // Add in user saved parameters
     var layerUserParams = aoi_feature_edit.aoi_user_remembered_params[lyr.maplayer_id];
-    $.extend(layerParams, layerUserParams); 
+    $.extend(layerParams, layerUserParams);
 
     var layerOptions;
     var outputLayer = undefined;
@@ -65,7 +65,7 @@ leaflet_helper.layer_conversion = function (lyr, map) {
         outputLayer = new L.tileLayer.wms(lyr.url, layerOptions);
     } else if (lyr.type == 'WFS') {
 
-        try {          
+        try {
             if (layerOptions.crs) {
                 var crs = layerOptions.crs.replace(/::/g, ':').split(':');
                 layerOptions.crs = eval('L.CRS.' + crs[crs.length - 2] + crs[crs.length - 1]);
@@ -78,7 +78,7 @@ leaflet_helper.layer_conversion = function (lyr, map) {
         catch (e) {
             console.error('Unable to create WFS layer: ' + e.toString());
         }
-    
+
     } else if (lyr.type == 'WMTS') {
         // this seems a bit fussy, so will make sure we can create this without errors
         try {
@@ -86,6 +86,20 @@ leaflet_helper.layer_conversion = function (lyr, map) {
         }
         catch (e) {
             log.warn('Unable to create WMTS layer: ' + e.toString());
+        }
+    } else if (lyr.type == 'WCS') {
+        try {
+            if (layerOptions.crs) {
+                var crs = layerOptions.crs.replace(/::/g, ':').split(':');
+                layerOptions.crs = eval('L.CRS.' + crs[crs.length - 2] + crs[crs.length - 1]);
+            }
+            else
+               layerOptions.crs = L.CRS.EPSG4326;
+
+            outputLayer = new L.nonTiledLayer.wcs(lyr.url, layerOptions);
+        }
+        catch (e) {
+            console.error('Unable to create WCS layer: ' + e.toString());
         }
     } else if (lyr.type == 'ESRI Tiled Map Service' && esriPluginInstalled) {
         outputLayer = L.esri.tiledMapLayer(lyr.url, layerOptions);
@@ -157,8 +171,6 @@ leaflet_helper.layer_conversion = function (lyr, map) {
         outputLayer = leaflet_helper.constructors.geojson(lyr, map);
     } else if (lyr.type == 'MediaQ') {
         outputLayer = new L.MediaQLayer(true, map, layerOptions);
-    } else if (lyr.type == 'WFS') {
-        outputLayer = new L.WFS(layerOptions);
     } else if (lyr.type == 'ESRI Shapefile') {
         outputLayer = new L.shapefile(lyr.url, layerOptions);
     } else if (lyr.type == 'NWS Weather Alerts') {
@@ -274,7 +286,7 @@ leaflet_helper.toWKT = function (layer) {
                 lng = latlngs[i].lng;
                 lat = latlngs[i].lat;
             }
-        } 
+        }
         if (layer instanceof L.Polygon) {
             return "POLYGON((" + coords.join(",") + "," + lng + " " + lat + "))";
         } else if (layer instanceof L.Polyline) {
@@ -358,4 +370,3 @@ leaflet_helper.addLayerControl = function (map) {
         L.control.layers(null, overlayMaps).addTo(map);
     }
 };
-

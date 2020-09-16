@@ -6,7 +6,7 @@ from django.contrib.auth.decorators import login_required
 from django.urls import path, include
 from django.views.generic import CreateView, UpdateView, ListView
 from .forms import FeatureTypeForm, MapForm, LayerForm, MapLayerForm
-from .views import CreateFeatures, EditFeatures, create_update_map, FeatureTypeListView, FeatureTypeDelete, MapListView,\
+from .views import CreateFeatures, EditFeatures, ClassifyFeatures, create_update_map, FeatureTypeListView, FeatureTypeDelete, MapListView,\
  MapDelete, LayerListView, LayerDelete, LayerImport, KMZLayerImport, JSONLayerImport, JSONLayerExport, update_user_maplayer_param
 from .models import FeatureType, Map, Layer
 
@@ -27,6 +27,10 @@ urlpatterns = [
     path('features/edit/',
         login_required(EditFeatures.as_view()),
         name='feature-edit'),
+
+    path('features/classify/',
+        login_required(ClassifyFeatures.as_view()),
+        name='classify-feature'),
 
     # path('features/read/?$',
     #     login_required(ReadFeatures.as_view()),
@@ -112,4 +116,5 @@ urlpatterns = [
     path('api/map-layers/create/create-json-layer', JSONLayerImport.as_view(), name='create-json-layer'),
 
     path('api/map-layers/<int:pk>.json', JSONLayerExport.as_view(), name='json-layer-export'),
+
 ]

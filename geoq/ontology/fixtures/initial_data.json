@@ -1,0 +1,72 @@
+[{
+  "model": "ontology.term",
+  "pk": 1,
+  "fields": {
+    "word": "Frigate",
+    "identifier": "http://opensextant.org/ontology/EquipmentOntology/Frigate",
+    "type": "Object"
+  }
+}, {
+  "model": "ontology.term",
+  "pk": 2,
+  "fields": {
+    "word": "Stores Ship",
+    "identifier": "http://opensextant.org/ontology/EquipmentOntology/StoresShip",
+    "type": "Object"
+  }
+}, {
+  "model": "ontology.term",
+  "pk": 3,
+  "fields": {
+    "word": "Jiangdao FFL",
+    "identifier": "http://opensextant.org/ontology/maritime/china_maritime/Jiangdao_FFL",
+    "type": "Object"
+  }
+}, {
+  "model": "ontology.term",
+  "pk": 4,
+  "fields": {
+    "word": "vessel pennant number",
+    "identifier": "http://opensextant.org/ontology/EquipmentOntology/VesselPennantNumber",
+    "type": "Property"
+  }
+}, {
+  "model": "ontology.term",
+  "pk": 5,
+  "fields": {
+    "word": "equipment code",
+    "identifier": "http://opensextant.org/ontology/EquipmentOntology/equipment_code",
+    "type": "Property"
+  }
+}, {
+  "model": "ontology.term",
+  "pk": 6,
+  "fields": {
+    "word": "aircraft length",
+    "identifier": "http://opensextant.org/ontology/EquipmentOntology/acft_length",
+    "type": "Property"
+  }
+}, {
+  "model": "ontology.term",
+  "pk": 7,
+  "fields": {
+    "word": "aircraft number of engines",
+    "identifier": "http://opensextant.org/ontology/EquipmentOntology/acft_number_of_engines",
+    "type": "Property"
+  }
+}, {
+  "model": "ontology.term",
+  "pk": 8,
+  "fields": {
+    "word": "Passenger aircraft",
+    "identifier": "http://opensextant.org/ontology/EquipmentOntology/PassengerAircraft",
+    "type": "Object"
+  }
+}, {
+  "model": "ontology.vocabulary",
+  "pk": 1,
+  "fields": {
+    "name": "Spratly Island Operations",
+    "terms": [1, 2, 3, 4, 6, 7, 8]
+  }
+}]

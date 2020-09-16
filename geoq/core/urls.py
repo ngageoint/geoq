@@ -10,10 +10,12 @@ from django.views.i18n import JavaScriptCatalog
 from .forms import AOIForm, JobForm, ProjectForm, TeamForm, ExportJobForm
 from geoq.core.atom2_view import JobAtom
 from .models import AOI, Project, Job
-from .proxies import proxy_to
+from .proxies import proxy_to, proxy_request_to
 from .views import *
 from geoq.maps.views import feature_delete
 from geoq.core.views import batch_create_aois, usng, mgrs, ipaws, prioritize_cells
+
+from .ontoquery import retrieve_features
 
 urlpatterns = [
     path('', Dashboard.as_view(), name='home'),
@@ -51,7 +53,10 @@ urlpatterns = [
         name='job-assign-workcells'),
     path('jobs/<int:job_pk>/job-summary/',
         login_required(SummaryView.as_view()),
-        name='job-summary'),               
+        name='job-summary'),
+    path('jobs/<int:job_pk>/job-create-vocabulary',
+        login_required(VocabularyView.as_view()),
+        name='job-create-vocabulary'),
     path('jobs/<int:pk>/',
         JobDetailedListView.as_view(template_name='core/job_detail.html'),
         name='job-detail'),
@@ -127,6 +132,7 @@ urlpatterns = [
     path('aois/deleter/<int:pk>/', login_required( aoi_delete ), name='aoi-deleter'),
 
     path('features/delete/<int:pk>/', login_required( feature_delete ), name='feature-delete'),
+    path('features/list/<int:pk>/', login_required( retrieve_features ), name='retrieve-features'),
 
     # Report Pages
     path('reports/work/<int:job_pk>/', login_required(WorkSummaryView.as_view()), name='work-summary'),
@@ -144,8 +150,8 @@ urlpatterns = [
     path('api/geo/usng/', usng, name='usng'),
     path('api/geo/mgrs/', mgrs, name='mgrs'),
     path('api/geo/ipaws/', ipaws, name='ipaws'),
-    path('proxy/<int:path>/', proxy_to, {'target_url': ''}),
-    path('proxy/', proxy_to, name='proxy'),
+    re_path(r'proxy/(?P<target_url>.*)/$', proxy_request_to),
+    path('proxy/', proxy_request_to, name='proxy'),
     path('api/job[s]?/<int:pk>.geojson', JobGeoJSON.as_view(), name='json-job'),
     path('api/job[s]?/<int:pk>.kml', JobKML.as_view(), name='kml-job'),
     path('api/job[s]?/<int:pk>.networked.kml', JobKMLNetworkLink.as_view(), name='kml-networked-job'),

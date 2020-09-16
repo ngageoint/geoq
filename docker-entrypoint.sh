@@ -10,5 +10,8 @@ python manage.py migrate
 python manage.py collectstatic --noinput
 paver install_dev_fixtures
 
+# set the ALLOWED_HOST
+sed -e 's/localhost/'$ALLOWED_HOST'/' ./geoq/settings.py > ./geoq/settings.py.new
+mv ./geoq/settings.py.new ./geoq/settings.py
 
 python manage.py runserver 0.0.0.0:8000
