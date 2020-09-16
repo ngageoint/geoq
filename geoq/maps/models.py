@@ -484,12 +484,13 @@ class Feature(models.Model):
         """
         Returns information to display on map
         """
-        properties = dict(id=self.id,
-                  analyst=self.analyst.username,
-                  created_at=datetime.strftime(self.created_at, '%Y-%m-%dT%H:%M:%S%Z'),
-                  )
+        properties = dict()
 
-        properties["type"] = self.template.details()
+        properties["type"] = "Feature"
+        properties["properties"] = self.template.details()
+        properties["properties"]["id"] = self.id
+        properties["properties"]["analyst"] = self.analyst.username
+        properties["properties"]["created_at"] = datetime.strftime(self.created_at, '%Y-%m-%dT%H:%M:%S%Z')
         properties["geometry"] = json.loads(self.the_geom.json)
 
         return properties

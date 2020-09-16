@@ -24,7 +24,7 @@ sparkle_builder.init = function (options) {
     if (options) sparkle_builder = $.extend(sparkle_builder, options);
     sparkle_builder.$accordion = $(sparkle_builder.accordion_id);
     sparkle_builder.buildAccordionPanel();
-    
+
     if (!sparkle_builder.map && aoi_feature_edit && aoi_feature_edit.map) {
         sparkle_builder.map = aoi_feature_edit.map;
     }
@@ -72,8 +72,8 @@ sparkle_builder.loadOntoSearch = function() {
           console.log("Starting Search")
           results = vowlHelper.byLabel($("#onto_search").val());
           //All Data requrired should be in results
-        
-          
+
+
           $('.typeahead').typeahead('close');
           allResults = listSearchResults(results);
           console.log(results)
@@ -92,18 +92,17 @@ sparkle_builder.loadOntoSearch = function() {
             url: leaflet_helper.home_url + "features/list/" + aoi_feature_edit.aoi_id + "/",
             data: JSON.stringify(postData),
             success: (data) => {
-              for (var i = 0; i < data.length; i ++) {
-                if (data[i].geometry.type == "Point") {
-                  var f =  L.marker([data[i].geometry.coordinates[1], data[i].geometry.coordinates[0]], {"style" : data[i].type.style});
-                  console.log(f)
-                } else {
-                  var f = L.polygon(data[i].geometry.coordinates, {"style" : data[i].type.style})
-                  console.log(f)
-                }
-                feature_manager.addFeatureToLayer(sparkle_builder.results_layer_group, f)
-              }
-              console.log(data)
-            },
+                var f = L.geoJson(data, {
+                  style: function (feature) {
+                    return feature["properties"]["style"];
+                  }
+                }).bindPopup(function (layer) {
+                    return L.Util.template('<b>ID:</b> {id}<br/><b>Class:</b> {name}<br/><b>Date:</b> {created_at}',layer.feature.properties);
+                })
+
+                sparkle_builder.results_layer_group.addLayer(f);
+                console.log(f)
+              },
             dataType: "json"
           });
         }

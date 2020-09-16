@@ -20,5 +20,6 @@ def retrieve_features(request, pk):
     if 'references' in input:
         features = aoi.features.filter(template__ontology_reference__in=input['references']).all()
         objs = [x.details() for x in features]
+        output = {"type": "FeatureCollection", "features": objs }
 
-        return HttpResponse(json.dumps(objs), content_type="application/json", status=200)
+        return HttpResponse(json.dumps(output), content_type="application/json", status=200)
