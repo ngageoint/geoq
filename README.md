@@ -38,7 +38,7 @@ For current news regarding GeoQ, see our [Wiki Page](https://github.com/ngageoin
 ![Work cells in Google Earth](https://cloud.githubusercontent.com/assets/147580/3464395/e5a0e4ca-024b-11e4-9500-ee468e66085e.png)
 
 
-###This project relies heavily on open source packages, particularly:###
+### This project relies heavily on open source packages, particularly:###
 Django under [BSD] (https://github.com/django/django/blob/master/LICENSE)
 
 Leaflet under [BSD] (https://github.com/Leaflet/Leaflet/blob/master/LICENSE)
