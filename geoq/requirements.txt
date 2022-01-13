@@ -36,7 +36,7 @@ nodeenv==1.3.5
 ordereddict==1.1
 packaging==20.3
 Paver==1.3.4
-Pillow==7.1.1
+Pillow==9.0.0
 psycopg2==2.8.5
 pyparsing==2.4.7
 python-dateutil==2.8.1
