@@ -314,8 +314,8 @@ leaflet_layer_control.addGeoOverview = function($accordion) {
         attributionControl: false,
 
     });
-    var osmAttr = '&copy; <a href="http://openstreetmap.org">OpenStreetMap</a> contributors, <a href="http://creativecommons.org/licenses/by-sa/2.0/">CC-BY-SA</a>';
-    var defaultLayer =L.tileLayer('http://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{attribution: osmAttr});
+    var osmAttr = '&copy; <a href="https://openstreetmap.org">OpenStreetMap</a> contributors, <a href="https://creativecommons.org/licenses/by-sa/2.0/">CC-BY-SA</a>';
+    var defaultLayer =L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png',{attribution: osmAttr});
     defaultLayer.addTo(minimap);
     setTimeout(function() { minimap.fitBounds(big.getBounds());}, 500);
     var aoi_extents = L.geoJson(aoi_feature_edit.aoi_extents_geojson,
