@@ -174,8 +174,8 @@
         var map = L.map('background_map', { zoomControl:false })
                 .setView([lat, lng], 7);
 
-    	var osmAttr = '&copy; <a href="https://openstreetmap.org">OpenStreetMap</a> contributors, <a href="http://creativecommons.org/licenses/by-sa/2.0/">CC-BY-SA</a>';
-        L.tileLayer('http://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{attribution: osmAttr}).addTo(map);
+    	var osmAttr = '&copy; <a href="https://openstreetmap.org">OpenStreetMap</a> contributors, <a href="https://creativecommons.org/licenses/by-sa/2.0/">CC-BY-SA</a>';
+        L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png',{attribution: osmAttr}).addTo(map);
 
 
         map.touchZoom.disable();
